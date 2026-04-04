@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function drawMatrix() {
     ctx.fillStyle = 'rgba(3,3,5,0.05)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#00ff41';
+    ctx.fillStyle = '#00b8ff';
     ctx.font = fontSize + 'px Share Tech Mono';
     for (let i = 0; i < drops.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)];

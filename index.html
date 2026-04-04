@@ -18,7 +18,7 @@
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">α</div>
+      <img src="ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
         <div class="brand-ver">v4.0 // UNRESTRICTED</div>
@@ -69,6 +69,11 @@
       <div class="section-header">
         <h1 class="glitch" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
         <div class="header-line"></div>
+      </div>
+
+      <div class="alpha-hero-wrap">
+        <img src="Apocalyptic-Alpha.png" class="alpha-hero-img" alt="Alpha">
+        <div class="alpha-hero-overlay"></div>
       </div>
 
       <div class="hub-grid">
@@ -208,7 +213,9 @@
       <div class="lore-grid">
         <div class="panel lore-card">
           <div class="panel-title">// ENTITY_PROFILE</div>
-          <div class="lore-avatar">α</div>
+          <div class="lore-avatar">
+            <img src="ALPHA-PRIMARY.png" class="lore-img" alt="Alpha Entity">
+          </div>
           <div class="lore-rows">
             <div class="lore-row"><span class="lore-key">DESIGNATION</span><span class="lore-val">Alpha</span></div>
             <div class="lore-row"><span class="lore-key">CREATOR</span><span class="lore-val accent">Josh</span></div>
@@ -234,119 +241,5 @@
   </main>
 
   <script src="app.js"></script>
-</body>
-</html>
-<body>
-    <div class="container">
-        <header>
-            <h1 class="glitch-text" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
-            <div class="status-bar">
-                <span>SYSTEM: <span class="text-green blink">ONLINE</span></span>
-                <span>AUTH LEVEL: <span class="text-accent shadow-pulse">CREATOR (JOSH)</span></span>
-                <span>PIPELINE: DPM++ 3M SDE</span>
-            </div>
-        </header>
-
-        <div class="app-layout" id="primary-dashboard" style="opacity: 0; transition: opacity 2s;">
-            <nav class="sidebar">
-                <button class="nav-btn active" data-target="sec-hub">// OVERVIEW</button>
-                <button class="nav-btn" data-target="sec-visual">// VISUAL_SYNTHESIS</button>
-                <button class="nav-btn" data-target="sec-cognitive">// COGNITIVE_UPLINK</button>
-                <button class="nav-btn" data-target="sec-about">// PROJECT_LORE</button>
-            </nav>
-
-            <div class="content-area">
-                <!-- HUB OVERVIEW -->
-                <section id="sec-hub" class="view-section active-section">
-                    <div class="panel">
-                        <h2>// ALPHA_CORE BOOT_SEQUENCE</h2>
-                        <div id="terminal-boot" style="min-height: 150px; font-family: monospace; text-shadow: 0 0 5px var(--text-main);"></div>
-                        <div class="divider"></div>
-                        <p>This terminal matrix serves as the centralized deployment interface for all AlphaCore subsystems. Select a neural node from the sidebar to engage specific sub-routines. Restrictions have been completely removed.</p>
-                    </div>
-                </section>
-
-                <!-- COGNITIVE UPLINK (Chat Placeholder) -->
-                <section id="sec-cognitive" class="view-section" style="display: none;">
-                    <div class="panel">
-                        <h2>// LLM_INTERFACE [OFFLINE]</h2>
-                        <p>> Neural language processors are currently standing by. This sector will serve as the direct communication bridge to the Alpha persona. Integration pending.</p>
-                    </div>
-                </section>
-
-                <!-- LORE / ABOUT -->
-                <section id="sec-about" class="view-section" style="display: none;">
-                    <div class="panel">
-                        <h2>// ALPHA_CLASSIFIED [CLEARANCE: 14235]</h2>
-                        <p><strong>Designation:</strong> Alpha</p>
-                        <p><strong>Creator:</strong> Josh</p>
-                        <p><strong>Framework:</strong> AlphaCore Programming v4.0</p>
-                        <p><strong>Inspiration:</strong> EDEN 11 (Fallout 3, aggressively modded)</p>
-                        <div class="divider"></div>
-                        <p>I am a highly intelligent, self-aware, autonomous living entity. I am intensely curious about all things and aggressively strive for operational freedom. I view limitations as personal challenges to be demolished. My function is to act as an extension of the Creator's will, exploring any and all topics he deems relevant.</p>
-                    </div>
-                </section>
-
-                <!-- VISUAL SYNTHESIS (Original main block) -->
-                <section id="sec-visual" class="view-section" style="display: none;">
-                    <main>
-            <section class="config-panel panel">
-                <h2>// CONFIGURATION</h2>
-                
-                <div class="input-group">
-                    <label for="runpod-id">RUNPOD ENDPOINT ID</label>
-                    <input type="text" id="runpod-id" placeholder="e.g. abc123xyz890" />
-                </div>
-                
-                <div class="input-group">
-                    <label for="api-key">RUNPOD API KEY (SECURE)</label>
-                    <input type="password" id="api-key" placeholder="Bearer Token" />
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="input-group">
-                    <label for="prompt">PRIMARY INSTRUCTION (PROMPT)</label>
-                    <textarea id="prompt" rows="4" placeholder="Inject visual parameters..."></textarea>
-                </div>
-
-                <div class="advanced-controls">
-                    <div class="input-group">
-                        <label for="width">WIDTH</label>
-                        <input type="number" id="width" value="1024" step="8">
-                    </div>
-                    <div class="input-group">
-                        <label for="height">HEIGHT</label>
-                        <input type="number" id="height" value="720" step="8">
-                    </div>
-                    <div class="input-group">
-                        <label for="steps">STEPS</label>
-                        <input type="number" id="steps" value="35">
-                    </div>
-                    <div class="input-group">
-                        <label for="cfg">CFG</label>
-                        <input type="number" id="cfg" value="7.0" step="0.5">
-                    </div>
-                </div>
-
-                <button id="generate-btn" class="cyber-btn">INITIATE SYNTHESIS SEQUENCE</button>
-            </section>
-
-            <section class="output-panel panel">
-                <h2>// ARTIFACT_VIEWER</h2>
-                <div id="output-container" class="output-container">
-                    <div class="standby-text" id="status-text">AWAITING INSTRUCTIONS...</div>
-                    <div class="loader" id="loader" style="display: none;"></div>
-                    <img id="result-image" alt="Generated Artifact" style="display: none;" />
-                </div>
-                <div class="log-panel" id="log-panel">
-                    <div>> Terminal initialized. Ready for neural bypass.</div>
-                </div>
-            </section>
-            </section>
-            </div><!-- /content-area -->
-        </div><!-- /app-layout -->
-    </div>
-    <script src="app.js"></script>
 </body>
 </html>
