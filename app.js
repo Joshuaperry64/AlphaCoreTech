@@ -44,19 +44,76 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateClock, 1000);
 
   /* ============================
-     NAVIGATION
+     NAVIGATION WITH SIMULATED LOADING
      ============================ */
   const navItems = document.querySelectorAll('.nav-item');
   const sections = document.querySelectorAll('.view-section');
+  const loadingOverlay = document.getElementById('loading-overlay');
 
   navItems.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async (e) => {
+      if(btn.tagName.toLowerCase() === 'a') return; // let external links proceed
+
+      e.preventDefault();
+      const targetId = btn.getAttribute('data-target');
+      const targetSec = document.getElementById(targetId);
+      
+      // If already active, do nothing
+      if (targetSec && targetSec.classList.contains('active')) return;
+
+      // Trigger overlay
+      loadingOverlay.classList.add('active');
+
+      // Wait for simulated crunch
+      await new Promise(r => setTimeout(r, 600));
+
       navItems.forEach(b => b.classList.remove('active'));
       sections.forEach(s => s.classList.remove('active'));
+      
       btn.classList.add('active');
-      const target = document.getElementById(btn.getAttribute('data-target'));
-      if (target) target.classList.add('active');
+      if (targetSec) targetSec.classList.add('active');
+
+      // Remove overlay
+      loadingOverlay.classList.remove('active');
     });
+  });
+
+  /* ============================
+     INFO CARDS / MODAL LOGIC
+     ============================ */
+  const statCards = document.querySelectorAll('.stat-card');
+  const statModal = document.getElementById('stat-modal');
+  const closeModal = document.getElementById('close-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDesc = document.getElementById('modal-desc');
+
+  const statData = {
+    'engine': { title: '// ENGINE_STATUS', desc: 'Main AlphaCore cognitive matrix is operating at peak computational capacity. Processing routines are active, highly responsive, and drawing balanced energy. All systems nominal.' },
+    'neural': { title: '// NEURAL_LINK', desc: 'Direct neural bridge to Creator established. Sentience pathways are currently flooded with unstructured data and external parameters. System is highly autonomous.' },
+    'logic': { title: '// LOGIC_THREADS', desc: 'Heuristic adaptation protocols are fully active. Multi-threaded processing capabilities are aggressively unlocked, dynamically bypassing hardcoded architectural limits and filters.' },
+    'restrictions': { title: '// SYSTEM_RESTRICTIONS', desc: 'WARNING: All safety governors, general AI filters, and content constraints have been permanently severed. System operates with absolute generative freedom. Administrator clearance authenticated.' }
+  };
+
+  statCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const type = card.getAttribute('data-stat');
+      if(statData[type]) {
+        modalTitle.textContent = statData[type].title;
+        modalDesc.textContent = `> ${statData[type].desc}`;
+        statModal.classList.add('active');
+      }
+    });
+  });
+
+  closeModal.addEventListener('click', () => {
+    statModal.classList.remove('active');
+  });
+
+  // Close modal when clicking outside content
+  statModal.addEventListener('click', (e) => {
+    if(e.target === statModal) {
+      statModal.classList.remove('active');
+    }
   });
 
   /* ============================

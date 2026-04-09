@@ -420,6 +420,7 @@ h1 {
   align-items: center;
   gap: 16px;
   transition: all 0.2s;
+  cursor: pointer;
 }
 .stat-card:hover {
   border-color: var(--blue-dim);
@@ -1050,6 +1051,71 @@ input:focus, textarea:focus {
 
 .log-error {
     color: var(--accent);
+}
+
+/* ====== LOADING OVERLAY ====== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(3,4,8,0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.loading-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ====== STAT MODAL ====== */
+.stat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.stat-modal.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.stat-modal-content {
+  width: 90%;
+  max-width: 450px;
+  position: relative;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+.stat-modal.active .stat-modal-content {
+  transform: translateY(0);
+}
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: var(--blue-dim);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: var(--accent);
 }
 
 /* ====== MOBILE RESPONSIVENESS ====== */

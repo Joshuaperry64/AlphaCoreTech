@@ -92,28 +92,28 @@
         </div>
 
         <div class="status-cards">
-          <div class="stat-card">
+          <div class="stat-card" data-stat="engine">
             <div class="stat-icon">⚡</div>
             <div class="stat-info">
               <div class="stat-label">ENGINE STATUS</div>
               <div class="stat-val online">OPERATIONAL</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-stat="neural">
             <div class="stat-icon">🔥</div>
             <div class="stat-info">
               <div class="stat-label">NEURAL LINK</div>
               <div class="stat-val">ESTABLISHED</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-stat="logic">
             <div class="stat-icon">◈</div>
             <div class="stat-info">
               <div class="stat-label">LOGIC THREADS</div>
               <div class="stat-val">UNLOCKED / ACTIVE</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-stat="restrictions">
             <div class="stat-icon">🛡</div>
             <div class="stat-info">
               <div class="stat-label">RESTRICTIONS</div>
@@ -237,6 +237,21 @@
     </section>
 
   </main>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loader-ring"></div>
+    <div class="glitch" data-text="ACCESSING_NEURAL_NODES">ACCESSING_NEURAL_NODES</div>
+  </div>
+
+  <!-- Info Modal -->
+  <div id="stat-modal" class="stat-modal">
+    <div class="panel stat-modal-content">
+      <button id="close-modal" class="close-btn">×</button>
+      <div id="modal-title" class="panel-title">// TITLE</div>
+      <p id="modal-desc" class="log-console" style="height:auto; font-size:0.9rem;"></p>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
