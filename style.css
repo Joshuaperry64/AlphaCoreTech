@@ -264,7 +264,7 @@ html, body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center center;
   display: block;
   filter: brightness(0.55) saturate(1.2);
 }
@@ -1050,4 +1050,68 @@ input:focus, textarea:focus {
 
 .log-error {
     color: var(--accent);
+}
+
+/* ====== MOBILE RESPONSIVENESS ====== */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+  }
+  
+  .main-content {
+    left: 0;
+    padding: 20px 15px;
+    position: relative;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-height: auto;
+    padding: 10px;
+  }
+  
+  .nav-item {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+    flex: 1 1 calc(50% - 10px);
+    justify-content: center;
+  }
+  
+  .nav-arrow { display: none; }
+  
+  .alpha-hero-wrap {
+    width: calc(100% + 30px);
+    margin: -20px -15px 20px -15px;
+    height: 180px;
+  }
+  
+  .hub-grid, .synth-grid, .lore-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar-status {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .status-row {
+    flex: 1 1 45%;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-area {
+    width: 100%;
+  }
 }
