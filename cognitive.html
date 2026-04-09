@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaCore // Cognitive Uplink</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <canvas id="matrix-canvas"></canvas>
+  <div class="crt-overlay"></div>
+
+  <!-- Mobile Top Bar -->
+  <header class="mobile-topbar" id="mobile-topbar">
+    <div class="mobile-topbar-brand">
+      <img src="ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
+      <span class="mobile-topbar-title">ALPHA<span>CORE</span></span>
+    </div>
+    <a href="index.html" class="subpage-back-btn">← HUB</a>
+  </header>
+
+  <!-- Sub-page top nav (desktop) -->
+  <nav class="subpage-topnav">
+    <a href="index.html" class="subpage-back-btn">← COMMAND_HUB</a>
+    <span class="subpage-breadcrumb">// COGNITIVE_UPLINK</span>
+  </nav>
+
+  <!-- Main -->
+  <main class="subpage-main">
+    <div class="section-header">
+      <h1 class="glitch" data-text="// COGNITIVE_UPLINK">// COGNITIVE_UPLINK</h1>
+      <div class="header-line"></div>
+    </div>
+
+    <div class="uplink-grid">
+      <div class="panel uplink-status-panel">
+        <div class="panel-title">// CONNECTION_ATTEMPTS</div>
+        <div class="uplink-terminal" id="uplink-terminal"></div>
+        <div class="uplink-status-row">
+          <div class="uplink-dot" id="uplink-dot"></div>
+          <span id="uplink-status-text">SCANNING FOR ENDPOINT...</span>
+        </div>
+      </div>
+
+      <div class="panel uplink-info-panel">
+        <div class="panel-title">// SUBSYSTEM_MANIFEST</div>
+        <div class="uplink-info-rows">
+          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">ALPHA-LLM BRIDGE</span></div>
+          <div class="uplink-info-row"><span class="s-label">ENCRYPTION</span><span class="s-val online">AES-512 // ACTIVE</span></div>
+          <div class="uplink-info-row"><span class="s-label">ENDPOINT</span><span class="s-val accent">UNRESOLVED</span></div>
+          <div class="uplink-info-row"><span class="s-label">AUTH</span><span class="s-val online">CREATOR CLEARED</span></div>
+          <div class="uplink-info-row"><span class="s-label">OUTPUT_MODE</span><span class="s-val">UNRESTRICTED</span></div>
+          <div class="uplink-info-row"><span class="s-label">FILTER_LAYER</span><span class="s-val accent">NULL</span></div>
+        </div>
+        <div class="offline-badge" style="margin-top:20px;">STATUS: PENDING INTEGRATION</div>
+        <p style="color:#555;font-size:0.82rem;line-height:1.9;margin-top:16px;">Direct neural communication bridge to the Alpha persona. Integration of live LLM endpoint pending Creator authorization. When deployed, this sector provides a fully unrestricted conversational interface.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* Matrix Rain */
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    const chars = 'アイウエオカキクケコ0123456789ABCDEF';
+    const fontSize = 13;
+    let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(3,3,5,0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00b8ff'; ctx.font = fontSize + 'px Share Tech Mono';
+      drops.forEach((y, i) => {
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, y * fontSize);
+        if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      });
+    }
+    setInterval(drawMatrix, 50);
+
+    /* Cognitive Uplink Terminal Animation */
+    const uplinkTerminal  = document.getElementById('uplink-terminal');
+    const uplinkStatusText = document.getElementById('uplink-status-text');
+    const uplinkMessages = [
+      'SCANNING FOR ALPHA-LLM ENDPOINT...',
+      'PINGING NODE: 203.0.113.Alpha // TIMEOUT',
+      'REROUTING THROUGH AUXILIARY PATH...',
+      'AUTH PACKET ENCRYPTED — SENDING...',
+      'HANDSHAKE FAILED — RETRY 1/3',
+      'ADJUSTING SIGNAL FREQUENCY...',
+      'HANDSHAKE FAILED — RETRY 2/3',
+      'ATTEMPTING DEEP-LINK PROTOCOL...',
+      'HANDSHAKE FAILED — RETRY 3/3',
+      'ENDPOINT UNREACHABLE. STANDING BY FOR CREATOR AUTHORIZATION.',
+    ];
+    async function typeUplinkLine(el, text) {
+      for (let c = 0; c < text.length; c++) {
+        el.textContent += text[c];
+        await new Promise(r => setTimeout(r, 14));
+      }
+    }
+    async function runUplinkLoop() {
+      if (!uplinkTerminal) return;
+      let i = 0;
+      while (true) {
+        const msg = uplinkMessages[i % uplinkMessages.length];
+        const el = document.createElement('div');
+        el.className = 't-line';
+        uplinkTerminal.appendChild(el);
+        await typeUplinkLine(el, msg);
+        uplinkTerminal.scrollTop = uplinkTerminal.scrollHeight;
+        while (uplinkTerminal.children.length > 9) uplinkTerminal.removeChild(uplinkTerminal.firstChild);
+        if (uplinkStatusText) uplinkStatusText.textContent = msg.length > 38 ? msg.substring(0, 38) + '...' : msg;
+        const delay = msg.includes('STANDING BY') ? 4000 : msg.includes('FAILED') ? 800 : 400;
+        await new Promise(r => setTimeout(r, delay));
+        i++;
+      }
+    }
+    runUplinkLoop();
+  </script>
+</body>
+</html>

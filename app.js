@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  generateBtn.addEventListener('click', async () => {
+  if (generateBtn) generateBtn.addEventListener('click', async () => {
     const prompt = document.getElementById('prompt').value.trim();
     const width  = parseInt(document.getElementById('width').value, 10);
     const height = parseInt(document.getElementById('height').value, 10);
@@ -396,19 +396,32 @@ document.addEventListener('DOMContentLoaded', () => {
      MOBILE HAMBURGER TOGGLE
      ============================ */
   const hamburger = document.getElementById('hamburger');
-  const sidebar = document.getElementById('sidebar');
+  const sidebar   = document.getElementById('sidebar');
+  const sidebarDim = document.getElementById('sidebar-dim');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    hamburger.classList.add('open');
+    if (sidebarDim) sidebarDim.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    hamburger.classList.remove('open');
+    if (sidebarDim) sidebarDim.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
   if (hamburger && sidebar) {
     hamburger.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      hamburger.classList.toggle('open');
+      sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     });
-    // Close sidebar when a nav item is tapped on mobile
+    // Tap dim overlay to close
+    if (sidebarDim) sidebarDim.addEventListener('click', closeSidebar);
+    // Close on nav item tap on mobile
     sidebar.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-          sidebar.classList.remove('open');
-          hamburger.classList.remove('open');
-        }
+        if (window.innerWidth <= 768) closeSidebar();
       });
     });
   }

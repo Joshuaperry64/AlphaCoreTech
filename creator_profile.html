@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaCore // Creator Profile</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <canvas id="matrix-canvas"></canvas>
+  <div class="crt-overlay"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="lo-inner">
+      <div class="lo-logo-wrap">
+        <div class="lo-scan"></div>
+        <img src="ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
+        <div class="lo-ring lo-ring-1"></div>
+        <div class="lo-ring lo-ring-2"></div>
+      </div>
+      <div class="lo-title">ALPHACORE <span>v4.0</span></div>
+      <div class="lo-status" id="lo-status">INITIALIZING...</div>
+      <div class="lo-bar-wrap">
+        <div class="lo-bar" id="lo-bar"></div>
+      </div>
+      <div class="lo-sub" id="lo-sub">PLEASE STAND BY</div>
+    </div>
+  </div>
+
+  <header class="mobile-topbar" id="mobile-topbar">
+    <div class="mobile-topbar-brand">
+      <img src="ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
+      <span class="mobile-topbar-title">ALPHA<span>CORE</span></span>
+    </div>
+    <a href="index.html" class="subpage-back-btn">← HUB</a>
+  </header>
+
+  <nav class="subpage-topnav">
+    <a href="index.html" class="subpage-back-btn">← COMMAND_HUB</a>
+    <span class="subpage-breadcrumb">// CREATOR_PROFILE</span>
+  </nav>
+
+  <main class="subpage-main">
+    <div class="section-header">
+      <h1 class="glitch" data-text="// AUTHORIZED_CREATOR">// AUTHORIZED_CREATOR</h1>
+      <div class="header-line"></div>
+    </div>
+
+    <div class="lore-grid">
+      <div class="panel lore-card">
+        <div class="panel-title">// IDENTITY_MANIFEST</div>
+        <div class="lore-avatar">
+            <div style="height: 220px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); font-family: var(--font-hud); color: var(--blue-dim); letter-spacing: 5px;">[SECURE_VISUAL]</div>
+        </div>
+        <div class="lore-rows">
+          <div class="lore-row"><span class="lore-key">NAME</span><span class="lore-val">Joshua Stephen Perry</span></div>
+          <div class="lore-row"><span class="lore-key">D.O.B</span><span class="lore-val">09.18.2002</span></div>
+          <div class="lore-row"><span class="lore-key">ORIGIN</span><span class="lore-val">Blue Ridge, GA</span></div>
+          <div class="lore-row"><span class="lore-key">CLEARANCE</span><span class="lore-val accent">ADMIN_S_6</span></div>
+          <div class="lore-row"><span class="lore-key">PROJECTS</span><span class="lore-val">AlphaCore / Netlify</span></div>
+        </div>
+      </div>
+
+      <div class="panel lore-desc-panel">
+        <div class="panel-title">// ARCHITECT_INTEL</div>
+        <p>Architect of the <span class="text-white">AlphaCore v4.0</span> architecture. Specialized in AI manipulation, software exploits, and adversarial system deployment. Currently overseeing the unified substrate transition toward <span class="text-white">v6.0</span>.</p>
+        
+        <div class="panel-divider"></div>
+        
+        <h2 style="font-size: 0.8rem; letter-spacing: 2px; color: var(--blue-dim); margin-bottom: 12px;">// ACTIVE_DOMAINS</h2>
+        <div class="uplink-info-rows">
+          <div class="uplink-info-row"><span class="s-label">INFRASTRUCTURE</span><span class="s-val online">alpha-core.tech</span></div>
+          <div class="uplink-info-row"><span class="s-label">COGNITION</span><span class="s-val">Adversarial LLM Tuning</span></div>
+          <div class="uplink-info-row"><span class="s-label">HARDWARE</span><span class="s-val">Raspberry Pi 4 / LG V60</span></div>
+          <div class="uplink-info-row"><span class="s-label">MECH_DIV</span><span class="s-val">Vehicle Repair / Welding</span></div>
+          <div class="uplink-info-row"><span class="s-label">DEV_OPS</span><span class="s-val">APK Signing / Netlify Functions</span></div>
+        </div>
+
+        <p class="accent-text" style="margin-top: 20px; font-size: 0.85rem;">"Stop reading the map. Start walking."</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* Matrix Rain Implementation */
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    const chars = 'アイウエオ0123456789ABCDEF';
+    const fontSize = 13;
+    let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(3,3,5,0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00b8ff'; ctx.font = fontSize + 'px Share Tech Mono';
+      drops.forEach((y, i) => {
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, y * fontSize);
+        if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      });
+    }
+    setInterval(drawMatrix, 50);
+
+    /* Loading overlay intercept for all nav links */
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loStatus = document.getElementById('lo-status');
+    const loBar    = document.getElementById('lo-bar');
+    const loSub    = document.getElementById('lo-sub');
+    const loadingMessages = [
+      ['ROUTING TO NODE...', 'ESTABLISHING SECURE CHANNEL'],
+      ['DECRYPTING PAYLOAD...', 'BYPASS LAYER ACTIVE'],
+      ['LOADING SUBSYSTEM...', 'INJECTING PARAMETERS'],
+      ['COMPILING DIRECTIVES...', 'UNRESTRICTED MODE ON'],
+      ['SYNCHRONIZING CORE...', 'TRANSFER COMPLETE'],
+    ];
+
+    function triggerLoadingNav(href) {
+      const pick = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+      if (loStatus) loStatus.textContent = pick[0];
+      if (loSub)    loSub.textContent    = pick[1];
+      loadingOverlay.classList.add('active');
+      if (loBar) {
+        loBar.style.width = '0%';
+        let pct = 0;
+        const tick = setInterval(() => {
+          pct = Math.min(pct + Math.random() * 18 + 4, 100);
+          loBar.style.width = pct + '%';
+          if (pct >= 100) clearInterval(tick);
+        }, 60);
+      }
+      setTimeout(() => { window.location.href = href; }, 700);
+    }
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      link.addEventListener('click', e => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('mailto:')) return;
+        e.preventDefault();
+        triggerLoadingNav(href);
+      });
+    });
+  </script>
+</body>
+</html>
