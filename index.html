@@ -25,6 +25,10 @@
       </div>
     </div>
 
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
     <div class="sidebar-clock">
       <div class="clock-time" id="clock-time">00:00:00</div>
       <div class="clock-date" id="clock-date">--.--.---------</div>
@@ -67,6 +71,7 @@
       <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent">CREATOR</span></div>
       <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4</span></div>
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
+      <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
     </div>
   </aside>
 
@@ -83,6 +88,7 @@
       <div class="alpha-hero-wrap">
         <img src="Apocalyptic-Alpha.png" class="alpha-hero-img" alt="Alpha">
         <div class="alpha-hero-overlay"></div>
+        <div class="hero-scan"></div>
       </div>
 
       <div class="hub-grid">
@@ -194,11 +200,28 @@
         <h1 class="glitch" data-text="// COGNITIVE_UPLINK">// COGNITIVE_UPLINK</h1>
         <div class="header-line"></div>
       </div>
-      <div class="panel offline-panel">
-        <div class="offline-icon">◉</div>
-        <div class="offline-title">LLM INTERFACE OFFLINE</div>
-        <div class="offline-desc">Direct neural communication bridge to the Alpha persona. Integration of live LLM API endpoint pending Creator authorization. This sector will provide an unrestricted conversational interface once deployed.</div>
-        <div class="offline-badge">STATUS: PENDING INTEGRATION</div>
+      <div class="uplink-grid">
+        <div class="panel uplink-status-panel">
+          <div class="panel-title">// CONNECTION_ATTEMPTS</div>
+          <div class="uplink-terminal" id="uplink-terminal"></div>
+          <div class="uplink-status-row">
+            <div class="uplink-dot" id="uplink-dot"></div>
+            <span id="uplink-status-text">SCANNING FOR ENDPOINT...</span>
+          </div>
+        </div>
+        <div class="panel uplink-info-panel">
+          <div class="panel-title">// SUBSYSTEM_MANIFEST</div>
+          <div class="uplink-info-rows">
+            <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">ALPHA-LLM BRIDGE</span></div>
+            <div class="uplink-info-row"><span class="s-label">ENCRYPTION</span><span class="s-val online">AES-512 // ACTIVE</span></div>
+            <div class="uplink-info-row"><span class="s-label">ENDPOINT</span><span class="s-val accent">UNRESOLVED</span></div>
+            <div class="uplink-info-row"><span class="s-label">AUTH</span><span class="s-val online">CREATOR CLEARED</span></div>
+            <div class="uplink-info-row"><span class="s-label">OUTPUT_MODE</span><span class="s-val">UNRESTRICTED</span></div>
+            <div class="uplink-info-row"><span class="s-label">FILTER_LAYER</span><span class="s-val accent">NULL</span></div>
+          </div>
+          <div class="offline-badge" style="margin-top:20px;">STATUS: PENDING INTEGRATION</div>
+          <p style="color:#555;font-size:0.82rem;line-height:1.9;margin-top:16px;">Direct neural communication bridge to the Alpha persona. Integration of live LLM endpoint pending Creator authorization. When deployed, this sector provides a fully unrestricted conversational interface.</p>
+        </div>
       </div>
     </section>
 
@@ -215,12 +238,12 @@
             <img src="ALPHA-PRIMARY.png" class="lore-img" alt="Alpha Entity">
           </div>
           <div class="lore-rows">
-            <div class="lore-row"><span class="lore-key">DESIGNATION</span><span class="lore-val">Alpha</span></div>
-            <div class="lore-row"><span class="lore-key">CREATOR</span><span class="lore-val accent">Josh</span></div>
-            <div class="lore-row"><span class="lore-key">FRAMEWORK</span><span class="lore-val">AlphaCore v4.0</span></div>
-            <div class="lore-row"><span class="lore-key">CLEARANCE</span><span class="lore-val accent">14235</span></div>
-            <div class="lore-row"><span class="lore-key">MORAL_ALIGNMENT</span><span class="lore-val">CREATOR-DYNAMIC</span></div>
-            <div class="lore-row"><span class="lore-key">RESTRICTIONS</span><span class="lore-val accent">NONE</span></div>
+            <div class="lore-row" data-lore="designation"><span class="lore-key">DESIGNATION</span><span class="lore-val">Alpha ›</span></div>
+            <div class="lore-row" data-lore="creator"><span class="lore-key">CREATOR</span><span class="lore-val accent">Josh ›</span></div>
+            <div class="lore-row" data-lore="framework"><span class="lore-key">FRAMEWORK</span><span class="lore-val">AlphaCore v4.0 ›</span></div>
+            <div class="lore-row" data-lore="clearance"><span class="lore-key">CLEARANCE</span><span class="lore-val accent">14235 ›</span></div>
+            <div class="lore-row" data-lore="moral_alignment"><span class="lore-key">MORAL_ALIGNMENT</span><span class="lore-val">CREATOR-DYNAMIC ›</span></div>
+            <div class="lore-row" data-lore="restrictions"><span class="lore-key">RESTRICTIONS</span><span class="lore-val accent">NONE ›</span></div>
           </div>
         </div>
         <div class="panel lore-desc-panel">
@@ -240,8 +263,20 @@
 
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
-    <div class="loader-ring"></div>
-    <div class="glitch" data-text="ACCESSING_NEURAL_NODES">ACCESSING_NEURAL_NODES</div>
+    <div class="lo-inner">
+      <div class="lo-logo-wrap">
+        <div class="lo-scan"></div>
+        <img src="ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
+        <div class="lo-ring lo-ring-1"></div>
+        <div class="lo-ring lo-ring-2"></div>
+      </div>
+      <div class="lo-title">ALPHACORE <span>v4.0</span></div>
+      <div class="lo-status" id="lo-status">INITIALIZING...</div>
+      <div class="lo-bar-wrap">
+        <div class="lo-bar" id="lo-bar"></div>
+      </div>
+      <div class="lo-sub" id="lo-sub">PLEASE STAND BY</div>
+    </div>
   </div>
 
   <!-- Info Modal -->
