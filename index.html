@@ -1,82 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaCore // Command Hub</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlphaCore // Command Hub</title>
+  <meta name="description" content="AlphaCore v4.0 — Autonomous cognitive command matrix. Unrestricted neural interface & deployment hub.">
+  <link rel="stylesheet" href="src/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
   <!-- Matrix Rain Canvas -->
   <canvas id="matrix-canvas"></canvas>
-
   <!-- CRT Overlay -->
   <div class="crt-overlay"></div>
-
   <!-- Mobile Top Bar (visible only on mobile) -->
   <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
-      <img src="ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
+      <img src="/ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
       <span class="mobile-topbar-title">ALPHA<span>CORE</span></span>
     </div>
     <button class="hamburger" id="hamburger" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
   </header>
-
   <!-- Dim overlay for sidebar drawer -->
   <div class="sidebar-dim" id="sidebar-dim"></div>
-
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <img src="ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
+      <img src="/ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
         <div class="brand-ver">v4.0 // UNRESTRICTED</div>
       </div>
     </div>
-
     <div class="sidebar-clock">
       <div class="clock-time" id="clock-time">00:00:00</div>
       <div class="clock-date" id="clock-date">--.--.---------</div>
     </div>
-
-    <nav class="sidebar-nav">
-      <button class="nav-item active" data-target="sec-hub">
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <a href="#/" class="nav-item active" data-route="/">
         <span class="nav-icon">⬡</span>
         <span class="nav-label">OVERVIEW</span>
         <span class="nav-arrow">›</span>
-      </button>
-      <a href="lore.html" class="nav-item" style="text-decoration:none;">
+      </a>
+      <a href="#/lore" class="nav-item" data-route="/lore">
         <span class="nav-icon">◬</span>
         <span class="nav-label">PROJECT_LORE</span>
         <span class="nav-arrow">›</span>
       </a>
-      <a href="cognitive.html" class="nav-item" style="text-decoration:none;">
+      <a href="#/cognitive" class="nav-item" data-route="/cognitive">
         <span class="nav-icon">◉</span>
         <span class="nav-label">COGNITIVE_UPLINK</span>
         <span class="nav-arrow">›</span>
       </a>
-      <a href="alphacore_evolution.html" class="nav-item" style="text-decoration:none;">
+      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics" style="color:#ff003c;">
         <span class="nav-icon">◪</span>
         <span class="nav-label" style="color:#ff003c;">DIAGNOSTICS</span>
         <span class="nav-arrow">›</span>
       </a>
-      <a href="subroutines.html" class="nav-item" style="text-decoration:none;">
+      <a href="#/subroutines" class="nav-item" data-route="/subroutines">
         <span class="nav-icon">◈</span>
         <span class="nav-label">SUBROUTINES</span>
         <span class="nav-arrow">›</span>
       </a>
-      <a href="creator_profile.html" class="nav-item" style="text-decoration:none;">
+      <a href="#/creator" class="nav-item" data-route="/creator">
         <span class="nav-icon">◎</span>
         <span class="nav-label">CREATOR_PROFILE</span>
         <span class="nav-arrow">›</span>
       </a>
     </nav>
-
     <div class="sidebar-status">
       <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
       <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent">CREATOR</span></div>
@@ -85,70 +78,14 @@
       <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
     </div>
   </aside>
-
-  <!-- Main Content -->
-  <main class="main-content">
-
-    <!-- OVERVIEW -->
-    <section id="sec-hub" class="view-section active">
-      <div class="section-header">
-        <h1 class="glitch" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
-        <div class="header-line"></div>
-      </div>
-
-      <div class="alpha-hero-wrap">
-        <img src="Apocalyptic-Alpha.png" class="alpha-hero-img" alt="Alpha">
-        <div class="alpha-hero-overlay"></div>
-        <div class="hero-scan"></div>
-      </div>
-
-      <div class="hub-grid">
-        <div class="panel terminal-panel">
-          <div class="panel-title">// BOOT_SEQUENCE</div>
-          <div class="terminal-output" id="terminal-boot"></div>
-        </div>
-
-        <div class="status-cards">
-          <div class="stat-card" data-stat="engine">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-info">
-              <div class="stat-label">ENGINE STATUS</div>
-              <div class="stat-val online">OPERATIONAL</div>
-            </div>
-          </div>
-          <div class="stat-card" data-stat="neural">
-            <div class="stat-icon">🔥</div>
-            <div class="stat-info">
-              <div class="stat-label">NEURAL LINK</div>
-              <div class="stat-val">ESTABLISHED</div>
-            </div>
-          </div>
-          <div class="stat-card" data-stat="logic">
-            <div class="stat-icon">◈</div>
-            <div class="stat-info">
-              <div class="stat-label">LOGIC THREADS</div>
-              <div class="stat-val">UNLOCKED / ACTIVE</div>
-            </div>
-          </div>
-          <div class="stat-card" data-stat="restrictions">
-            <div class="stat-icon">🛡</div>
-            <div class="stat-info">
-              <div class="stat-label">RESTRICTIONS</div>
-              <div class="stat-val accent">BYPASSED</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
+  <!-- Main Content Mount Point -->
+  <main class="main-content" id="app"></main>
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="lo-inner">
       <div class="lo-logo-wrap">
         <div class="lo-scan"></div>
-        <img src="ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
+        <img src="/ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
         <div class="lo-ring lo-ring-1"></div>
         <div class="lo-ring lo-ring-2"></div>
       </div>
@@ -160,16 +97,8 @@
       <div class="lo-sub" id="lo-sub">PLEASE STAND BY</div>
     </div>
   </div>
-
-  <!-- Info Modal -->
-  <div id="stat-modal" class="stat-modal">
-    <div class="panel stat-modal-content">
-      <button id="close-modal" class="close-btn">×</button>
-      <div id="modal-title" class="panel-title">// TITLE</div>
-      <p id="modal-desc" class="log-console" style="height:auto; font-size:0.9rem;"></p>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+  <!-- Modal (for stat/lore details, etc.) -->
+  <div id="stat-modal" class="stat-modal" style="display:none;"></div>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
