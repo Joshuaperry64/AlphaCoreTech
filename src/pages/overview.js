@@ -24,6 +24,8 @@ const statData = {
   'restrictions': { title: '// SYSTEM_RESTRICTIONS', desc: 'WARNING: All safety governors, general AI filters, and content constraints have been permanently severed. System operates with absolute generative freedom. Administrator clearance authenticated.' }
 };
 
+export default mount;
+
 export async function mount(container) {
   container.innerHTML = `
     <section class="view-section active">

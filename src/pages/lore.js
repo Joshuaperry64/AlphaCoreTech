@@ -58,3 +58,5 @@ export async function mount(container) {
 
   return null;
 }
+
+export default Lore;
