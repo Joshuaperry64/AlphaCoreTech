@@ -2,6 +2,7 @@
  * Overview Page — Hub landing with hero, boot terminal, stat cards
  */
 import { showModal } from '../components/modal.js';
+import { createElement } from '../components/utils.js';
 
 const bootLines = [
   "INITIALIZING ALPHACORE FRAMEWORK v4.0...",
@@ -24,9 +25,8 @@ const statData = {
   'restrictions': { title: '// SYSTEM_RESTRICTIONS', desc: 'WARNING: All safety governors, general AI filters, and content constraints have been permanently severed. System operates with absolute generative freedom. Administrator clearance authenticated.' }
 };
 
-export default mount;
-
-export async function mount(container) {
+export default function Overview() {
+  const container = createElement('div', { class: 'overview-page' });
   container.innerHTML = `
     <section class="view-section active">
       <div class="section-header">
@@ -88,32 +88,32 @@ export async function mount(container) {
     });
   });
 
-  // Boot sequence typewriter
-  let cancelled = false;
-  const bootEl = document.getElementById('terminal-boot');
-
-  async function runBoot() {
+  // Boot sequence typewriter (starts after element is in DOM)
+  setTimeout(() => {
+    const bootEl = document.getElementById('terminal-boot');
     if (!bootEl) return;
-    for (const line of bootLines) {
-      if (cancelled) return;
-      const el = document.createElement('div');
-      el.className = 't-line';
-      bootEl.appendChild(el);
-      for (let i = 0; i < line.length; i++) {
-        if (cancelled) return;
-        el.textContent += line[i];
-        await new Promise(r => setTimeout(r, 12));
+    let i = 0;
+    async function runBoot() {
+      for (const line of bootLines) {
+        if (!document.getElementById('terminal-boot')) return; // unmounted
+        const el = document.createElement('div');
+        el.className = 't-line';
+        bootEl.appendChild(el);
+        for (let c = 0; c < line.length; c++) {
+          if (!document.getElementById('terminal-boot')) return;
+          el.textContent += line[c];
+          await new Promise(r => setTimeout(r, 12));
+        }
+        await new Promise(r => setTimeout(r, 80));
       }
-      await new Promise(r => setTimeout(r, 80));
+      if (document.getElementById('terminal-boot')) {
+        const cursor = document.createElement('span');
+        cursor.className = 'terminal-cursor';
+        bootEl.appendChild(cursor);
+      }
     }
-    if (!cancelled) {
-      const cursor = document.createElement('span');
-      cursor.className = 'terminal-cursor';
-      bootEl.appendChild(cursor);
-    }
-  }
-  runBoot();
+    runBoot();
+  }, 50);
 
-  // Return cleanup function
-  return () => { cancelled = true; };
+  return container;
 }

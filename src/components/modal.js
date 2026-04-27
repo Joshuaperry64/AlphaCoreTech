@@ -1,6 +1,6 @@
 /**
  * Shared Modal component
- * Used by stat cards, lore rows, and any future info panels.
+ * Dynamically creates modal content if the shell element exists.
  */
 
 let initialized = false;
@@ -10,22 +10,29 @@ export function initModal() {
   initialized = true;
 
   const modal = document.getElementById('stat-modal');
+  if (!modal) return;
+
+  // Build modal inner content
+  modal.innerHTML = `
+    <div class="panel stat-modal-content">
+      <button id="close-modal" class="close-btn">×</button>
+      <div id="modal-title" class="panel-title">// TITLE</div>
+      <p id="modal-desc" class="log-console" style="height:auto; font-size:0.9rem;"></p>
+    </div>
+  `;
+  modal.style.display = '';
+
   const closeBtn = document.getElementById('close-modal');
-
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      modal.classList.remove('active');
-    });
+    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
   }
 
-  if (modal) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('active');
-    });
-  }
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal) modal.classList.remove('active');
+    if (e.key === 'Escape') modal.classList.remove('active');
   });
 }
 

@@ -1,8 +1,10 @@
 /**
  * Creator Profile Page
  */
+import { createElement } from '../components/utils.js';
 
-export async function mount(container) {
+export default function CreatorProfile() {
+  const container = createElement('div', { class: 'creator-page' });
   container.innerHTML = `
     <div class="section-header">
       <h1 class="glitch" data-text="// AUTHORIZED_CREATOR">// AUTHORIZED_CREATOR</h1>
@@ -41,7 +43,5 @@ export async function mount(container) {
     </div>
   `;
 
-  return null;
+  return container;
 }
-
-export default CreatorProfile;

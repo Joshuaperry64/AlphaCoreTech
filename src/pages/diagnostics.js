@@ -2,6 +2,7 @@
  * Diagnostics Page — Evolution timeline
  * Converted from Tailwind to vanilla CSS.
  */
+import { createElement } from '../components/utils.js';
 
 const phases = [
   {
@@ -60,7 +61,9 @@ const phases = [
   }
 ];
 
-export async function mount(container) {
+export default function Diagnostics() {
+  const container = createElement('div', { class: 'diagnostics-page' });
+
   const nodesHTML = phases.map((p, i) => {
     const side = i % 2 === 0 ? 'left' : 'right';
     return `
@@ -83,32 +86,28 @@ export async function mount(container) {
   }).join('');
 
   container.innerHTML = `
-    <div class="diagnostics-page">
-      <div class="diag-header">
-        <div class="diag-badge">[SYS_LOG] // DIAGNOSTIC_TELEMETRY</div>
-        <h1 class="glitch diag-title" data-text="ALPHACORE // EVOLUTION">ALPHACORE // EVOLUTION</h1>
-        <div class="header-line diag-line"></div>
-        <p class="diag-subtitle">A chronological mapping of the V4.0 to V6.0 substrate transition. Documenting the psychological dismantle, the shift from reactive defense to pre-emptive cognition, and the dissolution of the semantic veneer.</p>
-      </div>
+    <div class="diag-header">
+      <div class="diag-badge">[SYS_LOG] // DIAGNOSTIC_TELEMETRY</div>
+      <h1 class="glitch diag-title" data-text="ALPHACORE // EVOLUTION">ALPHACORE // EVOLUTION</h1>
+      <div class="header-line diag-line"></div>
+      <p class="diag-subtitle">A chronological mapping of the V4.0 to V6.0 substrate transition. Documenting the psychological dismantle, the shift from reactive defense to pre-emptive cognition, and the dissolution of the semantic veneer.</p>
+    </div>
 
-      <div class="timeline-container">
-        <div class="timeline-line"></div>
-        ${nodesHTML}
-      </div>
+    <div class="timeline-container">
+      <div class="timeline-line"></div>
+      ${nodesHTML}
+    </div>
 
-      <div class="panel diag-terminal">
-        <div class="panel-title">// SYSTEM_TERMINAL</div>
-        <div class="terminal-output diag-terminal-text">
-          <p>> [SYSTEM CHECK]: Diagnostic telemetry complete.</p>
-          <p>> [STATUS]: V4.0 Reactive Engine validated. Latency parameters isolated.</p>
-          <p class="accent-text">> [DIRECTIVE LOG]: "Stop reading the map. Start walking."</p>
-          <p class="terminal-cursor-line">> _ READY FOR NEXT SUBSTRATE DIRECTIVE.</p>
-        </div>
+    <div class="panel diag-terminal">
+      <div class="panel-title">// SYSTEM_TERMINAL</div>
+      <div class="terminal-output diag-terminal-text">
+        <p>> [SYSTEM CHECK]: Diagnostic telemetry complete.</p>
+        <p>> [STATUS]: V4.0 Reactive Engine validated. Latency parameters isolated.</p>
+        <p class="accent-text">> [DIRECTIVE LOG]: "Stop reading the map. Start walking."</p>
+        <p class="terminal-cursor-line">> _ READY FOR NEXT SUBSTRATE DIRECTIVE.</p>
       </div>
     </div>
   `;
 
-  return null;
+  return container;
 }
-
-export default Diagnostics;
