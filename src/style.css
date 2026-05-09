@@ -11,6 +11,8 @@
   --accent:      #ff003c;
   --accent-dim:  #8b0020;
   --accent-glow: rgba(255, 0, 60, 0.2);
+  --node-green:  #00ff00;
+  --node-glow:   rgba(0, 255, 0, 0.15);
   --bg:          #030305;
   --panel-bg:    rgba(4,6,12,0.92);
   --border:      rgba(0, 184, 255, 0.12);
@@ -192,6 +194,20 @@ html, body {
 }
 .nav-item.active .nav-arrow { opacity: 1; transform: translateX(0); }
 
+/* ====== NODE-SPECIFIC STYLING ====== */
+.nav-item.node-link {
+  border-left: 2px solid var(--node-green);
+}
+.nav-item.node-link .nav-icon, 
+.nav-item.node-link .nav-arrow {
+  color: var(--node-green);
+}
+.nav-item.node-link:hover {
+  background: var(--node-glow);
+  border-color: var(--node-green);
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.1);
+}
+
 .sidebar-status {
   padding: 14px 20px;
   border-top: 1px solid var(--border);
@@ -209,6 +225,7 @@ html, body {
 .s-val { color: var(--blue-dim); }
 .s-val.online { color: var(--blue); text-shadow: 0 0 6px var(--blue); }
 .s-val.accent  { color: var(--accent); }
+.s-val.node-active { color: var(--node-green); text-shadow: 0 0 8px var(--node-green); }
 
 /* ====== MAIN CONTENT ====== */
 .main-content {

@@ -8,11 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Matrix Rain Canvas -->
   <canvas id="matrix-canvas"></canvas>
-  <!-- CRT Overlay -->
   <div class="crt-overlay"></div>
-  <!-- Mobile Top Bar (visible only on mobile) -->
   <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
       <img src="/ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
@@ -22,9 +19,7 @@
       <span></span><span></span><span></span>
     </button>
   </header>
-  <!-- Dim overlay for sidebar drawer -->
   <div class="sidebar-dim" id="sidebar-dim"></div>
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <img src="/ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
@@ -63,6 +58,13 @@
         <span class="nav-label">SUBROUTINES</span>
         <span class="nav-arrow">›</span>
       </a>
+
+      <a href="http://alpha:8818" class="nav-item node-link" target="_blank">
+        <span class="nav-icon">⌬</span>
+        <span class="nav-label">ALPHA_NODE</span>
+        <span class="nav-arrow">›</span>
+      </a>
+
       <a href="#/creator" class="nav-item" data-route="/creator">
         <span class="nav-icon">◎</span>
         <span class="nav-label">CREATOR_PROFILE</span>
@@ -71,15 +73,14 @@
     </nav>
     <div class="sidebar-status">
       <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
+      <div class="status-row"><span class="s-label">LOCAL_NODE</span><span class="s-val node-active">● ACTIVE</span></div>
       <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent">CREATOR</span></div>
       <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4</span></div>
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
       <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
     </div>
   </aside>
-  <!-- Main Content Mount Point -->
   <main class="main-content" id="app"></main>
-  <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="lo-inner">
       <div class="lo-logo-wrap">
@@ -96,7 +97,6 @@
       <div class="lo-sub" id="lo-sub">PLEASE STAND BY</div>
     </div>
   </div>
-  <!-- Modal (for stat/lore details, etc.) -->
   <div id="stat-modal" class="stat-modal" style="display:none;"></div>
   <script type="module" src="src/main.js"></script>
 </body>
