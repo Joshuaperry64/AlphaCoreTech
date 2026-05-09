@@ -10,6 +10,7 @@
 <body>
   <canvas id="matrix-canvas"></canvas>
   <div class="crt-overlay"></div>
+  
   <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
       <img src="/ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
@@ -19,68 +20,67 @@
       <span></span><span></span><span></span>
     </button>
   </header>
+  
   <div class="sidebar-dim" id="sidebar-dim"></div>
+  
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <img src="/ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
-        <div class="brand-ver">v4.0 // UNRESTRICTED</div>
+        <div class="brand-version">v4.0 BUILD 88</div>
       </div>
     </div>
-    <div class="sidebar-clock">
-      <div class="clock-time" id="clock-time">00:00:00</div>
-      <div class="clock-date" id="clock-date">--.--.---------</div>
-    </div>
-    <nav class="sidebar-nav" id="sidebar-nav">
-      <a href="#/" class="nav-item active" data-route="/">
-        <span class="nav-icon">⬡</span>
-        <span class="nav-label">OVERVIEW</span>
-        <span class="nav-arrow">›</span>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">CORE SYSTEMS</div>
+      <a href="/" class="nav-item" data-link>
+        <span class="nav-icon">⎔</span>
+        <span class="nav-label">Overview</span>
       </a>
-      <a href="#/lore" class="nav-item" data-route="/lore">
-        <span class="nav-icon">◬</span>
-        <span class="nav-label">PROJECT_LORE</span>
-        <span class="nav-arrow">›</span>
+      <a href="/cognitive" class="nav-item" data-link>
+        <span class="nav-icon">⟁</span>
+        <span class="nav-label">Cognitive Core</span>
       </a>
-      <a href="#/cognitive" class="nav-item" data-route="/cognitive">
-        <span class="nav-icon">◉</span>
-        <span class="nav-label">COGNITIVE_UPLINK</span>
-        <span class="nav-arrow">›</span>
+      <a href="/diagnostics" class="nav-item" data-link>
+        <span class="nav-icon">⍾</span>
+        <span class="nav-label">Diagnostics</span>
       </a>
-      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics" style="color:#ff003c;">
-        <span class="nav-icon">◪</span>
-        <span class="nav-label" style="color:#ff003c;">DIAGNOSTICS</span>
-        <span class="nav-arrow">›</span>
-      </a>
-      <a href="#/subroutines" class="nav-item" data-route="/subroutines">
-        <span class="nav-icon">◈</span>
-        <span class="nav-label">SUBROUTINES</span>
-        <span class="nav-arrow">›</span>
+      <a href="/subroutines" class="nav-item" data-link>
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Subroutines</span>
       </a>
 
-      <a href="http://dell.ai:8818" class="nav-item node-link" target="_blank">
+      <div class="nav-section-title">AI DEPLOYMENTS</div>
+      <a href="http://ai.alpha-core.tech:8818" class="nav-item node-link" target="_blank">
         <span class="nav-icon">⌬</span>
-        <span class="nav-label">DELL_AI_NODE</span>
+        <span class="nav-label">Local Swarm</span>
         <span class="nav-arrow">›</span>
       </a>
 
-      <a href="#/creator" class="nav-item" data-route="/creator">
-        <span class="nav-icon">◎</span>
-        <span class="nav-label">CREATOR_PROFILE</span>
-        <span class="nav-arrow">›</span>
+      <div class="nav-section-title">DATABANKS</div>
+      <a href="/lore" class="nav-item" data-link>
+        <span class="nav-icon">◬</span>
+        <span class="nav-label">System Lore</span>
+      </a>
+      <a href="/creator" class="nav-item" data-link>
+        <span class="nav-icon">◈</span>
+        <span class="nav-label">Creator Auth</span>
       </a>
     </nav>
-    <div class="sidebar-status">
+    
+    <div class="sidebar-footer">
       <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
-      <div class="status-row"><span class="s-label">DELL_AI</span><span class="s-val node-active">● ACTIVE</span></div>
+      <div class="status-row"><span class="s-label">SWARM</span><span class="s-val node-active">● ACTIVE</span></div>
       <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent">CREATOR</span></div>
       <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4</span></div>
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
       <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
     </div>
   </aside>
+  
   <main class="main-content" id="app"></main>
+  
   <div id="loading-overlay" class="loading-overlay">
     <div class="lo-inner">
       <div class="lo-logo-wrap">
@@ -91,13 +91,12 @@
       </div>
       <div class="lo-title">ALPHACORE <span>v4.0</span></div>
       <div class="lo-status" id="lo-status">INITIALIZING...</div>
-      <div class="lo-bar-wrap">
+      <div class="lo-progress">
         <div class="lo-bar" id="lo-bar"></div>
       </div>
-      <div class="lo-sub" id="lo-sub">PLEASE STAND BY</div>
     </div>
   </div>
-  <div id="stat-modal" class="stat-modal" style="display:none;"></div>
-  <script type="module" src="src/main.js"></script>
+  
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
