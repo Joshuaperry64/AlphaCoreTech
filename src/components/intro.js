@@ -10,8 +10,20 @@ export default function createIntro(onComplete) {
   Object.assign(intro.style, {
     position: 'fixed', inset: '0', zIndex: '9999',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,0,0,0.97)',
+    backgroundImage: 'url(/alpha-tech.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   });
+
+  // Dark overlay so text stays readable over the background image
+  const bgOverlay = document.createElement('div');
+  Object.assign(bgOverlay.style, {
+    position: 'absolute', inset: '0', background: 'rgba(0,0,0,0.72)', zIndex: '1',
+    pointerEvents: 'none',
+  });
+  intro.appendChild(bgOverlay);
+
 
   // CRT scanlines
   const scanlines = createElement('div', { class: 'intro-scanlines' });

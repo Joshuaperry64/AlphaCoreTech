@@ -35,7 +35,7 @@ export default function Overview() {
       </div>
 
       <div class="alpha-hero-wrap">
-        <img src="/Apocalyptic-Alpha.png" class="alpha-hero-img" alt="Alpha">
+        <img src="/banner.png" class="alpha-hero-img" alt="Alpha">
         <div class="alpha-hero-overlay"></div>
         <div class="hero-scan"></div>
       </div>
