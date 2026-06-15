@@ -394,22 +394,200 @@ function setStatus(root, sel, msg, type = '') {
   el.className = 'aim-status-bar' + (type ? ` aim-status-${type}` : '');
 }
 
+/* ─── PIN PAD ACCESS CONTROL ────────────────────────────────── */
+function buildPinPad(onSuccess) {
+  const wrap = document.createElement('div');
+  wrap.className = 'aim-pin-wrap';
+  wrap.innerHTML = `
+    <div class="aim-pin-box">
+      <div class="aim-pin-header">
+        <div class="aim-pin-icon">🔒</div>
+        <div class="aim-pin-title">// SECURITY_LOCKOUT</div>
+        <div class="aim-pin-subtitle">UNRESTRICTED GENERATION ACCESS</div>
+      </div>
+      
+      <div class="aim-pin-display-wrap">
+        <div class="aim-pin-display" id="aim-pin-display">
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+          <span class="aim-pin-dot"></span>
+        </div>
+        <div class="aim-pin-feedback" id="aim-pin-feedback">> ENTER VALID ACCESS PIN</div>
+      </div>
+      
+      <div class="aim-pinpad-grid">
+        <button class="aim-pad-btn" data-val="1">1</button>
+        <button class="aim-pad-btn" data-val="2">2</button>
+        <button class="aim-pad-btn" data-val="3">3</button>
+        <button class="aim-pad-btn" data-val="4">4</button>
+        <button class="aim-pad-btn" data-val="5">5</button>
+        <button class="aim-pad-btn" data-val="6">6</button>
+        <button class="aim-pad-btn" data-val="7">7</button>
+        <button class="aim-pad-btn" data-val="8">8</button>
+        <button class="aim-pad-btn" data-val="9">9</button>
+        <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
+        <button class="aim-pad-btn" data-val="0">0</button>
+        <button class="aim-pad-btn aim-pad-btn-enter" id="aim-pad-enter">ENT</button>
+      </div>
+    </div>
+  `;
+
+  let currentPin = '';
+  const display = wrap.querySelector('#aim-pin-display');
+  const feedback = wrap.querySelector('#aim-pin-feedback');
+  const pinBox = wrap.querySelector('.aim-pin-box');
+  const dots = display.querySelectorAll('.aim-pin-dot');
+
+  function updateDisplay() {
+    dots.forEach((dot, idx) => {
+      if (idx < currentPin.length) {
+        dot.classList.add('filled');
+      } else {
+        dot.classList.remove('filled');
+      }
+    });
+  }
+
+  function handleInput(val) {
+    if (currentPin.length < 9) {
+      currentPin += val;
+      updateDisplay();
+      feedback.textContent = `> ENTERING PIN...`;
+      feedback.className = 'aim-pin-feedback';
+    }
+  }
+
+  function handleClear() {
+    currentPin = '';
+    updateDisplay();
+    feedback.textContent = `> ENTER VALID ACCESS PIN`;
+    feedback.className = 'aim-pin-feedback';
+  }
+
+  function handleBackspace() {
+    if (currentPin.length > 0) {
+      currentPin = currentPin.slice(0, -1);
+      updateDisplay();
+      if (currentPin.length === 0) {
+        feedback.textContent = `> ENTER VALID ACCESS PIN`;
+      } else {
+        feedback.textContent = `> ENTERING PIN...`;
+      }
+      feedback.className = 'aim-pin-feedback';
+    }
+  }
+
+  function handleEnter() {
+    const masterPin = '672167566';
+    const otpPin = '12345678';
+
+    if (currentPin === masterPin) {
+      handleSuccess();
+    } else if (currentPin === otpPin) {
+      if (localStorage.getItem('aim_pin_12345678_used') === 'true') {
+        handleFailure('ONE-TIME PIN EXPIRED');
+      } else {
+        localStorage.setItem('aim_pin_12345678_used', 'true');
+        handleSuccess();
+      }
+    } else {
+      handleFailure('ACCESS DENIED');
+    }
+  }
+
+  function handleSuccess() {
+    feedback.textContent = `> ACCESS GRANTED. UNLOCKING...`;
+    feedback.className = 'aim-pin-feedback aim-feedback-ok';
+    pinBox.classList.add('aim-access-granted');
+    
+    // Disable inputs
+    window.removeEventListener('keydown', keyHandler);
+    
+    setTimeout(() => {
+      sessionStorage.setItem('aimodals_authenticated', '1');
+      onSuccess();
+    }, 1200);
+  }
+
+  function handleFailure(message) {
+    feedback.textContent = `> ${message}`;
+    feedback.className = 'aim-pin-feedback aim-feedback-error';
+    pinBox.classList.add('aim-shake');
+    
+    setTimeout(() => {
+      pinBox.classList.remove('aim-shake');
+      currentPin = '';
+      updateDisplay();
+    }, 600);
+  }
+
+  // Mouse/Touch click events
+  wrap.querySelectorAll('.aim-pad-btn[data-val]').forEach(btn => {
+    btn.onclick = () => handleInput(btn.dataset.val);
+  });
+  wrap.querySelector('#aim-pad-clear').onclick = handleClear;
+  wrap.querySelector('#aim-pad-enter').onclick = handleEnter;
+
+  // Keyboard events
+  function keyHandler(e) {
+    // Only capture digits and controls
+    if (e.key >= '0' && e.key <= '9') {
+      handleInput(e.key);
+    } else if (e.key === 'Backspace') {
+      handleBackspace();
+    } else if (e.key === 'Escape' || e.key === 'Delete') {
+      handleClear();
+    } else if (e.key === 'Enter') {
+      handleEnter();
+    }
+  }
+
+  window.addEventListener('keydown', keyHandler);
+
+  // Clean up key listener if element is removed from DOM
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(wrap)) {
+      window.removeEventListener('keydown', keyHandler);
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  return wrap;
+}
+
 /* ─── MAIN PAGE ─────────────────────────────────────────────── */
 export default function AiModals() {
   const container = createElement('div', { class: 'aimodals-page' });
 
-  // If disclaimer not accepted this session, show it first
-  if (!sessionStorage.getItem('aim_disclaimer_accepted')) {
-    container.appendChild(buildDisclaimer(() => {
-      container.innerHTML = '';
+  function showNextStep() {
+    container.innerHTML = '';
+    // If disclaimer not accepted this session, show it first
+    if (!sessionStorage.getItem('aim_disclaimer_accepted')) {
+      container.appendChild(buildDisclaimer(() => {
+        container.innerHTML = '';
+        container.appendChild(buildMainUI());
+      }));
+    } else {
       container.appendChild(buildMainUI());
-    }));
+    }
+  }
+
+  if (!sessionStorage.getItem('aimodals_authenticated')) {
+    container.appendChild(buildPinPad(showNextStep));
   } else {
-    container.appendChild(buildMainUI());
+    showNextStep();
   }
 
   return container;
 }
+
 
 function buildMainUI() {
   const root = document.createElement('div');

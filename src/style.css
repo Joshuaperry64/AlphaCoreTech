@@ -1968,3 +1968,214 @@ input:focus, textarea:focus {
   .aim-disc-actions { flex-direction: column; align-items: stretch; }
   .aim-disc-actions .aim-btn { text-align: center; }
 }
+
+/* ─── AI MODALS PIN PAD ACCESS ────────────────────────────── */
+.aim-pin-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.aim-pin-box {
+  background: rgba(10, 15, 25, 0.85);
+  border: 1px solid var(--blue, #00b8ff);
+  box-shadow: 0 0 15px rgba(0, 184, 255, 0.2);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 380px;
+  padding: 30px;
+  backdrop-filter: blur(12px);
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.aim-pin-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue, #00b8ff), transparent);
+  animation: scan-horizontal 2.5s infinite linear;
+}
+
+.aim-pin-header {
+  margin-bottom: 25px;
+}
+
+.aim-pin-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: var(--blue, #00b8ff);
+  text-shadow: 0 0 8px rgba(0, 184, 255, 0.5);
+  animation: pulse-glow 1.5s infinite ease-in-out alternate;
+}
+
+.aim-pin-title {
+  font-family: var(--font-hud);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.aim-pin-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: rgba(0, 184, 255, 0.5);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.aim-pin-display-wrap {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 184, 255, 0.15);
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 25px;
+}
+
+.aim-pin-display {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.aim-pin-dot {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(0, 184, 255, 0.3);
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.aim-pin-dot.filled {
+  background: var(--blue, #00b8ff);
+  border-color: #fff;
+  box-shadow: 0 0 10px var(--blue, #00b8ff), 0 0 2px #fff;
+}
+
+.aim-pin-feedback {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgba(0, 184, 255, 0.7);
+  letter-spacing: 1px;
+  height: 18px;
+  transition: color 0.2s ease;
+}
+
+.aim-feedback-ok {
+  color: var(--node-green, #00ff88) !important;
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+}
+
+.aim-feedback-error {
+  color: var(--accent, #ff003c) !important;
+  text-shadow: 0 0 5px rgba(255, 0, 60, 0.5);
+}
+
+.aim-pinpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.aim-pad-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(0, 184, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-hud);
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 15px 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  outline: none;
+}
+
+.aim-pad-btn:hover {
+  border-color: var(--blue, #00b8ff);
+  background: rgba(0, 184, 255, 0.1);
+  box-shadow: 0 0 8px rgba(0, 184, 255, 0.2);
+}
+
+.aim-pad-btn:active {
+  background: var(--blue, #00b8ff);
+  color: #000;
+  box-shadow: 0 0 15px var(--blue, #00b8ff);
+  transform: scale(0.95);
+}
+
+.aim-pad-btn-clear {
+  color: var(--accent, #ff003c);
+  font-size: 0.85rem;
+  border-color: rgba(255, 0, 60, 0.2);
+}
+
+.aim-pad-btn-clear:hover {
+  border-color: var(--accent, #ff003c);
+  background: rgba(255, 0, 60, 0.1);
+  box-shadow: 0 0 8px rgba(255, 0, 60, 0.2);
+}
+
+.aim-pad-btn-clear:active {
+  background: var(--accent, #ff003c);
+  color: #fff;
+  box-shadow: 0 0 15px var(--accent, #ff003c);
+}
+
+.aim-pad-btn-enter {
+  color: var(--node-green, #00ff88);
+  font-size: 0.85rem;
+  border-color: rgba(0, 255, 136, 0.2);
+}
+
+.aim-pad-btn-enter:hover {
+  border-color: var(--node-green, #00ff88);
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.aim-pad-btn-enter:active {
+  background: var(--node-green, #00ff88);
+  color: #000;
+  box-shadow: 0 0 15px var(--node-green, #00ff88);
+}
+
+/* Animations */
+@keyframes scan-horizontal {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 12px var(--blue, #00b8ff)); }
+}
+
+.aim-shake {
+  animation: aim-shake-keyframes 0.4s ease-in-out;
+  border-color: var(--accent, #ff003c) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.3) !important;
+}
+
+@keyframes aim-shake-keyframes {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.aim-access-granted {
+  border-color: var(--node-green, #00ff88) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.4) !important;
+  transform: scale(1.02);
+}
