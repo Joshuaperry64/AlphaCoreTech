@@ -16,6 +16,7 @@ import Subroutines from './pages/subroutines.js';
 import CreatorProfile from './pages/creator.js';
 import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
+import AiModals from './pages/aimodals.js';
 
 const routes = {
   '/': Overview,
@@ -25,6 +26,7 @@ const routes = {
   '/creator': CreatorProfile,
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
+  '/aimodals': AiModals,
 };
 
 function updateActiveNav(hash) {
