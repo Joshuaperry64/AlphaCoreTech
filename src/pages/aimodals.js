@@ -4,8 +4,8 @@
  */
 import { createElement } from '../components/utils.js';
 
-const TXT2IMG_URL = 'https://josh64perry--text-to-image-sdxl-merger-inference-web.modal.run/';
-const IMG2IMG_URL = 'https://josh64perry--img2img-qwen-edit-plus-model-web.modal.run/';
+const TXT2IMG_URL = 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/';
+const IMG2IMG_URL = 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/';
 
 const DEFAULT_NEG =
   'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed';
