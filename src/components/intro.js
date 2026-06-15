@@ -129,8 +129,8 @@ export default function createIntro(onComplete) {
   });
   secFlash.textContent = 'MANDATORY BRIEFING // UNAUTHORIZED ACCESS WILL BE LOGGED';
   intro.appendChild(secFlash);
-  setTimeout(() => { secFlash.style.opacity = '0'; }, 1800);
-  setTimeout(() => { secFlash.remove(); }, 2500);
+  setTimeout(() => { secFlash.style.opacity = '0'; }, 900);
+  setTimeout(() => { secFlash.remove(); }, 1400);
 
   // Boot sequence lines
   const lines = [
@@ -164,12 +164,12 @@ export default function createIntro(onComplete) {
       bootLinesEl.textContent += getTimestamp(lineIdx) + ' ' + lines[lineIdx] + '\n';
       bootLinesEl.scrollTop = bootLinesEl.scrollHeight;
       lineIdx++;
-      setTimeout(nextLine, 800 + Math.random() * 600);
+      setTimeout(nextLine, 400 + Math.random() * 300);
     } else {
       startBtn.style.display = '';
     }
   }
-  setTimeout(nextLine, 600);
+  setTimeout(nextLine, 300);
 
   // Audio visualizer (graceful — no crash if audio missing)
   let audioCtx, analyser, animFrame;
