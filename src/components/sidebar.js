@@ -57,4 +57,18 @@ export function initSidebar() {
     });
     if (sidebarDim) sidebarDim.addEventListener('click', closeSidebar);
   }
+
+  // Sidebar collapse (desktop)
+  const collapseBtn = document.getElementById('sidebar-collapse-btn');
+  if (collapseBtn && sidebar) {
+    if (localStorage.getItem('alphacore_sidebar_collapsed') === '1') {
+      sidebar.classList.add('sidebar--collapsed');
+      document.body.classList.add('sidebar-collapsed');
+    }
+    collapseBtn.addEventListener('click', () => {
+      const collapsed = sidebar.classList.toggle('sidebar--collapsed');
+      document.body.classList.toggle('sidebar-collapsed', collapsed);
+      localStorage.setItem('alphacore_sidebar_collapsed', collapsed ? '1' : '0');
+    });
+  }
 }

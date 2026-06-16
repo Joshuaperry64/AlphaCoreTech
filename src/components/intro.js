@@ -82,23 +82,6 @@ export default function createIntro(onComplete) {
   });
   bootPanel.appendChild(bootLinesEl);
 
-  // Skip button
-  const skipBtn = createElement('button', { class: 'intro-skip-btn' }, 'SKIP INTRO');
-  Object.assign(skipBtn.style, {
-    position: 'absolute', top: '20px', right: '24px', zIndex: '100',
-    padding: '6px 18px', background: 'rgba(0,0,0,0.6)',
-    border: '1px solid rgba(0,184,255,0.4)', borderRadius: '2px',
-    color: '#00b8ff', fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
-    letterSpacing: '2px', cursor: 'pointer', transition: 'all 0.2s',
-  });
-  skipBtn.onmouseenter = () => { skipBtn.style.background = 'rgba(0,184,255,0.15)'; };
-  skipBtn.onmouseleave = () => { skipBtn.style.background = 'rgba(0,0,0,0.6)'; };
-  skipBtn.onclick = () => {
-    cleanup();
-    localStorage.setItem('alphacore_intro_complete', '1');
-    if (onComplete) onComplete();
-  };
-  intro.appendChild(skipBtn);
 
   // Start button (hidden until boot completes)
   const startBtn = createElement('button', { class: 'intro-start-btn' }, 'ENTER COMMAND MATRIX');

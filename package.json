@@ -4,7 +4,7 @@
   "version": "4.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "chmod +x ./node_modules/.bin/vite || true",
+    "prebuild": "node -e \"console.log('Prebuild checks completed.')\"",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

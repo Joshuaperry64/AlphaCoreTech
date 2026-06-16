@@ -72,6 +72,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const replay = document.createElement('a');
     replay.href = '#';
     replay.className = 'nav-item';
+    replay.setAttribute('data-label', 'Replay Intro');
     replay.innerHTML = '<span class="nav-icon">↻</span><span class="nav-label">REPLAY INTRO</span><span class="nav-arrow">›</span>';
     replay.onclick = e => { e.preventDefault(); localStorage.removeItem('alphacore_intro_complete'); mountIntro(true); };
     nav.appendChild(replay);

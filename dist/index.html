@@ -6,8 +6,8 @@
   <title>AlphaCore // Command Hub</title>
   <meta name="description" content="AlphaCore v4.0 — Autonomous cognitive command matrix. Unrestricted neural interface & deployment hub.">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-DMg0eXaL.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Cf-NlUqq.css">
+  <script type="module" crossorigin src="/assets/index-CBilkvl1.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DPnKpqvp.css">
 </head>
 <body>
   <canvas id="matrix-canvas"></canvas>
@@ -36,40 +36,40 @@
     
     <nav class="sidebar-nav" id="sidebar-nav">
       <div class="nav-section-title">CORE SYSTEMS</div>
-      <a href="#/" class="nav-item" data-route="/">
+      <a href="#/" class="nav-item" data-route="/" data-label="Overview">
         <span class="nav-icon">⎔</span>
         <span class="nav-label">Overview</span>
       </a>
-      <a href="#/cognitive" class="nav-item" data-route="/cognitive">
+      <a href="#/cognitive" class="nav-item" data-route="/cognitive" data-label="Cognitive Core">
         <span class="nav-icon">⟁</span>
         <span class="nav-label">Cognitive Core</span>
       </a>
-      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics">
+      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics" data-label="Diagnostics">
         <span class="nav-icon">⍾</span>
         <span class="nav-label">Diagnostics</span>
       </a>
-      <a href="#/admin" class="nav-item" data-route="/admin">
+      <a href="#/admin" class="nav-item" data-route="/admin" data-label="Administration">
         <span class="nav-icon">⚙</span>
         <span class="nav-label">Administration</span>
       </a>
 
 
       <div class="nav-section-title">DATABANKS</div>
-      <a href="#/lore" class="nav-item" data-route="/lore">
+      <a href="#/lore" class="nav-item" data-route="/lore" data-label="System Lore">
         <span class="nav-icon">◬</span>
         <span class="nav-label">System Lore</span>
       </a>
-      <a href="#/creator" class="nav-item" data-route="/creator">
+      <a href="#/creator" class="nav-item" data-route="/creator" data-label="Creator Auth">
         <span class="nav-icon">◈</span>
         <span class="nav-label">Creator Auth</span>
       </a>
-      <a href="#/vault" class="nav-item" data-route="/vault">
+      <a href="#/vault" class="nav-item" data-route="/vault" data-label="Classified Vault">
         <span class="nav-icon">🔐</span>
         <span class="nav-label">Classified Vault</span>
       </a>
 
       <div class="nav-section-title">SYNTHESIS</div>
-      <a href="#/aimodals" class="nav-item" data-route="/aimodals">
+      <a href="#/aimodals" class="nav-item" data-route="/aimodals" data-label="AI Modals">
         <span class="nav-icon">✦</span>
         <span class="nav-label">AI Modals</span>
       </a>
@@ -83,6 +83,11 @@
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
       <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
     </div>
+    
+    <button class="sidebar-collapse-btn" id="sidebar-collapse-btn">
+      <span class="sc-label">COLLAPSE</span>
+      <span class="sc-icon">‹</span>
+    </button>
   </aside>
   
   <main class="main-content" id="app"></main>
