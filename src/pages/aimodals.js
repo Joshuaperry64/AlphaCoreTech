@@ -5,6 +5,13 @@
 import { createElement } from '../components/utils.js';
 import { buildPinPad } from '../components/pinpad.js';
 
+const LORA_OPTIONS = `
+  <option value="none">NONE (BASE MODEL ONLY)</option>
+  <option value="cunny">CUNNY</option>
+  <option value="lora2">LORA SLOT 2 (PENDING)</option>
+  <option value="lora3">LORA SLOT 3 (PENDING)</option>
+`;
+
 function getModalSettings() {
   const defaults = {
     txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
@@ -95,18 +102,51 @@ function updateProgress(loader, step, maxSteps) {
 }
 
 /* ─── RESULT PANEL ──────────────────────────────────────────── */
-function buildResult(container) {
+function buildResult(urls = []) {
   const el = document.createElement('div');
   el.className = 'aim-result hidden';
+  if (!Array.isArray(urls)) urls = [urls];
+  if (urls.length === 0) return el;
+  let currentIdx = 0;
+
   el.innerHTML = `
-    <div class="aim-result-label">// OUTPUT_ARTIFACT</div>
+    <div class="aim-result-label">// OUTPUT_ARTIFACT <span class="aim-batch-count" style="float:right; opacity:0.7;">${urls.length > 1 ? '1 / ' + urls.length : ''}</span></div>
     <div class="aim-result-img-wrap">
-      <img class="aim-result-img" id="aim-result-img" src="" alt="Generated output" />
+      <img class="aim-result-img" id="aim-result-img" src="${urls[0]}" alt="Generated output" />
     </div>
-    <div class="aim-result-actions">
+    <div class="aim-result-actions" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:10px;">
+        <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
+        <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
+      </div>
       <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
     </div>
   `;
+
+  if (urls.length > 1) {
+    const imgEl = el.querySelector('#aim-result-img');
+    const countEl = el.querySelector('.aim-batch-count');
+    
+    el.querySelector('#aim-prev-btn').onclick = () => {
+      currentIdx = (currentIdx - 1 + urls.length) % urls.length;
+      imgEl.src = urls[currentIdx];
+      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+    };
+    
+    el.querySelector('#aim-next-btn').onclick = () => {
+      currentIdx = (currentIdx + 1) % urls.length;
+      imgEl.src = urls[currentIdx];
+      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+    };
+  }
+
+  el.querySelector('#aim-dl-btn').onclick = () => {
+    const a = document.createElement('a');
+    a.href = urls[currentIdx];
+    a.download = `alphacore_output_${Date.now()}_${currentIdx}.png`;
+    a.click();
+  };
+
   return el;
 }
 
@@ -143,6 +183,19 @@ function buildTxt2Img() {
           <button class="aim-seg-btn" data-j="0" data-c="1">CYBERREAL</button>
           <button class="aim-seg-btn" data-j="1" data-c="1">MERGED</button>
         </div>
+      </div>
+    </div>
+
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-4)</label>
+        <input class="aim-input" type="number" id="t2i-batch" min="1" max="4" value="1" />
+      </div>
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="t2i-lora">ACTIVE LORA</label>
+        <select class="aim-input aim-select" id="t2i-lora" style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; appearance:none; cursor:pointer;">
+          ${LORA_OPTIONS}
+        </select>
       </div>
     </div>
 
@@ -199,6 +252,8 @@ function buildTxt2Img() {
     const c = modelBtn.dataset.c;
     let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
+    const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
+    const lora = wrap.querySelector('#t2i-lora').value;
 
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -233,6 +288,8 @@ function buildTxt2Img() {
         negative_prompt: neg,
         guidance_scale: cfg,
         num_inference_steps: steps,
+        batch_size: batchSize,
+        lora: lora,
         scheduler: 'Euler',
         seed: -1,
       });
@@ -260,15 +317,17 @@ function buildTxt2Img() {
               if (data.step !== undefined && data.max_steps !== undefined) {
                 updateProgress(loader, data.step, data.max_steps);
               } else if (data.image_b64) {
-                const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
-                const byteCharacters = atob(b64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: 'image/png'});
-                url = URL.createObjectURL(blob);
+                const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                url = b64s.map(b64 => {
+                  const byteCharacters = atob(b64);
+                  const byteNumbers = new Array(byteCharacters.length);
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                  }
+                  const byteArray = new Uint8Array(byteNumbers);
+                  const blob = new Blob([byteArray], {type: 'image/png'});
+                  return URL.createObjectURL(blob);
+                });
               } else if (data.error) {
                 throw new Error(data.error);
               }
@@ -281,20 +340,13 @@ function buildTxt2Img() {
         }
       }
 
-      if (!url) throw new Error("Stream finished but no image received");
+      if (!url || url.length === 0) throw new Error("Stream finished but no image received");
 
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
 
-      const resultEl = buildResult();
-      resultEl.querySelector('#aim-result-img').src = url;
+      const resultEl = buildResult(url);
       resultEl.classList.remove('hidden');
-      resultEl.querySelector('#aim-dl-btn').onclick = () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `alphacore_t2i_${Date.now()}.png`;
-        a.click();
-      };
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#t2i-status', 'ARTIFACT RENDERED SUCCESSFULLY.', 'ok');
     } catch (err) {
@@ -345,6 +397,19 @@ function buildImg2Img() {
         <button class="aim-seg-btn active" data-steps="${settings.stepsFastImg}">⚡ FAST</button>
         <button class="aim-seg-btn" data-steps="${settings.stepsNormalImg}">⚖ NORMAL</button>
         <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 FOCUSED</button>
+      </div>
+    </div>
+
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-4)</label>
+        <input class="aim-input" type="number" id="i2i-batch" min="1" max="4" value="1" />
+      </div>
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="i2i-lora">ACTIVE LORA</label>
+        <select class="aim-input aim-select" id="i2i-lora" style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; appearance:none; cursor:pointer;">
+          ${LORA_OPTIONS}
+        </select>
       </div>
     </div>
 
@@ -427,6 +492,8 @@ function buildImg2Img() {
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#i2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
+    const batchSize = parseInt(wrap.querySelector('#i2i-batch').value) || 1;
+    const lora = wrap.querySelector('#i2i-lora').value;
     
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -460,6 +527,8 @@ function buildImg2Img() {
       formData.append('negative_prompt', neg);
       formData.append('num_inference_steps', steps);
       formData.append('true_cfg_scale', cfg);
+      formData.append('batch_size', batchSize);
+      formData.append('lora', lora);
       formData.append('seed', -1);
 
       const res = await fetch(`${settings.img2imgUrl}stream`, { method: 'POST', body: formData });
@@ -486,15 +555,17 @@ function buildImg2Img() {
               if (data.step !== undefined && data.max_steps !== undefined) {
                 updateProgress(loader, data.step, data.max_steps);
               } else if (data.image_b64) {
-                const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
-                const byteCharacters = atob(b64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: 'image/png'});
-                url = URL.createObjectURL(blob);
+                const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                url = b64s.map(b64 => {
+                  const byteCharacters = atob(b64);
+                  const byteNumbers = new Array(byteCharacters.length);
+                  for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                  }
+                  const byteArray = new Uint8Array(byteNumbers);
+                  const blob = new Blob([byteArray], {type: 'image/png'});
+                  return URL.createObjectURL(blob);
+                });
               } else if (data.error) {
                 throw new Error(data.error);
               }
@@ -507,20 +578,13 @@ function buildImg2Img() {
         }
       }
 
-      if (!url) throw new Error("Stream finished but no image received");
+      if (!url || url.length === 0) throw new Error("Stream finished but no image received");
 
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
 
-      const resultEl = buildResult();
-      resultEl.querySelector('#aim-result-img').src = url;
+      const resultEl = buildResult(url);
       resultEl.classList.remove('hidden');
-      resultEl.querySelector('#aim-dl-btn').onclick = () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `alphacore_i2i_${Date.now()}.png`;
-        a.click();
-      };
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#i2i-status', 'EDIT APPLIED SUCCESSFULLY.', 'ok');
     } catch (err) {
