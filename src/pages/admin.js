@@ -34,7 +34,14 @@ function buildAdminUI() {
   const defaultSettings = {
     txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
-    negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed'
+    negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed',
+    stepsFastTxt: 2,
+    stepsFocusedTxt: 4,
+    stepsNormalTxt: 8,
+    stepsFastImg: 20,
+    stepsFocusedImg: 30,
+    stepsNormalImg: 40,
+    guidanceImg: 7.0
   };
 
   let settings = { ...defaultSettings };
@@ -132,6 +139,30 @@ function buildAdminUI() {
             <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
             <textarea class="aim-textarea" id="cfg-neg" rows="4">${settings.negativePrompt}</textarea>
           </div>
+          <div class="aim-row" style="margin-top: 12px;">
+            <div class="aim-field aim-field-half">
+              <label class="aim-label">TXT2IMG STEPS (FAST / FOCUSED / NORMAL)</label>
+              <div class="flex-row" style="display: flex; gap: 10px;">
+                <input class="aim-input" type="number" id="cfg-t2i-fast" value="${settings.stepsFastTxt}" />
+                <input class="aim-input" type="number" id="cfg-t2i-focused" value="${settings.stepsFocusedTxt}" />
+                <input class="aim-input" type="number" id="cfg-t2i-normal" value="${settings.stepsNormalTxt}" />
+              </div>
+            </div>
+            <div class="aim-field aim-field-half">
+              <label class="aim-label">IMG2IMG STEPS (FAST / FOCUSED / NORMAL)</label>
+              <div class="flex-row" style="display: flex; gap: 10px;">
+                <input class="aim-input" type="number" id="cfg-i2i-fast" value="${settings.stepsFastImg}" />
+                <input class="aim-input" type="number" id="cfg-i2i-focused" value="${settings.stepsFocusedImg}" />
+                <input class="aim-input" type="number" id="cfg-i2i-normal" value="${settings.stepsNormalImg}" />
+              </div>
+            </div>
+          </div>
+          <div class="aim-row" style="margin-top: 12px;">
+             <div class="aim-field aim-field-half">
+                <label class="aim-label" for="cfg-i2i-guidance">IMG2IMG DEFAULT GUIDANCE</label>
+                <input class="aim-input" type="number" step="0.1" id="cfg-i2i-guidance" value="${settings.guidanceImg}" />
+             </div>
+          </div>
           <button class="aim-btn aim-btn-generate" id="btn-save-cfg" style="margin-top: 15px;">
             SAVE GENERATIVE PIPELINES
           </button>
@@ -166,6 +197,13 @@ function buildAdminUI() {
   const cfgT2iUrl = root.querySelector('#cfg-t2i-url');
   const cfgI2iUrl = root.querySelector('#cfg-i2i-url');
   const cfgNeg = root.querySelector('#cfg-neg');
+  const cfgT2iFast = root.querySelector('#cfg-t2i-fast');
+  const cfgT2iFocused = root.querySelector('#cfg-t2i-focused');
+  const cfgT2iNormal = root.querySelector('#cfg-t2i-normal');
+  const cfgI2iFast = root.querySelector('#cfg-i2i-fast');
+  const cfgI2iFocused = root.querySelector('#cfg-i2i-focused');
+  const cfgI2iNormal = root.querySelector('#cfg-i2i-normal');
+  const cfgI2iGuidance = root.querySelector('#cfg-i2i-guidance');
   const saveCfgBtn = root.querySelector('#btn-save-cfg');
   const cfgFeedback = root.querySelector('#cfg-form-feedback');
   
@@ -296,7 +334,14 @@ function buildAdminUI() {
       txt2imgUrl: t2i,
       img2imgUrl: i2i,
       negativePrompt: neg,
-      guidanceScale: settings.guidanceScale || '7.0'
+      guidanceScale: settings.guidanceScale || '7.0',
+      stepsFastTxt: parseInt(cfgT2iFast.value) || 2,
+      stepsFocusedTxt: parseInt(cfgT2iFocused.value) || 4,
+      stepsNormalTxt: parseInt(cfgT2iNormal.value) || 8,
+      stepsFastImg: parseInt(cfgI2iFast.value) || 20,
+      stepsFocusedImg: parseInt(cfgI2iFocused.value) || 30,
+      stepsNormalImg: parseInt(cfgI2iNormal.value) || 40,
+      guidanceImg: parseFloat(cfgI2iGuidance.value) || 7.0
     };
 
     localStorage.setItem('alphacore_modal_settings', JSON.stringify(newSettings));

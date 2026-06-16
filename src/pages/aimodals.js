@@ -10,7 +10,14 @@ function getModalSettings() {
     txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed',
-    guidanceScale: '7.0'
+    guidanceScale: '7.0',
+    guidanceImg: 7.0,
+    stepsFastTxt: 2,
+    stepsNormalTxt: 8,
+    stepsFocusedTxt: 4,
+    stepsFastImg: 20,
+    stepsNormalImg: 40,
+    stepsFocusedImg: 30
   };
   try {
     const custom = localStorage.getItem('alphacore_modal_settings');
@@ -69,9 +76,22 @@ function buildLoader(text = 'SYNTHESIZING...') {
       <div class="aim-spinner"></div>
       <div class="aim-loader-text" id="aim-loader-text">${text}</div>
       <div class="aim-loader-sub">MODAL GPU ACTIVE — PLEASE WAIT</div>
+      <div class="aim-progress-wrap" style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); margin-top: 15px; border-radius: 3px; overflow: hidden; display: none;">
+        <div class="aim-progress-bar" id="aim-progress-bar" style="width: 0%; height: 100%; background: var(--accent, #ff003c); transition: width 0.2s; box-shadow: 0 0 8px var(--accent, #ff003c);"></div>
+      </div>
     </div>
   `;
   return el;
+}
+
+function updateProgress(loader, step, maxSteps) {
+  const wrap = loader.querySelector('.aim-progress-wrap');
+  const bar = loader.querySelector('.aim-progress-bar');
+  if (wrap && bar) {
+    wrap.style.display = 'block';
+    const pct = Math.min(100, Math.round(((step + 1) / maxSteps) * 100));
+    bar.style.width = `${pct}%`;
+  }
 }
 
 /* ─── RESULT PANEL ──────────────────────────────────────────── */
@@ -110,9 +130,10 @@ function buildTxt2Img() {
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">SPEED MODE</label>
-        <div class="aim-seg" id="t2i-speed">
-          <button class="aim-seg-btn active" data-steps="20">⚡ FAST</button>
-          <button class="aim-seg-btn" data-steps="50">🎯 FOCUSED</button>
+        <div class="aim-seg aim-seg-3" id="t2i-speed">
+          <button class="aim-seg-btn active" data-steps="${settings.stepsFastTxt}">⚡ FAST</button>
+          <button class="aim-seg-btn" data-steps="${settings.stepsNormalTxt}">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="${settings.stepsFocusedTxt}">🎯 FOCUSED</button>
         </div>
       </div>
       <div class="aim-field aim-field-half">
@@ -209,10 +230,52 @@ function buildTxt2Img() {
         scheduler: 'Euler',
         seed: -1,
       });
-      const res = await fetch(`${settings.txt2imgUrl}?${params}`);
+      const res = await fetch(`${settings.txt2imgUrl}stream?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let url = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); 
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                updateProgress(loader, data.step, data.max_steps);
+              } else if (data.image_b64) {
+                const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+                const byteCharacters = atob(b64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'image/png'});
+                url = URL.createObjectURL(blob);
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) {
+                throw e; 
+              }
+            }
+          }
+        }
+      }
+
+      if (!url) throw new Error("Stream finished but no image received");
 
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
@@ -273,9 +336,9 @@ function buildImg2Img() {
     <div class="aim-field">
       <label class="aim-label">PROCESSING MODE</label>
       <div class="aim-seg aim-seg-3" id="i2i-speed">
-        <button class="aim-seg-btn active" data-steps="15">⚡ FAST</button>
-        <button class="aim-seg-btn" data-steps="25">⚖ NORMAL</button>
-        <button class="aim-seg-btn" data-steps="50">🎯 FOCUSED</button>
+        <button class="aim-seg-btn active" data-steps="${settings.stepsFastImg}">⚡ FAST</button>
+        <button class="aim-seg-btn" data-steps="${settings.stepsNormalImg}">⚖ NORMAL</button>
+        <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 FOCUSED</button>
       </div>
     </div>
 
@@ -285,6 +348,10 @@ function buildImg2Img() {
         <div class="aim-field">
           <label class="aim-label" for="i2i-neg">NEGATIVE PROMPT</label>
           <textarea class="aim-textarea aim-textarea-sm" id="i2i-neg" rows="2">${settings.negativePrompt}</textarea>
+        </div>
+        <div class="aim-field" style="margin-top: 12px;">
+          <label class="aim-label" for="i2i-cfg">GUIDANCE SCALE <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg).toFixed(1)}</span></label>
+          <input class="aim-range" type="range" id="i2i-cfg" min="1" max="15" step="0.5" value="${settings.guidanceImg}" />
         </div>
       </div>
     </details>
@@ -305,6 +372,15 @@ function buildImg2Img() {
       btn.classList.add('active');
     });
   });
+
+  // Guidance scale display
+  const i2iCfgInput = wrap.querySelector('#i2i-cfg');
+  const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
+  if (i2iCfgInput && i2iCfgVal) {
+    i2iCfgInput.addEventListener('input', () => {
+      i2iCfgVal.textContent = parseFloat(i2iCfgInput.value).toFixed(1);
+    });
+  }
 
   // File input / dropzone
   const fileInput = wrap.querySelector('#i2i-file');
@@ -344,6 +420,7 @@ function buildImg2Img() {
 
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
     const neg = wrap.querySelector('#i2i-neg').value;
+    const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
 
     const loaderSlot = wrap.querySelector('#i2i-loader-slot');
     const resultSlot = wrap.querySelector('#i2i-result-slot');
@@ -370,13 +447,55 @@ function buildImg2Img() {
       formData.append('prompt', prompt);
       formData.append('negative_prompt', neg);
       formData.append('num_inference_steps', steps);
-      formData.append('true_cfg_scale', 4.0);
+      formData.append('true_cfg_scale', cfg);
       formData.append('seed', -1);
 
-      const res = await fetch(settings.img2imgUrl, { method: 'POST', body: formData });
+      const res = await fetch(`${settings.img2imgUrl}stream`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let url = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); 
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                updateProgress(loader, data.step, data.max_steps);
+              } else if (data.image_b64) {
+                const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+                const byteCharacters = atob(b64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'image/png'});
+                url = URL.createObjectURL(blob);
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) {
+                throw e; 
+              }
+            }
+          }
+        }
+      }
+
+      if (!url) throw new Error("Stream finished but no image received");
 
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
