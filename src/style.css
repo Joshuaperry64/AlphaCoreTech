@@ -1494,7 +1494,7 @@ input:focus, textarea:focus {
   .aim-tab { padding: 8px 12px; font-size: 0.66rem; }
 
   /* Admin page */
-  .admin-panel-page { margin-top: 16px; padding: 20px 14px 32px; }
+  .admin-panel-page, .admin-page { margin-top: 16px; padding: 20px 14px 32px; }
 
   /* Panels */
   .panel { padding: 16px 14px; }
@@ -1573,6 +1573,11 @@ input:focus, textarea:focus {
   border-radius: 10px;
   box-shadow: 0 0 24px #00fff7cc;
   padding: 32px 24px 40px 24px;
+}
+.admin-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 0 60px 0;
 }
 .pinpad-wrap {
   display: flex;

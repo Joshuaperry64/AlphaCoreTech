@@ -2,9 +2,10 @@ import { createElement } from '../components/utils.js';
 import { buildPinPad, getPins, addPin, revokePin } from '../components/pinpad.js';
 
 export default function AdminPage() {
-  const container = createElement('div', { class: 'admin-panel-page' });
+  const container = createElement('div');
 
   function showAdmin() {
+    container.className = 'admin-page';
     container.innerHTML = '';
     container.appendChild(buildAdminUI());
   }
@@ -13,6 +14,7 @@ export default function AdminPage() {
   if (sessionStorage.getItem('admin_authenticated')) {
     showAdmin();
   } else {
+    container.className = 'admin-panel-page';
     container.appendChild(buildPinPad({
       authKey: 'admin_authenticated',
       onSuccess: showAdmin,
