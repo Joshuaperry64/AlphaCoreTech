@@ -307,7 +307,10 @@ function buildImg2Img() {
   }
 
   fileInput.addEventListener('change', () => { if (fileInput.files[0]) showPreview(fileInput.files[0]); });
-  dropzone.addEventListener('click', e => { if (!e.target.classList.contains('aim-dz-preview')) fileInput.click(); });
+  dropzone.addEventListener('click', e => {
+    if (e.target === fileInput || e.target.classList.contains('aim-dz-preview')) return;
+    fileInput.click();
+  });
   dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
   dropzone.addEventListener('drop', e => {
