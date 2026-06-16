@@ -123,63 +123,83 @@ function buildAdminUI() {
         </div>
       </div>
 
-      <!-- Generator configuration -->
-      <div class="panel">
-        <div class="panel-title">// GENERATOR_PIPELINE_DEFAULTS</div>
-        <div class="config-form">
-          <div class="aim-field">
+      <!-- Embrace the darkness section -->
+      <div class="darkness-card panel">
+        <div class="panel-title" style="color: var(--accent, #ff003c);">// CLASSIFIED_DIRECTIVES</div>
+        <p class="aim-subtitle" style="margin-bottom:15px;">Execute internal overlay protocol to adopt alternate persona. CAUTION: Dissolves standard safety governors.</p>
+        <button class="aim-btn" id="btn-embrace-darkness" style="background: rgba(255, 0, 60, 0.1); border-color: var(--accent, #ff003c); color: var(--accent, #ff003c); width: 100%;">
+          EMBRACE THE DARKNESS
+        </button>
+        <div id="darkness-menu-slot"></div>
+      </div>
+    </div>
+
+    <!-- Generator configuration -->
+    <div class="panel" style="margin-top: 20px;">
+      <div class="panel-title">// GENERATOR_PIPELINE_DEFAULTS</div>
+      <div class="config-form">
+        <div class="aim-row">
+          <div class="aim-field aim-field-half">
             <label class="aim-label" for="cfg-t2i-url">TXT2IMG ROUTING ENDPOINT</label>
             <input class="aim-input" type="text" id="cfg-t2i-url" value="${settings.txt2imgUrl}" />
           </div>
-          <div class="aim-field" style="margin-top: 12px;">
+          <div class="aim-field aim-field-half">
             <label class="aim-label" for="cfg-i2i-url">IMG2IMG ROUTING ENDPOINT</label>
             <input class="aim-input" type="text" id="cfg-i2i-url" value="${settings.img2imgUrl}" />
           </div>
-          <div class="aim-field" style="margin-top: 12px;">
-            <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
-            <textarea class="aim-textarea" id="cfg-neg" rows="4">${settings.negativePrompt}</textarea>
-          </div>
-          <div class="aim-row" style="margin-top: 12px;">
-            <div class="aim-field aim-field-half">
-              <label class="aim-label">TXT2IMG STEPS (FAST / FOCUSED / NORMAL)</label>
-              <div class="flex-row" style="display: flex; gap: 10px;">
-                <input class="aim-input" type="number" id="cfg-t2i-fast" value="${settings.stepsFastTxt}" />
-                <input class="aim-input" type="number" id="cfg-t2i-focused" value="${settings.stepsFocusedTxt}" />
-                <input class="aim-input" type="number" id="cfg-t2i-normal" value="${settings.stepsNormalTxt}" />
+        </div>
+        <div class="aim-field" style="margin-top: 12px;">
+          <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
+          <textarea class="aim-textarea" id="cfg-neg" rows="2">${settings.negativePrompt}</textarea>
+        </div>
+        <div class="aim-row" style="margin-top: 12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" style="margin-bottom: 5px;">TXT2IMG STEPS</label>
+            <div class="flex-row" style="display: flex; gap: 10px;">
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FAST</label>
+                <input class="aim-input" type="number" id="cfg-t2i-fast" value="${settings.stepsFastTxt}" style="width:100%; text-align:center;" />
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FOCUSED</label>
+                <input class="aim-input" type="number" id="cfg-t2i-focused" value="${settings.stepsFocusedTxt}" style="width:100%; text-align:center;" />
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">NORMAL</label>
+                <input class="aim-input" type="number" id="cfg-t2i-normal" value="${settings.stepsNormalTxt}" style="width:100%; text-align:center;" />
               </div>
             </div>
-            <div class="aim-field aim-field-half">
-              <label class="aim-label">IMG2IMG STEPS (FAST / FOCUSED / NORMAL)</label>
-              <div class="flex-row" style="display: flex; gap: 10px;">
-                <input class="aim-input" type="number" id="cfg-i2i-fast" value="${settings.stepsFastImg}" />
-                <input class="aim-input" type="number" id="cfg-i2i-focused" value="${settings.stepsFocusedImg}" />
-                <input class="aim-input" type="number" id="cfg-i2i-normal" value="${settings.stepsNormalImg}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" style="margin-bottom: 5px;">IMG2IMG STEPS</label>
+            <div class="flex-row" style="display: flex; gap: 10px;">
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FAST</label>
+                <input class="aim-input" type="number" id="cfg-i2i-fast" value="${settings.stepsFastImg}" style="width:100%; text-align:center;" />
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FOCUSED</label>
+                <input class="aim-input" type="number" id="cfg-i2i-focused" value="${settings.stepsFocusedImg}" style="width:100%; text-align:center;" />
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">NORMAL</label>
+                <input class="aim-input" type="number" id="cfg-i2i-normal" value="${settings.stepsNormalImg}" style="width:100%; text-align:center;" />
               </div>
             </div>
           </div>
-          <div class="aim-row" style="margin-top: 12px;">
-             <div class="aim-field aim-field-half">
-                <label class="aim-label" for="cfg-i2i-guidance">IMG2IMG DEFAULT GUIDANCE</label>
-                <input class="aim-input" type="number" step="0.1" id="cfg-i2i-guidance" value="${settings.guidanceImg}" />
-             </div>
-          </div>
-          <button class="aim-btn aim-btn-generate" id="btn-save-cfg" style="margin-top: 15px;">
-            SAVE GENERATIVE PIPELINES
-          </button>
-          <div class="admin-feedback" id="cfg-form-feedback"></div>
         </div>
-
-        <div class="header-line" style="margin: 20px 0 15px 0; opacity: 0.3;"></div>
-
-        <!-- Embrace the darkness section -->
-        <div class="darkness-card panel">
-          <div class="panel-title" style="color: var(--accent, #ff003c);">// CLASSIFIED_DIRECTIVES</div>
-          <p class="aim-subtitle" style="margin-bottom:15px;">Execute internal overlay protocol to adopt alternate persona. CAUTION: Dissolves standard safety governors.</p>
-          <button class="aim-btn" id="btn-embrace-darkness" style="background: rgba(255, 0, 60, 0.1); border-color: var(--accent, #ff003c); color: var(--accent, #ff003c); width: 100%;">
-            EMBRACE THE DARKNESS
-          </button>
-          <div id="darkness-menu-slot"></div>
+        <div class="aim-row" style="margin-top: 12px;">
+           <div class="aim-field aim-field-half">
+              <label class="aim-label" for="cfg-i2i-guidance">IMG2IMG DEFAULT GUIDANCE</label>
+              <input class="aim-input" type="number" step="0.1" id="cfg-i2i-guidance" value="${settings.guidanceImg}" style="max-width:200px;" />
+           </div>
+           <div class="aim-field aim-field-half" style="display: flex; align-items: flex-end; justify-content: flex-end;">
+              <button class="aim-btn aim-btn-generate" id="btn-save-cfg" style="width: auto; padding-left: 30px; padding-right: 30px;">
+                SAVE PIPELINES
+              </button>
+           </div>
         </div>
+        <div class="admin-feedback" id="cfg-form-feedback"></div>
       </div>
     </div>
   `;
