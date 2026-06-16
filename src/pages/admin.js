@@ -351,7 +351,7 @@ function buildAdminUI() {
   // Embrace the darkness alternate state trigger
   darknessBtn.onclick = (e) => {
     e.preventDefault();
-    darknessBtn.classList.add('hidden');
+    sessionStorage.setItem('darkness_mode_active', 'true'); // ACTIVATE DARKNESS
     darknessBtn.style.display = 'none';
 
     darknessSlot.innerHTML = `
@@ -372,12 +372,14 @@ function buildAdminUI() {
             <button class="aim-seg-btn" data-f="low">STEALTH IDLE</button>
           </div>
         </div>
+        <button class="aim-btn" id="btn-revert-darkness" style="margin-top: 15px; border-color: #555; color: #777; width: 100%;">REVERT TO STANDARD</button>
       </div>
     `;
-
+    
     const darkRange = darknessSlot.querySelector('#dark-range');
     const darkVal = darknessSlot.querySelector('#dark-str-val');
     const freqBtns = darknessSlot.querySelectorAll('#dark-freq-seg .aim-seg-btn');
+    const revertBtn = darknessSlot.querySelector('#btn-revert-darkness');
 
     darkRange.oninput = () => {
       darkVal.textContent = `${darkRange.value}%`;
@@ -391,8 +393,20 @@ function buildAdminUI() {
       };
     });
 
+    revertBtn.onclick = () => {
+      sessionStorage.removeItem('darkness_mode_active'); // DEACTIVATE DARKNESS
+      darknessSlot.innerHTML = '';
+      darknessBtn.style.display = 'block';
+      console.log('[SYS] Standard safety governors restored.');
+    };
+
     console.log('[SYS] Adopted Alternate Persona: Luci. Standard safety mechanisms overridden.');
   };
+  
+  // Check if darkness mode was active on page load
+  if (sessionStorage.getItem('darkness_mode_active') === 'true') {
+    darknessBtn.click();
+  }
 
   // Initial render of PIN list
   updatePinList();

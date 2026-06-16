@@ -197,8 +197,14 @@ function buildTxt2Img() {
     const modelBtn = wrap.querySelector('#t2i-model .aim-seg-btn.active');
     const j = modelBtn.dataset.j;
     const c = modelBtn.dataset.c;
-    const neg = wrap.querySelector('#t2i-neg').value;
+    let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
+
+    // Check for darkness mode and override negative prompt
+    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
+      neg = ''; // Override negative prompt, removing restrictions.
+      console.warn('[DARKNESS] NSFW governors disabled for this T2I request.');
+    }
 
     const loaderSlot = wrap.querySelector('#t2i-loader-slot');
     const resultSlot = wrap.querySelector('#t2i-result-slot');
@@ -419,8 +425,14 @@ function buildImg2Img() {
     if (!prompt) { setStatus(wrap, '#i2i-status', 'ERROR: Edit instruction is empty.', 'error'); return; }
 
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
-    const neg = wrap.querySelector('#i2i-neg').value;
+    let neg = wrap.querySelector('#i2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
+    
+    // Check for darkness mode and override negative prompt
+    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
+      neg = ''; // Override negative prompt, removing restrictions.
+      console.warn('[DARKNESS] NSFW governors disabled for this I2I request.');
+    }
 
     const loaderSlot = wrap.querySelector('#i2i-loader-slot');
     const resultSlot = wrap.querySelector('#i2i-result-slot');
