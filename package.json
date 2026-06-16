@@ -4,7 +4,7 @@
   "version": "4.0.0",
   "type": "module",
   "scripts": {
-    "prebuild": "node -e \"console.log('Prebuild checks completed.')\"",
+    "prebuild": "node -e \"const fs = require('fs'); if (process.platform !== 'win32' && fs.existsSync('./node_modules/.bin/vite')) { fs.chmodSync('./node_modules/.bin/vite', 0o755); } console.log('Prebuild completed.');\"",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
