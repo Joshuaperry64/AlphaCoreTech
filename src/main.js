@@ -16,6 +16,7 @@ import CreatorProfile from './pages/creator.js';
 import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
 import AiModals from './pages/aimodals.js';
+import VaultPage from './pages/vault.js';
 
 const routes = {
   '/': Overview,
@@ -25,6 +26,7 @@ const routes = {
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
   '/aimodals': AiModals,
+  '/vault': VaultPage,
 };
 
 function updateActiveNav(hash) {
