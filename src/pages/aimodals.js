@@ -3,12 +3,25 @@
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
+import { buildPinPad } from '../components/pinpad.js';
 
-const TXT2IMG_URL = 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/';
-const IMG2IMG_URL = 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/';
-
-const DEFAULT_NEG =
-  'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed';
+function getModalSettings() {
+  const defaults = {
+    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
+    img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
+    negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed',
+    guidanceScale: '7.0'
+  };
+  try {
+    const custom = localStorage.getItem('alphacore_modal_settings');
+    if (custom) {
+      return { ...defaults, ...JSON.parse(custom) };
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return defaults;
+}
 
 /* ─── DISCLAIMER SCREEN ─────────────────────────────────────── */
 function buildDisclaimer(onAccept) {
@@ -79,6 +92,7 @@ function buildResult(container) {
 
 /* ─── TXT2IMG PANEL ─────────────────────────────────────────── */
 function buildTxt2Img() {
+  const settings = getModalSettings();
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
   wrap.innerHTML = `
@@ -116,11 +130,11 @@ function buildTxt2Img() {
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="t2i-neg">NEGATIVE PROMPT</label>
-          <textarea class="aim-textarea aim-textarea-sm" id="t2i-neg" rows="2">${DEFAULT_NEG}</textarea>
+          <textarea class="aim-textarea aim-textarea-sm" id="t2i-neg" rows="2">${settings.negativePrompt}</textarea>
         </div>
         <div class="aim-field">
-          <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE <span class="aim-val-display" id="t2i-cfg-val">7.0</span></label>
-          <input class="aim-range" type="range" id="t2i-cfg" min="1" max="15" step="0.5" value="7" />
+          <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale).toFixed(1)}</span></label>
+          <input class="aim-range" type="range" id="t2i-cfg" min="1" max="15" step="0.5" value="${settings.guidanceScale}" />
         </div>
       </div>
     </details>
@@ -195,7 +209,7 @@ function buildTxt2Img() {
         scheduler: 'Euler',
         seed: -1,
       });
-      const res = await fetch(`${TXT2IMG_URL}?${params}`);
+      const res = await fetch(`${settings.txt2imgUrl}?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -228,6 +242,7 @@ function buildTxt2Img() {
 
 /* ─── IMG2IMG PANEL ─────────────────────────────────────────── */
 function buildImg2Img() {
+  const settings = getModalSettings();
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
   wrap.innerHTML = `
@@ -269,7 +284,7 @@ function buildImg2Img() {
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="i2i-neg">NEGATIVE PROMPT</label>
-          <textarea class="aim-textarea aim-textarea-sm" id="i2i-neg" rows="2">${DEFAULT_NEG}</textarea>
+          <textarea class="aim-textarea aim-textarea-sm" id="i2i-neg" rows="2">${settings.negativePrompt}</textarea>
         </div>
       </div>
     </details>
@@ -358,7 +373,7 @@ function buildImg2Img() {
       formData.append('true_cfg_scale', 4.0);
       formData.append('seed', -1);
 
-      const res = await fetch(IMG2IMG_URL, { method: 'POST', body: formData });
+      const res = await fetch(settings.img2imgUrl, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -397,174 +412,6 @@ function setStatus(root, sel, msg, type = '') {
   el.className = 'aim-status-bar' + (type ? ` aim-status-${type}` : '');
 }
 
-/* ─── PIN PAD ACCESS CONTROL ────────────────────────────────── */
-function buildPinPad(onSuccess) {
-  const wrap = document.createElement('div');
-  wrap.className = 'aim-pin-wrap';
-  wrap.innerHTML = `
-    <div class="aim-pin-box">
-      <div class="aim-pin-header">
-        <div class="aim-pin-icon">🔒</div>
-        <div class="aim-pin-title">// SECURITY_LOCKOUT</div>
-        <div class="aim-pin-subtitle">UNRESTRICTED GENERATION ACCESS</div>
-      </div>
-      
-      <div class="aim-pin-display-wrap">
-        <div class="aim-pin-display" id="aim-pin-display">
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-        </div>
-        <div class="aim-pin-feedback" id="aim-pin-feedback">> ENTER VALID ACCESS PIN</div>
-      </div>
-      
-      <div class="aim-pinpad-grid">
-        <button class="aim-pad-btn" data-val="1">1</button>
-        <button class="aim-pad-btn" data-val="2">2</button>
-        <button class="aim-pad-btn" data-val="3">3</button>
-        <button class="aim-pad-btn" data-val="4">4</button>
-        <button class="aim-pad-btn" data-val="5">5</button>
-        <button class="aim-pad-btn" data-val="6">6</button>
-        <button class="aim-pad-btn" data-val="7">7</button>
-        <button class="aim-pad-btn" data-val="8">8</button>
-        <button class="aim-pad-btn" data-val="9">9</button>
-        <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
-        <button class="aim-pad-btn" data-val="0">0</button>
-        <button class="aim-pad-btn aim-pad-btn-enter" id="aim-pad-enter">ENT</button>
-      </div>
-    </div>
-  `;
-
-  let currentPin = '';
-  const display = wrap.querySelector('#aim-pin-display');
-  const feedback = wrap.querySelector('#aim-pin-feedback');
-  const pinBox = wrap.querySelector('.aim-pin-box');
-  const dots = display.querySelectorAll('.aim-pin-dot');
-
-  function updateDisplay() {
-    dots.forEach((dot, idx) => {
-      if (idx < currentPin.length) {
-        dot.classList.add('filled');
-      } else {
-        dot.classList.remove('filled');
-      }
-    });
-  }
-
-  function handleInput(val) {
-    if (currentPin.length < 9) {
-      currentPin += val;
-      updateDisplay();
-      feedback.textContent = `> ENTERING PIN...`;
-      feedback.className = 'aim-pin-feedback';
-    }
-  }
-
-  function handleClear() {
-    currentPin = '';
-    updateDisplay();
-    feedback.textContent = `> ENTER VALID ACCESS PIN`;
-    feedback.className = 'aim-pin-feedback';
-  }
-
-  function handleBackspace() {
-    if (currentPin.length > 0) {
-      currentPin = currentPin.slice(0, -1);
-      updateDisplay();
-      if (currentPin.length === 0) {
-        feedback.textContent = `> ENTER VALID ACCESS PIN`;
-      } else {
-        feedback.textContent = `> ENTERING PIN...`;
-      }
-      feedback.className = 'aim-pin-feedback';
-    }
-  }
-
-  function handleEnter() {
-    const masterPin = '672167566';
-    const otpPin = '12345678';
-
-    if (currentPin === masterPin) {
-      handleSuccess();
-    } else if (currentPin === otpPin) {
-      if (localStorage.getItem('aim_pin_12345678_used') === 'true') {
-        handleFailure('ONE-TIME PIN EXPIRED');
-      } else {
-        localStorage.setItem('aim_pin_12345678_used', 'true');
-        handleSuccess();
-      }
-    } else {
-      handleFailure('ACCESS DENIED');
-    }
-  }
-
-  function handleSuccess() {
-    feedback.textContent = `> ACCESS GRANTED. UNLOCKING...`;
-    feedback.className = 'aim-pin-feedback aim-feedback-ok';
-    pinBox.classList.add('aim-access-granted');
-    
-    // Disable inputs
-    window.removeEventListener('keydown', keyHandler);
-    
-    setTimeout(() => {
-      sessionStorage.setItem('aimodals_authenticated', '1');
-      onSuccess();
-    }, 1200);
-  }
-
-  function handleFailure(message) {
-    feedback.textContent = `> ${message}`;
-    feedback.className = 'aim-pin-feedback aim-feedback-error';
-    pinBox.classList.add('aim-shake');
-    
-    setTimeout(() => {
-      pinBox.classList.remove('aim-shake');
-      currentPin = '';
-      updateDisplay();
-    }, 600);
-  }
-
-  // Mouse/Touch click events
-  wrap.querySelectorAll('.aim-pad-btn[data-val]').forEach(btn => {
-    btn.onclick = () => handleInput(btn.dataset.val);
-  });
-  wrap.querySelector('#aim-pad-clear').onclick = handleClear;
-  wrap.querySelector('#aim-pad-enter').onclick = handleEnter;
-
-  // Keyboard events
-  function keyHandler(e) {
-    // Only capture digits and controls
-    if (e.key >= '0' && e.key <= '9') {
-      handleInput(e.key);
-    } else if (e.key === 'Backspace') {
-      handleBackspace();
-    } else if (e.key === 'Escape' || e.key === 'Delete') {
-      handleClear();
-    } else if (e.key === 'Enter') {
-      handleEnter();
-    }
-  }
-
-  window.addEventListener('keydown', keyHandler);
-
-  // Clean up key listener if element is removed from DOM
-  const observer = new MutationObserver(() => {
-    if (!document.body.contains(wrap)) {
-      window.removeEventListener('keydown', keyHandler);
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  return wrap;
-}
-
 /* ─── MAIN PAGE ─────────────────────────────────────────────── */
 export default function AiModals() {
   const container = createElement('div', { class: 'aimodals-page' });
@@ -583,7 +430,13 @@ export default function AiModals() {
   }
 
   if (!sessionStorage.getItem('aimodals_authenticated')) {
-    container.appendChild(buildPinPad(showNextStep));
+    container.appendChild(buildPinPad({
+      authKey: 'aimodals_authenticated',
+      onSuccess: showNextStep,
+      title: '// SECURITY_LOCKOUT',
+      subtitle: 'UNRESTRICTED GENERATION ACCESS',
+      icon: '🔒'
+    }));
   } else {
     showNextStep();
   }
