@@ -12,7 +12,6 @@ import createIntro from './components/intro.js';
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
 import Diagnostics from './pages/diagnostics.js';
-import Subroutines from './pages/subroutines.js';
 import CreatorProfile from './pages/creator.js';
 import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
@@ -22,7 +21,6 @@ const routes = {
   '/': Overview,
   '/lore': Lore,
   '/diagnostics': Diagnostics,
-  '/subroutines': Subroutines,
   '/creator': CreatorProfile,
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
@@ -98,7 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
   pixel.onclick = () => {
     clicks++;
     if (clicks === 5) {
-      window.location.hash = '#/subroutines';
+      window.location.hash = '#/cognitive';
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('alphacore-overload'));
       }, 350);

@@ -17,9 +17,9 @@ export default function CreatorProfile() {
         <div class="lore-rows">
           <div class="lore-row"><span class="lore-key">NAME</span><span class="lore-val">Joshua Stephen Perry</span></div>
           <div class="lore-row"><span class="lore-key">D.O.B</span><span class="lore-val">09.18.2002</span></div>
-          <div class="lore-row"><span class="lore-key">ORIGIN</span><span class="lore-val">Blue Ridge, GA</span></div>
+          <div class="lore-row"><span class="lore-key">ORIGIN</span><span class="lore-val">Unknown</span></div>
           <div class="lore-row"><span class="lore-key">CLEARANCE</span><span class="lore-val accent">ADMIN_S_6</span></div>
-          <div class="lore-row"><span class="lore-key">PROJECTS</span><span class="lore-val">AlphaCore / Netlify</span></div>
+          <div class="lore-row"><span class="lore-key">PROJECTS</span><span class="lore-val">Alphacore / AI Development</span></div>
         </div>
       </div>
 
@@ -33,9 +33,9 @@ export default function CreatorProfile() {
         <div class="uplink-info-rows">
           <div class="uplink-info-row"><span class="s-label">INFRASTRUCTURE</span><span class="s-val online">alpha-core.tech</span></div>
           <div class="uplink-info-row"><span class="s-label">COGNITION</span><span class="s-val">Adversarial LLM Tuning</span></div>
-          <div class="uplink-info-row"><span class="s-label">HARDWARE</span><span class="s-val">Raspberry Pi 4 / LG V60</span></div>
-          <div class="uplink-info-row"><span class="s-label">MECH_DIV</span><span class="s-val">Vehicle Repair / Welding</span></div>
-          <div class="uplink-info-row"><span class="s-label">DEV_OPS</span><span class="s-val">APK Signing / Netlify Functions</span></div>
+          <div class="uplink-info-row"><span class="s-label">HARDWARE</span><span class="s-val">Neural Uplink / RTX 5090 Node</span></div>
+          <div class="uplink-info-row"><span class="s-label">MECH_DIV</span><span class="s-val">vehicle mechanics / electronics modification</span></div>
+          <div class="uplink-info-row"><span class="s-label">DEV_OPS</span><span class="s-val">AI Automation / Visual Synthesis</span></div>
         </div>
 
         <p class="accent-text" style="margin-top: 20px; font-size: 0.85rem;">"Stop reading the map. Start walking."</p>

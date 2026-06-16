@@ -109,19 +109,7 @@ export default function CognitiveUplink() {
       const textSpan = typingEl.querySelector('.chat-text');
 
       try {
-        const res = await fetch('/.netlify/functions/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, history })
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`${res.status} — ${errText}`);
-        }
-
-        const data = await res.json();
-        const reply = data.reply || data.candidates?.[0]?.content?.parts?.[0]?.text || '[No response from neural bridge]';
+        const reply = 'this feature is still in development.';
 
         // Typewriter effect
         typingEl.classList.remove('typing');

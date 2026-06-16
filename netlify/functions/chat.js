@@ -16,76 +16,9 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server misconfiguration: GEMINI_API_KEY not set.' })
-    };
-  }
-
-  let body;
-  try {
-    body = JSON.parse(event.body);
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body.' }) };
-  }
-
-  const { message, history } = body;
-  if (!message) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Message required.' }) };
-  }
-
-  // Build conversation contents
-  const contents = [
-    ...(history || []),
-    { role: 'user', parts: [{ text: message }] }
-  ];
-
-  const payload = {
-    system_instruction: {
-      parts: [{ text: SYSTEM_PROMPT }]
-    },
-    contents,
-    generationConfig: {
-      temperature: 0.9,
-      topP: 0.95,
-      topK: 40,
-      maxOutputTokens: 2048,
-    }
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reply: 'this feature is still in development.' })
   };
-
-  try {
-    const MODEL = 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      return {
-        statusCode: res.status,
-        body: JSON.stringify({ error: `Gemini API error: ${res.status} — ${errText}` })
-      };
-    }
-
-    const data = await res.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'ERROR: No response generated.';
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reply })
-    };
-
-  } catch (err) {
-    return {
-      statusCode: 502,
-      body: JSON.stringify({ error: `Proxy error: ${err.message}` })
-    };
-  }
 };
