@@ -8,7 +8,7 @@ import { buildPinPad } from '../components/pinpad.js';
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
   <option value="cunny">CUNNY</option>
-  <option value="lora2">LORA SLOT 2 (PENDING)</option>
+  <option value="custom_training">CUSTOM</option>
   <option value="lora3">LORA SLOT 3 (PENDING)</option>
 `;
 
