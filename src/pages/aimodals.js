@@ -192,8 +192,8 @@ function buildTxt2Img() {
         <input class="aim-input" type="number" id="t2i-batch" min="1" max="4" value="1" />
       </div>
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2i-lora">ACTIVE LORA</label>
-        <select class="aim-input aim-select" id="t2i-lora" style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; appearance:none; cursor:pointer;">
+        <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK)</label>
+        <select class="aim-input aim-select" id="t2i-lora" multiple style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; cursor:pointer; height:auto; min-height:80px;">
           ${LORA_OPTIONS}
         </select>
       </div>
@@ -253,7 +253,8 @@ function buildTxt2Img() {
     let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
     const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
-    const lora = wrap.querySelector('#t2i-lora').value;
+    const loraSelect = wrap.querySelector('#t2i-lora');
+    const lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
 
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -406,8 +407,8 @@ function buildImg2Img() {
         <input class="aim-input" type="number" id="i2i-batch" min="1" max="4" value="1" />
       </div>
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2i-lora">ACTIVE LORA</label>
-        <select class="aim-input aim-select" id="i2i-lora" style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; appearance:none; cursor:pointer;">
+        <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK)</label>
+        <select class="aim-input aim-select" id="i2i-lora" multiple style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; cursor:pointer; height:auto; min-height:80px;">
           ${LORA_OPTIONS}
         </select>
       </div>
@@ -493,7 +494,8 @@ function buildImg2Img() {
     let neg = wrap.querySelector('#i2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
     const batchSize = parseInt(wrap.querySelector('#i2i-batch').value) || 1;
-    const lora = wrap.querySelector('#i2i-lora').value;
+    const loraSelect = wrap.querySelector('#i2i-lora');
+    const lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
     
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
