@@ -17,14 +17,14 @@ function getModalSettings() {
   const defaults = {
     txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
-    negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed',
+    negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
-    guidanceImg: 7.0,
-    stepsFastTxt: 2,
-    stepsNormalTxt: 8,
-    stepsFocusedTxt: 4,
-    stepsFastImg: 20,
-    stepsNormalImg: 40,
+    guidanceImg: 4.0,
+    stepsFastTxt: 10,
+    stepsNormalTxt: 20,
+    stepsFocusedTxt: 50,
+    stepsFastImg: 8,
+    stepsNormalImg: 17,
     stepsFocusedImg: 30
   };
   try {

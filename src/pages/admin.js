@@ -36,14 +36,14 @@ function buildAdminUI() {
   const defaultSettings = {
     txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
-    negativePrompt: 'worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed',
-    stepsFastTxt: 2,
-    stepsFocusedTxt: 4,
-    stepsNormalTxt: 8,
-    stepsFastImg: 20,
+    negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
+    stepsFastTxt: 10,
+    stepsFocusedTxt: 50,
+    stepsNormalTxt: 20,
+    stepsFastImg: 8,
     stepsFocusedImg: 30,
-    stepsNormalImg: 40,
-    guidanceImg: 7.0
+    stepsNormalImg: 17,
+    guidanceImg: 4.0
   };
 
   let settings = { ...defaultSettings };

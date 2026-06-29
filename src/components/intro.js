@@ -88,11 +88,51 @@ export default function createIntro(onComplete) {
     display: 'none', margin: '30px auto 0 auto', width: 'fit-content', fontSize: '1.2rem', padding: '15px 30px', letterSpacing: '2px'
   });
   
+  // Mobile Warning Panel (hidden initially)
+  const mobileWarningPanel = createElement('div', { class: 'intro-mobile-warning' });
+  Object.assign(mobileWarningPanel.style, {
+    display: 'none', flexDirection: 'column', alignItems: 'center', marginTop: '20px',
+    textAlign: 'center', background: 'rgba(255, 0, 0, 0.1)', padding: '20px', 
+    border: '1px solid var(--accent)', borderRadius: '8px',
+    animation: 'fade-in 1.5s forwards'
+  });
+  const mobileWarningText = createElement('p', {}, 'MOBILE VIEW STILL IN DEVELOPMENT. WEBSITE FUNCTIONS AND VIEWS MAY NOT FUNCTION AS INTENDED OR APPEAR CORRECTLY.');
+  Object.assign(mobileWarningText.style, {
+    color: 'var(--accent)', fontFamily: 'var(--font-hud)', fontSize: '0.9rem', marginBottom: '20px', lineHeight: '1.5'
+  });
+  mobileWarningPanel.appendChild(mobileWarningText);
+  
+  const continueBtn = createElement('button', { class: 'aim-btn' }, 'CONTINUE (5s)');
+  Object.assign(continueBtn.style, { borderColor: 'var(--accent)', color: 'var(--accent)' });
+  mobileWarningPanel.appendChild(continueBtn);
+  bootPanel.appendChild(mobileWarningPanel);
+
   enterBtn.onclick = () => {
     bootLinesEl.style.display = 'none';
     enterBtn.style.display = 'none';
     glitchTitle.style.display = 'none';
-    loginPanel.style.display = 'flex';
+    
+    if (window.innerWidth <= 768) {
+      mobileWarningPanel.style.display = 'flex';
+      let countdown = 5;
+      const interval = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          clearInterval(interval);
+          mobileWarningPanel.style.display = 'none';
+          loginPanel.style.display = 'flex';
+        } else {
+          continueBtn.textContent = `CONTINUE (${countdown}s)`;
+        }
+      }, 1000);
+      continueBtn.onclick = () => {
+        clearInterval(interval);
+        mobileWarningPanel.style.display = 'none';
+        loginPanel.style.display = 'flex';
+      };
+    } else {
+      loginPanel.style.display = 'flex';
+    }
   };
   bootPanel.appendChild(enterBtn);
 
