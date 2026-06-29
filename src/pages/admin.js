@@ -430,6 +430,7 @@ function buildAdminUI() {
     };
 
     localStorage.setItem('alphacore_modal_settings', JSON.stringify(newSettings));
+    import('../components/db_sync.js').then(module => module.pushToServer('settings', newSettings));
     showFeedback(cfgFeedback, 'Generative pipeline configurations synchronized.', 'ok');
   };
 

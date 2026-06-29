@@ -1,3 +1,5 @@
+import { pushToServer } from './db_sync.js';
+
 export function getLogs() {
   const data = localStorage.getItem('alphacore_system_logs');
   return data ? JSON.parse(data) : [];
@@ -20,8 +22,10 @@ export function logAction(action, details = {}) {
   }
   
   localStorage.setItem('alphacore_system_logs', JSON.stringify(logs));
+  pushToServer('logs', logs);
 }
 
 export function clearLogs() {
-  localStorage.removeItem('alphacore_system_logs');
+  localStorage.setItem('alphacore_system_logs', '[]');
+  pushToServer('logs', []);
 }

@@ -8,6 +8,7 @@ import { initSidebar } from './components/sidebar.js';
 import { initModal } from './components/modal.js';
 import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
+import { syncFromServer } from './components/db_sync.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -55,13 +56,21 @@ function renderRoute() {
 }
 
 function mountIntro(force) {
-  if (!force && localStorage.getItem('alphacore_intro_complete')) {
-    renderRoute();
-    return;
-  }
-  document.body.appendChild(createIntro(() => {
-    renderRoute();
-  }));
+  syncFromServer().then(() => {
+    if (!force && localStorage.getItem('alphacore_intro_complete')) {
+      renderRoute();
+      return;
+    }
+    
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    
+    const introEl = createIntro(() => {
+      renderRoute();
+    });
+    
+    app.appendChild(introEl);
+  });
 }
 
 window.addEventListener('hashchange', renderRoute);

@@ -4,6 +4,7 @@
  */
 
 import { logAction } from './logger.js';
+import { pushToServer } from './db_sync.js';
 
 // Load all registered PINs from localStorage or initialize defaults
 export function getPins() {
@@ -13,6 +14,7 @@ export function getPins() {
       { pin: '672167566', type: 'permanent', label: 'Master Admin PIN', roles: ['admin', 'vault'], createdAt: Date.now() }
     ];
     localStorage.setItem('alphacore_pins', JSON.stringify(defaultPins));
+    pushToServer('pins', defaultPins);
     return defaultPins;
   }
   try {
@@ -26,6 +28,7 @@ export function getPins() {
 // Save PINs to localStorage
 export function savePins(pins) {
   localStorage.setItem('alphacore_pins', JSON.stringify(pins));
+  pushToServer('pins', pins);
 }
 
 // Add a new security PIN (permanent, one-time, or temporary)
