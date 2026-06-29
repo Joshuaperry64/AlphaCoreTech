@@ -83,6 +83,18 @@ export default function createIntro(onComplete) {
   });
   bootPanel.appendChild(bootLinesEl);
 
+  const enterBtn = createElement('button', { class: 'aim-btn aim-btn-accept' }, 'ENTER COMMAND MATRIX');
+  Object.assign(enterBtn.style, {
+    display: 'none', margin: '30px auto 0 auto', width: 'fit-content', fontSize: '1.2rem', padding: '15px 30px', letterSpacing: '2px'
+  });
+  
+  enterBtn.onclick = () => {
+    bootLinesEl.style.display = 'none';
+    enterBtn.style.display = 'none';
+    glitchTitle.style.display = 'none';
+    loginPanel.style.display = 'flex';
+  };
+  bootPanel.appendChild(enterBtn);
 
   // Login panel (hidden until boot completes)
   const loginPanel = createElement('div', { class: 'intro-login-panel' });
@@ -97,22 +109,6 @@ export default function createIntro(onComplete) {
     letterSpacing: '4px', marginBottom: '15px', textShadow: '0 0 8px rgba(0,184,255,0.5)'
   });
   loginPanel.appendChild(titleEl);
-
-  const profileSelect = createElement('select', { class: 'aim-select' });
-  Object.assign(profileSelect.style, {
-    marginBottom: '20px', width: '280px', textAlign: 'center', fontSize: '1rem',
-    background: 'rgba(0,0,0,0.7)', border: '1px solid var(--blue)', color: 'var(--blue)'
-  });
-  
-  const pins = getPins();
-  // We can just add options for all pins by label
-  pins.forEach((p, idx) => {
-    const opt = document.createElement('option');
-    opt.value = p.pin;
-    opt.textContent = p.label.toUpperCase();
-    profileSelect.appendChild(opt);
-  });
-  loginPanel.appendChild(profileSelect);
 
   const pinPadContainer = createElement('div');
   Object.assign(pinPadContainer.style, {
@@ -131,10 +127,11 @@ export default function createIntro(onComplete) {
   pinPadContainer.appendChild(pinPad);
   loginPanel.appendChild(pinPadContainer);
 
-  const guestBtn = createElement('button', { class: 'aim-btn' }, 'CONTINUE AS GUEST');
+  const guestBtn = createElement('button', { class: 'aim-btn' }, 'SKIP LOGIN');
   Object.assign(guestBtn.style, {
-    marginTop: '20px', padding: '10px 24px', background: 'transparent',
-    borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'
+    marginTop: '35px', padding: '10px 24px', background: 'transparent',
+    borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem',
+    letterSpacing: '2px'
   });
   guestBtn.onmouseenter = () => { guestBtn.style.color = '#fff'; guestBtn.style.borderColor = '#fff'; };
   guestBtn.onmouseleave = () => { guestBtn.style.color = 'rgba(255,255,255,0.7)'; guestBtn.style.borderColor = 'rgba(255,255,255,0.3)'; };
@@ -199,7 +196,7 @@ export default function createIntro(onComplete) {
       lineIdx++;
       setTimeout(nextLine, 400 + Math.random() * 300);
     } else {
-      loginPanel.style.display = 'flex';
+      enterBtn.style.display = 'block';
     }
   }
   setTimeout(nextLine, 300);
