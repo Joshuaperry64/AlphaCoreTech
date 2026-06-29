@@ -1,0 +1,42 @@
+{
+  "pins": [
+    {
+      "pin": "672167566",
+      "type": "permanent",
+      "label": "Master Admin PIN",
+      "roles": [
+        "admin",
+        "vault",
+        "aimodals",
+        "generate",
+        "lora",
+        "diagnostics"
+      ],
+      "createdAt": 1782687600000
+    },
+    {
+      "pin": "20022005",
+      "type": "permanent",
+      "label": "Father",
+      "roles": [
+        "aimodals",
+        "generate",
+        "vault"
+      ],
+      "createdAt": 1782687600000
+    }
+  ],
+  "logs": [],
+  "settings": {
+    "txt2imgUrl": "https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/",
+    "img2imgUrl": "https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/",
+    "negativePrompt": "worst quality, low quality, censorship, text, watermark, signature, blur, bad anatomy, ugly, deformed",
+    "stepsFastTxt": 2,
+    "stepsFocusedTxt": 4,
+    "stepsNormalTxt": 8,
+    "stepsFastImg": 20,
+    "stepsFocusedImg": 30,
+    "stepsNormalImg": 40,
+    "guidanceImg": 7.0
+  }
+}
