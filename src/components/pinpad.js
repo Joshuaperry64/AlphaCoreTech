@@ -3,13 +3,14 @@
  * Manages authorized PIN configurations, temporary durations, and OTP status.
  */
 
+import { logAction } from './logger.js';
+
 // Load all registered PINs from localStorage or initialize defaults
 export function getPins() {
   const data = localStorage.getItem('alphacore_pins');
   if (!data) {
     const defaultPins = [
-      { pin: '672167566', type: 'permanent', label: 'Master Admin PIN', createdAt: Date.now() },
-      { pin: '12345678', type: 'one-time', used: false, label: 'Default OTP', createdAt: Date.now() }
+      { pin: '672167566', type: 'permanent', label: 'Master Admin PIN', roles: ['admin', 'vault'], createdAt: Date.now() }
     ];
     localStorage.setItem('alphacore_pins', JSON.stringify(defaultPins));
     return defaultPins;
@@ -28,12 +29,13 @@ export function savePins(pins) {
 }
 
 // Add a new security PIN (permanent, one-time, or temporary)
-export function addPin({ pin, type, durationSeconds, label }) {
+export function addPin({ pin, type, durationSeconds, label, roles = [] }) {
   const pins = getPins();
   const newPin = {
     pin,
     type,
     label,
+    roles,
     createdAt: Date.now()
   };
   
@@ -57,7 +59,7 @@ export function revokePin(pinVal) {
 }
 
 // Validate PIN entry
-export function validatePin(pinVal) {
+export function validatePin(pinVal, requiredRole = null) {
   const pins = getPins();
   const found = pins.find(p => p.pin === pinVal);
   
@@ -65,28 +67,32 @@ export function validatePin(pinVal) {
     return { valid: false, reason: 'ACCESS DENIED' };
   }
   
+  if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
+    return { valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` };
+  }
+  
   if (found.type === 'one-time') {
     if (found.used) {
       return { valid: false, reason: 'ONE-TIME PIN EXPIRED' };
     }
-    // Mark as used
-    found.used = true;
-    savePins(pins);
-    return { valid: true };
+    // Remove the OTP completely from the active list
+    const updatedPins = pins.filter(p => p.pin !== pinVal);
+    savePins(updatedPins);
+    return { valid: true, pinObj: found };
   }
   
   if (found.type === 'temporary') {
     if (Date.now() > found.expiresAt) {
       return { valid: false, reason: 'TEMPORARY PIN EXPIRED' };
     }
-    return { valid: true };
+    return { valid: true, pinObj: found };
   }
   
-  return { valid: true };
+  return { valid: true, pinObj: found };
 }
 
 // Dynamic PIN Pad UI component creator
-export function buildPinPad({ authKey, onSuccess, title = '// SECURITY_LOCKOUT', subtitle = 'UNRESTRICTED ACCESS REQUIRED', icon = '🔒' }) {
+export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '// SECURITY_LOCKOUT', subtitle = 'UNRESTRICTED ACCESS REQUIRED', icon = '🔒' }) {
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
   wrap.innerHTML = `
@@ -99,15 +105,7 @@ export function buildPinPad({ authKey, onSuccess, title = '// SECURITY_LOCKOUT',
       
       <div class="aim-pin-display-wrap">
         <div class="aim-pin-display" id="aim-pin-display">
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
-          <span class="aim-pin-dot"></span>
+          <!-- Dots rendered dynamically -->
         </div>
         <div class="aim-pin-feedback" id="aim-pin-feedback">> ENTER VALID ACCESS PIN</div>
       </div>
@@ -133,16 +131,13 @@ export function buildPinPad({ authKey, onSuccess, title = '// SECURITY_LOCKOUT',
   const display = wrap.querySelector('#aim-pin-display');
   const feedback = wrap.querySelector('#aim-pin-feedback');
   const pinBox = wrap.querySelector('.aim-pin-box');
-  const dots = display.querySelectorAll('.aim-pin-dot');
-
   function updateDisplay() {
-    dots.forEach((dot, idx) => {
-      if (idx < currentPin.length) {
-        dot.classList.add('filled');
-      } else {
-        dot.classList.remove('filled');
-      }
-    });
+    display.innerHTML = '';
+    for (let i = 0; i < currentPin.length; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'aim-pin-dot filled';
+      display.appendChild(dot);
+    }
   }
 
   function handleInput(val) {
@@ -175,15 +170,17 @@ export function buildPinPad({ authKey, onSuccess, title = '// SECURITY_LOCKOUT',
   }
 
   function handleEnter() {
-    const result = validatePin(currentPin);
+    const result = validatePin(currentPin, requiredRole);
     if (result.valid) {
-      handleSuccess();
+      logAction('AUTH_SUCCESS', { label: result.pinObj.label });
+      handleSuccess(result);
     } else {
+      logAction('AUTH_FAILED', { reason: result.reason });
       handleFailure(result.reason);
     }
   }
 
-  function handleSuccess() {
+  function handleSuccess(result) {
     feedback.textContent = '> ACCESS GRANTED. DECRYPTING...';
     feedback.className = 'aim-pin-feedback aim-feedback-ok';
     pinBox.classList.add('aim-access-granted');
@@ -192,8 +189,14 @@ export function buildPinPad({ authKey, onSuccess, title = '// SECURITY_LOCKOUT',
     window.removeEventListener('keydown', keyHandler);
     
     setTimeout(() => {
-      sessionStorage.setItem(authKey, '1');
-      onSuccess();
+      if (authKey) sessionStorage.setItem(authKey, '1');
+      if (result && result.pinObj) {
+        sessionStorage.setItem('current_profile', result.pinObj.label);
+        if (result.pinObj.roles) {
+          result.pinObj.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
+        }
+      }
+      onSuccess(result);
     }, 1200);
   }
 

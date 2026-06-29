@@ -1,5 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { buildPinPad } from '../components/pinpad.js';
+import { showModal } from '../components/modal.js';
 
 export default function VaultPage() {
   const container = createElement('div', { class: 'vault-page' });
@@ -15,6 +16,7 @@ export default function VaultPage() {
   } else {
     container.appendChild(buildPinPad({
       authKey: 'vault_authenticated',
+      requiredRole: 'vault',
       onSuccess: showVault,
       title: 'ALPHACORE // VAULT_LOCKOUT',
       subtitle: 'PERSONAL DECRYPTION PIN REQUIRED',
@@ -45,6 +47,9 @@ function buildVaultUI() {
       </button>
       <button class="aim-tab" data-tab="transmissions">
         <span class="aim-tab-icon">⍾</span> TRANSMISSIONS
+      </button>
+      <button class="aim-tab" data-tab="storage">
+        <span class="aim-tab-icon">💾</span> USER STORAGE
       </button>
     </div>
 
@@ -99,6 +104,8 @@ function buildVaultUI() {
       const { element, startVisualizer, stopAudio } = buildTransmissionsPanel();
       content.appendChild(element);
       blueprintAnimFrame = startVisualizer();
+    } else if (activeTab === 'storage') {
+      content.appendChild(buildStoragePanel());
     }
   }
 
@@ -644,4 +651,121 @@ function buildVaultUI() {
       stopAudio: stopAudioPlayback
     };
   }
+}
+
+// ==========================================
+// VAULT STORAGE PANEL
+// ==========================================
+function buildStoragePanel() {
+  const el = document.createElement('div');
+  el.className = 'vault-storage-panel';
+  el.style.cssText = 'display: flex; flex-direction: column; gap: 20px;';
+  
+  const currentProfile = sessionStorage.getItem('current_profile') || 'GUEST';
+
+  let files = [];
+  try {
+    files = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+  } catch(e) {}
+
+  const myFiles = files.filter(f => f.owner === currentProfile);
+  const sharedFiles = files.filter(f => f.shared && f.owner !== currentProfile);
+
+  function renderFileList(list, listTitle, emptyMsg) {
+    let html = `<div class="panel-subtitle">// ${listTitle}</div>`;
+    if (list.length === 0) {
+      html += `<div style="padding: 10px; color: var(--blue-dim); font-size: 0.8rem;">> ${emptyMsg}</div>`;
+    } else {
+      html += '<div style="display:flex; flex-direction:column; gap:8px;">';
+      list.forEach(f => {
+        html += `
+          <div style="border: 1px solid var(--border-dim); background: rgba(0,184,255,0.02); padding: 10px; border-radius: var(--radius); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-family: var(--font-hud); color: var(--blue); font-size: 0.85rem;">${f.filename}</div>
+              <div style="color: var(--blue-dim); font-size: 0.65rem; margin-top: 4px;">OWNER: ${f.owner} | SIZE: ${f.content.length}b</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button class="aim-btn btn-view-file" data-id="${f.id}">VIEW</button>
+              ${f.owner === currentProfile ? `<button class="aim-btn btn-del-file" style="border-color:var(--accent); color:var(--accent);" data-id="${f.id}">DELETE</button>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+    return html;
+  }
+
+  el.innerHTML = `
+    <div class="vault-storage-grid">
+      <div class="vsg-col-main">
+        ${renderFileList(myFiles, 'PERSONAL_STORAGE', 'NO ENCRYPTED FILES FOUND IN PERSONAL STORAGE.')}
+        <div style="margin-top: 30px;"></div>
+        ${renderFileList(sharedFiles, 'SHARED_STORAGE', 'NO CLASSIFIED SHARED FILES AVAILABLE.')}
+      </div>
+      
+      <div class="vsg-col-side">
+        <div class="panel-subtitle">// UPLOAD_NEW_DATA</div>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+          <input type="text" class="aim-input" id="new-file-name" placeholder="FILENAME.TXT" />
+          <textarea class="aim-textarea" id="new-file-content" rows="6" placeholder="ENTER CLASSIFIED DATA..."></textarea>
+          <label style="color: var(--blue-dim); font-size: 0.75rem;">
+            <input type="checkbox" id="new-file-shared"> SHARE WITH OTHER USERS
+          </label>
+          <button class="aim-btn aim-btn-generate" id="btn-save-file" style="margin-top:10px;">ENCRYPT & SAVE</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Attach events
+  const btnSave = el.querySelector('#btn-save-file');
+  btnSave.onclick = () => {
+    const filename = el.querySelector('#new-file-name').value.trim();
+    const content = el.querySelector('#new-file-content').value.trim();
+    const shared = el.querySelector('#new-file-shared').checked;
+    
+    if (!filename || !content) {
+      alert("FILENAME AND CONTENT REQUIRED.");
+      return;
+    }
+    
+    files.push({
+      id: Date.now().toString(),
+      owner: currentProfile,
+      filename,
+      content,
+      shared,
+      createdAt: Date.now()
+    });
+    
+    localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
+    // Re-render
+    const parent = el.parentElement;
+    parent.innerHTML = '';
+    parent.appendChild(buildStoragePanel());
+  };
+
+  el.querySelectorAll('.btn-view-file').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-id');
+      const file = files.find(f => f.id === id);
+      if (file) {
+        showModal(`// VIEWING: ${file.filename}`, `<pre style="white-space: pre-wrap; word-break: break-all; font-family: var(--font-mono); color: var(--blue-dim); font-size: 0.8rem;">${file.content}</pre>`);
+      }
+    };
+  });
+
+  el.querySelectorAll('.btn-del-file').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.getAttribute('data-id');
+      files = files.filter(f => f.id !== id);
+      localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
+      const parent = el.parentElement;
+      parent.innerHTML = '';
+      parent.appendChild(buildStoragePanel());
+    };
+  });
+
+  return el;
 }

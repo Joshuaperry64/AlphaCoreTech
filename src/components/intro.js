@@ -3,6 +3,7 @@
  * Vanilla CSS, CRT scanlines, glitch effects, audio-reactive visualizer
  */
 import { createElement } from './utils.js';
+import { buildPinPad, getPins } from './pinpad.js';
 
 export default function createIntro(onComplete) {
   // Container — fullscreen overlay
@@ -83,32 +84,69 @@ export default function createIntro(onComplete) {
   bootPanel.appendChild(bootLinesEl);
 
 
-  // Start button (hidden until boot completes)
-  const startBtn = createElement('button', { class: 'intro-start-btn' }, 'ENTER COMMAND MATRIX');
-  Object.assign(startBtn.style, {
-    display: 'none', marginTop: '12px', padding: '14px 32px',
-    background: 'transparent', border: '1px solid #00b8ff',
-    color: '#00b8ff', fontFamily: 'var(--font-hud)', fontSize: '0.9rem',
-    fontWeight: '700', letterSpacing: '4px', cursor: 'pointer',
-    transition: 'all 0.3s', borderRadius: '2px',
-    textShadow: '0 0 8px rgba(0,184,255,0.5)',
+  // Login panel (hidden until boot completes)
+  const loginPanel = createElement('div', { class: 'intro-login-panel' });
+  Object.assign(loginPanel.style, {
+    display: 'none', flexDirection: 'column', alignItems: 'center', marginTop: '20px',
+    animation: 'fade-in 1.5s forwards'
   });
-  startBtn.onmouseenter = () => {
-    startBtn.style.background = 'rgba(0,184,255,0.12)';
-    startBtn.style.boxShadow = '0 0 20px rgba(0,184,255,0.3), inset 0 0 20px rgba(0,184,255,0.05)';
-    startBtn.style.letterSpacing = '6px';
-  };
-  startBtn.onmouseleave = () => {
-    startBtn.style.background = 'transparent';
-    startBtn.style.boxShadow = 'none';
-    startBtn.style.letterSpacing = '4px';
-  };
-  startBtn.onclick = () => {
+
+  const titleEl = createElement('h2', {}, 'IDENTIFY USER');
+  Object.assign(titleEl.style, {
+    fontFamily: 'var(--font-hud)', color: 'var(--blue)', fontSize: '1.2rem',
+    letterSpacing: '4px', marginBottom: '15px', textShadow: '0 0 8px rgba(0,184,255,0.5)'
+  });
+  loginPanel.appendChild(titleEl);
+
+  const profileSelect = createElement('select', { class: 'aim-select' });
+  Object.assign(profileSelect.style, {
+    marginBottom: '20px', width: '280px', textAlign: 'center', fontSize: '1rem',
+    background: 'rgba(0,0,0,0.7)', border: '1px solid var(--blue)', color: 'var(--blue)'
+  });
+  
+  const pins = getPins();
+  // We can just add options for all pins by label
+  pins.forEach((p, idx) => {
+    const opt = document.createElement('option');
+    opt.value = p.pin;
+    opt.textContent = p.label.toUpperCase();
+    profileSelect.appendChild(opt);
+  });
+  loginPanel.appendChild(profileSelect);
+
+  const pinPadContainer = createElement('div');
+  Object.assign(pinPadContainer.style, {
+    transform: 'scale(0.85)', transformOrigin: 'top center', marginBottom: '-40px'
+  });
+  
+  const pinPad = buildPinPad({
+    onSuccess: (res) => {
+      cleanup();
+      localStorage.setItem('alphacore_intro_complete', '1');
+      if (onComplete) onComplete();
+    },
+    title: '// USER_AUTHENTICATION',
+    subtitle: 'PLEASE ENTER YOUR PIN'
+  });
+  pinPadContainer.appendChild(pinPad);
+  loginPanel.appendChild(pinPadContainer);
+
+  const guestBtn = createElement('button', { class: 'aim-btn' }, 'CONTINUE AS GUEST');
+  Object.assign(guestBtn.style, {
+    marginTop: '20px', padding: '10px 24px', background: 'transparent',
+    borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'
+  });
+  guestBtn.onmouseenter = () => { guestBtn.style.color = '#fff'; guestBtn.style.borderColor = '#fff'; };
+  guestBtn.onmouseleave = () => { guestBtn.style.color = 'rgba(255,255,255,0.7)'; guestBtn.style.borderColor = 'rgba(255,255,255,0.3)'; };
+  guestBtn.onclick = () => {
+    sessionStorage.setItem('current_profile', 'Guest');
     cleanup();
     localStorage.setItem('alphacore_intro_complete', '1');
     if (onComplete) onComplete();
   };
-  bootPanel.appendChild(startBtn);
+  loginPanel.appendChild(guestBtn);
+
+  bootPanel.appendChild(loginPanel);
 
   intro.appendChild(bootPanel);
 
@@ -161,7 +199,7 @@ export default function createIntro(onComplete) {
       lineIdx++;
       setTimeout(nextLine, 400 + Math.random() * 300);
     } else {
-      startBtn.style.display = '';
+      loginPanel.style.display = 'flex';
     }
   }
   setTimeout(nextLine, 300);

@@ -17,6 +17,7 @@ import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
 import AiModals from './pages/aimodals.js';
 import VaultPage from './pages/vault.js';
+import Research from './pages/research.js';
 
 const routes = {
   '/': Overview,
@@ -27,6 +28,7 @@ const routes = {
   '/admin': AdminPanel,
   '/aimodals': AiModals,
   '/vault': VaultPage,
+  '/research': Research,
 };
 
 function updateActiveNav(hash) {
@@ -41,6 +43,12 @@ function renderRoute() {
   const app = document.getElementById('app');
   app.innerHTML = '';
   app.scrollTop = 0;
+  
+  // Apply a glitch/fade transition effect
+  app.classList.remove('page-transition');
+  void app.offsetWidth; // trigger reflow
+  app.classList.add('page-transition');
+
   const routeFn = routes[hash] || routes['/'];
   app.appendChild(routeFn());
   updateActiveNav(hash);

@@ -21,6 +21,18 @@ export function initSidebar() {
   updateClock();
   clockInterval = setInterval(updateClock, 1000);
 
+  // Auth profile display
+  const authVal = document.getElementById('sidebar-auth-val');
+  if (authVal) {
+    const profile = sessionStorage.getItem('current_profile');
+    if (profile) {
+      authVal.textContent = profile.toUpperCase();
+      if (profile.toLowerCase() === 'guest') {
+        authVal.className = 's-val';
+      }
+    }
+  }
+
   // Uptime
   function updateUptime() {
     const uptimeEl = document.getElementById('uptime-counter');

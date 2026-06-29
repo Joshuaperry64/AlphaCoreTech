@@ -3,6 +3,7 @@
  * Converted from Tailwind to vanilla CSS.
  */
 import { createElement } from '../components/utils.js';
+import { buildPinPad } from '../components/pinpad.js';
 
 const phases = [
   {
@@ -61,9 +62,9 @@ const phases = [
   }
 ];
 
-export default function Diagnostics() {
-  const container = createElement('div', { class: 'diagnostics-page' });
-
+function buildDiagnosticsUI() {
+  const container = createElement('div', { class: 'diagnostics-root' });
+  
   const nodesHTML = phases.map((p, i) => {
     const side = i % 2 === 0 ? 'left' : 'right';
     return `
@@ -108,6 +109,29 @@ export default function Diagnostics() {
       </div>
     </div>
   `;
+  return container;
+}
+
+export default function Diagnostics() {
+  const container = createElement('div', { class: 'diagnostics-page' });
+
+  function showDiagnostics() {
+    container.innerHTML = '';
+    container.appendChild(buildDiagnosticsUI());
+  }
+
+  if (sessionStorage.getItem('diagnostics_authenticated')) {
+    showDiagnostics();
+  } else {
+    container.appendChild(buildPinPad({
+      authKey: 'diagnostics_authenticated',
+      requiredRole: 'diagnostics',
+      onSuccess: showDiagnostics,
+      title: 'ALPHACORE // DIAGNOSTICS',
+      subtitle: 'CLEARANCE LEVEL REQUIRED',
+      icon: '📊'
+    }));
+  }
 
   return container;
 }

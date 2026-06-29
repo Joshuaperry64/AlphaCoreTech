@@ -1,5 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { buildPinPad, getPins, addPin, revokePin } from '../components/pinpad.js';
+import { getLogs, clearLogs } from '../components/logger.js';
 
 export default function AdminPage() {
   const container = createElement('div');
@@ -96,6 +97,17 @@ function buildAdminUI() {
             </div>
           </div>
 
+          <div class="aim-field" style="margin-top: 10px;">
+            <label class="aim-label">ACCESS LEVEL / ROLES</label>
+            <div class="flex-row" style="display: flex; gap: 15px; margin-top: 5px; flex-wrap: wrap;">
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="aimodals"> AI Modals Access</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="generate"> Image Generation</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="lora"> LoRA Usage</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="vault"> Classified Vault</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="diagnostics"> Diagnostics Panel</label>
+            </div>
+          </div>
+
           <button class="aim-btn aim-btn-generate" id="btn-save-new-pin" style="margin-top: 15px;">
             AUTHORIZE SECURITY PIN
           </button>
@@ -111,6 +123,7 @@ function buildAdminUI() {
               <tr>
                 <th>LABEL</th>
                 <th>PIN</th>
+                <th>ROLES</th>
                 <th>TYPE</th>
                 <th>EXPIRES/STATUS</th>
                 <th>ACTION</th>
@@ -131,6 +144,29 @@ function buildAdminUI() {
           EMBRACE THE DARKNESS
         </button>
         <div id="darkness-menu-slot"></div>
+      </div>
+    </div>
+
+    <!-- User Logs section -->
+    <div class="panel" style="margin-top: 20px;">
+      <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>// SYSTEM_USER_LOGS</span>
+        <button class="aim-btn aim-btn-sm" id="btn-clear-logs" style="color:var(--accent, #ff003c); border-color:var(--accent, #ff003c);">CLEAR LOGS</button>
+      </div>
+      <div class="pin-list-wrap" style="max-height: 300px; overflow-y: auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>TIMESTAMP</th>
+              <th>PROFILE</th>
+              <th>ACTION</th>
+              <th>DETAILS</th>
+            </tr>
+          </thead>
+          <tbody id="user-logs-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -259,6 +295,9 @@ function buildAdminUI() {
     const type = pinType.value;
     const durationMin = parseInt(pinDuration.value) || 5;
 
+    const roleBoxes = root.querySelectorAll('.new-pin-role:checked');
+    const roles = Array.from(roleBoxes).map(b => b.value);
+
     if (!/^\d{8,9}$/.test(pin)) {
       showFeedback(pinFeedback, 'ERROR: PIN must be exactly 8 or 9 digits.', 'error');
       return;
@@ -268,13 +307,37 @@ function buildAdminUI() {
       pin,
       type,
       durationSeconds: durationMin * 60,
-      label
+      label,
+      roles
     });
 
     pinVal.value = '';
     pinLabel.value = '';
     showFeedback(pinFeedback, 'PIN authorized and written to security databank.', 'ok');
     updatePinList();
+  };
+
+  // Global impersonate hook
+  window.impersonateProfile = (pinValue) => {
+    const pins = getPins();
+    const target = pins.find(p => p.pin === pinValue);
+    if (!target) return;
+    
+    // Clear existing session roles
+    const allRoles = ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'];
+    allRoles.forEach(r => sessionStorage.removeItem(r + '_authenticated'));
+    
+    // Apply target profile roles
+    if (target.roles) {
+      target.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
+    }
+    
+    // Set active profile name
+    sessionStorage.setItem('current_profile', target.label);
+    
+    // Redirect to overview to see what is unlocked
+    window.location.hash = '#/';
+    window.location.reload();
   };
 
   // Global delete PIN hook for inline click handlers
@@ -323,9 +386,11 @@ function buildAdminUI() {
       tr.innerHTML = `
         <td class="table-label">${p.label}</td>
         <td class="table-mono">${isMaster ? '*******' : p.pin}</td>
+        <td class="table-mono" style="font-size:0.55rem; color:var(--blue-dim);">${(p.roles || []).join(', ').toUpperCase()}</td>
         <td class="table-mono">${p.type.toUpperCase()}</td>
         <td>${statusHtml}</td>
         <td>
+          <button class="aim-btn aim-btn-sm" onclick="impersonateProfile('${p.pin}')" style="margin-right: 8px;">IMPERSONATE</button>
           <button class="aim-btn aim-btn-sm" onclick="revokePin('${p.pin}')" ${isMaster ? 'disabled' : ''} style="border-color:${isMaster ? 'rgba(255,255,255,0.1)' : 'var(--accent, #ff003c)'}; color:${isMaster ? 'rgba(255,255,255,0.2)' : 'var(--accent, #ff003c)'}">
             REVOKE
           </button>
@@ -439,6 +504,45 @@ function buildAdminUI() {
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
+
+  renderLogs();
+
+  function renderLogs() {
+    const logsBody = root.querySelector('#user-logs-body');
+    const logs = getLogs();
+    
+    if (logs.length === 0) {
+      logsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">NO LOGS FOUND IN SYSTEM.</td></tr>';
+      return;
+    }
+    
+    logsBody.innerHTML = logs.map(log => {
+      const ts = new Date(log.timestamp).toLocaleString();
+      let det = '';
+      if (log.details) {
+        if (log.details.label) det += `[Profile: ${log.details.label}] `;
+        if (log.details.reason) det += `[Reason: ${log.details.reason}] `;
+        if (log.details.type) det += `[Type: ${log.details.type}] `;
+        if (log.details.prompt) det += `[Prompt: ${log.details.prompt.substring(0, 30)}...] `;
+      }
+      return `
+        <tr>
+          <td>${ts}</td>
+          <td style="color: var(--blue, #00b8ff);">${log.profile}</td>
+          <td>${log.action}</td>
+          <td style="font-size: 0.8rem; opacity: 0.8;">${det}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Clear Logs
+  root.querySelector('#btn-clear-logs').addEventListener('click', () => {
+    if (confirm('Are you sure you want to purge all system logs?')) {
+      clearLogs();
+      renderLogs();
+    }
+  });
 
   return root;
 }

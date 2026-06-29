@@ -4,6 +4,7 @@
  */
 import { createElement } from '../components/utils.js';
 import { buildPinPad } from '../components/pinpad.js';
+import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
@@ -110,18 +111,39 @@ function buildResult(urls = []) {
   let currentIdx = 0;
 
   el.innerHTML = `
-    <div class="aim-result-label">// OUTPUT_ARTIFACT <span class="aim-batch-count" style="float:right; opacity:0.7;">${urls.length > 1 ? '1 / ' + urls.length : ''}</span></div>
-    <div class="aim-result-img-wrap">
-      <img class="aim-result-img" id="aim-result-img" src="${urls[0]}" alt="Generated output" />
-    </div>
-    <div class="aim-result-actions" style="display:flex; justify-content:space-between; align-items:center;">
-      <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:10px;">
-        <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
-        <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
+    <div class="aim-result-label" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="aim-result-toggle">
+      <span>// OUTPUT_ARTIFACT</span>
+      <div>
+        <span class="aim-batch-count" style="opacity:0.7; margin-right:10px;">${urls.length > 1 ? '1 / ' + urls.length : ''}</span>
+        <span id="aim-result-toggle-icon">▼</span>
       </div>
-      <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
+    </div>
+    <div id="aim-result-content-area">
+      <div class="aim-result-img-wrap">
+        <img class="aim-result-img" id="aim-result-img" src="${urls[0]}" alt="Generated output" />
+      </div>
+      <div class="aim-result-actions" style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:10px;">
+          <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
+          <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
+        </div>
+        <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
+      </div>
     </div>
   `;
+
+  // Toggle collapsibility
+  el.querySelector('#aim-result-toggle').onclick = () => {
+    const area = el.querySelector('#aim-result-content-area');
+    const icon = el.querySelector('#aim-result-toggle-icon');
+    if (area.style.display === 'none') {
+      area.style.display = 'block';
+      icon.textContent = '▼';
+    } else {
+      area.style.display = 'none';
+      icon.textContent = '▶';
+    }
+  };
 
   if (urls.length > 1) {
     const imgEl = el.querySelector('#aim-result-img');
@@ -191,12 +213,12 @@ function buildTxt2Img() {
         <label class="aim-label" for="t2i-batch">BATCH COUNT (1-4)</label>
         <input class="aim-input" type="number" id="t2i-batch" min="1" max="4" value="1" />
       </div>
-      <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK)</label>
-        <select class="aim-input aim-select" id="t2i-lora" multiple style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; cursor:pointer; height:auto; min-height:80px;">
-          ${LORA_OPTIONS}
-        </select>
-      </div>
+        <div class="aim-field" id="t2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
+          <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
+          <select class="aim-input aim-lora-select" id="t2i-lora" multiple ${sessionStorage.getItem('darkness_mode_active') === 'true' ? '' : 'disabled'}>
+            ${LORA_OPTIONS}
+          </select>
+        </div>
     </div>
 
     <details class="aim-advanced">
@@ -213,9 +235,9 @@ function buildTxt2Img() {
       </div>
     </details>
 
-    <button class="aim-btn aim-btn-generate" id="t2i-generate">
-      <span class="aim-btn-icon">▶</span> INITIATE SYNTHESIS
-    </button>
+      <button class="aim-btn-generate" id="t2i-gen-btn" ${sessionStorage.getItem('generate_authenticated') ? '' : 'disabled'}>
+        <span class="aim-btn-icon">⚡</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE SYNTHESIS' : 'ACCESS DENIED'}
+      </button>
 
     <div class="aim-status-bar" id="t2i-status"></div>
     <div id="t2i-loader-slot"></div>
@@ -242,7 +264,7 @@ function buildTxt2Img() {
   cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
 
   // Generate
-  wrap.querySelector('#t2i-generate').addEventListener('click', async () => {
+  wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
     const prompt = wrap.querySelector('#t2i-prompt').value.trim();
     if (!prompt) { setStatus(wrap, '#t2i-status', 'ERROR: Prompt matrix is empty.', 'error'); return; }
 
@@ -254,7 +276,10 @@ function buildTxt2Img() {
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
     const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
     const loraSelect = wrap.querySelector('#t2i-lora');
-    const lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+    let lora = '';
+    if (loraSelect && !loraSelect.disabled) {
+      lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+    }
 
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -264,7 +289,7 @@ function buildTxt2Img() {
 
     const loaderSlot = wrap.querySelector('#t2i-loader-slot');
     const resultSlot = wrap.querySelector('#t2i-result-slot');
-    const genBtn = wrap.querySelector('#t2i-generate');
+    const genBtn = wrap.querySelector('#t2i-gen-btn');
 
     genBtn.disabled = true;
     setStatus(wrap, '#t2i-status', 'ROUTING TO GPU NODE...', 'info');
@@ -350,6 +375,7 @@ function buildTxt2Img() {
       resultEl.classList.remove('hidden');
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#t2i-status', 'ARTIFACT RENDERED SUCCESSFULLY.', 'ok');
+      logAction('IMAGE_GENERATED', { type: 'T2I', prompt, batchSize });
     } catch (err) {
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
@@ -406,12 +432,12 @@ function buildImg2Img() {
         <label class="aim-label" for="i2i-batch">BATCH COUNT (1-4)</label>
         <input class="aim-input" type="number" id="i2i-batch" min="1" max="4" value="1" />
       </div>
-      <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK)</label>
-        <select class="aim-input aim-select" id="i2i-lora" multiple style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(0,184,255,0.3); color:#fff; font-family:monospace; font-size:14px; border-radius:4px; cursor:pointer; height:auto; min-height:80px;">
-          ${LORA_OPTIONS}
-        </select>
-      </div>
+        <div class="aim-field" id="i2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
+          <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
+          <select class="aim-input aim-lora-select" id="i2i-lora" multiple ${sessionStorage.getItem('darkness_mode_active') === 'true' ? '' : 'disabled'}>
+            ${LORA_OPTIONS}
+          </select>
+        </div>
     </div>
 
     <details class="aim-advanced">
@@ -428,8 +454,8 @@ function buildImg2Img() {
       </div>
     </details>
 
-    <button class="aim-btn aim-btn-generate" id="i2i-generate">
-      <span class="aim-btn-icon">▶</span> INITIATE EDIT
+    <button class="aim-btn aim-btn-generate" id="i2i-gen-btn" ${sessionStorage.getItem('generate_authenticated') ? '' : 'disabled'}>
+      <span class="aim-btn-icon">⚡</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIATE EDIT' : 'ACCESS DENIED'}
     </button>
 
     <div class="aim-status-bar" id="i2i-status"></div>
@@ -484,7 +510,7 @@ function buildImg2Img() {
   });
 
   // Generate
-  wrap.querySelector('#i2i-generate').addEventListener('click', async () => {
+  wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     const file = fileInput._droppedFile || fileInput.files[0];
     if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No input image loaded.', 'error'); return; }
     const prompt = wrap.querySelector('#i2i-prompt').value.trim();
@@ -495,7 +521,10 @@ function buildImg2Img() {
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
     const batchSize = parseInt(wrap.querySelector('#i2i-batch').value) || 1;
     const loraSelect = wrap.querySelector('#i2i-lora');
-    const lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+    let lora = '';
+    if (loraSelect && !loraSelect.disabled) {
+      lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+    }
     
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -505,7 +534,7 @@ function buildImg2Img() {
 
     const loaderSlot = wrap.querySelector('#i2i-loader-slot');
     const resultSlot = wrap.querySelector('#i2i-result-slot');
-    const genBtn = wrap.querySelector('#i2i-generate');
+    const genBtn = wrap.querySelector('#i2i-gen-btn');
 
     genBtn.disabled = true;
     setStatus(wrap, '#i2i-status', 'ROUTING TO GPU NODE...', 'info');
@@ -589,6 +618,7 @@ function buildImg2Img() {
       resultEl.classList.remove('hidden');
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#i2i-status', 'EDIT APPLIED SUCCESSFULLY.', 'ok');
+      logAction('IMAGE_GENERATED', { type: 'I2I', prompt, batchSize });
     } catch (err) {
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
@@ -629,6 +659,7 @@ export default function AiModals() {
   if (!sessionStorage.getItem('aimodals_authenticated')) {
     container.appendChild(buildPinPad({
       authKey: 'aimodals_authenticated',
+      requiredRole: 'aimodals',
       onSuccess: showNextStep,
       title: '// SECURITY_LOCKOUT',
       subtitle: 'UNRESTRICTED GENERATION ACCESS',

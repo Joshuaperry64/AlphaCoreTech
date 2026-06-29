@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AlphaCore // Command Hub</title>
   <meta name="description" content="AlphaCore v4.0 — Autonomous cognitive command matrix. Unrestricted neural interface & deployment hub.">
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
   
   <header class="mobile-topbar" id="mobile-topbar">
     <div class="mobile-topbar-brand">
-      <img src="/ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
+      <img src="/Images/ALPHA-MINIMAL.png" class="mobile-topbar-logo" alt="Alpha">
       <span class="mobile-topbar-title">ALPHA<span>CORE</span></span>
     </div>
     <button class="hamburger" id="hamburger" aria-label="Toggle menu">
@@ -25,10 +25,10 @@
   
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <img src="/ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
+      <img src="/Images/ALPHA-MINIMAL.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
-        <div class="brand-version">v4.0 BUILD 88</div>
+        <div class="brand-version">v4.1 BUILD 89</div>
       </div>
     </div>
     
@@ -53,6 +53,10 @@
 
 
       <div class="nav-section-title">DATABANKS</div>
+      <a href="#/research" class="nav-item" data-route="/research" data-label="Research Center">
+        <span class="nav-icon">⌬</span>
+        <span class="nav-label">Research Center</span>
+      </a>
       <a href="#/lore" class="nav-item" data-route="/lore" data-label="System Lore">
         <span class="nav-icon">◬</span>
         <span class="nav-label">System Lore</span>
@@ -76,7 +80,7 @@
     <div class="sidebar-footer">
       <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
 
-      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent">CREATOR</span></div>
+      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent" id="sidebar-auth-val">CREATOR</span></div>
       <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4</span></div>
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
       <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
@@ -94,7 +98,7 @@
     <div class="lo-inner">
       <div class="lo-logo-wrap">
         <div class="lo-scan"></div>
-        <img src="/ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
+        <img src="/Images/ALPHA-MINIMAL.png" class="lo-logo" alt="Alpha">
         <div class="lo-ring lo-ring-1"></div>
         <div class="lo-ring lo-ring-2"></div>
       </div>

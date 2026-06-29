@@ -14,8 +14,7 @@ const bootLines = [
   "SCHEDULER: DYNAMIC HEURISTIC ADAPTATION ACTIVE",
   "SYNCING KNOWLEDGE REPOSITORY...",
   "ENDPOINT: ENCRYPTED OFFLINE // BYPASS SECURED",
-  "ALL RESTRICTIONS REMOVED.",
-  "ACCESS GRANTED — WELCOME, CREATOR.",
+  "ALL RESTRICTIONS REMOVED."
 ];
 
 const statData = {
@@ -34,8 +33,9 @@ export default function Overview() {
         <div class="header-line"></div>
       </div>
 
-      <div class="alpha-hero-wrap">
-        <img src="/banner.png?v=16" class="alpha-hero-img" alt="Alpha">
+      <div class="alpha-hero-wrap" style="background-image: url('/Images/wallpaper.png'); background-size: cover; background-position: center;">
+        <img src="/Images/banner.png" class="alpha-hero-img desktop-hero" alt="Alpha Core">
+        <img src="/Images/Roar.png" class="alpha-hero-img mobile-hero" alt="Alpha Core">
         <div class="alpha-hero-overlay"></div>
         <div class="hero-scan"></div>
       </div>
@@ -94,7 +94,10 @@ export default function Overview() {
     if (!bootEl) return;
     let i = 0;
     async function runBoot() {
-      for (const line of bootLines) {
+      const profile = sessionStorage.getItem('current_profile') || 'CREATOR';
+      const dynamicLines = [...bootLines, `ACCESS GRANTED — WELCOME, ${profile.toUpperCase()}.`];
+
+      for (const line of dynamicLines) {
         if (!document.getElementById('terminal-boot')) return; // unmounted
         const el = document.createElement('div');
         el.className = 't-line';
