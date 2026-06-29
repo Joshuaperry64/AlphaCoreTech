@@ -21,7 +21,8 @@ export default function AdminPage() {
       onSuccess: showAdmin,
       title: 'ALPHACORE // ADMIN_LOCKOUT',
       subtitle: 'ADMINISTRATOR AUTHENTICATION REQUIRED',
-      icon: '⚙'
+      icon: '⚙',
+      requiredRole: 'admin'
     }));
   }
 

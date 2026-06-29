@@ -113,7 +113,10 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
   
-  const availablePins = getPins();
+  let availablePins = getPins();
+  if (requiredRole) {
+    availablePins = availablePins.filter(p => p.roles && p.roles.includes(requiredRole));
+  }
   const profileOptions = availablePins.map(p => `<option value="${p.pin}">${p.label}</option>`).join('');
 
   wrap.innerHTML = `

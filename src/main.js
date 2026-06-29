@@ -9,6 +9,7 @@ import { initModal } from './components/modal.js';
 import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer } from './components/db_sync.js';
+import { buildPinPad } from './components/pinpad.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -49,6 +50,55 @@ function renderRoute() {
   app.classList.remove('page-transition');
   void app.offsetWidth; // trigger reflow
   app.classList.add('page-transition');
+
+  // GLOBAL LOGIN WALL
+  const currentProfile = sessionStorage.getItem('current_profile');
+  const sidebar = document.getElementById('sidebar');
+  const mobileTopbar = document.getElementById('mobile-topbar');
+  
+  if (!currentProfile) {
+    if (sidebar) sidebar.style.display = 'none';
+    if (mobileTopbar) mobileTopbar.style.display = 'none';
+    
+    const loginContainer = createElement('div', { class: 'global-login-page' });
+    loginContainer.style.cssText = 'display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;';
+    
+    loginContainer.appendChild(buildPinPad({
+      authKey: 'global_authenticated',
+      onSuccess: () => {
+        if (sidebar) sidebar.style.display = '';
+        if (mobileTopbar) mobileTopbar.style.display = '';
+        
+        // Update sidebar visual profile text immediately
+        const authVal = document.getElementById('sidebar-auth-val');
+        if (authVal) {
+          const profile = sessionStorage.getItem('current_profile');
+          if (profile) authVal.textContent = profile.toUpperCase();
+        }
+        
+        // Ensure role visibility on tabs applies immediately
+        import('./components/sidebar.js').then(module => {
+          // Temporarily doing it manually for immediate effect before reload
+          const pins = JSON.parse(localStorage.getItem('alphacore_pins') || '[]');
+          const userPin = pins.find(p => p.label === sessionStorage.getItem('current_profile'));
+          const hasAdmin = userPin && userPin.roles && userPin.roles.includes('admin');
+          const adminTab = document.querySelector('a[data-route="/admin"]');
+          if (adminTab) adminTab.style.display = hasAdmin ? 'flex' : 'none';
+        });
+
+        renderRoute();
+      },
+      title: 'ALPHACORE // IDENTITY_VERIFICATION',
+      subtitle: 'ESTABLISH SECURE HANDSHAKE',
+      icon: '⟁'
+    }));
+    
+    app.appendChild(loginContainer);
+    return;
+  } else {
+    if (sidebar) sidebar.style.display = '';
+    if (mobileTopbar) mobileTopbar.style.display = '';
+  }
 
   const routeFn = routes[hash] || routes['/'];
   app.appendChild(routeFn());

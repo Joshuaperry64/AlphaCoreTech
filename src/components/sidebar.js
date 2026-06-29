@@ -2,6 +2,7 @@
  * Sidebar — Clock, uptime, hamburger menu
  * Initialized once globally.
  */
+import { getPins } from './pinpad.js';
 
 let clockInterval = null;
 let uptimeInterval = null;
@@ -29,6 +30,14 @@ export function initSidebar() {
       authVal.textContent = profile.toUpperCase();
       if (profile.toLowerCase() === 'guest') {
         authVal.className = 's-val';
+      }
+      
+      const pins = getPins();
+      const userPin = pins.find(p => p.label === profile);
+      const hasAdmin = userPin && userPin.roles && userPin.roles.includes('admin');
+      const adminTab = document.querySelector('a[data-route="/admin"]');
+      if (adminTab) {
+        adminTab.style.display = hasAdmin ? 'flex' : 'none';
       }
     }
   }
