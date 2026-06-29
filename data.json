@@ -20,8 +20,7 @@
       "label": "J. P.",
       "roles": [
         "aimodals",
-        "generate",
-        "vault"
+        "generate"
       ],
       "createdAt": 1782687600000
     }

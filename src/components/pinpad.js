@@ -29,7 +29,7 @@ export function getPins() {
       pin: '20022005',
       type: 'permanent',
       label: 'J. P.',
-      roles: ['aimodals', 'generate', 'vault'],
+      roles: ['aimodals', 'generate'],
       createdAt: Date.now()
     });
     localStorage.setItem('alphacore_pins', JSON.stringify(pins));

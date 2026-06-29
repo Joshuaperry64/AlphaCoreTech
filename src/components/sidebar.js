@@ -39,6 +39,12 @@ export function initSidebar() {
       if (adminTab) {
         adminTab.style.display = hasAdmin ? 'flex' : 'none';
       }
+      
+      const hasVault = userPin && userPin.roles && userPin.roles.includes('vault');
+      const vaultTab = document.querySelector('a[data-route="/vault"]');
+      if (vaultTab) {
+        vaultTab.style.display = hasVault ? 'flex' : 'none';
+      }
     }
   }
 
