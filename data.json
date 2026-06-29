@@ -3,7 +3,7 @@
     {
       "pin": "672167566",
       "type": "permanent",
-      "label": "Master Admin PIN",
+      "label": "Architect",
       "roles": [
         "admin",
         "vault",
@@ -17,7 +17,7 @@
     {
       "pin": "20022005",
       "type": "permanent",
-      "label": "Father",
+      "label": "J. P.",
       "roles": [
         "aimodals",
         "generate",

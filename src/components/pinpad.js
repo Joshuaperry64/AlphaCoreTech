@@ -9,20 +9,34 @@ import { pushToServer } from './db_sync.js';
 // Load all registered PINs from localStorage or initialize defaults
 export function getPins() {
   const data = localStorage.getItem('alphacore_pins');
+  let pins = [];
   if (!data) {
-    const defaultPins = [
-      { pin: '672167566', type: 'permanent', label: 'Master Admin PIN', roles: ['admin', 'vault'], createdAt: Date.now() }
+    pins = [
+      { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() }
     ];
-    localStorage.setItem('alphacore_pins', JSON.stringify(defaultPins));
-    pushToServer('pins', defaultPins);
-    return defaultPins;
+  } else {
+    try {
+      pins = JSON.parse(data);
+    } catch (e) {
+      console.error('Failed to parse PINs from storage:', e);
+      pins = [];
+    }
   }
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    console.error('Failed to parse PINs from storage:', e);
-    return [];
+
+  // Auto-inject J. P. profile if missing from local storage
+  if (!pins.some(p => p.pin === '20022005')) {
+    pins.push({
+      pin: '20022005',
+      type: 'permanent',
+      label: 'J. P.',
+      roles: ['aimodals', 'generate', 'vault'],
+      createdAt: Date.now()
+    });
+    localStorage.setItem('alphacore_pins', JSON.stringify(pins));
+    pushToServer('pins', pins);
   }
+
+  return pins;
 }
 
 // Save PINs to localStorage
@@ -98,12 +112,23 @@ export function validatePin(pinVal, requiredRole = null) {
 export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '// SECURITY_LOCKOUT', subtitle = 'UNRESTRICTED ACCESS REQUIRED', icon = '🔒' }) {
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
+  
+  const availablePins = getPins();
+  const profileOptions = availablePins.map(p => `<option value="${p.pin}">${p.label}</option>`).join('');
+
   wrap.innerHTML = `
     <div class="aim-pin-box">
       <div class="aim-pin-header">
         <div class="aim-pin-icon">${icon}</div>
         <div class="aim-pin-title">${title}</div>
         <div class="aim-pin-subtitle">${subtitle}</div>
+      </div>
+      
+      <div class="aim-pin-profile-select" style="margin-bottom: 15px; text-align: center;">
+        <select id="aim-pin-user-select" class="aim-select" style="width: 80%;">
+          <option value="" disabled selected>Select User Profile</option>
+          ${profileOptions}
+        </select>
       </div>
       
       <div class="aim-pin-display-wrap">
@@ -131,9 +156,17 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   `;
 
   let currentPin = '';
+  let selectedProfile = null;
   const display = wrap.querySelector('#aim-pin-display');
   const feedback = wrap.querySelector('#aim-pin-feedback');
   const pinBox = wrap.querySelector('.aim-pin-box');
+  const userSelect = wrap.querySelector('#aim-pin-user-select');
+  
+  userSelect.addEventListener('change', (e) => {
+    selectedProfile = e.target.value;
+    handleClear();
+  });
+
   function updateDisplay() {
     display.innerHTML = '';
     for (let i = 0; i < currentPin.length; i++) {
@@ -144,6 +177,18 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   }
 
   function handleInput(val) {
+    if (!selectedProfile) {
+      feedback.textContent = '> SELECT A USER PROFILE FIRST';
+      feedback.className = 'aim-pin-feedback aim-feedback-error';
+      setTimeout(() => {
+        if (!selectedProfile) {
+          feedback.textContent = '> ENTER VALID ACCESS PIN';
+          feedback.className = 'aim-pin-feedback';
+        }
+      }, 1500);
+      return;
+    }
+
     if (currentPin.length < 9) {
       currentPin += val;
       updateDisplay();
@@ -173,8 +218,17 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   }
 
   function handleEnter() {
+    if (!selectedProfile) {
+      handleFailure('SELECT A USER PROFILE FIRST');
+      return;
+    }
     const result = validatePin(currentPin, requiredRole);
     if (result.valid) {
+      if (result.pinObj.pin !== selectedProfile) {
+        logAction('AUTH_FAILED', { reason: 'PIN DOES NOT MATCH SELECTED PROFILE' });
+        handleFailure('PIN INVALID FOR SELECTED PROFILE');
+        return;
+      }
       logAction('AUTH_SUCCESS', { label: result.pinObj.label });
       handleSuccess(result);
     } else {

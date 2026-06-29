@@ -669,9 +669,9 @@ function buildStoragePanel() {
   } catch(e) {}
 
   const myFiles = files.filter(f => f.owner === currentProfile);
-  const sharedFiles = currentProfile === 'Father'
+  const sharedFiles = currentProfile === 'J. P.'
     ? []
-    : files.filter(f => f.shared && f.owner !== currentProfile && f.owner !== 'Father');
+    : files.filter(f => f.shared && f.owner !== currentProfile && f.owner !== 'J. P.');
 
   function renderFileList(list, listTitle, emptyMsg) {
     let html = `<div class="panel-subtitle">// ${listTitle}</div>`;
@@ -711,7 +711,7 @@ function buildStoragePanel() {
         <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
           <input type="text" class="aim-input" id="new-file-name" placeholder="FILENAME.TXT" />
           <textarea class="aim-textarea" id="new-file-content" rows="6" placeholder="ENTER CLASSIFIED DATA..."></textarea>
-          <label style="color: var(--blue-dim); font-size: 0.75rem; display: ${currentProfile === 'Father' ? 'none' : 'block'};">
+          <label style="color: var(--blue-dim); font-size: 0.75rem; display: ${currentProfile === 'J. P.' ? 'none' : 'block'};">
             <input type="checkbox" id="new-file-shared"> SHARE WITH OTHER USERS
           </label>
           <button class="aim-btn aim-btn-generate" id="btn-save-file" style="margin-top:10px;">ENCRYPT & SAVE</button>
@@ -725,7 +725,7 @@ function buildStoragePanel() {
   btnSave.onclick = () => {
     const filename = el.querySelector('#new-file-name').value.trim();
     const content = el.querySelector('#new-file-content').value.trim();
-    const shared = currentProfile === 'Father' ? false : el.querySelector('#new-file-shared').checked;
+    const shared = currentProfile === 'J. P.' ? false : el.querySelector('#new-file-shared').checked;
     
     if (!filename || !content) {
       alert("FILENAME AND CONTENT REQUIRED.");
