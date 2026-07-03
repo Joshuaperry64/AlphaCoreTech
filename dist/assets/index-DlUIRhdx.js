@@ -555,7 +555,7 @@
         <div class="aim-seg aim-seg-3" id="t2i-model">
           <button class="aim-seg-btn active" data-j="1" data-c="0">JUGGERNAUT</button>
           <button class="aim-seg-btn" data-j="0" data-c="1">CYBERREAL</button>
-          <button class="aim-seg-btn" data-j="1" data-c="1">MERGED</button>
+          <button class="aim-seg-btn" data-j="1" data-c="1">UNHOLY</button>
         </div>
       </div>
     </div>
