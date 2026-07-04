@@ -36,8 +36,14 @@ export default function CognitiveUplink() {
             <span class="chat-text">Cognitive Core uplink established. Active profile injected.</span>
           </div>
         </div>
-        <div class="chat-input-wrap">
-          <div class="chat-input-prefix">&gt;_</div>
+        <div class="chat-input-wrap" style="position: relative;">
+          <button class="chat-input-prefix" id="cmd-menu-btn" title="Command Menu" style="background:transparent; border:none; cursor:pointer; color:var(--text); font-family:inherit; outline:none; font-size:inherit;">&gt;_</button>
+          
+          <div id="cmd-menu-popup" style="display: none; position: absolute; bottom: 110%; left: 0; background: rgba(5,5,10,0.95); border: 1px solid var(--border); padding: 10px; flex-direction: column; gap: 10px; z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(0, 184, 255, 0.2);">
+            <button class="aim-btn" id="cmd-clear-chat" style="padding: 6px 12px; font-size: 0.8rem; width: 100%;">// CLEAR CHAT</button>
+            <button class="aim-btn" id="cmd-reload-history" style="padding: 6px 12px; font-size: 0.8rem; width: 100%;">// RELOAD HISTORY</button>
+          </div>
+          
           <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message or /imagine..." maxlength="4000"></textarea>
           <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT">
             <span class="chat-send-icon">⟩</span>
@@ -143,6 +149,37 @@ export default function CognitiveUplink() {
     chatInput.addEventListener('input', () => {
       chatInput.style.height = 'auto';
       chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+    });
+
+    // Command Menu Logic
+    const cmdMenuBtn = document.getElementById('cmd-menu-btn');
+    const cmdMenuPopup = document.getElementById('cmd-menu-popup');
+    const cmdClearChat = document.getElementById('cmd-clear-chat');
+    const cmdReloadHistory = document.getElementById('cmd-reload-history');
+    
+    cmdMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cmdMenuPopup.style.display = cmdMenuPopup.style.display === 'flex' ? 'none' : 'flex';
+    });
+    
+    document.addEventListener('click', () => {
+      if (cmdMenuPopup) cmdMenuPopup.style.display = 'none';
+    });
+    cmdMenuPopup.addEventListener('click', (e) => e.stopPropagation());
+    
+    cmdClearChat.addEventListener('click', () => {
+      chatMessages.innerHTML = '';
+      history = [];
+      appendMessage('SYSTEM', 'Chat history cleared. Active profile maintained.', 'system-msg');
+      cmdMenuPopup.style.display = 'none';
+    });
+    
+    cmdReloadHistory.addEventListener('click', () => {
+      chatMessages.innerHTML = '';
+      history = [];
+      appendMessage('SYSTEM', 'Reloading history from endpoint...', 'system-msg');
+      loadHistory();
+      cmdMenuPopup.style.display = 'none';
     });
 
     chatInput.addEventListener('keydown', (e) => {
