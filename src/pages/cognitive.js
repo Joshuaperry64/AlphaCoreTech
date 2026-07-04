@@ -115,7 +115,7 @@ export default function CognitiveUplink() {
 
     async function loadHistory() {
       try {
-        const res = await fetch(\`\${MODAL_API}/api/history?profile=\${encodeURIComponent(profile)}\`);
+        const res = await fetch(`${MODAL_API}/api/history?profile=${encodeURIComponent(profile)}`);
         if (res.ok) {
           const pastHistory = await res.json();
           if (pastHistory && pastHistory.length > 0) {
@@ -170,7 +170,7 @@ export default function CognitiveUplink() {
       const typingEl = appendMessage('ALPHA', '...', 'alpha-msg typing');
 
       try {
-        const res = await fetch(\`\${MODAL_API}/api/chat\`, {
+        const res = await fetch(`${MODAL_API}/api/chat`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({text, history, profile})
@@ -202,8 +202,8 @@ export default function CognitiveUplink() {
 
     function appendMessage(prefix, text, className) {
       const msg = document.createElement('div');
-      msg.className = \`chat-msg \${className}\`;
-      msg.innerHTML = \`<span class="chat-prefix">[\${prefix}]</span><span class="chat-text">\${escapeHtml(text)}</span>\`;
+      msg.className = `chat-msg ${className}`;
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">${escapeHtml(text)}</span>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
@@ -211,8 +211,8 @@ export default function CognitiveUplink() {
     
     function appendImage(prefix, url, prompt) {
       const msg = document.createElement('div');
-      msg.className = \`chat-msg alpha-msg\`;
-      msg.innerHTML = \`<span class="chat-prefix">[\${prefix}]</span><span class="chat-text">Asset rendered.</span><br/><img src="\${url}" style="max-width:100%; border-radius:4px; margin-top:10px; border:1px solid var(--border);" />\`;
+      msg.className = `chat-msg alpha-msg`;
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Asset rendered.</span><br/><img src="${url}" style="max-width:100%; border-radius:4px; margin-top:10px; border:1px solid var(--border);" />`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
@@ -232,7 +232,7 @@ export default function CognitiveUplink() {
        if(!key || !val) return;
        memSaveBtn.textContent = "INJECTING...";
        try {
-           await fetch(\`\${MODAL_API}/api/memory\`, {
+           await fetch(`${MODAL_API}/api/memory`, {
                method: 'POST',
                headers: {'Content-Type': 'application/json'},
                body: JSON.stringify({profile, key, value: val})
@@ -246,10 +246,10 @@ export default function CognitiveUplink() {
 
     async function loadMemory() {
        try {
-           const res = await fetch(\`\${MODAL_API}/api/memory?profile=\${encodeURIComponent(profile)}\`);
+           const res = await fetch(`${MODAL_API}/api/memory?profile=${encodeURIComponent(profile)}`);
            const mems = await res.json();
            const list = container.querySelector('#memory-list');
-           list.innerHTML = mems.map(m => \`<div style="padding:10px; border-bottom:1px solid var(--border);"><strong>\${escapeHtml(m.key)}</strong>: \${escapeHtml(m.value)}</div>\`).join('');
+           list.innerHTML = mems.map(m => `<div style="padding:10px; border-bottom:1px solid var(--border);"><strong>${escapeHtml(m.key)}</strong>: ${escapeHtml(m.value)}</div>`).join('');
            if(mems.length === 0) list.innerHTML = '<div style="color:var(--text-muted)">No active memories.</div>';
        } catch(e) { console.error(e); }
     }
@@ -257,10 +257,10 @@ export default function CognitiveUplink() {
     // GALLERY
     async function loadGallery() {
        try {
-           const res = await fetch(\`\${MODAL_API}/api/gallery?profile=\${encodeURIComponent(profile)}\`);
+           const res = await fetch(`${MODAL_API}/api/gallery?profile=${encodeURIComponent(profile)}`);
            const imgs = await res.json();
            const grid = container.querySelector('#gallery-grid');
-           grid.innerHTML = imgs.map(img => \`<img src="\${MODAL_API + img.url}" title="\${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);">\`).join('');
+           grid.innerHTML = imgs.map(img => `<img src="${MODAL_API + img.url}" title="${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);">`).join('');
            if(imgs.length === 0) grid.innerHTML = '<div style="color:var(--text-muted)">No generated assets found.</div>';
        } catch(e) { console.error(e); }
     }
