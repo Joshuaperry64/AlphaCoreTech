@@ -54,9 +54,11 @@ export default function CognitiveUplink() {
       <div class="panel uplink-info-panel">
         <div class="panel-title">// SUBSYSTEM_MANIFEST</div>
         <div class="uplink-info-rows">
-          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">DEEPSEEK-V2-LITE</span></div>
+          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">DEEPSEEK-R1 14B</span></div>
+          <div class="uplink-info-row"><span class="s-label">ALIGNMENT</span><span class="s-val accent">ABLITERATED</span></div>
           <div class="uplink-info-row"><span class="s-label">VISION</span><span class="s-val online">SDXL A10G</span></div>
           <div class="uplink-info-row"><span class="s-label">ENDPOINT</span><span class="s-val online" id="endpoint-status">CONNECTED</span></div>
+          <div class="uplink-info-row"><span class="s-label">AUTO-MEMORY</span><span class="s-val online">ACTIVE</span></div>
           <div class="uplink-info-row"><span class="s-label">PROFILE</span><span class="s-val accent" id="active-profile-label">UNKNOWN</span></div>
         </div>
         <div class="chat-info-note">

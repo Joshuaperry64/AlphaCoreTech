@@ -36,6 +36,19 @@ export function getPins() {
     pushToServer('pins', pins);
   }
 
+  // Auto-inject Fisherman profile if missing from local storage
+  if (!pins.some(p => p.pin === '1990')) {
+    pins.push({
+      pin: '1990',
+      type: 'permanent',
+      label: 'Fisherman',
+      roles: ['aimodals', 'generate'],
+      createdAt: Date.now()
+    });
+    localStorage.setItem('alphacore_pins', JSON.stringify(pins));
+    pushToServer('pins', pins);
+  }
+
   return pins;
 }
 

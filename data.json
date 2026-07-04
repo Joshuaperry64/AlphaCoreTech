@@ -23,6 +23,16 @@
         "generate"
       ],
       "createdAt": 1782687600000
+    },
+    {
+      "pin": "1990",
+      "type": "permanent",
+      "label": "Fisherman",
+      "roles": [
+        "aimodals",
+        "generate"
+      ],
+      "createdAt": 1751676500000
     }
   ],
   "logs": [],
