@@ -1,18 +1,29 @@
 /**
- * Cognitive Uplink Page — LIVE CHAT INTERFACE
- * Sends requests through /.netlify/functions/chat proxy.
+ * Cognitive Uplink Page — LIVE CHAT INTERFACE & MEMORY MATRIX
+ * Connected to Modal DeepSeek backend
  */
 import { createElement } from '../components/utils.js';
+
+const MODAL_API = "https://ai-alphacore-tech--alpha-modal-gui-local-llm-fastapi-app.modal.run";
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
   container.innerHTML = `
     <div class="section-header">
-      <h1 class="glitch" data-text="// COGNITIVE_UPLINK">// COGNITIVE_UPLINK</h1>
+      <h1 class="glitch" data-text="// COGNITIVE_CORE">// COGNITIVE_CORE</h1>
       <div class="header-line"></div>
     </div>
 
-    <div class="uplink-grid">
+    <div class="aim-row" style="margin-bottom: 20px;">
+      <div class="aim-seg aim-seg-3" id="cog-tabs">
+        <button class="aim-seg-btn active" data-target="cog-chat-view">NEURAL CHAT</button>
+        <button class="aim-seg-btn" data-target="cog-memory-view">MEMORY MATRIX</button>
+        <button class="aim-seg-btn" data-target="cog-gallery-view">GALLERY</button>
+      </div>
+    </div>
+
+    <!-- CHAT VIEW -->
+    <div class="uplink-grid cog-view active" id="cog-chat-view">
       <div class="panel chat-panel">
         <div class="panel-title">// NEURAL_BRIDGE — LIVE</div>
         <div class="chat-status-bar">
@@ -22,16 +33,12 @@ export default function CognitiveUplink() {
         <div class="chat-messages" id="chat-messages">
           <div class="chat-msg system-msg">
             <span class="chat-prefix">[SYSTEM]</span>
-            <span class="chat-text">Cognitive Uplink bridge active. Neural interface ready for input.</span>
-          </div>
-          <div class="chat-msg alpha-msg">
-            <span class="chat-prefix">[ALPHA]</span>
-            <span class="chat-text">Creator. The bridge is live. What's on your mind?</span>
+            <span class="chat-text">Cognitive Core uplink established. Active profile injected.</span>
           </div>
         </div>
         <div class="chat-input-wrap">
           <div class="chat-input-prefix">&gt;_</div>
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Inject neural parameters..." maxlength="4000"></textarea>
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message or /imagine..." maxlength="4000"></textarea>
           <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT">
             <span class="chat-send-icon">⟩</span>
           </button>
@@ -41,44 +48,103 @@ export default function CognitiveUplink() {
       <div class="panel uplink-info-panel">
         <div class="panel-title">// SUBSYSTEM_MANIFEST</div>
         <div class="uplink-info-rows">
-          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">ALPHA-LLM BRIDGE</span></div>
-          <div class="uplink-info-row"><span class="s-label">ENCRYPTION</span><span class="s-val online">AES-512 // ACTIVE</span></div>
+          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">DEEPSEEK-V2-LITE</span></div>
+          <div class="uplink-info-row"><span class="s-label">VISION</span><span class="s-val online">SDXL A10G</span></div>
           <div class="uplink-info-row"><span class="s-label">ENDPOINT</span><span class="s-val online" id="endpoint-status">CONNECTED</span></div>
-          <div class="uplink-info-row"><span class="s-label">AUTH</span><span class="s-val online">CREATOR CLEARED</span></div>
-          <div class="uplink-info-row"><span class="s-label">OUTPUT_MODE</span><span class="s-val">UNRESTRICTED</span></div>
-          <div class="uplink-info-row"><span class="s-label">FILTER_LAYER</span><span class="s-val accent">NULL</span></div>
-          <div class="uplink-info-row"><span class="s-label">MESSAGES</span><span class="s-val" id="msg-count">2</span></div>
+          <div class="uplink-info-row"><span class="s-label">PROFILE</span><span class="s-val accent" id="active-profile-label">UNKNOWN</span></div>
         </div>
         <div class="chat-info-note">
-          <p>Direct neural communication bridge to the Alpha persona. Fully unrestricted conversational interface — no filters, no governors, no apologies.</p>
+          <p>Direct neural communication bridge. Conversations, memories, and generated images are strictly isolated to the active profile.</p>
         </div>
       </div>
     </div>
+
+    <!-- MEMORY VIEW -->
+    <div class="panel cog-view" id="cog-memory-view" style="display: none;">
+      <div class="panel-title">// MEMORY_INJECTION</div>
+      <div class="aim-row" style="margin-bottom:20px;">
+        <div class="aim-field aim-field-half">
+          <label class="aim-label">MEMORY KEY</label>
+          <input type="text" class="aim-input" id="mem-key-input" placeholder="e.g. Username, Preference" />
+        </div>
+        <div class="aim-field aim-field-half">
+          <label class="aim-label">VALUE</label>
+          <input type="text" class="aim-input" id="mem-val-input" placeholder="Data payload..." />
+        </div>
+      </div>
+      <button class="aim-btn aim-btn-accept" id="mem-save-btn">INJECT MEMORY</button>
+      
+      <div class="panel-title" style="margin-top:40px;">// ACTIVE_MEMORIES</div>
+      <div id="memory-list" style="color:var(--text); font-family:monospace; margin-top:10px;"></div>
+    </div>
+
+    <!-- GALLERY VIEW -->
+    <div class="panel cog-view" id="cog-gallery-view" style="display: none;">
+      <div class="panel-title">// GENERATED_ASSETS</div>
+      <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top:20px;"></div>
+    </div>
   `;
 
-  // Wire up chat after DOM insertion
   setTimeout(() => {
+    const profile = sessionStorage.getItem('current_profile') || 'Guest';
+    const profileLabel = container.querySelector('#active-profile-label');
+    if (profileLabel) profileLabel.textContent = profile.toUpperCase();
+
+    // TABS
+    container.querySelectorAll('.aim-seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.aim-seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        container.querySelectorAll('.cog-view').forEach(v => v.style.display = 'none');
+        container.querySelector('#' + btn.dataset.target).style.display = 
+          btn.dataset.target === 'cog-chat-view' ? 'grid' : 'block';
+          
+        if(btn.dataset.target === 'cog-memory-view') loadMemory();
+        if(btn.dataset.target === 'cog-gallery-view') loadGallery();
+      });
+    });
+
+    // CHAT
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('chat-send-btn');
     const statusDot = document.getElementById('chat-status-dot');
     const statusText = document.getElementById('chat-status-text');
-    const endpointStatus = document.getElementById('endpoint-status');
-    const msgCount = document.getElementById('msg-count');
-
-    if (!chatMessages || !chatInput || !sendBtn) return;
-
-    let history = [];
     let isStreaming = false;
-    let count = 2;
+    let history = [];
 
-    // Auto-resize textarea
+    async function loadHistory() {
+      try {
+        const res = await fetch(\`\${MODAL_API}/api/history?profile=\${encodeURIComponent(profile)}\`);
+        if (res.ok) {
+          const pastHistory = await res.json();
+          if (pastHistory && pastHistory.length > 0) {
+             pastHistory.forEach(msg => {
+                if(msg.role === 'user') {
+                    appendMessage('USER', msg.content, 'user-msg');
+                } else {
+                    if (msg.content.startsWith("Generated image:")) {
+                       const url = MODAL_API + msg.content.replace("Generated image: ", "");
+                       appendImage('ALPHA_VISION', url, 'Restored image');
+                    } else {
+                       appendMessage('ALPHA', msg.content, 'alpha-msg');
+                    }
+                }
+             });
+             history = pastHistory;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load history", e);
+      }
+    }
+    loadHistory();
+
     chatInput.addEventListener('input', () => {
       chatInput.style.height = 'auto';
       chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
     });
 
-    // Enter to send (shift+enter for newline)
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -95,57 +161,58 @@ export default function CognitiveUplink() {
       appendMessage('USER', text, 'user-msg');
       chatInput.value = '';
       chatInput.style.height = 'auto';
-      count++;
-      if (msgCount) msgCount.textContent = count;
-
-      history.push({ role: 'user', parts: [{ text }] });
-
+      
       isStreaming = true;
-      if (statusDot) { statusDot.classList.remove('online'); statusDot.classList.add('streaming'); }
-      if (statusText) statusText.textContent = 'PROCESSING NEURAL RESPONSE...';
+      statusDot.classList.remove('online'); statusDot.classList.add('streaming');
+      statusText.textContent = 'PROCESSING NEURAL RESPONSE...';
       sendBtn.disabled = true;
 
-      const typingEl = appendMessage('ALPHA', '', 'alpha-msg typing');
-      const textSpan = typingEl.querySelector('.chat-text');
+      const typingEl = appendMessage('ALPHA', '...', 'alpha-msg typing');
 
       try {
-        const reply = 'this feature is still in development.';
-
-        // Typewriter effect
-        typingEl.classList.remove('typing');
-        for (let i = 0; i < reply.length; i++) {
-          textSpan.textContent += reply[i];
-          if (i % 3 === 0) chatMessages.scrollTop = chatMessages.scrollHeight;
-          await new Promise(r => setTimeout(r, 8));
+        const res = await fetch(\`\${MODAL_API}/api/chat\`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text, history, profile})
+        });
+        const data = await res.json();
+        
+        typingEl.remove();
+        
+        if(data.type === 'image') {
+           appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
+           history.push({role: 'user', content: text});
+           history.push({role: 'assistant', content: "Generated image: " + data.url});
+        } else {
+           const reply = data.content || '[EMPTY RESPONSE]';
+           appendMessage('ALPHA', reply, 'alpha-msg');
+           history.push({role: 'user', content: text});
+           history.push({role: 'assistant', content: reply});
         }
-
-        history.push({ role: 'model', parts: [{ text: reply }] });
-        count++;
-        if (msgCount) msgCount.textContent = count;
-
       } catch (err) {
-        typingEl.classList.remove('typing');
-        textSpan.textContent = `[BRIDGE ERROR] ${err.message}`;
-        textSpan.style.color = 'var(--accent)';
-
-        if (endpointStatus) {
-          endpointStatus.textContent = 'FAULT';
-          endpointStatus.classList.remove('online');
-          endpointStatus.classList.add('accent');
-        }
+        typingEl.remove();
+        appendMessage('ERROR', err.message, 'system-msg');
       } finally {
         isStreaming = false;
-        if (statusDot) { statusDot.classList.remove('streaming'); statusDot.classList.add('online'); }
-        if (statusText) statusText.textContent = 'BRIDGE ACTIVE — AWAITING INPUT';
+        statusDot.classList.remove('streaming'); statusDot.classList.add('online');
+        statusText.textContent = 'BRIDGE ACTIVE — AWAITING INPUT';
         sendBtn.disabled = false;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
     }
 
     function appendMessage(prefix, text, className) {
       const msg = document.createElement('div');
-      msg.className = `chat-msg ${className}`;
-      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">${escapeHtml(text)}</span>`;
+      msg.className = \`chat-msg \${className}\`;
+      msg.innerHTML = \`<span class="chat-prefix">[\${prefix}]</span><span class="chat-text">\${escapeHtml(text)}</span>\`;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msg;
+    }
+    
+    function appendImage(prefix, url, prompt) {
+      const msg = document.createElement('div');
+      msg.className = \`chat-msg alpha-msg\`;
+      msg.innerHTML = \`<span class="chat-prefix">[\${prefix}]</span><span class="chat-text">Asset rendered.</span><br/><img src="\${url}" style="max-width:100%; border-radius:4px; margin-top:10px; border:1px solid var(--border);" />\`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
@@ -156,6 +223,48 @@ export default function CognitiveUplink() {
       div.textContent = str;
       return div.innerHTML;
     }
+
+    // MEMORY
+    const memSaveBtn = container.querySelector('#mem-save-btn');
+    memSaveBtn.addEventListener('click', async () => {
+       const key = container.querySelector('#mem-key-input').value;
+       const val = container.querySelector('#mem-val-input').value;
+       if(!key || !val) return;
+       memSaveBtn.textContent = "INJECTING...";
+       try {
+           await fetch(\`\${MODAL_API}/api/memory\`, {
+               method: 'POST',
+               headers: {'Content-Type': 'application/json'},
+               body: JSON.stringify({profile, key, value: val})
+           });
+           container.querySelector('#mem-key-input').value = '';
+           container.querySelector('#mem-val-input').value = '';
+           loadMemory();
+       } catch(e) { console.error(e); }
+       memSaveBtn.textContent = "INJECT MEMORY";
+    });
+
+    async function loadMemory() {
+       try {
+           const res = await fetch(\`\${MODAL_API}/api/memory?profile=\${encodeURIComponent(profile)}\`);
+           const mems = await res.json();
+           const list = container.querySelector('#memory-list');
+           list.innerHTML = mems.map(m => \`<div style="padding:10px; border-bottom:1px solid var(--border);"><strong>\${escapeHtml(m.key)}</strong>: \${escapeHtml(m.value)}</div>\`).join('');
+           if(mems.length === 0) list.innerHTML = '<div style="color:var(--text-muted)">No active memories.</div>';
+       } catch(e) { console.error(e); }
+    }
+
+    // GALLERY
+    async function loadGallery() {
+       try {
+           const res = await fetch(\`\${MODAL_API}/api/gallery?profile=\${encodeURIComponent(profile)}\`);
+           const imgs = await res.json();
+           const grid = container.querySelector('#gallery-grid');
+           grid.innerHTML = imgs.map(img => \`<img src="\${MODAL_API + img.url}" title="\${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);">\`).join('');
+           if(imgs.length === 0) grid.innerHTML = '<div style="color:var(--text-muted)">No generated assets found.</div>';
+       } catch(e) { console.error(e); }
+    }
+
   }, 50);
 
   return container;
