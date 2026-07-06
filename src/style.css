@@ -2938,3 +2938,31 @@ input:focus, textarea:focus {
     border-radius: 4px;
   }
 }
+
+/* Media Loader Progress Bar */
+.media-loader {
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  margin: 10px 0;
+}
+
+.media-loader-bar {
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% { left: -50%; }
+  100% { left: 100%; }
+}

@@ -37,15 +37,17 @@ export default function CognitiveUplink() {
           </div>
         </div>
         <div class="chat-input-wrap" style="position: relative;">
-          <button class="chat-input-prefix" id="cmd-menu-btn" title="Command Menu" style="background:transparent; border:none; cursor:pointer; color:var(--text); font-family:inherit; outline:none; font-size:inherit;">&gt;_</button>
+          <button class="chat-input-prefix" id="cmd-menu-btn" title="Command Menu" style="background:transparent; border:none; cursor:pointer; color:var(--text); font-family:inherit; outline:none; font-size:1.5rem; padding: 15px; margin-right: 5px;">&gt;_</button>
           
-          <div id="cmd-menu-popup" style="display: none; position: absolute; bottom: 110%; left: 0; background: rgba(5,5,10,0.95); border: 1px solid var(--border); padding: 10px; flex-direction: column; gap: 10px; z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(0, 184, 255, 0.2);">
-            <button class="aim-btn" id="cmd-clear-chat" style="padding: 6px 12px; font-size: 0.8rem; width: 100%;">// CLEAR CHAT</button>
-            <button class="aim-btn" id="cmd-reload-history" style="padding: 6px 12px; font-size: 0.8rem; width: 100%;">// RELOAD HISTORY</button>
+          <div id="cmd-menu-popup" style="display: none; position: absolute; bottom: 110%; left: 0; background: rgba(5,5,10,0.95); border: 1px solid var(--border); padding: 10px; flex-direction: column; gap: 10px; z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(0, 184, 255, 0.2); min-width: 150px;">
+            <button class="aim-btn" id="cmd-clear-chat" style="padding: 12px; font-size: 1rem; width: 100%;">// CLEAR CHAT</button>
+            <button class="aim-btn" id="cmd-reload-history" style="padding: 12px; font-size: 1rem; width: 100%;">// RELOAD HISTORY</button>
+            <button class="aim-btn" id="cmd-imagine" style="padding: 12px; font-size: 1rem; width: 100%;">// IMAGINE</button>
+            <button class="aim-btn" id="cmd-animate" style="padding: 12px; font-size: 1rem; width: 100%;">// ANIMATE</button>
           </div>
           
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Type a message or /imagine..." maxlength="4000"></textarea>
-          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;"></textarea>
+          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;">
             <span class="chat-send-icon">⟩</span>
           </button>
         </div>
@@ -131,9 +133,16 @@ export default function CognitiveUplink() {
                 if(msg.role === 'user') {
                     appendMessage('USER', msg.content, 'user-msg');
                 } else {
-                    if (msg.content.startsWith("Generated image:")) {
+                    if (msg.content.startsWith("Generated video:")) {
+                       const url = MODAL_API + msg.content.replace("Generated video: ", "");
+                       appendVideo('ALPHA_VISION', url, 'Restored video');
+                    } else if (msg.content.startsWith("Generated image:")) {
                        const url = MODAL_API + msg.content.replace("Generated image: ", "");
                        appendImage('ALPHA_VISION', url, 'Restored image');
+                    } else if (msg.content.startsWith("Generated image for prompt:")) {
+                       const urlMatch = msg.content.match(/at (\/files\/.*)/);
+                       const url = urlMatch ? MODAL_API + urlMatch[1] : '';
+                       if(url) appendImage('ALPHA_VISION', url, 'Restored image');
                     } else {
                        appendMessage('ALPHA', msg.content, 'alpha-msg');
                     }
@@ -184,6 +193,21 @@ export default function CognitiveUplink() {
       cmdMenuPopup.style.display = 'none';
     });
 
+    const cmdImagine = document.getElementById('cmd-imagine');
+    const cmdAnimate = document.getElementById('cmd-animate');
+    
+    cmdImagine.addEventListener('click', () => {
+      chatInput.value = '/imagine ';
+      chatInput.focus();
+      cmdMenuPopup.style.display = 'none';
+    });
+    
+    cmdAnimate.addEventListener('click', () => {
+      chatInput.value = '/animate ';
+      chatInput.focus();
+      cmdMenuPopup.style.display = 'none';
+    });
+
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -203,10 +227,18 @@ export default function CognitiveUplink() {
       
       isStreaming = true;
       statusDot.classList.remove('online'); statusDot.classList.add('streaming');
-      statusText.textContent = 'PROCESSING NEURAL RESPONSE...';
+      
+      let processingText = 'PROCESSING NEURAL RESPONSE...';
+      let typingHTML = '...';
+      if (text.startsWith('/imagine') || text.startsWith('/animate')) {
+         processingText = 'RENDERING MEDIA ASSET...';
+         typingHTML = '<div class="media-loader"><div class="media-loader-bar"></div></div><span style="font-size:0.8rem; color:var(--accent);">ALLOCATING GPU COMPUTE...</span>';
+      }
+      
+      statusText.textContent = processingText;
       sendBtn.disabled = true;
 
-      const typingEl = appendMessage('ALPHA', '...', 'alpha-msg typing');
+      const typingEl = appendMessage('ALPHA', typingHTML, 'alpha-msg typing');
 
       try {
         const res = await fetch(`${MODAL_API}/api/chat`, {
@@ -218,7 +250,11 @@ export default function CognitiveUplink() {
         
         typingEl.remove();
         
-        if(data.type === 'image') {
+        if(data.type === 'video') {
+           appendVideo('ALPHA_VISION', MODAL_API + data.url, data.content);
+           history.push({role: 'user', content: text});
+           history.push({role: 'assistant', content: "Generated video: " + data.url});
+        } else if(data.type === 'image') {
            appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
            history.push({role: 'user', content: text});
            history.push({role: 'assistant', content: "Generated image: " + data.url});
@@ -248,10 +284,27 @@ export default function CognitiveUplink() {
       return msg;
     }
     
+    function appendVideo(prefix, url, prompt) {
+      const msg = document.createElement('div');
+      msg.className = `chat-msg alpha-msg`;
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Video asset rendered.</span><br/>
+      <div style="position:relative; display:inline-block; max-width:100%; margin-top:10px;">
+        <video src="${url}" autoplay loop muted controls style="max-width:100%; border-radius:4px; border:1px solid var(--border);"></video>
+        <a href="${url}" download="alpha_render.mp4" target="_blank" class="aim-btn" style="display:block; text-align:center; margin-top:5px; text-decoration:none; padding:10px;">// DOWNLOAD VIDEO</a>
+      </div>`;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msg;
+    }
+
     function appendImage(prefix, url, prompt) {
       const msg = document.createElement('div');
       msg.className = `chat-msg alpha-msg`;
-      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Asset rendered.</span><br/><img src="${url}" style="max-width:100%; border-radius:4px; margin-top:10px; border:1px solid var(--border);" />`;
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Image asset rendered.</span><br/>
+      <div style="position:relative; display:inline-block; max-width:100%; margin-top:10px;">
+        <img src="${url}" style="max-width:100%; border-radius:4px; border:1px solid var(--border);">
+        <a href="${url}" download="alpha_render.png" target="_blank" class="aim-btn" style="display:block; text-align:center; margin-top:5px; text-decoration:none; padding:10px;">// DOWNLOAD IMAGE</a>
+      </div>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
@@ -299,7 +352,14 @@ export default function CognitiveUplink() {
            const res = await fetch(`${MODAL_API}/api/gallery?profile=${encodeURIComponent(profile)}`);
            const imgs = await res.json();
            const grid = container.querySelector('#gallery-grid');
-           grid.innerHTML = imgs.map(img => `<img src="${MODAL_API + img.url}" title="${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);">`).join('');
+           grid.innerHTML = imgs.map(img => {
+               const fullUrl = MODAL_API + img.url;
+               if (fullUrl.endsWith('.mp4')) {
+                   return `<div style="display:flex; flex-direction:column; gap:5px;"><video src="${fullUrl}" title="${escapeHtml(img.prompt)}" autoplay loop muted style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);"></video><a href="${fullUrl}" download target="_blank" class="aim-btn" style="text-align:center; text-decoration:none; font-size:0.8rem;">// SAVE</a></div>`;
+               } else {
+                   return `<div style="display:flex; flex-direction:column; gap:5px;"><img src="${fullUrl}" title="${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);"><a href="${fullUrl}" download target="_blank" class="aim-btn" style="text-align:center; text-decoration:none; font-size:0.8rem;">// SAVE</a></div>`;
+               }
+           }).join('');
            if(imgs.length === 0) grid.innerHTML = '<div style="color:var(--text-muted)">No generated assets found.</div>';
        } catch(e) { console.error(e); }
     }
