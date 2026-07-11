@@ -400,18 +400,48 @@ function buildImg2Img() {
       <span class="aim-panel-badge">QWEN EDIT+</span>
     </div>
 
-    <div class="aim-field">
-      <label class="aim-label">INPUT IMAGE</label>
-      <div class="aim-dropzone" id="i2i-dropzone">
-        <input type="file" id="i2i-file" accept="image/*" class="aim-file-input" />
-        <div class="aim-dropzone-inner" id="i2i-dz-inner">
-          <div class="aim-dz-icon">📁</div>
-          <div class="aim-dz-text">DROP IMAGE HERE or <span class="aim-dz-link">BROWSE</span></div>
-          <div class="aim-dz-sub">PNG, JPG, WEBP — max 10MB</div>
+    <div class="aim-row" style="display:flex; gap:10px;">
+      <div class="aim-field" style="flex:1;">
+        <label class="aim-label">PRIMARY IMAGE</label>
+        <div class="aim-dropzone" id="i2i-dropzone">
+          <input type="file" id="i2i-file" accept="image/*" class="aim-file-input" />
+          <div class="aim-dropzone-inner" id="i2i-dz-inner">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP IMAGE</div>
+          </div>
+          <img class="aim-dz-preview hidden" id="i2i-preview" alt="preview" />
         </div>
-        <img class="aim-dz-preview hidden" id="i2i-preview" alt="preview" />
+      </div>
+      <div class="aim-field" style="flex:1;">
+        <label class="aim-label">SECONDARY IMAGE (OPTIONAL)</label>
+        <div class="aim-dropzone" id="i2i-dropzone2">
+          <input type="file" id="i2i-file2" accept="image/*" class="aim-file-input" />
+          <div class="aim-dropzone-inner" id="i2i-dz-inner2">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP IMAGE</div>
+          </div>
+          <img class="aim-dz-preview hidden" id="i2i-preview2" alt="preview" />
+        </div>
       </div>
     </div>
+
+    <details class="aim-advanced" style="margin-bottom: 15px;">
+      <summary class="aim-advanced-toggle">▶ REFERENCE IMAGES (UP TO 5)</summary>
+      <div class="aim-advanced-body" style="display:flex; gap:10px; overflow-x:auto;">
+        ${[1,2,3,4,5].map(i => `
+        <div class="aim-field" style="min-width: 100px;">
+          <div class="aim-dropzone" id="i2i-ref-dropzone${i}" style="height: 100px; min-height: 100px;">
+            <input type="file" id="i2i-ref-file${i}" accept="image/*" class="aim-file-input" />
+            <div class="aim-dropzone-inner" id="i2i-ref-dz-inner${i}" style="padding: 10px;">
+              <div class="aim-dz-icon" style="font-size: 1.2rem;">📁</div>
+              <div class="aim-dz-text" style="font-size: 0.7rem;">REF ${i}</div>
+            </div>
+            <img class="aim-dz-preview hidden" id="i2i-ref-preview${i}" alt="preview" />
+          </div>
+        </div>
+        `).join('')}
+      </div>
+    </details>
 
     <div class="aim-field">
       <label class="aim-label" for="i2i-prompt">EDIT INSTRUCTION</label>
@@ -480,39 +510,59 @@ function buildImg2Img() {
     });
   }
 
-  // File input / dropzone
   const fileInput = wrap.querySelector('#i2i-file');
   const dropzone = wrap.querySelector('#i2i-dropzone');
   const dzInner = wrap.querySelector('#i2i-dz-inner');
   const preview = wrap.querySelector('#i2i-preview');
 
-  function showPreview(file) {
+  const fileInput2 = wrap.querySelector('#i2i-file2');
+  const dropzone2 = wrap.querySelector('#i2i-dropzone2');
+  const dzInner2 = wrap.querySelector('#i2i-dz-inner2');
+  const preview2 = wrap.querySelector('#i2i-preview2');
+
+  function showPreview(file, prv, dzI, dz) {
     if (!file) return;
     const url = URL.createObjectURL(file);
-    preview.src = url;
-    preview.classList.remove('hidden');
-    dzInner.classList.add('hidden');
-    dropzone.classList.add('has-preview');
+    prv.src = url;
+    prv.classList.remove('hidden');
+    dzI.classList.add('hidden');
+    dz.classList.add('has-preview');
   }
 
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) showPreview(fileInput.files[0]); });
-  dropzone.addEventListener('click', e => {
-    if (e.target === fileInput || e.target.classList.contains('aim-dz-preview')) return;
-    fileInput.click();
-  });
-  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) { fileInput._droppedFile = file; showPreview(file); }
-  });
+  function bindDropzone(fInput, dz, dzI, prv) {
+    fInput.addEventListener('change', () => { if (fInput.files[0]) showPreview(fInput.files[0], prv, dzI, dz); });
+    dz.addEventListener('click', e => {
+      if (e.target === fInput || e.target.classList.contains('aim-dz-preview')) return;
+      fInput.click();
+    });
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) { fInput._droppedFile = file; showPreview(file, prv, dzI, dz); }
+    });
+  }
+
+  bindDropzone(fileInput, dropzone, dzInner, preview);
+  bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
+  
+  const refInputs = [];
+  for (let i = 1; i <= 5; i++) {
+    const fInput = wrap.querySelector(`#i2i-ref-file${i}`);
+    const dz = wrap.querySelector(`#i2i-ref-dropzone${i}`);
+    const dzI = wrap.querySelector(`#i2i-ref-dz-inner${i}`);
+    const prv = wrap.querySelector(`#i2i-ref-preview${i}`);
+    bindDropzone(fInput, dz, dzI, prv);
+    refInputs.push(fInput);
+  }
 
   // Generate
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     const file = fileInput._droppedFile || fileInput.files[0];
-    if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No input image loaded.', 'error'); return; }
+    const file2 = fileInput2._droppedFile || fileInput2.files[0];
+    if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No primary image loaded.', 'error'); return; }
     const prompt = wrap.querySelector('#i2i-prompt').value.trim();
     if (!prompt) { setStatus(wrap, '#i2i-status', 'ERROR: Edit instruction is empty.', 'error'); return; }
 
@@ -554,6 +604,11 @@ function buildImg2Img() {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      if (file2) formData.append('image2', file2);
+      refInputs.forEach((inp, idx) => {
+        const refFile = inp._droppedFile || inp.files[0];
+        if (refFile) formData.append(`ref${idx+1}`, refFile);
+      });
       formData.append('prompt', prompt);
       formData.append('negative_prompt', neg);
       formData.append('num_inference_steps', steps);
