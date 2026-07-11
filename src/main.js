@@ -3,7 +3,7 @@
  * SPA bootstrap: matrix rain, sidebar, modal, router, intro sequence.
  */
 import './style.css';
-import { initMatrixRain } from './components/matrix-rain.js';
+import { initMatrixRain, toggleEcoMode, getEcoMode } from './components/matrix-rain.js';
 import { initSidebar } from './components/sidebar.js';
 import { initModal } from './components/modal.js';
 import { createElement } from './components/utils.js';
@@ -131,6 +131,26 @@ window.addEventListener('hashchange', renderRoute);
 window.addEventListener('DOMContentLoaded', () => {
   // Init global systems
   initMatrixRain();
+  
+  // Setup Eco Mode Button
+  const ecoBtn = document.getElementById('eco-mode-btn');
+  if (ecoBtn) {
+    if (getEcoMode()) {
+      ecoBtn.classList.add('active');
+      document.body.classList.add('eco-mode');
+    }
+    ecoBtn.addEventListener('click', () => {
+      const isEco = toggleEcoMode();
+      if (isEco) {
+        ecoBtn.classList.add('active');
+        document.body.classList.add('eco-mode');
+      } else {
+        ecoBtn.classList.remove('active');
+        document.body.classList.remove('eco-mode');
+      }
+    });
+  }
+
   initSidebar();
   initModal();
 

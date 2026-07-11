@@ -2966,3 +2966,45 @@ input:focus, textarea:focus {
   0% { left: -50%; }
   100% { left: 100%; }
 }
+
+/* Eco Mode Button */
+.eco-mode-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0, 184, 255, 0.1);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 184, 255, 0.2);
+}
+
+.eco-mode-btn:hover {
+  background: rgba(0, 184, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.eco-mode-btn.active {
+  background: rgba(255, 200, 0, 0.2);
+  border-color: rgba(255, 200, 0, 0.5);
+  box-shadow: 0 0 15px rgba(255, 200, 0, 0.4);
+  color: #ffc800;
+}
+
+body.eco-mode .crt-overlay {
+  display: none !important;
+}
+
+body.eco-mode .glitch {
+  animation: none !important;
+  text-shadow: none !important;
+}

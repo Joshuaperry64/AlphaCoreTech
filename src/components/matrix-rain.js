@@ -3,6 +3,18 @@
  * Initialized once globally. Never duplicated.
  */
 
+let isEcoMode = localStorage.getItem('alphacore_eco_mode') === 'true';
+
+export function toggleEcoMode() {
+  isEcoMode = !isEcoMode;
+  localStorage.setItem('alphacore_eco_mode', isEcoMode);
+  return isEcoMode;
+}
+
+export function getEcoMode() {
+  return isEcoMode;
+}
+
 export function initMatrixRain() {
   const canvas = document.getElementById('matrix-canvas');
   if (!canvas) return;
@@ -39,7 +51,7 @@ export function initMatrixRain() {
   function draw(timestamp) {
     requestAnimationFrame(draw);
 
-    if (document.hidden) return; // Pause when tab is inactive
+    if (document.hidden || isEcoMode) return; // Pause when tab is inactive or in eco mode
 
     const delta = timestamp - lastDrawTime;
     if (delta < interval) return;
