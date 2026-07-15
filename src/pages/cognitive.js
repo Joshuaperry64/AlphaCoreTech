@@ -247,30 +247,81 @@ export default function CognitiveUplink() {
       const typingEl = appendMessage('ALPHA', typingHTML, 'alpha-msg typing');
 
       try {
-        const res = await fetch(`${MODAL_API}/api/chat`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({text, history, profile})
-        });
-        const data = await res.json();
-        
-        typingEl.remove();
-        
-        if (window._cogNotifyWarm) window._cogNotifyWarm();
+        if (isMedia) {
+          const res = await fetch(`${MODAL_API}/api/chat`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text, history, profile})
+          });
+          const data = await res.json();
+          typingEl.remove();
+          if (window._cogNotifyWarm) window._cogNotifyWarm();
 
-        if(data.type === 'video') {
-           appendVideo('ALPHA_VISION', MODAL_API + data.url, data.content);
-           history.push({role: 'user', content: text});
-           history.push({role: 'assistant', content: "Generated video: " + data.url});
-        } else if(data.type === 'image') {
-           appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
-           history.push({role: 'user', content: text});
-           history.push({role: 'assistant', content: "Generated image: " + data.url});
+          if(data.type === 'video') {
+             appendVideo('ALPHA_VISION', MODAL_API + data.url, data.content);
+             history.push({role: 'user', content: text});
+             history.push({role: 'assistant', content: "Generated video: " + data.url});
+          } else if(data.type === 'image') {
+             appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
+             history.push({role: 'user', content: text});
+             history.push({role: 'assistant', content: "Generated image: " + data.url});
+          } else {
+             const reply = data.content || '[EMPTY RESPONSE]';
+             appendMessage('ALPHA', reply, 'alpha-msg');
+             history.push({role: 'user', content: text});
+             history.push({role: 'assistant', content: reply});
+          }
         } else {
-           const reply = data.content || '[EMPTY RESPONSE]';
-           appendMessage('ALPHA', reply, 'alpha-msg');
-           history.push({role: 'user', content: text});
-           history.push({role: 'assistant', content: reply});
+          // Streaming text response
+          const res = await fetch(`${MODAL_API}/api/chat/stream`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text, history, profile})
+          });
+          typingEl.remove();
+          if (window._cogNotifyWarm) window._cogNotifyWarm();
+          
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder("utf-8");
+          let fullReply = "";
+          
+          // Create an empty message element to update
+          const streamEl = appendMessage('ALPHA', '', 'alpha-msg');
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            fullReply += chunk;
+            
+            // Format chunks dynamically
+            let htmlContent = '';
+            if (fullReply.includes('<think>')) {
+              const parts = fullReply.split(/<think>|<\/think>/);
+              for (let i = 0; i < parts.length; i++) {
+                if (i % 2 === 1) {
+                  htmlContent += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);" open>
+                    <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
+                    <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
+                  </details>`;
+                } else if (parts[i].trim() !== '') {
+                  htmlContent += `<span>${escapeHtml(parts[i].trim())}</span>`;
+                }
+              }
+            } else {
+              htmlContent = escapeHtml(fullReply);
+            }
+            streamEl.querySelector('.chat-text').innerHTML = htmlContent;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+          
+          history.push({role: 'user', content: text});
+          history.push({role: 'assistant', content: fullReply});
+          
+          // Collapse thoughts when done generating
+          const details = streamEl.querySelectorAll('details');
+          details.forEach(d => d.removeAttribute('open'));
         }
       } catch (err) {
         typingEl.remove();
