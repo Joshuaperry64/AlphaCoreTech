@@ -754,6 +754,9 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="img2img" id="aim-tab-i2i">
         <span class="aim-tab-icon">⟁</span> IMG2IMG
       </button>
+      <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
+        <span class="aim-tab-icon">🎬</span> FRAMEPACK
+      </button>
     </div>
 
     <div id="aim-content"></div>
@@ -772,8 +775,10 @@ function buildMainUI() {
       content.innerHTML = '';
       if (tab.dataset.tab === 'txt2img') {
         currentPanel = buildTxt2Img();
-      } else {
+      } else if (tab.dataset.tab === 'img2img') {
         currentPanel = buildImg2Img();
+      } else {
+        currentPanel = buildFramepack();
       }
       content.appendChild(currentPanel);
     });
@@ -860,4 +865,47 @@ function buildMainUI() {
   });
 
   return root;
+}
+
+/* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
+function buildFramepack() {
+  const wrap = document.createElement('div');
+  wrap.className = 'aim-panel';
+  wrap.innerHTML = `
+    <div class="aim-panel-header">
+      <span class="aim-panel-icon">🎬</span>
+      <span class="aim-panel-title">FRAMEPACK STUDIO</span>
+      <span class="aim-panel-badge">H100 GPU</span>
+    </div>
+    <div class="aim-row" style="margin-bottom: 20px;">
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Framepack Studio requires a dedicated H100 container (cold boot takes ~1-3 minutes).
+        Because Gradio cannot be easily rewritten into a static API endpoint, it runs as a full interactive serverless app.
+        <br/><br/>
+        <strong>Note:</strong> The container will automatically shut down after a period of inactivity to prevent runaway compute costs.
+      </p>
+    </div>
+    <div class="aim-row" style="display:flex; gap:10px; justify-content: center; margin-bottom: 20px;">
+      <button class="aim-btn" id="fp-launch-btn" style="padding: 15px 30px; font-size: 1.1rem;">LAUNCH IN BROWSER</button>
+      <button class="aim-btn aim-btn-decline" id="fp-newtab-btn" style="padding: 15px 30px; font-size: 1.1rem;">OPEN IN NEW TAB</button>
+    </div>
+    <div id="fp-frame-container" style="display:none; width:100%; height:800px; border:1px solid var(--border); border-radius:10px; overflow:hidden;">
+    </div>
+  `;
+
+  const url = 'https://ai-alphacore-tech--framepack-studio-wsl-lifecycle-framepackcontainer-ui.modal.run/';
+
+  wrap.querySelector('#fp-launch-btn').onclick = () => {
+    const container = wrap.querySelector('#fp-frame-container');
+    container.style.display = 'block';
+    container.innerHTML = `<iframe src="${url}" width="100%" height="100%" style="border:none;" allow="camera; microphone; display-capture"></iframe>`;
+    // Trigger notification
+    if (window._aimNotifyWarm) window._aimNotifyWarm();
+  };
+
+  wrap.querySelector('#fp-newtab-btn').onclick = () => {
+    window.open(url, '_blank');
+  };
+
+  return wrap;
 }
