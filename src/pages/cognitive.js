@@ -12,6 +12,12 @@ export default function CognitiveUplink() {
     <div class="section-header">
       <h1 class="glitch" data-text="// COGNITIVE_CORE">// COGNITIVE_CORE</h1>
       <div class="header-line"></div>
+      
+      <div class="aim-status-panel" style="margin-top: 15px; padding: 10px; border: 1px solid var(--accent); background: rgba(255,0,60,0.05); display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <div id="cog-backend-status" style="font-weight: bold; flex: 1; color: #00ffff; font-family: 'Courier New', monospace;">STATUS: ❄ COLD BOOT</div>
+        <button id="cog-lock-btn" class="aim-btn aim-btn-sm" style="font-size: 0.8rem; padding: 6px 12px;">🔒 LOCK ON (15M)</button>
+        <button id="cog-shutdown-btn" class="aim-btn aim-btn-sm aim-btn-decline" style="font-size: 0.8rem; padding: 6px 12px; margin-top: 0;">⏻ SHUT DOWN</button>
+      </div>
     </div>
 
     <div class="aim-row" style="margin-bottom: 20px;">
@@ -250,6 +256,8 @@ export default function CognitiveUplink() {
         
         typingEl.remove();
         
+        if (window._cogNotifyWarm) window._cogNotifyWarm();
+
         if(data.type === 'video') {
            appendVideo('ALPHA_VISION', MODAL_API + data.url, data.content);
            history.push({role: 'user', content: text});
@@ -363,6 +371,82 @@ export default function CognitiveUplink() {
            if(imgs.length === 0) grid.innerHTML = '<div style="color:var(--text-muted)">No generated assets found.</div>';
        } catch(e) { console.error(e); }
     }
+
+    // --- Backend Status Logic ---
+    let lockInterval = null;
+    let expireTime = 0;
+    let displayInterval = null;
+    let lockEndTime = 0;
+    const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+
+    function updateStatusDisplay() {
+      const statusEl = container.querySelector('#cog-backend-status');
+      const lockBtn = container.querySelector('#cog-lock-btn');
+      if (!statusEl) return;
+      const now = Date.now();
+      
+      if (now < lockEndTime) {
+        const remaining = Math.floor((lockEndTime - now) / 1000);
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        statusEl.textContent = `STATUS: 🔒 LOCKED WARM (${m}:${s.toString().padStart(2, '0')})`;
+        statusEl.style.color = '#ff003c';
+        if (lockBtn) lockBtn.style.opacity = '0.5';
+      } else if (now < expireTime) {
+        const remaining = Math.floor((expireTime - now) / 1000);
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        statusEl.textContent = `STATUS: 🔥 WARM (${m}:${s.toString().padStart(2, '0')})`;
+        statusEl.style.color = '#ffaa00';
+        if (lockBtn) lockBtn.style.opacity = '1';
+      } else {
+        statusEl.textContent = `STATUS: ❄ COLD BOOT`;
+        statusEl.style.color = '#00ffff';
+        if (lockBtn) lockBtn.style.opacity = '1';
+        if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
+      }
+    }
+
+    window._cogNotifyWarm = () => {
+      expireTime = Math.max(expireTime, Date.now() + IDLE_TIMEOUT_MS);
+      if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+      updateStatusDisplay();
+    };
+
+    container.querySelector('#cog-lock-btn').addEventListener('click', () => {
+      if (Date.now() < lockEndTime) return; // Already locked
+      if (!confirm('WARNING: Locking the backend prevents it from spinning down for 15 minutes. This will incur consistent compute costs even if idle. Are you sure?')) return;
+      
+      lockEndTime = Date.now() + (15 * 60 * 1000);
+      expireTime = Math.max(expireTime, lockEndTime);
+      
+      if (lockInterval) clearInterval(lockInterval);
+      // Ping every 2 minutes
+      lockInterval = setInterval(() => {
+        if (Date.now() >= lockEndTime) {
+          clearInterval(lockInterval);
+          lockInterval = null;
+          return;
+        }
+        fetch(`${MODAL_API}/api/ping`).catch(()=>{});
+        window._cogNotifyWarm();
+      }, 2 * 60 * 1000);
+      
+      // Initial ping
+      fetch(`${MODAL_API}/api/ping`).catch(()=>{});
+      
+      if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+      updateStatusDisplay();
+    });
+
+    container.querySelector('#cog-shutdown-btn').addEventListener('click', async () => {
+      if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
+      lockEndTime = 0;
+      expireTime = 0;
+      updateStatusDisplay();
+      
+      try { fetch(`${MODAL_API}/api/shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){}
+    });
 
   }, 50);
 

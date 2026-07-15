@@ -165,6 +165,22 @@ window.addEventListener('DOMContentLoaded', () => {
         playAudioBtn.title = "Play Music";
       }
     });
+
+    // Autoplay audio on first interaction if not playing
+    let firstInteraction = false;
+    document.body.addEventListener('click', () => {
+      if (!firstInteraction) {
+        firstInteraction = true;
+        const audio = getGlobalAudio() || initGlobalAudio();
+        if (audio.paused) {
+           audio.play().then(() => {
+             setAudioPlaying(true);
+             playAudioBtn.innerHTML = '&#10074;&#10074;';
+             playAudioBtn.title = "Pause Music";
+           }).catch(()=>{});
+        }
+      }
+    }, { once: true });
   }
 
   initSidebar();
