@@ -4,6 +4,7 @@
  */
 import { createElement } from './utils.js';
 import { buildPinPad, getPins } from './pinpad.js';
+import { initGlobalAudio, getAudioContext, setAudioPlaying } from './audio.js';
 
 export default function createIntro(onComplete) {
   // Container — fullscreen overlay
@@ -242,23 +243,27 @@ export default function createIntro(onComplete) {
   setTimeout(nextLine, 300);
 
   // Audio visualizer (graceful — no crash if audio missing)
-  let audioCtx, analyser, animFrame;
+  let animFrame;
+
   function startVisualizer() {
     try {
-      const audio = new Audio('skybeat.mp3');
-      audio.loop = false;
-      audio.volume = 0.5;
-      audio.play().catch(() => {}); // silent fail if no audio file
+      const audio = initGlobalAudio();
 
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
+      // Let the toggle button manage state, but we attempt autoplay for the intro
+      audio.play().then(() => {
+        setAudioPlaying(true);
+        const playBtn = document.getElementById('play-audio-btn');
+        if (playBtn) playBtn.innerHTML = '&#10074;&#10074;'; // Pause icon
+      }).catch(() => {
+        // Silent fail if autoplay is blocked
+      });
 
-      audioCtx = new AudioCtx();
-      const source = audioCtx.createMediaElementSource(audio);
-      analyser = audioCtx.createAnalyser();
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
-      analyser.fftSize = 256;
+      const audioSetup = getAudioContext();
+      if (!audioSetup) return;
+
+      const { audioCtx, analyser } = audioSetup;
+      if (!analyser) return;
+
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
       const ctx = visCanvas.getContext('2d');
@@ -294,9 +299,6 @@ export default function createIntro(onComplete) {
       }
       draw();
 
-      // Stop audio when intro dismissed
-      audio.addEventListener('ended', () => {});
-      intro._audio = audio;
     } catch (e) {
       // Audio not critical — visualizer is optional
     }
@@ -307,8 +309,7 @@ export default function createIntro(onComplete) {
   function cleanup() {
     cancelled = true;
     if (animFrame) cancelAnimationFrame(animFrame);
-    if (audioCtx) audioCtx.close().catch(() => {});
-    if (intro._audio) { intro._audio.pause(); intro._audio.src = ''; }
+    // Do NOT stop audio or destroy audioCtx so it persists globally
     intro.remove();
   }
 
