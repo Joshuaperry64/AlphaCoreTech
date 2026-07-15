@@ -871,7 +871,32 @@ function buildMainUI() {
 function buildFramepack() {
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
-  wrap.innerHTML = `
+  
+  const isAuth = sessionStorage.getItem('alphacore_auth_fp') === 'true';
+  if (!isAuth) {
+    const pad = buildPinPad({
+      authKey: 'framepack',
+      title: '// FRAMEPACK STUDIO',
+      subtitle: 'RESTRICTED GPU ACCESS',
+      requiredRole: 'admin',
+      onSuccess: () => {
+        sessionStorage.setItem('alphacore_auth_fp', 'true');
+        wrap.innerHTML = '';
+        wrap.appendChild(buildFramepackContent());
+      }
+    });
+    wrap.appendChild(pad);
+    return wrap;
+  }
+  
+  wrap.appendChild(buildFramepackContent());
+  return wrap;
+}
+
+function buildFramepackContent() {
+  const inner = document.createElement('div');
+  inner.style.width = '100%';
+  inner.innerHTML = `
     <div class="aim-panel-header">
       <span class="aim-panel-icon">🎬</span>
       <span class="aim-panel-title">FRAMEPACK STUDIO</span>
@@ -895,17 +920,16 @@ function buildFramepack() {
 
   const url = 'https://ai-alphacore-tech--framepack-studio-wsl-lifecycle-framepackcontainer-ui.modal.run/';
 
-  wrap.querySelector('#fp-launch-btn').onclick = () => {
-    const container = wrap.querySelector('#fp-frame-container');
+  inner.querySelector('#fp-launch-btn').onclick = () => {
+    const container = inner.querySelector('#fp-frame-container');
     container.style.display = 'block';
     container.innerHTML = `<iframe src="${url}" width="100%" height="100%" style="border:none;" allow="camera; microphone; display-capture"></iframe>`;
-    // Trigger notification
     if (window._aimNotifyWarm) window._aimNotifyWarm();
   };
 
-  wrap.querySelector('#fp-newtab-btn').onclick = () => {
+  inner.querySelector('#fp-newtab-btn').onclick = () => {
     window.open(url, '_blank');
   };
 
-  return wrap;
+  return inner;
 }
