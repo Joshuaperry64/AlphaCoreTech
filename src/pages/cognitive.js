@@ -323,6 +323,14 @@ export default function CognitiveUplink() {
           const details = streamEl.querySelectorAll('details');
           details.forEach(d => d.removeAttribute('open'));
         }
+        
+        // Play success/return audio
+        try {
+          const returnAudio = new Audio('/digital-ui.mp3');
+          returnAudio.volume = 0.4;
+          returnAudio.play().catch(e => console.log('Audio playback prevented:', e));
+        } catch (e) {}
+
       } catch (err) {
         typingEl.remove();
         appendMessage('ERROR', err.message, 'system-msg');
