@@ -286,7 +286,25 @@ export default function CognitiveUplink() {
     function appendMessage(prefix, text, className) {
       const msg = document.createElement('div');
       msg.className = `chat-msg ${className}`;
-      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">${escapeHtml(text)}</span>`;
+      
+      let htmlContent = '';
+      if (typeof text === 'string' && text.includes('<think>')) {
+        const parts = text.split(/<think>|<\/think>/);
+        for (let i = 0; i < parts.length; i++) {
+          if (i % 2 === 1) {
+            htmlContent += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);">
+              <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
+              <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
+            </details>`;
+          } else if (parts[i].trim() !== '') {
+            htmlContent += `<span>${escapeHtml(parts[i].trim())}</span>`;
+          }
+        }
+      } else {
+        htmlContent = escapeHtml(text);
+      }
+
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text" style="white-space:pre-wrap;">${htmlContent}</span>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
