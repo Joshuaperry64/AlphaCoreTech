@@ -40,6 +40,11 @@ export function initSidebar() {
         adminTab.style.display = hasAdmin ? 'flex' : 'none';
       }
       
+      const visionTab = document.querySelector('a[data-route="/vision"]');
+      if (visionTab) {
+        visionTab.style.display = hasAdmin ? 'flex' : 'none';
+      }
+      
       const hasVault = userPin && userPin.roles && userPin.roles.includes('vault');
       const vaultTab = document.querySelector('a[data-route="/vault"]');
       if (vaultTab) {

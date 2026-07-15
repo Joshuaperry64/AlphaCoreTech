@@ -21,6 +21,7 @@ import AdminPanel from './pages/admin.js';
 import AiModals from './pages/aimodals.js';
 import VaultPage from './pages/vault.js';
 import Research from './pages/research.js';
+import VisionProcessor from './pages/vision.js';
 
 const routes = {
   '/': Overview,
@@ -32,6 +33,7 @@ const routes = {
   '/aimodals': AiModals,
   '/vault': VaultPage,
   '/research': Research,
+  '/vision': VisionProcessor,
 };
 
 function updateActiveNav(hash) {

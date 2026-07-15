@@ -3,7 +3,8 @@
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
-import { buildPinPad } from '../components/pinpad.js';
+import { buildPinPad, getPins } from '../components/pinpad.js';
+import { saveImageToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
@@ -344,6 +345,10 @@ function buildTxt2Img() {
                 updateProgress(loader, data.step, data.max_steps);
               } else if (data.image_b64) {
                 const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                b64s.forEach(b64 => {
+                   saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', 'data:image/png;base64,' + b64);
+                });
                 url = b64s.map(b64 => {
                   const byteCharacters = atob(b64);
                   const byteNumbers = new Array(byteCharacters.length);
@@ -643,6 +648,10 @@ function buildImg2Img() {
                 updateProgress(loader, data.step, data.max_steps);
               } else if (data.image_b64) {
                 const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                b64s.forEach(b64 => {
+                   saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', 'data:image/png;base64,' + b64);
+                });
                 url = b64s.map(b64 => {
                   const byteCharacters = atob(b64);
                   const byteNumbers = new Array(byteCharacters.length);

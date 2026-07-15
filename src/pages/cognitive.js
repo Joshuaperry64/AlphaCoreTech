@@ -2,7 +2,10 @@
  * Cognitive Uplink Page — LIVE CHAT INTERFACE & MEMORY MATRIX
  * Connected to Modal DeepSeek backend
  */
+import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
+import { logAction } from '../components/logger.js';
+import { saveImageToGallery } from '../components/vision_db.js';
 
 const MODAL_API = "https://ai-alphacore-tech--alpha-modal-gui-local-llm-fastapi-app.modal.run";
 
@@ -263,6 +266,7 @@ export default function CognitiveUplink() {
              history.push({role: 'assistant', content: "Generated video: " + data.url});
           } else if(data.type === 'image') {
              appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
+             saveImageToGallery(profile, data.content, 'Cognitive Core', MODAL_API + data.url);
              history.push({role: 'user', content: text});
              history.push({role: 'assistant', content: "Generated image: " + data.url});
           } else {
