@@ -2967,11 +2967,18 @@ input:focus, textarea:focus {
   100% { left: 100%; }
 }
 
-/* Eco Mode Button */
-.eco-mode-btn {
+/* Bottom Right Controls */
+.bottom-right-controls {
   position: fixed;
   bottom: 20px;
   right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10000;
+}
+
+/* Eco Mode Button & Play Audio Button */
+.eco-mode-btn, .play-audio-btn {
   width: 50px;
   height: 50px;
   border-radius: 50%;

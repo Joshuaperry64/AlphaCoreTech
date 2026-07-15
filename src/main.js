@@ -10,6 +10,7 @@ import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer } from './components/db_sync.js';
 import { buildPinPad } from './components/pinpad.js';
+import { toggleAudio, initGlobalAudio } from './components/audio.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -147,6 +148,21 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         ecoBtn.classList.remove('active');
         document.body.classList.remove('eco-mode');
+      }
+    });
+  }
+
+  // Setup Audio Play/Pause Button
+  const playAudioBtn = document.getElementById('play-audio-btn');
+  if (playAudioBtn) {
+    playAudioBtn.addEventListener('click', () => {
+      const isPlaying = toggleAudio();
+      if (isPlaying) {
+        playAudioBtn.innerHTML = '&#10074;&#10074;'; // Pause icon
+        playAudioBtn.title = "Pause Music";
+      } else {
+        playAudioBtn.innerHTML = '&#9658;'; // Play icon
+        playAudioBtn.title = "Play Music";
       }
     });
   }
