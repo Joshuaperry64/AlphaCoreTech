@@ -1,4 +1,4 @@
-import { createElement } from '../components/utils.js';
+import { createElement, escapeHTML } from '../components/utils.js';
 import { buildPinPad, getPins, addPin, revokePin } from '../components/pinpad.js';
 import { getLogs, clearLogs } from '../components/logger.js';
 
@@ -522,16 +522,16 @@ function buildAdminUI() {
       const ts = new Date(log.timestamp).toLocaleString();
       let det = '';
       if (log.details) {
-        if (log.details.label) det += `[Profile: ${log.details.label}] `;
-        if (log.details.reason) det += `[Reason: ${log.details.reason}] `;
-        if (log.details.type) det += `[Type: ${log.details.type}] `;
-        if (log.details.prompt) det += `[Prompt: ${log.details.prompt.substring(0, 30)}...] `;
+        if (log.details.label) det += `[Profile: ${escapeHTML(log.details.label)}] `;
+        if (log.details.reason) det += `[Reason: ${escapeHTML(log.details.reason)}] `;
+        if (log.details.type) det += `[Type: ${escapeHTML(log.details.type)}] `;
+        if (log.details.prompt) det += `[Prompt: ${escapeHTML(log.details.prompt.substring(0, 30))}...] `;
       }
       return `
         <tr>
-          <td>${ts}</td>
-          <td style="color: var(--blue, #00b8ff);">${log.profile}</td>
-          <td>${log.action}</td>
+          <td>${escapeHTML(ts)}</td>
+          <td style="color: var(--blue, #00b8ff);">${escapeHTML(log.profile)}</td>
+          <td>${escapeHTML(log.action)}</td>
           <td style="font-size: 0.8rem; opacity: 0.8;">${det}</td>
         </tr>
       `;
