@@ -346,6 +346,12 @@ function buildVaultUI() {
       function renderLoop() {
         if (!canvas.offsetParent) return; // Stop if not visible
 
+        const isEcoMode = localStorage.getItem('alphacore_eco_mode') === 'true';
+        if (document.hidden || isEcoMode) {
+           frameId = requestAnimationFrame(renderLoop);
+           return;
+        }
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const speed = parseFloat(speedSlider.value) * 0.1;
         const range = parseInt(rangeSlider.value);
@@ -560,6 +566,10 @@ function buildVaultUI() {
 
       const stepMs = 100;
       transmissionInterval = setInterval(() => {
+        if (!el.isConnected) {
+            clearInterval(transmissionInterval);
+            return;
+        }
         trackProgressSeconds += stepMs / 1000;
         if (trackProgressSeconds >= track.duration) {
           stopAudioPlayback();
@@ -600,6 +610,12 @@ function buildVaultUI() {
 
       function drawVisualizer() {
         if (!visualizerCanvas.offsetParent) return;
+
+        const isEcoMode = localStorage.getItem('alphacore_eco_mode') === 'true';
+        if (document.hidden || isEcoMode) {
+           animId = requestAnimationFrame(drawVisualizer);
+           return;
+        }
 
         vCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
         

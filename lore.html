@@ -81,20 +81,34 @@
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
     const chars = 'アイウエオカキクケコ0123456789ABCDEF';
-    const fontSize = 13;
+    const fontSize = 24;
     let drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
-    function drawMatrix() {
-      ctx.fillStyle = 'rgba(3,3,5,0.05)';
+
+    let lastDrawTime = 0;
+    const fps = 12;
+    const interval = 1000 / fps;
+
+    function drawMatrix(timestamp) {
+      requestAnimationFrame(drawMatrix);
+      const isEcoMode = localStorage.getItem('alphacore_eco_mode') === 'true';
+      if (document.hidden || isEcoMode) return;
+
+      const delta = timestamp - lastDrawTime;
+      if (delta < interval) return;
+      lastDrawTime = timestamp - (delta % interval);
+
+      ctx.fillStyle = 'rgba(3,3,5,0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00b8ff';
       ctx.font = fontSize + 'px Share Tech Mono';
       drops.forEach((y, i) => {
+        if (Math.random() > 0.5) return;
         ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, y * fontSize);
-        if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        if (y * fontSize > canvas.height && Math.random() > 0.95) drops[i] = 0;
         drops[i]++;
       });
     }
-    setInterval(drawMatrix, 50);
+    requestAnimationFrame(drawMatrix);
 
     /* Lore Modal */
     const loreData = {

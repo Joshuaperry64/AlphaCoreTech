@@ -490,7 +490,14 @@ export default function CognitiveUplink() {
 
     window._cogNotifyWarm = () => {
       expireTime = Math.max(expireTime, Date.now() + IDLE_TIMEOUT_MS);
-      if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+      if (!displayInterval) displayInterval = setInterval(() => {
+        if (!container.isConnected) {
+          clearInterval(displayInterval);
+          displayInterval = null;
+          return;
+        }
+        updateStatusDisplay();
+      }, 1000);
       updateStatusDisplay();
     };
 
@@ -504,7 +511,7 @@ export default function CognitiveUplink() {
       if (lockInterval) clearInterval(lockInterval);
       // Ping every 2 minutes
       lockInterval = setInterval(() => {
-        if (Date.now() >= lockEndTime) {
+        if (!container.isConnected || Date.now() >= lockEndTime) {
           clearInterval(lockInterval);
           lockInterval = null;
           return;
@@ -516,7 +523,14 @@ export default function CognitiveUplink() {
       // Initial ping
       fetch(`${MODAL_API}/api/ping`).catch(()=>{});
       
-      if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+      if (!displayInterval) displayInterval = setInterval(() => {
+        if (!container.isConnected) {
+          clearInterval(displayInterval);
+          displayInterval = null;
+          return;
+        }
+        updateStatusDisplay();
+      }, 1000);
       updateStatusDisplay();
     });
 
