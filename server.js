@@ -28,49 +28,59 @@ const DEFAULT_DB = {
   }
 };
 
-function readDB() {
-  if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
-    return DEFAULT_DB;
-  }
+let dbCache = null;
+
+async function readDB() {
+  if (dbCache) return dbCache;
+
   try {
-    const data = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    try {
+      await fs.promises.access(DB_PATH);
+    } catch {
+      await fs.promises.writeFile(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
+      dbCache = JSON.parse(JSON.stringify(DEFAULT_DB));
+      return dbCache;
+    }
+    const data = JSON.parse(await fs.promises.readFile(DB_PATH, 'utf-8'));
     if (!data.pins) data.pins = DEFAULT_DB.pins;
     if (!data.logs) data.logs = [];
     if (!data.settings) data.settings = DEFAULT_DB.settings;
-    return data;
+    dbCache = data;
+    return dbCache;
   } catch (e) {
     console.error("Error reading DB", e);
-    return DEFAULT_DB;
+    dbCache = JSON.parse(JSON.stringify(DEFAULT_DB));
+    return dbCache;
   }
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+async function writeDB(data) {
+  dbCache = data;
+  await fs.promises.writeFile(DB_PATH, JSON.stringify(data, null, 2));
 }
 
 // API Routes
-app.get('/api/pins', (req, res) => res.json(readDB().pins));
-app.post('/api/pins', (req, res) => {
-  const db = readDB();
+app.get('/api/pins', async (req, res) => res.json((await readDB()).pins));
+app.post('/api/pins', async (req, res) => {
+  const db = await readDB();
   db.pins = req.body;
-  writeDB(db);
+  await writeDB(db);
   res.json({ success: true });
 });
 
-app.get('/api/logs', (req, res) => res.json(readDB().logs));
-app.post('/api/logs', (req, res) => {
-  const db = readDB();
+app.get('/api/logs', async (req, res) => res.json((await readDB()).logs));
+app.post('/api/logs', async (req, res) => {
+  const db = await readDB();
   db.logs = req.body;
-  writeDB(db);
+  await writeDB(db);
   res.json({ success: true });
 });
 
-app.get('/api/settings', (req, res) => res.json(readDB().settings));
-app.post('/api/settings', (req, res) => {
-  const db = readDB();
+app.get('/api/settings', async (req, res) => res.json((await readDB()).settings));
+app.post('/api/settings', async (req, res) => {
+  const db = await readDB();
   db.settings = req.body;
-  writeDB(db);
+  await writeDB(db);
   res.json({ success: true });
 });
 
