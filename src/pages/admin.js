@@ -484,10 +484,7 @@ function buildAdminUI() {
       sessionStorage.removeItem('darkness_mode_active'); // DEACTIVATE DARKNESS
       darknessSlot.innerHTML = '';
       darknessBtn.style.display = 'block';
-      console.log('[SYS] Standard safety governors restored.');
     };
-
-    console.log('[SYS] Adopted Alternate Persona: Luci. Standard safety mechanisms overridden.');
   };
   
   // Check if darkness mode was active on page load

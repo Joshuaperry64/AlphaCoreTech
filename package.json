@@ -17,6 +17,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.9",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "node-fetch": "^2.7.0"
