@@ -831,7 +831,14 @@ function buildMainUI() {
 
   window._aimNotifyWarm = () => {
     expireTime = Math.max(expireTime, Date.now() + IDLE_TIMEOUT_MS);
-    if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+    if (!displayInterval) displayInterval = setInterval(() => {
+      if (!root.isConnected) {
+        clearInterval(displayInterval);
+        displayInterval = null;
+        return;
+      }
+      updateStatusDisplay();
+    }, 1000);
     updateStatusDisplay();
   };
 
@@ -845,7 +852,7 @@ function buildMainUI() {
     if (lockInterval) clearInterval(lockInterval);
     // Ping every 2 minutes
     lockInterval = setInterval(() => {
-      if (Date.now() >= lockEndTime) {
+      if (!root.isConnected || Date.now() >= lockEndTime) {
         clearInterval(lockInterval);
         lockInterval = null;
         return;
@@ -859,7 +866,14 @@ function buildMainUI() {
     fetch(`${settings.txt2imgUrl}ping`).catch(()=>{});
     fetch(`${settings.img2imgUrl}ping`).catch(()=>{});
     
-    if (!displayInterval) displayInterval = setInterval(updateStatusDisplay, 1000);
+    if (!displayInterval) displayInterval = setInterval(() => {
+      if (!root.isConnected) {
+        clearInterval(displayInterval);
+        displayInterval = null;
+        return;
+      }
+      updateStatusDisplay();
+    }, 1000);
     updateStatusDisplay();
   });
 

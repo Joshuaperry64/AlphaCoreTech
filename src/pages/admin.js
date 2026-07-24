@@ -402,7 +402,13 @@ function buildAdminUI() {
   }
 
   // Periodic active tokens status refresh (for temp countdowns)
-  const refreshInterval = setInterval(updatePinList, 1000);
+  const refreshInterval = setInterval(() => {
+    if (!container.isConnected) {
+      clearInterval(refreshInterval);
+      return;
+    }
+    updatePinList();
+  }, 1000);
 
   // Save generative defaults
   saveCfgBtn.onclick = (e) => {
