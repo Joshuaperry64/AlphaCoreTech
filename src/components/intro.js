@@ -12,7 +12,8 @@ export default function createIntro(onComplete) {
   Object.assign(intro.style, {
     position: 'fixed', inset: '0', zIndex: '9999',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    backgroundImage: 'url(/alpha-tech.png)',
+    backgroundColor: '#000',
+    backgroundImage: 'url(/Images/wallpaper.png)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',

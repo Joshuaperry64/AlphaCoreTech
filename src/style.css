@@ -1414,13 +1414,13 @@ input:focus, textarea:focus {
 
   /* Mobile Background Images */
   .overview-page {
-    background-image: url('/Images/overview.png');
+    background-image: url('/Images/wallpaper.png');
     background-size: cover;
     background-position: center center;
     background-attachment: fixed;
   }
   .aimodals-page {
-    background-image: url('/Images/imggen.png');
+    background-image: url('/Images/wallpaper.png');
     background-size: cover;
     background-position: center center;
     background-attachment: fixed;
