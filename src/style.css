@@ -401,7 +401,7 @@ body.sidebar-collapsed .main-content {
 .alpha-hero-wrap {
   position: relative;
   width: calc(100% + 72px);
-  height: 380px;
+  height: 280px;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -1414,13 +1414,13 @@ input:focus, textarea:focus {
 
   /* Mobile Background Images */
   .overview-page {
-    background-image: url('/Images/wallpaper.png');
+    background-image: url('/Images/wallpapernew.png');
     background-size: cover;
     background-position: center center;
     background-attachment: fixed;
   }
   .aimodals-page {
-    background-image: url('/Images/wallpaper.png');
+    background-image: url('/Images/wallpapernew.png');
     background-size: cover;
     background-position: center center;
     background-attachment: fixed;

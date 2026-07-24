@@ -13,7 +13,7 @@ export default function createIntro(onComplete) {
     position: 'fixed', inset: '0', zIndex: '9999',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#000',
-    backgroundImage: 'url(/Images/wallpaper.png)',
+    backgroundImage: 'url(/Images/wallpapernew.png)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
