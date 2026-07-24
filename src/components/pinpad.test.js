@@ -1,20 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-<<<<<<< HEAD
-import { validatePin } from './pinpad';
+import { validatePin, addPin, getPins } from './pinpad';
 
 // Mock dependencies
 vi.mock('./logger.js', () => ({
   logAction: vi.fn()
 }));
-=======
-import { addPin, getPins } from './pinpad.js';
->>>>>>> origin/pr/6/head
 
 vi.mock('./db_sync.js', () => ({
   pushToServer: vi.fn()
 }));
 
-<<<<<<< HEAD
 describe('validatePin', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -165,7 +160,9 @@ describe('validatePin', () => {
     const result = validatePin('2222');
     expect(result.valid).toBe(true);
     expect(result.pinObj.pin).toBe('2222');
-=======
+  });
+});
+
 describe('addPin', () => {
   const MOCK_TIME = 1600000000000;
 
@@ -273,6 +270,5 @@ describe('addPin', () => {
 
     const pins = getPins();
     expect(pins).toContainEqual(pin);
->>>>>>> origin/pr/6/head
   });
 });

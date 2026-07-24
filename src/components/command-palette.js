@@ -15,6 +15,7 @@ const COMMANDS = [
   { icon: '💻', title: 'Go to CLI Shell Terminal', path: '#/terminal' },
   { icon: '📊', title: 'Go to System Analytics', path: '#/analytics' },
   { icon: '📜', title: 'Go to System Changelog', path: '#/changelog' },
+  { icon: '🌐', title: 'Go to Network Matrix', path: '#/network' },
   { icon: '⚙', title: 'Go to Administration', path: '#/admin' },
   { icon: '✦', title: 'Go to AI Modals Hub', path: '#/aimodals' },
   { icon: '🔐', title: 'Go to Classified Vault', path: '#/vault' },
