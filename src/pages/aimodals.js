@@ -262,8 +262,8 @@ function buildTxt2Img() {
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-4)</label>
-        <input class="aim-input" type="number" id="t2i-batch" min="1" max="4" value="1" />
+        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-10)</label>
+        <input class="aim-input" type="number" id="t2i-batch" min="1" max="10" value="1" />
       </div>
         <div class="aim-field" id="t2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
           <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
@@ -516,8 +516,8 @@ function buildImg2Img() {
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-4)</label>
-        <input class="aim-input" type="number" id="i2i-batch" min="1" max="4" value="1" />
+        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-10)</label>
+        <input class="aim-input" type="number" id="i2i-batch" min="1" max="10" value="1" />
       </div>
         <div class="aim-field" id="i2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
           <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
