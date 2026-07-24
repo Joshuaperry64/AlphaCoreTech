@@ -63,7 +63,7 @@ export default function Overview() {
 
       <div class="alpha-hero-wrap">
         <div style="font-family: 'Courier New', monospace; font-size: 0.8rem; color: #00ffff; margin-bottom: 10px;">// SYSTEM_INITIALIZED: TRUE</div>
-        <img src="/Images/ALPHA-MINIMAL.png" class="alpha-hero-img desktop-hero" alt="Alpha Core">
+        <img src="/Images/wallpaper.png" class="alpha-hero-img desktop-hero" alt="Alpha Core">
         <img src="/Images/wallpaper.png" class="alpha-hero-img mobile-hero" alt="Alpha Core">
         <div class="alpha-hero-overlay"></div>
         <div class="hero-scan"></div>
