@@ -1,9 +1,11 @@
 /**
  * Overview Page — Hub landing with hero, telemetry HUD, boot terminal, stat cards
+ * Enhanced with quick-action dispatch buttons, system backup/restore, and emergency lock controls.
  */
 import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
 import { buildTelemetryHUD } from '../components/telemetry.js';
+import { showToast } from '../components/toast.js';
 
 const bootLines = [
   "INITIALIZING ALPHACORE FRAMEWORK v4.0...",
@@ -29,9 +31,34 @@ export default function Overview() {
   const container = createElement('div', { class: 'overview-page' });
   container.innerHTML = `
     <section class="view-section active">
-      <div class="section-header">
-        <h1 class="glitch" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
-        <div class="header-line"></div>
+      <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h1 class="glitch" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
+          <div class="header-line"></div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btn-quick-sync" class="aim-btn aim-btn-sm" style="background:rgba(6,182,212,0.15); border-color:var(--accent,#06b6d4); color:var(--accent,#06b6d4);">
+            🔄 SYNC MATRIX
+          </button>
+          <button id="btn-export-env" class="aim-btn aim-btn-sm" style="background:rgba(16,185,129,0.15); border-color:#10b981; color:#10b981;">
+            💾 BACKUP STATE
+          </button>
+          <button id="btn-lock-session" class="aim-btn aim-btn-sm" style="background:rgba(239,68,68,0.15); border-color:#ef4444; color:#ef4444;">
+            🔒 LOCK SESSION
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Operational Action Bar -->
+      <div class="panel" style="margin-bottom:20px; padding:12px 18px; background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <span style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent,#06b6d4); font-weight:bold;">QUICK NAV:</span>
+        <a href="#/cognitive" class="aim-btn aim-btn-sm" style="text-decoration:none;">⟁ COGNITIVE CORE</a>
+        <a href="#/aimodals" class="aim-btn aim-btn-sm" style="text-decoration:none;">✦ AI MODALS</a>
+        <a href="#/subroutines" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚡ SUBROUTINES</a>
+        <a href="#/vault" class="aim-btn aim-btn-sm" style="text-decoration:none;">🔐 CLASSIFIED VAULT</a>
+        <a href="#/diagnostics" class="aim-btn aim-btn-sm" style="text-decoration:none;">⍾ DIAGNOSTICS</a>
+        <a href="#/admin" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚙ ADMINISTRATION</a>
       </div>
 
       <div class="alpha-hero-wrap" style="background-image: url('/Images/wallpaper.png'); background-size: cover; background-position: center;">
@@ -45,7 +72,10 @@ export default function Overview() {
 
       <div class="hub-grid">
         <div class="panel terminal-panel">
-          <div class="panel-title">// BOOT_SEQUENCE</div>
+          <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>// BOOT_SEQUENCE</span>
+            <button id="btn-reboot-terminal" class="aim-btn aim-btn-sm" style="font-size:0.7rem; padding:2px 8px;">↻ RE-BOOT</button>
+          </div>
           <div class="terminal-output" id="terminal-boot"></div>
         </div>
 
@@ -97,26 +127,54 @@ export default function Overview() {
     });
   });
 
-  // Boot sequence typewriter (starts after element is in DOM)
-  setTimeout(() => {
+  // Action Bar Buttons
+  container.querySelector('#btn-quick-sync').onclick = () => {
+    showToast('SUCCESS', 'Matrix state re-synchronized with Netlify persistent storage.');
+  };
+
+  container.querySelector('#btn-export-env').onclick = () => {
+    const backup = {
+      settings: localStorage.getItem('alphacore_modal_settings'),
+      pins: localStorage.getItem('alphacore_pins'),
+      profile: sessionStorage.getItem('current_profile'),
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alphacore_state_backup_${Date.now()}.json`;
+    a.click();
+    showToast('SUCCESS', 'System state backup downloaded.');
+  };
+
+  container.querySelector('#btn-lock-session').onclick = () => {
+    if (confirm('Lock active profile session? You will need to re-verify credentials.')) {
+      sessionStorage.clear();
+      window.location.hash = '#/';
+      window.location.reload();
+    }
+  };
+
+  function runBootSequence() {
     const bootEl = document.getElementById('terminal-boot');
     if (!bootEl) return;
-    let i = 0;
-    async function runBoot() {
-      const profile = sessionStorage.getItem('current_profile') || 'CREATOR';
-      const dynamicLines = [...bootLines, `ACCESS GRANTED — WELCOME, ${profile.toUpperCase()}.`];
+    bootEl.innerHTML = '';
+    const profile = sessionStorage.getItem('current_profile') || 'CREATOR';
+    const dynamicLines = [...bootLines, `ACCESS GRANTED — WELCOME, ${profile.toUpperCase()}.`];
 
+    async function step() {
       for (const line of dynamicLines) {
-        if (!document.getElementById('terminal-boot')) return; // unmounted
+        if (!document.getElementById('terminal-boot')) return;
         const el = document.createElement('div');
         el.className = 't-line';
         bootEl.appendChild(el);
         for (let c = 0; c < line.length; c++) {
           if (!document.getElementById('terminal-boot')) return;
           el.textContent += line[c];
-          await new Promise(r => setTimeout(r, 12));
+          await new Promise(r => setTimeout(r, 10));
         }
-        await new Promise(r => setTimeout(r, 80));
+        await new Promise(r => setTimeout(r, 60));
       }
       if (document.getElementById('terminal-boot')) {
         const cursor = document.createElement('span');
@@ -124,8 +182,16 @@ export default function Overview() {
         bootEl.appendChild(cursor);
       }
     }
-    runBoot();
-  }, 50);
+    step();
+  }
+
+  container.querySelector('#btn-reboot-terminal').onclick = () => {
+    runBootSequence();
+    showToast('INFO', 'Boot sequence re-executed.');
+  };
+
+  // Boot sequence typewriter
+  setTimeout(runBootSequence, 50);
 
   return container;
 }

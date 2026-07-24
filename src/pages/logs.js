@@ -1,9 +1,11 @@
 /**
- * AlphaCore System Event Logs Page Component
+ * AlphaCore Extended System Event Logs Page Component
  * Real-time filterable security, neural, and administrative event log viewer.
+ * Enhanced with export controls, live polling simulation, log clearing, and severity filtering.
  */
 
 import { createElement } from '../components/utils.js';
+import { showToast } from '../components/toast.js';
 
 export default function LogsPage() {
   const container = createElement('div', { class: 'logs-page-container' });
@@ -16,6 +18,9 @@ export default function LogsPage() {
     { id: 'LOG-8805', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), type: 'SYSTEM', level: 'INFO', source: 'AlphaCoreEngine', message: 'System state synced with Netlify Blob store persistence.' }
   ];
 
+  let livePollingActive = false;
+  let pollingInterval = null;
+
   function render() {
     container.innerHTML = `
       <div class="section-header">
@@ -23,10 +28,11 @@ export default function LogsPage() {
         <div class="header-line"></div>
       </div>
 
+      <!-- Action & Control Bar -->
       <div class="panel" style="margin-bottom:20px; padding:15px; background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(6,182,212,0.3));">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div style="display:flex; gap:10px; align-items:center;">
-            <input type="text" id="log-search" placeholder="Filter logs by keyword or module..." style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; width:260px;" />
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="log-search" placeholder="Filter logs by keyword or module..." style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; width:220px;" />
             <select id="log-type-filter" style="background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1); color:var(--accent, #06b6d4); padding:6px 10px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">
               <option value="ALL">ALL CATEGORIES</option>
               <option value="AUTH">AUTH</option>
@@ -35,11 +41,29 @@ export default function LogsPage() {
               <option value="SEC">SEC</option>
               <option value="SYSTEM">SYSTEM</option>
             </select>
+            <select id="log-level-filter" style="background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1); color:#10b981; padding:6px 10px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">
+              <option value="ALL">ALL LEVELS</option>
+              <option value="INFO">INFO</option>
+              <option value="SUCCESS">SUCCESS</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
           </div>
 
-          <button id="add-mock-log-btn" style="background:rgba(6,182,212,0.15); border:1px solid var(--accent, #06b6d4); color:var(--accent, #06b6d4); padding:6px 14px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; cursor:pointer;">
-            + EMIT DIAGNOSTIC EVENT
-          </button>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button id="btn-toggle-live" style="background:rgba(16,185,129,0.15); border:1px solid #10b981; color:#10b981; padding:6px 14px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; cursor:pointer;">
+              ● LIVE STREAM: OFF
+            </button>
+            <button id="add-mock-log-btn" style="background:rgba(6,182,212,0.15); border:1px solid var(--accent, #06b6d4); color:var(--accent, #06b6d4); padding:6px 14px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; cursor:pointer;">
+              + EMIT EVENT
+            </button>
+            <button id="export-logs-btn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#ccc; padding:6px 14px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; cursor:pointer;" title="Export JSON">
+              💾 EXPORT
+            </button>
+            <button id="purge-logs-btn" style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444; padding:6px 14px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; cursor:pointer;">
+              🗑 PURGE
+            </button>
+          </div>
         </div>
       </div>
 
@@ -62,17 +86,23 @@ export default function LogsPage() {
 
     const searchInput = container.querySelector('#log-search');
     const typeFilter = container.querySelector('#log-type-filter');
+    const levelFilter = container.querySelector('#log-level-filter');
     const tbody = container.querySelector('#logs-tbody');
     const emitBtn = container.querySelector('#add-mock-log-btn');
+    const toggleLiveBtn = container.querySelector('#btn-toggle-live');
+    const exportBtn = container.querySelector('#export-logs-btn');
+    const purgeBtn = container.querySelector('#purge-logs-btn');
 
     function updateTable() {
       const q = searchInput.value.toLowerCase();
       const cat = typeFilter.value;
+      const lvl = levelFilter.value;
 
       const filtered = logs.filter(l => {
         const matchesCat = cat === 'ALL' || l.type === cat;
+        const matchesLvl = lvl === 'ALL' || l.level === lvl;
         const matchesQ = l.message.toLowerCase().includes(q) || l.source.toLowerCase().includes(q) || l.id.toLowerCase().includes(q);
-        return matchesCat && matchesQ;
+        return matchesCat && matchesLvl && matchesQ;
       });
 
       if (filtered.length === 0) {
@@ -101,18 +131,74 @@ export default function LogsPage() {
 
     searchInput.addEventListener('input', updateTable);
     typeFilter.addEventListener('change', updateTable);
+    levelFilter.addEventListener('change', updateTable);
 
-    emitBtn.addEventListener('click', () => {
+    function emitLog() {
+      const types = ['NEURAL', 'PERF', 'AUTH', 'SEC', 'SYSTEM'];
+      const levels = ['INFO', 'SUCCESS', 'WARN', 'ERROR'];
+      const sources = ['TelemetryProbe', 'SynapseBridge', 'SecurityGovernor', 'MatrixCanvas', 'VectDB'];
+      const msgs = [
+        'System diagnostic trace emitted via Telemetry probe.',
+        'High latency detected on neural inference pipeline step.',
+        'Token authentication handshake refreshed successfully.',
+        'Matrix rain canvas frame rate optimized.',
+        'Vector space index updated with 512 new entries.'
+      ];
+
       const newLog = {
-        id: `LOG-${Math.floor(8806 + Math.random() * 1000)}`,
+        id: `LOG-${Math.floor(8806 + Math.random() * 10000)}`,
         timestamp: new Date().toISOString(),
-        type: ['NEURAL', 'PERF', 'AUTH', 'SYSTEM'][Math.floor(Math.random() * 4)],
-        level: ['INFO', 'SUCCESS', 'WARN'][Math.floor(Math.random() * 3)],
-        source: 'TelemetryProbe',
-        message: 'System diagnostic trace emitted via Telemetry probe.'
+        type: types[Math.floor(Math.random() * types.length)],
+        level: levels[Math.floor(Math.random() * levels.length)],
+        source: sources[Math.floor(Math.random() * sources.length)],
+        message: msgs[Math.floor(Math.random() * msgs.length)]
       };
       logs.unshift(newLog);
       updateTable();
+    }
+
+    emitBtn.addEventListener('click', () => {
+      emitLog();
+      showToast('INFO', 'Diagnostic log event generated.');
+    });
+
+    toggleLiveBtn.addEventListener('click', () => {
+      livePollingActive = !livePollingActive;
+      if (livePollingActive) {
+        toggleLiveBtn.textContent = '● LIVE STREAM: ON';
+        toggleLiveBtn.style.background = 'rgba(16,185,129,0.3)';
+        showToast('SUCCESS', 'Live event stream started.');
+        pollingInterval = setInterval(() => {
+          if (!container.isConnected) {
+            clearInterval(pollingInterval);
+            return;
+          }
+          emitLog();
+        }, 2500);
+      } else {
+        toggleLiveBtn.textContent = '● LIVE STREAM: OFF';
+        toggleLiveBtn.style.background = 'rgba(16,185,129,0.15)';
+        if (pollingInterval) clearInterval(pollingInterval);
+        showToast('INFO', 'Live event stream paused.');
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `alphacore_event_logs_${Date.now()}.json`;
+      a.click();
+      showToast('SUCCESS', 'Logs exported as JSON file.');
+    });
+
+    purgeBtn.addEventListener('click', () => {
+      if (confirm('Clear all system event logs?')) {
+        logs = [];
+        updateTable();
+        showToast('WARN', 'All event logs purged.');
+      }
     });
 
     updateTable();

@@ -10,6 +10,11 @@ let modalOverlay = null;
 const COMMANDS = [
   { icon: '⎔', title: 'Go to Overview', path: '#/' },
   { icon: '⟁', title: 'Go to Cognitive Core', path: '#/cognitive' },
+  { icon: '🧪', title: 'Go to Prompt Lab', path: '#/promptlab' },
+  { icon: '⚡', title: 'Go to Subroutines Console', path: '#/subroutines' },
+  { icon: '💻', title: 'Go to CLI Shell Terminal', path: '#/terminal' },
+  { icon: '📊', title: 'Go to System Analytics', path: '#/analytics' },
+  { icon: '📜', title: 'Go to System Changelog', path: '#/changelog' },
   { icon: '⚙', title: 'Go to Administration', path: '#/admin' },
   { icon: '✦', title: 'Go to AI Modals Hub', path: '#/aimodals' },
   { icon: '🔐', title: 'Go to Classified Vault', path: '#/vault' },
@@ -49,7 +54,7 @@ export function initCommandPalette() {
     <div style="width: 90%; max-width: 600px; background: rgba(12, 18, 30, 0.95); border: 1px solid var(--accent, #06b6d4); box-shadow: 0 0 25px rgba(6,182,212,0.3); border-radius: 6px; overflow: hidden; font-family: 'Share Tech Mono', monospace;">
       <div style="display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 16px;">
         <span style="color: var(--accent, #06b6d4); font-size: 1.2rem; margin-right: 10px;">>_</span>
-        <input type="text" id="cmd-input" placeholder="Type a command or navigate... (e.g. 'vault', 'theme', 'audio')" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 1rem;" autofocus />
+        <input type="text" id="cmd-input" placeholder="Type a command or navigate... (e.g. 'changelog', 'terminal', 'prompt')" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 1rem;" autofocus />
         <span style="font-size: 0.75rem; color: #666; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 3px;">ESC to exit</span>
       </div>
       <div id="cmd-list" style="max-height: 320px; overflow-y: auto; padding: 8px 0;"></div>
