@@ -13,6 +13,7 @@ import { buildPinPad } from './components/pinpad.js';
 import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying } from './components/audio.js';
 import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
+import { showToast } from './components/toast.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -25,6 +26,7 @@ import VaultPage from './pages/vault.js';
 import Research from './pages/research.js';
 import VisionProcessor from './pages/vision.js';
 import LogsPage from './pages/logs.js';
+import SubroutinesPage from './pages/subroutines.js';
 
 const routes = {
   '/': Overview,
@@ -38,6 +40,7 @@ const routes = {
   '/research': Research,
   '/vision': VisionProcessor,
   '/logs': LogsPage,
+  '/subroutines': SubroutinesPage,
 };
 
 function updateActiveNav(hash) {
@@ -85,7 +88,6 @@ function renderRoute() {
         
         // Ensure role visibility on tabs applies immediately
         import('./components/sidebar.js').then(module => {
-          // Temporarily doing it manually for immediate effect before reload
           const pins = JSON.parse(localStorage.getItem('alphacore_pins') || '[]');
           const userPin = pins.find(p => p.label === sessionStorage.getItem('current_profile'));
           const hasAdmin = userPin && userPin.roles && userPin.roles.includes('admin');
@@ -97,6 +99,7 @@ function renderRoute() {
           if (vaultTab) vaultTab.style.display = hasVault ? 'flex' : 'none';
         });
 
+        showToast('SUCCESS', 'Handshake verified. Welcome back.');
         renderRoute();
       },
       title: 'ALPHACORE // IDENTITY_VERIFICATION',
@@ -153,9 +156,11 @@ window.addEventListener('DOMContentLoaded', () => {
       if (isEco) {
         ecoBtn.classList.add('active');
         document.body.classList.add('eco-mode');
+        showToast('WARN', 'Eco Mode Activated (Low Power)');
       } else {
         ecoBtn.classList.remove('active');
         document.body.classList.remove('eco-mode');
+        showToast('INFO', 'Full Performance Mode Activated');
       }
     });
   }
@@ -166,15 +171,16 @@ window.addEventListener('DOMContentLoaded', () => {
     playAudioBtn.addEventListener('click', () => {
       const isPlaying = toggleAudio();
       if (isPlaying) {
-        playAudioBtn.innerHTML = '&#10074;&#10074;'; // Pause icon
+        playAudioBtn.innerHTML = '&#10074;&#10074;';
         playAudioBtn.title = "Pause Music";
+        showToast('INFO', 'Audio Stream Playing');
       } else {
-        playAudioBtn.innerHTML = '&#9658;'; // Play icon
+        playAudioBtn.innerHTML = '&#9658;';
         playAudioBtn.title = "Play Music";
+        showToast('INFO', 'Audio Stream Paused');
       }
     });
 
-    // Autoplay audio on first interaction if not playing
     let firstInteraction = false;
     document.body.addEventListener('click', () => {
       if (!firstInteraction) {

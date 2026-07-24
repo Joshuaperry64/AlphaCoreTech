@@ -6,6 +6,7 @@ import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
 import { logAction } from '../components/logger.js';
 import { saveImageToGallery } from '../components/vision_db.js';
+import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
 
 const MODAL_API = "https://ai-alphacore-tech--alpha-modal-gui-local-llm-fastapi-app.modal.run";
 
@@ -72,8 +73,10 @@ export default function CognitiveUplink() {
           <div class="uplink-info-row"><span class="s-label">AUTO-MEMORY</span><span class="s-val online">ACTIVE</span></div>
           <div class="uplink-info-row"><span class="s-label">PROFILE</span><span class="s-val accent" id="active-profile-label">UNKNOWN</span></div>
         </div>
-        <div class="chat-info-note">
-          <p>Direct neural communication bridge. Conversations, memories, and generated images are strictly isolated to the active profile.</p>
+
+        <div style="margin-top: 15px;">
+          <div style="font-family:'Orbitron',sans-serif; font-size:0.75rem; color:#888; margin-bottom:8px;">// SYNAPSE_TOPOLOGY</div>
+          <div id="neural-canvas-mount"></div>
         </div>
       </div>
     </div>
@@ -105,6 +108,12 @@ export default function CognitiveUplink() {
   `;
 
   setTimeout(() => {
+    // Mount Neural Topology Canvas
+    const canvasMount = container.querySelector('#neural-canvas-mount');
+    if (canvasMount) {
+      canvasMount.appendChild(buildNeuralTopologyCanvas(280, 160));
+    }
+
     const profile = sessionStorage.getItem('current_profile') || 'Guest';
     const profileLabel = container.querySelector('#active-profile-label');
     if (profileLabel) profileLabel.textContent = profile.toUpperCase();
@@ -239,7 +248,8 @@ export default function CognitiveUplink() {
       
       let processingText = 'PROCESSING NEURAL RESPONSE...';
       let typingHTML = '...';
-      if (text.startsWith('/imagine') || text.startsWith('/animate')) {
+      const isMedia = text.startsWith('/imagine') || text.startsWith('/animate');
+      if (isMedia) {
          processingText = 'RENDERING MEDIA ASSET...';
          typingHTML = '<div class="media-loader"><div class="media-loader-bar"></div></div><span style="font-size:0.8rem; color:var(--accent);">ALLOCATING GPU COMPUTE...</span>';
       }
@@ -540,7 +550,7 @@ export default function CognitiveUplink() {
       expireTime = 0;
       updateStatusDisplay();
       
-      try { fetch(`${MODAL_API}/api/shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){}
+      try { fetch(`${MODAL_API}/api/shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){};
     });
 
   }, 50);
