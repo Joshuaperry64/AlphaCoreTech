@@ -31,6 +31,7 @@ import PromptLabPage from './pages/promptlab.js';
 import AnalyticsPage from './pages/analytics.js';
 import TerminalPage from './pages/terminal.js';
 import ChangelogPage from './pages/changelog.js';
+import NetworkMatrixPage from './pages/network.js';
 
 const routes = {
   '/': Overview,
@@ -49,6 +50,7 @@ const routes = {
   '/analytics': AnalyticsPage,
   '/terminal': TerminalPage,
   '/changelog': ChangelogPage,
+  '/network': NetworkMatrixPage,
 };
 
 function updateActiveNav(hash) {
