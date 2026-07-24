@@ -63,15 +63,13 @@ export default function CognitiveUplink() {
         </div>
       </div>
 
-      <div class="panel uplink-info-panel">
-        <div class="panel-title">// SUBSYSTEM_MANIFEST</div>
-        <div class="uplink-info-rows">
-          <div class="uplink-info-row"><span class="s-label">PROTOCOL</span><span class="s-val">DEEPSEEK-R1 14B</span></div>
-          <div class="uplink-info-row"><span class="s-label">ALIGNMENT</span><span class="s-val accent">ABLITERATED</span></div>
-          <div class="uplink-info-row"><span class="s-label">VISION</span><span class="s-val online">SDXL A10G</span></div>
-          <div class="uplink-info-row"><span class="s-label">ENDPOINT</span><span class="s-val online" id="endpoint-status">CONNECTED</span></div>
-          <div class="uplink-info-row"><span class="s-label">AUTO-MEMORY</span><span class="s-val online">ACTIVE</span></div>
-          <div class="uplink-info-row"><span class="s-label">PROFILE</span><span class="s-val accent" id="active-profile-label">UNKNOWN</span></div>
+      <div class="panel uplink-info-panel" style="display: flex; flex-direction: column;">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>// LIVE_MODAL_LOGS</span>
+          <a href="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-modal-gui-local-llm" target="_blank" class="aim-btn aim-btn-sm" style="font-size: 0.6rem; padding: 4px 8px; text-decoration: none;">EXTERNAL &nearr;</a>
+        </div>
+        <div style="flex-grow: 1; min-height: 300px; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative;">
+          <iframe src="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-modal-gui-local-llm" style="width: 100%; height: 100%; border: none; background: #000;"></iframe>
         </div>
 
         <div style="margin-top: 15px;">
@@ -310,22 +308,7 @@ export default function CognitiveUplink() {
             fullReply += chunk;
             
             // Format chunks dynamically
-            let htmlContent = '';
-            if (fullReply.includes('<think>')) {
-              const parts = fullReply.split(/<think>|<\/think>/);
-              for (let i = 0; i < parts.length; i++) {
-                if (i % 2 === 1) {
-                  htmlContent += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);" open>
-                    <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
-                    <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
-                  </details>`;
-                } else if (parts[i].trim() !== '') {
-                  htmlContent += `<span>${escapeHtml(parts[i].trim())}</span>`;
-                }
-              }
-            } else {
-              htmlContent = escapeHtml(fullReply);
-            }
+            let htmlContent = formatThinkBlock(fullReply, true);
             streamEl.querySelector('.chat-text').innerHTML = htmlContent;
             chatMessages.scrollTop = chatMessages.scrollHeight;
           }
@@ -360,22 +343,7 @@ export default function CognitiveUplink() {
       const msg = document.createElement('div');
       msg.className = `chat-msg ${className}`;
       
-      let htmlContent = '';
-      if (typeof text === 'string' && text.includes('<think>')) {
-        const parts = text.split(/<think>|<\/think>/);
-        for (let i = 0; i < parts.length; i++) {
-          if (i % 2 === 1) {
-            htmlContent += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);">
-              <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
-              <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
-            </details>`;
-          } else if (parts[i].trim() !== '') {
-            htmlContent += `<span>${escapeHtml(parts[i].trim())}</span>`;
-          }
-        }
-      } else {
-        htmlContent = escapeHtml(text);
-      }
+      let htmlContent = formatThinkBlock(text, false);
 
       msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text" style="white-space:pre-wrap;">${htmlContent}</span>`;
       chatMessages.appendChild(msg);
@@ -410,9 +378,34 @@ export default function CognitiveUplink() {
     }
 
     function escapeHtml(str) {
+      if (typeof str !== 'string') return '';
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    function formatThinkBlock(text, isOpen = false) {
+      if (typeof text !== 'string') return '';
+      // If there's a </think> but no <think> (model skipped opening tag), prepend it
+      if (text.includes('</think>') && !text.includes('<think>')) {
+        text = '<think>\n' + text;
+      }
+      
+      if (!text.includes('<think>')) return escapeHtml(text);
+
+      const parts = text.split(/<think>|<\/think>/);
+      let html = '';
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 1) { // Inside think block
+          html += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);" ${isOpen ? 'open' : ''}>
+            <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
+            <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
+          </details>`;
+        } else if (parts[i].trim() !== '') {
+          html += `<span>${escapeHtml(parts[i].trim())}</span>`;
+        }
+      }
+      return html;
     }
 
     // MEMORY
