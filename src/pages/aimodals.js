@@ -128,7 +128,10 @@ function buildResult(urls = []) {
           <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
           <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
         </div>
-        <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
+        <div style="display:flex; gap:10px;">
+          ${urls.length > 1 ? `<button class="aim-btn aim-btn-dl" id="aim-dl-all-btn">⬇ DOWN ALL</button>` : ''}
+          <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
+        </div>
       </div>
     </div>
   `;
@@ -149,17 +152,65 @@ function buildResult(urls = []) {
   if (urls.length > 1) {
     const imgEl = el.querySelector('#aim-result-img');
     const countEl = el.querySelector('.aim-batch-count');
+    const actionsRow = el.querySelector('.aim-result-actions');
     
+    // Create thumbnails container
+    const thumbContainer = document.createElement('div');
+    thumbContainer.className = 'aim-result-thumbnails';
+    thumbContainer.style.display = 'flex';
+    thumbContainer.style.gap = '8px';
+    thumbContainer.style.marginTop = '10px';
+    thumbContainer.style.overflowX = 'auto';
+    thumbContainer.style.padding = '4px 0';
+    
+    // Add thumbnails
+    urls.forEach((u, idx) => {
+      const thumb = document.createElement('img');
+      thumb.src = u;
+      thumb.style.width = '60px';
+      thumb.style.height = '60px';
+      thumb.style.objectFit = 'cover';
+      thumb.style.cursor = 'pointer';
+      thumb.style.borderRadius = '4px';
+      thumb.style.border = idx === 0 ? '2px solid var(--accent)' : '2px solid transparent';
+      thumb.style.transition = 'border 0.2s';
+      
+      thumb.onclick = () => {
+        currentIdx = idx;
+        imgEl.src = urls[currentIdx];
+        countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+        Array.from(thumbContainer.children).forEach((t, i) => {
+          t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent';
+        });
+      };
+      thumbContainer.appendChild(thumb);
+    });
+    
+    // Insert thumbnails before actions row
+    actionsRow.parentNode.insertBefore(thumbContainer, actionsRow);
+    
+    // Keep next/prev buttons but update thumbnails highlighting
     el.querySelector('#aim-prev-btn').onclick = () => {
       currentIdx = (currentIdx - 1 + urls.length) % urls.length;
       imgEl.src = urls[currentIdx];
       countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      Array.from(thumbContainer.children).forEach((t, i) => t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent');
     };
     
     el.querySelector('#aim-next-btn').onclick = () => {
       currentIdx = (currentIdx + 1) % urls.length;
       imgEl.src = urls[currentIdx];
       countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      Array.from(thumbContainer.children).forEach((t, i) => t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent');
+    };
+
+    el.querySelector('#aim-dl-all-btn').onclick = () => {
+      urls.forEach((u, idx) => {
+        const a = document.createElement('a');
+        a.href = u;
+        a.download = `alphacore_output_${Date.now()}_${idx}.png`;
+        setTimeout(() => a.click(), idx * 200); // Stagger downloads
+      });
     };
   }
 
