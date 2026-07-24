@@ -1,8 +1,9 @@
 /**
- * Overview Page — Hub landing with hero, boot terminal, stat cards
+ * Overview Page — Hub landing with hero, telemetry HUD, boot terminal, stat cards
  */
 import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
+import { buildTelemetryHUD } from '../components/telemetry.js';
 
 const bootLines = [
   "INITIALIZING ALPHACORE FRAMEWORK v4.0...",
@@ -39,6 +40,8 @@ export default function Overview() {
         <div class="alpha-hero-overlay"></div>
         <div class="hero-scan"></div>
       </div>
+
+      <div id="telemetry-hud-mount"></div>
 
       <div class="hub-grid">
         <div class="panel terminal-panel">
@@ -79,6 +82,12 @@ export default function Overview() {
       </div>
     </section>
   `;
+
+  // Mount Telemetry HUD
+  const telemMount = container.querySelector('#telemetry-hud-mount');
+  if (telemMount) {
+    telemMount.appendChild(buildTelemetryHUD());
+  }
 
   // Stat card click → modal
   container.querySelectorAll('.stat-card').forEach(card => {

@@ -10,7 +10,9 @@ import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer } from './components/db_sync.js';
 import { buildPinPad } from './components/pinpad.js';
-import { toggleAudio, initGlobalAudio } from './components/audio.js';
+import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying } from './components/audio.js';
+import { initThemeSwitcher } from './components/theme-switcher.js';
+import { initCommandPalette } from './components/command-palette.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -22,6 +24,7 @@ import AiModals from './pages/aimodals.js';
 import VaultPage from './pages/vault.js';
 import Research from './pages/research.js';
 import VisionProcessor from './pages/vision.js';
+import LogsPage from './pages/logs.js';
 
 const routes = {
   '/': Overview,
@@ -34,6 +37,7 @@ const routes = {
   '/vault': VaultPage,
   '/research': Research,
   '/vision': VisionProcessor,
+  '/logs': LogsPage,
 };
 
 function updateActiveNav(hash) {
@@ -133,6 +137,8 @@ function mountIntro(force) {
 window.addEventListener('hashchange', renderRoute);
 window.addEventListener('DOMContentLoaded', () => {
   // Init global systems
+  initThemeSwitcher();
+  initCommandPalette();
   initMatrixRain();
   
   // Setup Eco Mode Button
@@ -219,7 +225,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const pixel = document.createElement('div');
   pixel.className = 'glitch-pixel';
   pixel.id = 'glitch-pixel';
-  pixel.style = 'position:fixed;bottom:18px;right:18px;width:8px;height:8px;background:#06b6d4;box-shadow:0 0 8px #06b6d4,0 0 2px #fff;z-index:9999;animation:glitch-pulse 0.7s infinite alternate;cursor:pointer;opacity:0.7;';
+  pixel.style = 'position:fixed;bottom:18px;right:18px;width:8px;height:8px;background:var(--accent, #06b6d4);box-shadow:0 0 8px var(--accent, #06b6d4),0 0 2px #fff;z-index:9999;animation:glitch-pulse 0.7s infinite alternate;cursor:pointer;opacity:0.7;';
   let clicks = 0;
   pixel.onclick = () => {
     clicks++;
