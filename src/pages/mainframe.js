@@ -29,7 +29,7 @@ export default function MainframePage() {
       // Load the AlphaMainframe UI via Iframe
       const iframe = createElement('iframe', {
         // This connects directly to the Cloudflare Zero Trust tunnel or local proxy layer
-        src: 'https://system.alpha-core.tech', 
+        src: 'https://josh-camper.tail58c4ca.ts.net', 
         style: 'width:100%; height:100%; border:none; background:#000;'
       });
       contentArea.appendChild(iframe);
