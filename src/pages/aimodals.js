@@ -992,7 +992,7 @@ function buildFramepackContent() {
     </div>
   `;
 
-  const url = 'https://ai-alphacore-tech--framepack-studio-wsl-lifecycle-framepackcontainer-ui.modal.run/';
+  const url = 'https://ai-alphacore-tech--framepack-studio-wsl-lifecycle-framep-f935cd.modal.run';
 
   inner.querySelector('#fp-launch-btn').onclick = () => {
     const container = inner.querySelector('#fp-frame-container');
