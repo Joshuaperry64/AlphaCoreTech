@@ -32,6 +32,7 @@ import AnalyticsPage from './pages/analytics.js';
 import TerminalPage from './pages/terminal.js';
 import ChangelogPage from './pages/changelog.js';
 import NetworkMatrixPage from './pages/network.js';
+import MainframePage from './pages/mainframe.js';
 
 const routes = {
   '/': Overview,
@@ -51,6 +52,7 @@ const routes = {
   '/terminal': TerminalPage,
   '/changelog': ChangelogPage,
   '/network': NetworkMatrixPage,
+  '/mainframe': MainframePage,
 };
 
 function updateActiveNav(hash) {
