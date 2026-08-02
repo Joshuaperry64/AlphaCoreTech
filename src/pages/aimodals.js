@@ -3,7 +3,7 @@
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
-import { buildPinPad, getPins } from '../components/pinpad.js';
+import { buildPinPad } from '../components/pinpad.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 
