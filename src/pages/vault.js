@@ -379,7 +379,7 @@ function buildVaultUI() {
             const dist = Math.hypot(n1.px - n2.px, n1.py - n2.py);
             if (dist < range) {
               const alpha = (1 - (dist / range)) * 0.4;
-              ctx.strokeStyle = matrixColor + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+              ctx.globalAlpha = alpha;
               ctx.beginPath();
               ctx.moveTo(n1.px, n1.py);
               ctx.lineTo(n2.px, n2.py);
@@ -387,6 +387,7 @@ function buildVaultUI() {
             }
           }
         }
+        ctx.globalAlpha = 1.0;
 
         // Draw nodes
         nodes.forEach(node => {
