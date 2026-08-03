@@ -10,11 +10,46 @@ vi.mock('./db_sync.js', () => ({
   pushToServer: vi.fn()
 }));
 
+// Helper to mock fetch responses based on what validatePin expects from /api/auth
+function mockFetch(testPins) {
+  global.fetch = vi.fn(async (url, options) => {
+    if (url === '/api/auth') {
+      const body = JSON.parse(options.body);
+      const { pin, requiredRole } = body;
+      const found = testPins.find(p => p.pin === pin);
+
+      if (!found) {
+        return { ok: true, json: async () => ({ valid: false, reason: 'ACCESS DENIED' }) };
+      }
+      if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
+        return { ok: true, json: async () => ({ valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` }) };
+      }
+      if (found.type === 'one-time') {
+        if (found.used) {
+          return { ok: true, json: async () => ({ valid: false, reason: 'ONE-TIME PIN EXPIRED' }) };
+        }
+        found.used = true;
+        // In real backend, this deletes it. Here we just update the mock state.
+        return { ok: true, json: async () => ({ valid: true, pinObj: found, isOtp: true }) };
+      }
+      if (found.type === 'temporary') {
+        if (Date.now() > found.expiresAt) {
+          return { ok: true, json: async () => ({ valid: false, reason: 'TEMPORARY PIN EXPIRED' }) };
+        }
+      }
+      return { ok: true, json: async () => ({ valid: true, pinObj: found }) };
+    }
+    return { ok: false };
+  });
+}
+
 describe('validatePin', () => {
+  let testPins = [];
+
   beforeEach(() => {
     localStorage.clear();
     // Setup local storage pins for testing
-    const testPins = [
+    testPins = [
       {
         pin: '1234',
         type: 'permanent',
@@ -66,98 +101,104 @@ describe('validatePin', () => {
       }
     ];
     localStorage.setItem('alphacore_pins', JSON.stringify(testPins));
+    mockFetch(testPins);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    global.fetch.mockClear();
   });
 
-  it('grants access when PIN is valid and no role is required', () => {
-    const result = validatePin('1234');
+  it('grants access when PIN is valid and no role is required', async () => {
+    const result = await validatePin('1234');
     expect(result.valid).toBe(true);
     expect(result.pinObj.pin).toBe('1234');
   });
 
-  it('denies access when PIN does not exist', () => {
-    const result = validatePin('9999');
+  it('denies access when PIN does not exist', async () => {
+    const result = await validatePin('9999');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('ACCESS DENIED');
   });
 
-  it('grants access when PIN is valid and required role matches', () => {
-    const result = validatePin('1234', 'admin');
+  it('grants access when PIN is valid and required role matches', async () => {
+    const result = await validatePin('1234', 'admin');
     expect(result.valid).toBe(true);
     expect(result.pinObj.pin).toBe('1234');
   });
 
-  it('denies access when PIN is valid but required role does not match', () => {
-    const result = validatePin('5678', 'admin');
+  it('denies access when PIN is valid but required role does not match', async () => {
+    const result = await validatePin('5678', 'admin');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('INSUFFICIENT CLEARANCE: REQUIRES [ADMIN]');
   });
 
-  it('denies access when PIN is valid but has no roles and a role is required', () => {
-    const result = validatePin('9012', 'admin');
+  it('denies access when PIN is valid but has no roles and a role is required', async () => {
+    const result = await validatePin('9012', 'admin');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('INSUFFICIENT CLEARANCE: REQUIRES [ADMIN]');
   });
 
-  it('denies access when user has null roles and a role is required', () => {
+  it('denies access when user has null roles and a role is required', async () => {
     const pins = JSON.parse(localStorage.getItem('alphacore_pins'));
-    pins.push({
+    const newPin = {
       pin: '8888',
       type: 'permanent',
       label: 'Null Roles User',
       roles: null,
       createdAt: Date.now()
-    });
+    };
+    pins.push(newPin);
+    testPins.push(newPin);
     localStorage.setItem('alphacore_pins', JSON.stringify(pins));
 
-    const result = validatePin('8888', 'admin');
+    const result = await validatePin('8888', 'admin');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('INSUFFICIENT CLEARANCE: REQUIRES [ADMIN]');
   });
 
-  it('denies access when user does not have roles field and a role is required', () => {
+  it('denies access when user does not have roles field and a role is required', async () => {
     const pins = JSON.parse(localStorage.getItem('alphacore_pins'));
-    pins.push({
+    const newPin = {
       pin: '7777',
       type: 'permanent',
       label: 'Undefined Roles User',
       createdAt: Date.now()
-    });
+    };
+    pins.push(newPin);
+    testPins.push(newPin);
     localStorage.setItem('alphacore_pins', JSON.stringify(pins));
 
-    const result = validatePin('7777', 'admin');
+    const result = await validatePin('7777', 'admin');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('INSUFFICIENT CLEARANCE: REQUIRES [ADMIN]');
   });
 
-  it('denies access if one-time PIN is already used', () => {
-    const result = validatePin('7890');
+  it('denies access if one-time PIN is already used', async () => {
+    const result = await validatePin('7890');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('ONE-TIME PIN EXPIRED');
   });
 
-  it('grants access for one-time PIN and removes it from storage', () => {
-    const result = validatePin('3456');
+  it('grants access for one-time PIN and removes it from storage', async () => {
+    const result = await validatePin('3456');
     expect(result.valid).toBe(true);
     expect(result.pinObj.pin).toBe('3456');
 
-    // It should be removed from localStorage via savePins inside validatePin
+    // It should be removed from localStorage via validatePin directly handling OTP clear locally
     const updatedPins = JSON.parse(localStorage.getItem('alphacore_pins'));
     const found = updatedPins.find(p => p.pin === '3456');
     expect(found).toBeUndefined();
   });
 
-  it('denies access if temporary PIN is expired', () => {
-    const result = validatePin('1111');
+  it('denies access if temporary PIN is expired', async () => {
+    const result = await validatePin('1111');
     expect(result.valid).toBe(false);
     expect(result.reason).toBe('TEMPORARY PIN EXPIRED');
   });
 
-  it('grants access if temporary PIN is active', () => {
-    const result = validatePin('2222');
+  it('grants access if temporary PIN is active', async () => {
+    const result = await validatePin('2222');
     expect(result.valid).toBe(true);
     expect(result.pinObj.pin).toBe('2222');
   });

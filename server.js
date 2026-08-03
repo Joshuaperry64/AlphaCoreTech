@@ -60,29 +60,91 @@ async function writeDB(data) {
   await fs.promises.writeFile(DB_PATH, JSON.stringify(data, null, 2));
 }
 
+// Authentication Middleware for POST routes
+const authenticate = async (req, res, next) => {
+  const userPin = req.headers['x-user-pin'];
+  const db = await readDB();
+  const pinObj = db.pins.find(p => p.pin === userPin);
+
+  if (!pinObj) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
+
 // API Routes
-app.get('/api/pins', async (req, res) => res.json((await readDB()).pins));
-app.post('/api/pins', async (req, res) => {
+app.get('/api/pins', async (req, res) => {
+  const db = await readDB();
+  const userPin = req.headers['x-user-pin'];
+  const isAuthenticated = userPin && db.pins.some(p => p.pin === userPin);
+
+  if (isAuthenticated) {
+    res.json(db.pins);
+  } else {
+    // Return safe pins (no actual pin value)
+    res.json(db.pins.map(p => {
+      const safePin = { ...p };
+      delete safePin.pin;
+      return safePin;
+    }));
+  }
+});
+
+app.post('/api/pins', authenticate, async (req, res) => {
   const db = await readDB();
   db.pins = req.body;
   await writeDB(db);
   res.json({ success: true });
 });
 
-app.get('/api/logs', async (req, res) => res.json((await readDB()).logs));
-app.post('/api/logs', async (req, res) => {
+app.get('/api/logs', authenticate, async (req, res) => res.json((await readDB()).logs));
+app.post('/api/logs', authenticate, async (req, res) => {
   const db = await readDB();
   db.logs = req.body;
   await writeDB(db);
   res.json({ success: true });
 });
 
-app.get('/api/settings', async (req, res) => res.json((await readDB()).settings));
-app.post('/api/settings', async (req, res) => {
+app.get('/api/settings', authenticate, async (req, res) => res.json((await readDB()).settings));
+app.post('/api/settings', authenticate, async (req, res) => {
   const db = await readDB();
   db.settings = req.body;
   await writeDB(db);
   res.json({ success: true });
+});
+
+app.post('/api/auth', async (req, res) => {
+  const db = await readDB();
+  const { pin, requiredRole } = req.body || {};
+
+  const found = db.pins.find(p => p.pin === pin);
+
+  if (!found) {
+    return res.json({ valid: false, reason: 'ACCESS DENIED' });
+  }
+
+  if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
+    return res.json({ valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` });
+  }
+
+  if (found.type === 'one-time') {
+    if (found.used) {
+      return res.json({ valid: false, reason: 'ONE-TIME PIN EXPIRED' });
+    }
+    found.used = true;
+    db.pins = db.pins.filter(p => p.pin !== pin);
+    await writeDB(db);
+    return res.json({ valid: true, pinObj: found, isOtp: true });
+  }
+
+  if (found.type === 'temporary') {
+    if (Date.now() > found.expiresAt) {
+      return res.json({ valid: false, reason: 'TEMPORARY PIN EXPIRED' });
+    }
+    return res.json({ valid: true, pinObj: found });
+  }
+
+  res.json({ valid: true, pinObj: found });
 });
 
 // Serve frontend build if exists
