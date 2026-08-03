@@ -2,9 +2,7 @@
  * Cognitive Uplink Page — LIVE CHAT INTERFACE & MEMORY MATRIX
  * Connected to Modal DeepSeek backend
  */
-import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
-import { logAction } from '../components/logger.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
 

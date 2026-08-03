@@ -1,5 +1,5 @@
 import { createElement } from '../components/utils.js';
-import { buildPinPad } from '../components/pinpad.js';
+import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { showModal } from '../components/modal.js';
 
 export default function VaultPage() {
@@ -10,19 +10,14 @@ export default function VaultPage() {
     container.appendChild(buildVaultUI());
   }
 
-  // Check if already authenticated this session
-  if (sessionStorage.getItem('vault_authenticated')) {
-    showVault();
-  } else {
-    container.appendChild(buildPinPad({
-      authKey: 'vault_authenticated',
-      requiredRole: 'vault',
-      onSuccess: showVault,
-      title: 'ALPHACORE // VAULT_LOCKOUT',
-      subtitle: 'PERSONAL DECRYPTION PIN REQUIRED',
-      icon: '🔐'
-    }));
-  }
+  requireAuth(container, {
+    authKey: 'vault_authenticated',
+    requiredRole: 'vault',
+    onSuccess: showVault,
+    title: 'ALPHACORE // VAULT_LOCKOUT',
+    subtitle: 'PERSONAL DECRYPTION PIN REQUIRED',
+    icon: '🔐'
+  });
 
   return container;
 }
@@ -408,7 +403,7 @@ function buildVaultUI() {
                     const dist = Math.hypot(n1.px - n2.px, n1.py - n2.py);
                     if (dist < range) {
                       const alpha = (1 - (dist / range)) * 0.4;
-                      ctx.strokeStyle = matrixColor + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                      ctx.globalAlpha = alpha;
                       ctx.beginPath();
                       ctx.moveTo(n1.px, n1.py);
                       ctx.lineTo(n2.px, n2.py);
@@ -420,6 +415,8 @@ function buildVaultUI() {
             }
           }
         }
+        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1.0;
 
         // Draw nodes
         nodes.forEach(node => {
