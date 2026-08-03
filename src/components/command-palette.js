@@ -3,7 +3,7 @@
  * Modal palette for fast navigation, subroutines execution, theme changing, and audio control.
  */
 
-import { applyTheme, THEMES } from './theme-switcher.js';
+import { applyTheme } from './theme-switcher.js';
 
 let modalOverlay = null;
 
