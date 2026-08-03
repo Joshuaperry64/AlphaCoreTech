@@ -150,6 +150,7 @@ export default function AnalyticsPage() {
   function updateStorageInspector() {
     tbody.innerHTML = '';
     let totalBytes = 0;
+    const fragment = document.createDocumentFragment();
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -173,8 +174,10 @@ export default function AnalyticsPage() {
         showToast('WARN', `Removed item '${key}' from LocalStorage.`);
       };
 
-      tbody.appendChild(tr);
+      fragment.appendChild(tr);
     }
+
+    tbody.appendChild(fragment);
 
     if (localStorage.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3" style="padding:15px; text-align:center; color:#666;">No items stored in LocalStorage</td></tr>`;
