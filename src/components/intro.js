@@ -3,7 +3,7 @@
  * Vanilla CSS, CRT scanlines, glitch effects, audio-reactive visualizer
  */
 import { createElement } from './utils.js';
-import { buildPinPad, getPins } from './pinpad.js';
+import { buildPinPad } from './pinpad.js';
 import { initGlobalAudio, getAudioContext, setAudioPlaying } from './audio.js';
 
 export default function createIntro(onComplete) {

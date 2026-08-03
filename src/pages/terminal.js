@@ -5,7 +5,6 @@
 
 import { createElement } from '../components/utils.js';
 import { applyTheme } from '../components/theme-switcher.js';
-import { showToast } from '../components/toast.js';
 
 export default function TerminalPage() {
   const container = createElement('div', { class: 'terminal-page-container' });
