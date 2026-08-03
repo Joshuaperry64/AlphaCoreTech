@@ -30,6 +30,19 @@ describe('escapeHTML', () => {
       .toBe('&lt;script&gt;alert(&quot;XSS &amp; SQLi &#39;test&#39;&quot;)&lt;/script&gt;');
   });
 
+  it("escapes mixed special characters", () => {
+    // using backticks to avoid escaping single quote within a single-quoted string
+    expect(escapeHTML(`<a href="?a=1&b='2'">Link</a>`)).toBe(
+      '&lt;a href=&quot;?a=1&amp;b=&#39;2&#39;&quot;&gt;Link&lt;/a&gt;'
+    );
+  });
+
+  it('casts truthy non-string values to string and escapes if necessary', () => {
+    expect(escapeHTML(123)).toBe('123');
+    expect(escapeHTML(true)).toBe('true');
+    expect(escapeHTML({ toString: () => '<obj>' })).toBe('&lt;obj&gt;');
+  });
+
   it('handles numbers as strings if they are truthy', () => {
     expect(escapeHTML(42)).toBe('42');
   });
