@@ -1,5 +1,5 @@
 import { createElement } from '../components/utils.js';
-import { buildPinPad } from '../components/pinpad.js';
+import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { showModal } from '../components/modal.js';
 
 export default function VaultPage() {
@@ -10,19 +10,14 @@ export default function VaultPage() {
     container.appendChild(buildVaultUI());
   }
 
-  // Check if already authenticated this session
-  if (sessionStorage.getItem('vault_authenticated')) {
-    showVault();
-  } else {
-    container.appendChild(buildPinPad({
-      authKey: 'vault_authenticated',
-      requiredRole: 'vault',
-      onSuccess: showVault,
-      title: 'ALPHACORE // VAULT_LOCKOUT',
-      subtitle: 'PERSONAL DECRYPTION PIN REQUIRED',
-      icon: '🔐'
-    }));
-  }
+  requireAuth(container, {
+    authKey: 'vault_authenticated',
+    requiredRole: 'vault',
+    onSuccess: showVault,
+    title: 'ALPHACORE // VAULT_LOCKOUT',
+    subtitle: 'PERSONAL DECRYPTION PIN REQUIRED',
+    icon: '🔐'
+  });
 
   return container;
 }

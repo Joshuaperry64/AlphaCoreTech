@@ -1,5 +1,5 @@
 import { createElement, escapeHTML } from '../components/utils.js';
-import { buildPinPad, getPins, addPin, revokePin } from '../components/pinpad.js';
+import { buildPinPad, getPins, addPin, revokePin, requireAuth } from '../components/pinpad.js';
 import { getLogs, clearLogs } from '../components/logger.js';
 
 export default function AdminPage() {
@@ -11,20 +11,16 @@ export default function AdminPage() {
     container.appendChild(buildAdminUI());
   }
 
-  // Check if authenticated
-  if (sessionStorage.getItem('admin_authenticated')) {
-    showAdmin();
-  } else {
-    container.className = 'admin-panel-page';
-    container.appendChild(buildPinPad({
-      authKey: 'admin_authenticated',
-      onSuccess: showAdmin,
-      title: 'ALPHACORE // ADMIN_LOCKOUT',
-      subtitle: 'ADMINISTRATOR AUTHENTICATION REQUIRED',
-      icon: '⚙',
-      requiredRole: 'admin'
-    }));
-  }
+  container.className = 'admin-panel-page';
+
+  requireAuth(container, {
+    authKey: 'admin_authenticated',
+    onSuccess: showAdmin,
+    title: 'ALPHACORE // ADMIN_LOCKOUT',
+    subtitle: 'ADMINISTRATOR AUTHENTICATION REQUIRED',
+    icon: '⚙',
+    requiredRole: 'admin'
+  });
 
   return container;
 }
