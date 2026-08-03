@@ -20,8 +20,8 @@ const DEFAULT_DB = {
   ],
   logs: [],
   settings: {
-    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
+    txt2imgUrl: 'https://josh627764--text-to-image-sdxl-merger-inference-web.modal.run/',
+    img2imgUrl: 'https://josh627764--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 10, stepsFocusedTxt: 50, stepsNormalTxt: 20,
     stepsFastImg: 8, stepsFocusedImg: 30, stepsNormalImg: 17,

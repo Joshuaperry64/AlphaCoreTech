@@ -3,7 +3,7 @@
  * Converted from Tailwind to vanilla CSS.
  */
 import { createElement } from '../components/utils.js';
-import { buildPinPad } from '../components/pinpad.js';
+import { buildPinPad, requireAuth } from '../components/pinpad.js';
 
 const phases = [
   {
@@ -120,18 +120,14 @@ export default function Diagnostics() {
     container.appendChild(buildDiagnosticsUI());
   }
 
-  if (sessionStorage.getItem('diagnostics_authenticated')) {
-    showDiagnostics();
-  } else {
-    container.appendChild(buildPinPad({
-      authKey: 'diagnostics_authenticated',
-      requiredRole: 'diagnostics',
-      onSuccess: showDiagnostics,
-      title: 'ALPHACORE // DIAGNOSTICS',
-      subtitle: 'CLEARANCE LEVEL REQUIRED',
-      icon: '📊'
-    }));
-  }
+  requireAuth(container, {
+    authKey: 'diagnostics_authenticated',
+    requiredRole: 'diagnostics',
+    onSuccess: showDiagnostics,
+    title: 'ALPHACORE // DIAGNOSTICS',
+    subtitle: 'CLEARANCE LEVEL REQUIRED',
+    icon: '📊'
+  });
 
   return container;
 }
