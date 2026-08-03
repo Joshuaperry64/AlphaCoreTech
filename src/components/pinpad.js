@@ -343,3 +343,11 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
 
   return wrap;
 }
+
+export function requireAuth(container, options) {
+  if (options.authKey && sessionStorage.getItem(options.authKey)) {
+    options.onSuccess();
+  } else {
+    container.appendChild(buildPinPad(options));
+  }
+}

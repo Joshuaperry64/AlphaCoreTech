@@ -7,13 +7,14 @@ export async function syncFromServer() {
       }
     };
 
-    const pinsRes = await fetch('/api/pins', fetchOptions);
+    const [pinsRes, logsRes, settingsRes] = await Promise.all([
+      fetch('/api/pins', fetchOptions),
+      fetch('/api/logs', fetchOptions),
+      fetch('/api/settings', fetchOptions)
+    ]);
+
     if (pinsRes.ok) localStorage.setItem('alphacore_pins', JSON.stringify(await pinsRes.json()));
-
-    const logsRes = await fetch('/api/logs', fetchOptions);
     if (logsRes.ok) localStorage.setItem('alphacore_system_logs', JSON.stringify(await logsRes.json()));
-
-    const settingsRes = await fetch('/api/settings', fetchOptions);
     if (settingsRes.ok) localStorage.setItem('alphacore_modal_settings', JSON.stringify(await settingsRes.json()));
     
     console.log('[SYS] Database sync complete.');

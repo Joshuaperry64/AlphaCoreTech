@@ -1,5 +1,5 @@
 import { createElement, escapeHTML } from '../components/utils.js';
-import { buildPinPad, getPins, addPin, revokePin } from '../components/pinpad.js';
+import { buildPinPad, getPins, addPin, revokePin, requireAuth } from '../components/pinpad.js';
 import { getLogs, clearLogs } from '../components/logger.js';
 
 export default function AdminPage() {
@@ -11,20 +11,16 @@ export default function AdminPage() {
     container.appendChild(buildAdminUI());
   }
 
-  // Check if authenticated
-  if (sessionStorage.getItem('admin_authenticated')) {
-    showAdmin();
-  } else {
-    container.className = 'admin-panel-page';
-    container.appendChild(buildPinPad({
-      authKey: 'admin_authenticated',
-      onSuccess: showAdmin,
-      title: 'ALPHACORE // ADMIN_LOCKOUT',
-      subtitle: 'ADMINISTRATOR AUTHENTICATION REQUIRED',
-      icon: '⚙',
-      requiredRole: 'admin'
-    }));
-  }
+  container.className = 'admin-panel-page';
+
+  requireAuth(container, {
+    authKey: 'admin_authenticated',
+    onSuccess: showAdmin,
+    title: 'ALPHACORE // ADMIN_LOCKOUT',
+    subtitle: 'ADMINISTRATOR AUTHENTICATION REQUIRED',
+    icon: '⚙',
+    requiredRole: 'admin'
+  });
 
   return container;
 }
@@ -34,8 +30,8 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
+    txt2imgUrl: 'https://josh627764--text-to-image-sdxl-merger-inference-web.modal.run/',
+    img2imgUrl: 'https://josh627764--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 10,
     stepsFocusedTxt: 50,
