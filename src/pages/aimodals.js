@@ -3,7 +3,7 @@
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
-import { buildPinPad } from '../components/pinpad.js';
+import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 
@@ -773,18 +773,14 @@ export default function AiModals() {
     }
   }
 
-  if (!sessionStorage.getItem('aimodals_authenticated')) {
-    container.appendChild(buildPinPad({
-      authKey: 'aimodals_authenticated',
-      requiredRole: 'aimodals',
-      onSuccess: showNextStep,
-      title: '// SECURITY_LOCKOUT',
-      subtitle: 'UNRESTRICTED GENERATION ACCESS',
-      icon: '🔒'
-    }));
-  } else {
-    showNextStep();
-  }
+  requireAuth(container, {
+    authKey: 'aimodals_authenticated',
+    requiredRole: 'aimodals',
+    onSuccess: showNextStep,
+    title: '// SECURITY_LOCKOUT',
+    subtitle: 'UNRESTRICTED GENERATION ACCESS',
+    icon: '🔒'
+  });
 
   return container;
 }
@@ -946,24 +942,17 @@ function buildFramepack() {
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
   
-  const isAuth = sessionStorage.getItem('alphacore_auth_fp') === 'true';
-  if (!isAuth) {
-    const pad = buildPinPad({
-      authKey: 'framepack',
-      title: '// FRAMEPACK STUDIO',
-      subtitle: 'RESTRICTED GPU ACCESS',
-      requiredRole: 'admin',
-      onSuccess: () => {
-        sessionStorage.setItem('alphacore_auth_fp', 'true');
-        wrap.innerHTML = '';
-        wrap.appendChild(buildFramepackContent());
-      }
-    });
-    wrap.appendChild(pad);
-    return wrap;
-  }
+  requireAuth(wrap, {
+    authKey: 'alphacore_auth_fp',
+    title: '// FRAMEPACK STUDIO',
+    subtitle: 'RESTRICTED GPU ACCESS',
+    requiredRole: 'admin',
+    onSuccess: () => {
+      wrap.innerHTML = '';
+      wrap.appendChild(buildFramepackContent());
+    }
+  });
   
-  wrap.appendChild(buildFramepackContent());
   return wrap;
 }
 
