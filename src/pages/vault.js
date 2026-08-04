@@ -367,21 +367,55 @@ function buildVaultUI() {
         ctx.strokeStyle = matrixColor;
         ctx.lineWidth = 0.5;
         
+        const cellSize = range;
+        const grid = new Map();
+
+        // Spatial partitioning: group nodes into a grid
         for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const n1 = nodes[i];
-            const n2 = nodes[j];
-            const dist = Math.hypot(n1.px - n2.px, n1.py - n2.py);
-            if (dist < range) {
-              const alpha = (1 - (dist / range)) * 0.4;
-              ctx.globalAlpha = alpha;
-              ctx.beginPath();
-              ctx.moveTo(n1.px, n1.py);
-              ctx.lineTo(n2.px, n2.py);
-              ctx.stroke();
+          const node = nodes[i];
+          const cx = Math.floor(node.px / cellSize);
+          const cy = Math.floor(node.py / cellSize);
+          const key = `${cx},${cy}`;
+          let cell = grid.get(key);
+          if (!cell) {
+            cell = [];
+            grid.set(key, cell);
+          }
+          cell.push({ node, index: i });
+        }
+
+        // Check only adjacent cells for distance < range
+        for (let i = 0; i < nodes.length; i++) {
+          const n1 = nodes[i];
+          const cx = Math.floor(n1.px / cellSize);
+          const cy = Math.floor(n1.py / cellSize);
+
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              const key = `${cx + dx},${cy + dy}`;
+              const cell = grid.get(key);
+              if (cell) {
+                for (let k = 0; k < cell.length; k++) {
+                  const item = cell[k];
+                  const j = item.index;
+                  if (j > i) {
+                    const n2 = item.node;
+                    const dist = Math.hypot(n1.px - n2.px, n1.py - n2.py);
+                    if (dist < range) {
+                      const alpha = (1 - (dist / range)) * 0.4;
+                      ctx.globalAlpha = alpha;
+                      ctx.beginPath();
+                      ctx.moveTo(n1.px, n1.py);
+                      ctx.lineTo(n2.px, n2.py);
+                      ctx.stroke();
+                    }
+                  }
+                }
+              }
             }
           }
         }
+        ctx.globalAlpha = 1.0;
         ctx.globalAlpha = 1.0;
 
         // Draw nodes
