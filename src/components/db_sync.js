@@ -1,9 +1,16 @@
 export async function syncFromServer() {
   try {
+    const pin = sessionStorage.getItem('current_pin') || '';
+    const fetchOptions = {
+      headers: {
+        'X-User-Pin': pin
+      }
+    };
+
     const [pinsRes, logsRes, settingsRes] = await Promise.all([
-      fetch('/api/pins'),
-      fetch('/api/logs'),
-      fetch('/api/settings')
+      fetch('/api/pins', fetchOptions),
+      fetch('/api/logs', fetchOptions),
+      fetch('/api/settings', fetchOptions)
     ]);
 
     if (pinsRes.ok) localStorage.setItem('alphacore_pins', JSON.stringify(await pinsRes.json()));
@@ -16,10 +23,14 @@ export async function syncFromServer() {
   }
 }
 
-export function pushToServer(endpoint, data) {
+export function pushToServer(endpoint, data, authPinOverride = null) {
+  const pin = authPinOverride || sessionStorage.getItem('current_pin') || '';
   fetch(`/api/${endpoint}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Pin': pin
+    },
     body: JSON.stringify(data)
   }).catch(e => console.warn(`[SYS] Failed to push to /api/${endpoint}`, e));
 }

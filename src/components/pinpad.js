@@ -65,9 +65,9 @@ export function getPins() {
 }
 
 // Save PINs to localStorage
-export function savePins(pins) {
+export function savePins(pins, authPinOverride = null) {
   localStorage.setItem('alphacore_pins', JSON.stringify(pins));
-  pushToServer('pins', pins);
+  pushToServer('pins', pins, authPinOverride);
 }
 
 // Add a new security PIN (permanent, one-time, or temporary)
@@ -100,37 +100,34 @@ export function revokePin(pinVal) {
   savePins(pins);
 }
 
-// Validate PIN entry
-export function validatePin(pinVal, requiredRole = null) {
-  const pins = getPins();
-  const found = pins.find(p => p.pin === pinVal);
-  
-  if (!found) {
-    return { valid: false, reason: 'ACCESS DENIED' };
-  }
-  
-  if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
-    return { valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` };
-  }
-  
-  if (found.type === 'one-time') {
-    if (found.used) {
-      return { valid: false, reason: 'ONE-TIME PIN EXPIRED' };
+// Validate PIN entry securely via server
+export async function validatePin(pinVal, requiredRole = null) {
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinVal, requiredRole })
+    });
+
+    if (!res.ok) {
+       return { valid: false, reason: 'SERVER ERROR' };
     }
-    // Remove the OTP completely from the active list
-    const updatedPins = pins.filter(p => p.pin !== pinVal);
-    savePins(updatedPins);
-    return { valid: true, pinObj: found };
-  }
-  
-  if (found.type === 'temporary') {
-    if (Date.now() > found.expiresAt) {
-      return { valid: false, reason: 'TEMPORARY PIN EXPIRED' };
+    const result = await res.json();
+
+    if (result.valid && result.isOtp) {
+       // Since the OTP is about to be deleted from the server, we don't need to savePins locally
+       // because the next syncFromServer will grab the updated state, but we should clear it
+       // from localStorage if it exists so we don't accidentally try to use it before sync.
+       let pins = getPins();
+       pins = pins.filter(p => p.pin !== pinVal && p.label !== result.pinObj.label);
+       localStorage.setItem('alphacore_pins', JSON.stringify(pins));
     }
-    return { valid: true, pinObj: found };
+
+    return result;
+  } catch (e) {
+    console.error('Auth request failed:', e);
+    return { valid: false, reason: 'NETWORK ERROR' };
   }
-  
-  return { valid: true, pinObj: found };
 }
 
 // Dynamic PIN Pad UI component creator
@@ -142,7 +139,8 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   if (requiredRole) {
     availablePins = availablePins.filter(p => p.roles && p.roles.includes(requiredRole));
   }
-  const profileOptions = availablePins.map(p => `<option value="${p.pin}">${p.label}</option>`).join('');
+  // Use p.label as the value because p.pin is no longer exposed to unauthenticated clients
+  const profileOptions = availablePins.map(p => `<option value="${p.label}">${p.label}</option>`).join('');
 
   wrap.innerHTML = `
     <div class="aim-pin-box">
@@ -245,14 +243,15 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
     }
   }
 
-  function handleEnter() {
+  async function handleEnter() {
     if (!selectedProfile) {
       handleFailure('SELECT A USER PROFILE FIRST');
       return;
     }
-    const result = validatePin(currentPin, requiredRole);
+    const result = await validatePin(currentPin, requiredRole);
     if (result.valid) {
-      if (result.pinObj.pin !== selectedProfile) {
+      // Validate that the label matches the selected profile (since option value is now the label)
+      if (result.pinObj.label !== selectedProfile) {
         logAction('AUTH_FAILED', { reason: 'PIN DOES NOT MATCH SELECTED PROFILE' });
         handleFailure('PIN INVALID FOR SELECTED PROFILE');
         return;
@@ -277,6 +276,9 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
       if (authKey) sessionStorage.setItem(authKey, '1');
       if (result && result.pinObj) {
         sessionStorage.setItem('current_profile', result.pinObj.label);
+        if (!result.isOtp) {
+          sessionStorage.setItem('current_pin', result.pinObj.pin);
+        }
         if (result.pinObj.roles) {
           result.pinObj.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
         }
