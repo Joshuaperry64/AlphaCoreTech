@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statuses = ['WARMING GPU...', 'LOADING MODEL...', 'INJECTING LORAS...', 'DENOISING...', 'RENDERING ARTIFACT...'];
     let tick = 0;
     while (true) {
-      const res = await fetch('/.netlify/functions/runpod', {
+      const res = await fetch('/api/runpod', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'status', jobId })
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     log('Firing synthesis sequence...');
 
     try {
-      const res = await fetch('/.netlify/functions/runpod', {
+      const res = await fetch('/api/runpod', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

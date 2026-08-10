@@ -164,7 +164,7 @@
         const statuses = ['WARMING GPU...', 'LOADING MODEL...', 'INJECTING LORAS...', 'DENOISING...', 'RENDERING ARTIFACT...'];
         let tick = 0;
         while (true) {
-          const res = await fetch('/.netlify/functions/runpod', {
+          const res = await fetch('/api/runpod', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'status', jobId })
@@ -194,7 +194,7 @@
         log('Firing synthesis sequence...');
 
         try {
-          const res = await fetch('/.netlify/functions/runpod', {
+          const res = await fetch('/api/runpod', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'run', payload: { input: { prompt, width, height, num_inference_steps: steps, guidance_scale: cfg } } })

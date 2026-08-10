@@ -147,6 +147,52 @@ app.post('/api/auth', async (req, res) => {
   res.json({ valid: true, pinObj: found });
 });
 
+// RunPod Proxy Route
+app.post('/api/runpod', async (req, res) => {
+  const API_KEY = process.env.RUNPOD_API_KEY;
+  const ENDPOINT_ID = process.env.RUNPOD_ENDPOINT_ID;
+  const BASE_URL = `https://api.runpod.ai/v2/${ENDPOINT_ID}`;
+
+  if (!API_KEY || !ENDPOINT_ID) {
+    return res.status(500).json({ error: 'Server misconfiguration: env vars not set.' });
+  }
+
+  const { action, jobId, payload } = req.body;
+  const headers = {
+    'Authorization': `Bearer ${API_KEY}`,
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    let runpodRes;
+    if (action === 'run') {
+      runpodRes = await fetch(`${BASE_URL}/run`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+    } else if (action === 'status') {
+      if (!jobId) return res.status(400).json({ error: 'jobId required for status.' });
+      runpodRes = await fetch(`${BASE_URL}/status/${jobId}`, {
+        method: 'GET',
+        headers
+      });
+    } else {
+      return res.status(400).json({ error: `Unknown action: ${action}` });
+    }
+
+    const data = await runpodRes.json();
+    res.status(runpodRes.status).json(data);
+  } catch (err) {
+    res.status(502).json({ error: `Proxy error: ${err.message}` });
+  }
+});
+
+// Chat Proxy Route
+app.post('/api/chat', async (req, res) => {
+  res.json({ reply: 'this feature is still in development.' });
+});
+
 // Serve frontend build if exists
 app.use(express.static(path.join(__dirname, 'dist')));
 
