@@ -256,7 +256,18 @@ export default function createIntro(onComplete) {
         const playBtn = document.getElementById('play-audio-btn');
         if (playBtn) playBtn.innerHTML = '&#10074;&#10074;'; // Pause icon
       }).catch(() => {
-        // Silent fail if autoplay is blocked
+        // Silent fail if autoplay is blocked - bind to first interaction
+        const startAudio = () => {
+          audio.play().then(() => {
+            setAudioPlaying(true);
+            const playBtn = document.getElementById('play-audio-btn');
+            if (playBtn) playBtn.innerHTML = '&#10074;&#10074;';
+          }).catch(()=>{});
+          document.removeEventListener('click', startAudio);
+          document.removeEventListener('keydown', startAudio);
+        };
+        document.addEventListener('click', startAudio);
+        document.addEventListener('keydown', startAudio);
       });
 
       const audioSetup = getAudioContext();
