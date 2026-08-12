@@ -29,24 +29,42 @@ const DEFAULT_DB = {
   }
 };
 
+import { getStore } from '@netlify/blobs';
+
 let dbCache = null;
+
+async function getNetlifyStore() {
+  if (process.env.NETLIFY || process.env.NETLIFY_BLOBS_CONTEXT) {
+    return getStore('alphacore_db');
+  }
+  return null;
+}
 
 async function readDB() {
   if (dbCache) return dbCache;
 
   try {
-    try {
-      await fs.promises.access(DB_PATH);
-    } catch {
-      await fs.promises.writeFile(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
-      dbCache = JSON.parse(JSON.stringify(DEFAULT_DB));
-      return dbCache;
+    const store = await getNetlifyStore();
+    if (store) {
+      let data = await store.get('data.json', { type: 'json' });
+      if (!data) {
+        data = JSON.parse(JSON.stringify(DEFAULT_DB));
+        await store.setJSON('data.json', data);
+      }
+      dbCache = data;
+    } else {
+      // Local FS fallback
+      try {
+        await fs.promises.access(DB_PATH);
+      } catch {
+        await fs.promises.writeFile(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
+      }
+      dbCache = JSON.parse(await fs.promises.readFile(DB_PATH, 'utf-8'));
     }
-    const data = JSON.parse(await fs.promises.readFile(DB_PATH, 'utf-8'));
-    if (!data.pins) data.pins = DEFAULT_DB.pins;
-    if (!data.logs) data.logs = [];
-    if (!data.settings) data.settings = DEFAULT_DB.settings;
-    dbCache = data;
+
+    if (!dbCache.pins) dbCache.pins = DEFAULT_DB.pins;
+    if (!dbCache.logs) dbCache.logs = [];
+    if (!dbCache.settings) dbCache.settings = DEFAULT_DB.settings;
     return dbCache;
   } catch (e) {
     console.error("Error reading DB", e);
@@ -57,7 +75,12 @@ async function readDB() {
 
 async function writeDB(data) {
   dbCache = data;
-  await fs.promises.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+  const store = await getNetlifyStore();
+  if (store) {
+    await store.setJSON('data.json', data);
+  } else {
+    await fs.promises.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+  }
 }
 
 // Authentication Middleware for POST routes
@@ -196,6 +219,10 @@ app.post('/api/chat', async (req, res) => {
 // Serve frontend build if exists
 app.use(express.static(path.join(__dirname, 'dist')));
 
-app.listen(3000, () => {
-  console.log('[SYS] AlphaCore Database Server running on port 3000');
-});
+if (!process.env.NETLIFY) {
+  app.listen(3000, () => {
+    console.log('[SYS] AlphaCore Database Server running on port 3000');
+  });
+}
+
+export default app;
