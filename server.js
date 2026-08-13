@@ -4,14 +4,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const DB_PATH = path.join(__dirname, 'data.json');
+const DB_PATH = path.join(_dirname, 'data.json');
 
 const DEFAULT_DB = {
   pins: [
@@ -178,7 +178,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Serve frontend build if exists
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(_dirname, 'dist')));
 
 if (!process.env.NETLIFY) {
   app.listen(3000, () => {
