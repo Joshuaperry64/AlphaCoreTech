@@ -9,15 +9,13 @@ import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
-  <option value="cunny">CUNNY</option>
-  <option value="custom_training">CUSTOM</option>
-  <option value="lora3">LORA SLOT 3 (PENDING)</option>
+  <option value="New_Amateurs_XL.safetensors">NEW AMATEURS XL</option>
 `;
 
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://josh627764--text-to-image-sdxl-merger-inference-web.modal.run/',
-    img2imgUrl: 'https://josh627764--img2img-qwen-edit-plus-model-web.modal.run/',
+    txt2imgUrl: 'https://bravogod32-alpha--text-to-image-sdxl-merger-inference-web.modal.run/',
+    img2imgUrl: 'https://bravogod32-alpha--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
@@ -251,12 +249,15 @@ function buildTxt2Img() {
         </div>
       </div>
       <div class="aim-field aim-field-half">
-        <label class="aim-label">BASE MODEL</label>
-        <div class="aim-seg aim-seg-3" id="t2i-model">
-          <button class="aim-seg-btn active" data-j="1" data-c="0">JUGGERNAUT</button>
-          <button class="aim-seg-btn" data-j="0" data-c="1">CYBERREAL</button>
-          <button class="aim-seg-btn" data-j="1" data-c="1">UNHOLY</button>
-        </div>
+        <label class="aim-label" for="t2i-model-select">BASE MODEL</label>
+        <select class="aim-input" id="t2i-model-select">
+          <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
+          <option value="cyberrealistic_final.safetensors">CYBERREALISTIC FINAL</option>
+          <option value="unholyDesireMixFoolS_v60.safetensors">UNHOLY DESIRE MIX</option>
+          <option value="autismmixSDXL_autismmixPony.safetensors">AUTISMMIX PONY</option>
+          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH V9</option>
+          <option value="epicrealismXL_pureFix.safetensors">EPICREALISM PURE FIX</option>
+        </select>
       </div>
     </div>
 
@@ -303,12 +304,7 @@ function buildTxt2Img() {
       btn.classList.add('active');
     });
   });
-  wrap.querySelectorAll('#t2i-model .aim-seg-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wrap.querySelectorAll('#t2i-model .aim-seg-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
+
 
   // CFG display
   const cfgInput = wrap.querySelector('#t2i-cfg');
@@ -321,9 +317,7 @@ function buildTxt2Img() {
     if (!prompt) { setStatus(wrap, '#t2i-status', 'ERROR: Prompt matrix is empty.', 'error'); return; }
 
     const steps = parseInt(wrap.querySelector('#t2i-speed .aim-seg-btn.active').dataset.steps);
-    const modelBtn = wrap.querySelector('#t2i-model .aim-seg-btn.active');
-    const j = modelBtn.dataset.j;
-    const c = modelBtn.dataset.c;
+    const modelStr = wrap.querySelector('#t2i-model-select').value;
     let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
     const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
@@ -361,8 +355,8 @@ function buildTxt2Img() {
     try {
       const params = new URLSearchParams({
         prompt,
-        JuggernautXL: j,
-        CyberRealisticXL: c,
+        model: modelStr,
+        checkpoint: modelStr,
         negative_prompt: neg,
         guidance_scale: cfg,
         num_inference_steps: steps,

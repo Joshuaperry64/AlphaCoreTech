@@ -6,7 +6,7 @@ import { createElement } from '../components/utils.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
 
-const MODAL_API = "https://ai-alphacore-tech--alpha-modal-gui-local-llm-fastapi-app.modal.run";
+const MODAL_API = "https://bravogod32-alpha--vllm-gemma-agent-model-fastapi-app.modal.run";
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });

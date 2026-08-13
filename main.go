@@ -50,8 +50,8 @@ func getDefaultDB() Database {
 		},
 		Logs: []interface{}{},
 		Settings: Settings{
-			Txt2ImgUrl:      "https://josh627764--text-to-image-sdxl-merger-inference-web.modal.run/",
-			Img2ImgUrl:      "https://josh627764--img2img-qwen-edit-plus-model-web.modal.run/",
+			Txt2ImgUrl:      "https://bravogod32-alpha--text-to-image-sdxl-merger-inference-web.modal.run/",
+			Img2ImgUrl:      "https://bravogod32-alpha--img2img-qwen-edit-plus-model-web.modal.run/",
 			NegativePrompt:  "worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts",
 			StepsFastTxt:    10,
 			StepsFocusedTxt: 50,
