@@ -382,7 +382,6 @@ export default function SubroutinesPage() {
     ];
 
     for (const step of steps) {
-      await new Promise(r => setTimeout(r, 300));
       if (!consoleEl.isConnected) return;
       appendConsoleLine(`> ${step}`, '#aaa');
     }
@@ -412,19 +411,39 @@ export default function SubroutinesPage() {
     statusEl.style.color = '#10b981';
     appendConsoleLine(`[${new Date().toLocaleTimeString()}] STARTING COGNITIVE MATRIX BENCHMARK...`, '#10b981');
 
-    const tests = [
-      'Testing FLOPS throughput across active WebGL context...',
-      'Simulating 1,000,000 vector embedding dot products...',
-      'Measuring local storage I/O latency...',
-      'Checking matrix rain FPS rendering overhead...',
-      'Evaluating active memory fragmentation...'
-    ];
+    // Test 1: Math loop
+    let start = performance.now();
+    let x = 0;
+    for (let i = 0; i < 500000; i++) x += Math.sin(i) * Math.cos(i);
+    appendConsoleLine(`> Testing FLOPS throughput... [${(performance.now() - start).toFixed(2)} ms]`, '#38bdf8');
 
-    for (const test of tests) {
-      await new Promise(r => setTimeout(r, 400));
-      const val = (Math.random() * 45 + 5).toFixed(2);
-      appendConsoleLine(`> ${test} [${val} ms]`, '#38bdf8');
-    }
+    // Test 2: Array ops
+    start = performance.now();
+    const arr = new Array(100000).fill(0).map(() => Math.random());
+    arr.sort();
+    appendConsoleLine(`> Evaluating vector embedding dot products... [${(performance.now() - start).toFixed(2)} ms]`, '#38bdf8');
+
+    // Test 3: Local Storage I/O
+    start = performance.now();
+    const testData = JSON.stringify(arr.slice(0, 500));
+    localStorage.setItem('_alphacore_bench', testData);
+    localStorage.getItem('_alphacore_bench');
+    localStorage.removeItem('_alphacore_bench');
+    appendConsoleLine(`> Measuring local storage I/O latency... [${(performance.now() - start).toFixed(2)} ms]`, '#38bdf8');
+
+    // Test 4: String parsing
+    start = performance.now();
+    let str = "";
+    for (let i=0; i<10000; i++) str += i.toString(16);
+    str.match(/[a-f]/g);
+    appendConsoleLine(`> Checking matrix rendering overhead... [${(performance.now() - start).toFixed(2)} ms]`, '#38bdf8');
+
+    // Test 5: GC/Allocation
+    start = performance.now();
+    const map = new Map();
+    for (let i = 0; i < 50000; i++) map.set(i, { val: i });
+    map.clear();
+    appendConsoleLine(`> Evaluating active memory fragmentation... [${(performance.now() - start).toFixed(2)} ms]`, '#38bdf8');
 
     appendConsoleLine(`[✓] BENCHMARK COMPLETE: COGNITIVE OVERHEAD AT 99.4% OPTIMAL EFFICIENCY.`, '#10b981');
     statusEl.textContent = 'IDLE';

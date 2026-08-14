@@ -6,17 +6,10 @@
 
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
+import { getLogs, logAction, clearLogs } from '../components/logger.js';
 
 export default function LogsPage() {
   const container = createElement('div', { class: 'logs-page-container' });
-
-  let logs = [
-    { id: 'LOG-8801', timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(), type: 'AUTH', level: 'INFO', source: 'IdentityVerification', message: 'User session verified for role: CREATOR.' },
-    { id: 'LOG-8802', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), type: 'NEURAL', level: 'SUCCESS', source: 'CognitiveUplink', message: 'Neural handshake established with 128 active synapse threads.' },
-    { id: 'LOG-8803', timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), type: 'PERF', level: 'OPTIM', source: 'MatrixRainCanvas', message: 'Throttled frame loop to 12 FPS. Background rendering paused.' },
-    { id: 'LOG-8804', timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(), type: 'SEC', level: 'WARN', source: 'AdminAccessControl', message: 'Sanitized input string in administrative activity audit log.' },
-    { id: 'LOG-8805', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), type: 'SYSTEM', level: 'INFO', source: 'AlphaCoreEngine', message: 'System state synced with Netlify Blob store persistence.' }
-  ];
 
   let livePollingActive = false;
   let pollingInterval = null;
@@ -97,8 +90,20 @@ export default function LogsPage() {
       const q = searchInput.value.toLowerCase();
       const cat = typeFilter.value;
       const lvl = levelFilter.value;
+      const rawLogs = getLogs();
 
-      const filtered = logs.filter(l => {
+      const mappedLogs = rawLogs.map((log, index) => {
+        return {
+          id: `LOG-${rawLogs.length - index}`,
+          timestamp: new Date(log.timestamp).toISOString(),
+          type: log.action || 'SYSTEM',
+          level: (log.action && log.action.includes('ERROR')) ? 'ERROR' : (log.action && log.action.includes('WARN')) ? 'WARN' : 'INFO',
+          source: log.profile || 'SYSTEM',
+          message: log.details ? JSON.stringify(log.details) : ''
+        };
+      });
+
+      const filtered = mappedLogs.filter(l => {
         const matchesCat = cat === 'ALL' || l.type === cat;
         const matchesLvl = lvl === 'ALL' || l.level === lvl;
         const matchesQ = l.message.toLowerCase().includes(q) || l.source.toLowerCase().includes(q) || l.id.toLowerCase().includes(q);
@@ -134,26 +139,7 @@ export default function LogsPage() {
     levelFilter.addEventListener('change', updateTable);
 
     function emitLog() {
-      const types = ['NEURAL', 'PERF', 'AUTH', 'SEC', 'SYSTEM'];
-      const levels = ['INFO', 'SUCCESS', 'WARN', 'ERROR'];
-      const sources = ['TelemetryProbe', 'SynapseBridge', 'SecurityGovernor', 'MatrixCanvas', 'VectDB'];
-      const msgs = [
-        'System diagnostic trace emitted via Telemetry probe.',
-        'High latency detected on neural inference pipeline step.',
-        'Token authentication handshake refreshed successfully.',
-        'Matrix rain canvas frame rate optimized.',
-        'Vector space index updated with 512 new entries.'
-      ];
-
-      const newLog = {
-        id: `LOG-${Math.floor(8806 + Math.random() * 10000)}`,
-        timestamp: new Date().toISOString(),
-        type: types[Math.floor(Math.random() * types.length)],
-        level: levels[Math.floor(Math.random() * levels.length)],
-        source: sources[Math.floor(Math.random() * sources.length)],
-        message: msgs[Math.floor(Math.random() * msgs.length)]
-      };
-      logs.unshift(newLog);
+      logAction('SYSTEM_DIAGNOSTIC', { details: 'Event emitted' });
       updateTable();
     }
 
@@ -195,7 +181,7 @@ export default function LogsPage() {
 
     purgeBtn.addEventListener('click', () => {
       if (confirm('Clear all system event logs?')) {
-        logs = [];
+        clearLogs();
         updateTable();
         showToast('WARN', 'All event logs purged.');
       }

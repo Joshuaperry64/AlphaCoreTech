@@ -383,24 +383,32 @@ export default function NetworkMatrixPage() {
       if (!n.isCore) {
         n.vx = (Math.random() - 0.5) * 2;
         n.vy = (Math.random() - 0.5) * 2;
-        n.load = Math.max(0, n.load - 20); // Simulate load dropping after reroute
       }
     });
     updateLinks();
     setTimeout(() => {
-      showToast('SUCCESS', 'Traffic rerouted. Latency normalized.');
-    }, 2000);
+      showToast('SUCCESS', 'Traffic rerouting initiated.');
+    }, 1000);
   };
 
-  container.querySelector('#btn-ping-all').onclick = () => {
-    showToast('INFO', 'Pinging all network nodes...');
+  container.querySelector('#btn-ping-all').onclick = async () => {
+    showToast('INFO', 'Pinging primary network endpoint...');
+
+    const start = performance.now();
+    try {
+      await fetch(window.location.origin, { method: 'HEAD', cache: 'no-store' });
+    } catch(e) {
+      // Ignore fetch failures and just use timeout
+    }
+    const pingMs = Math.round(performance.now() - start);
+
     nodes.forEach(n => {
-      n.ping = Math.max(1, n.ping - Math.floor(Math.random() * 5)); // Simulate slight improvement
+      // Assign variance around actual network ping
+      n.ping = Math.max(1, pingMs + (Math.floor(Math.random() * 20) - 10));
     });
+
     if (hoveredNode) updateInspector();
-    setTimeout(() => {
-      showToast('SUCCESS', 'Ping sweep complete. 0 nodes offline.');
-    }, 1500);
+    showToast('SUCCESS', `Ping sweep complete. Baseline latency: ${pingMs}ms`);
   };
 
   // Cleanup
