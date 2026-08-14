@@ -25,7 +25,7 @@ export default function PromptLabPage() {
       <button class="aim-btn aim-btn-sm btn-preset" data-preset="adversarial">🛡 ADVERSARIAL TEST</button>
     </div>
 
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; font-family:'Share Tech Mono',monospace;">
+    <div style="display:grid; grid-template-columns: 1fr; gap:20px; font-family:'Share Tech Mono',monospace; max-width: 800px; margin: 0 auto;">
       <!-- Input & Parameter Panel -->
       <div class="panel" style="background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(6,182,212,0.3)); padding:18px;">
         <div style="font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700; color:#fff; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
@@ -74,22 +74,6 @@ export default function PromptLabPage() {
           </button>
         </div>
       </div>
-
-      <!-- Simulation Output Panel -->
-      <div class="panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.1); padding:18px; display:flex; flex-direction:column;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
-          <span style="font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; color:var(--accent, #06b6d4);">// SIMULATED_RESPONSE</span>
-          <select id="sel-model-sim" style="background:#0a0f19; color:var(--accent,#06b6d4); border:1px solid var(--border); padding:3px 8px; font-family:'Share Tech Mono',monospace; font-size:0.75rem; border-radius:3px;">
-            <option value="deepseek">DEEPSEEK-R1 14B</option>
-            <option value="sdxl">SDXL SYNTHESIS</option>
-            <option value="qwen">QWEN EDIT+</option>
-          </select>
-        </div>
-
-        <div id="sim-output-box" style="flex:1; min-height:260px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:4px; font-size:0.85rem; color:#aaa; overflow-y:auto; line-height:1.5;">
-          <div style="color:#666;">> Enter a prompt and click OPTIMIZE PROMPT or test simulated output...</div>
-        </div>
-      </div>
     </div>
   `;
 
@@ -105,8 +89,6 @@ export default function PromptLabPage() {
 
   const btnOptimize = container.querySelector('#btn-optimize-prompt');
   const btnCopy = container.querySelector('#btn-copy-prompt');
-  const simOutput = container.querySelector('#sim-output-box');
-  const selModel = container.querySelector('#sel-model-sim');
 
   rngTemp.oninput = () => { valTemp.textContent = parseFloat(rngTemp.value).toFixed(2); };
   rngTopP.oninput = () => { valTopP.textContent = parseFloat(rngTopP.value).toFixed(2); };
@@ -114,7 +96,11 @@ export default function PromptLabPage() {
   function updateStats() {
     const text = promptText.value;
     const chars = text.length;
-    const tokens = Math.ceil(chars / 4); // Approximate token ratio
+
+    // Better heuristic for token calculation via word boundaries
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const tokens = Math.max(0, Math.ceil(words * 1.3));
+
     statTokens.textContent = tokens;
     statChars.textContent = chars;
 
@@ -168,12 +154,6 @@ export default function PromptLabPage() {
     const optimized = `[SYSTEM DIRECTIVE: ALPHACORE_V4_OPTIMIZED]\n[TEMP: ${rngTemp.value} | TOP_P: ${rngTopP.value}]\n\n${raw}\n\n[FORMAT: STRUCTURED HIGH-DENSITY OUTPUT]`;
     promptText.value = optimized;
     updateStats();
-
-    simOutput.innerHTML = `
-      <div style="color:var(--accent,#06b6d4); font-weight:bold; margin-bottom:8px;">[SIMULATION OUTPUT // ${selModel.value.toUpperCase()}]</div>
-      <div style="color:#eee;">Prompt successfully optimized and formatted for zero-refusal inference execution.</div>
-      <div style="margin-top:10px; color:#10b981;">✓ Contextual weights adjusted. Token salience maximized.</div>
-    `;
 
     showToast('SUCCESS', 'Prompt optimized successfully!');
   };

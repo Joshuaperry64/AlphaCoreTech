@@ -23,44 +23,6 @@ export function getPins() {
     }
   }
 
-  // Auto-inject J. P. profile if missing from local storage
-  if (!pins.some(p => p.pin === '6969')) {
-    pins.push({
-      pin: '6969',
-      type: 'permanent',
-      label: 'DoeBoy',
-      roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'],
-      createdAt: Date.now()
-    });
-    localStorage.setItem('alphacore_pins', JSON.stringify(pins));
-    pushToServer('pins', pins);
-  }
-
-  if (!pins.some(p => p.pin === '20022005')) {
-    pins.push({
-      pin: '20022005',
-      type: 'permanent',
-      label: 'J. P.',
-      roles: ['aimodals', 'generate'],
-      createdAt: Date.now()
-    });
-    localStorage.setItem('alphacore_pins', JSON.stringify(pins));
-    pushToServer('pins', pins);
-  }
-
-  // Auto-inject Fisherman profile if missing from local storage
-  if (!pins.some(p => p.pin === '1990')) {
-    pins.push({
-      pin: '1990',
-      type: 'permanent',
-      label: 'Fisherman',
-      roles: ['aimodals', 'generate'],
-      createdAt: Date.now()
-    });
-    localStorage.setItem('alphacore_pins', JSON.stringify(pins));
-    pushToServer('pins', pins);
-  }
-
   return pins;
 }
 

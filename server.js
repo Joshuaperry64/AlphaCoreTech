@@ -17,7 +17,9 @@ const DB_PATH = path.join(_dirname, 'data.json');
 const DEFAULT_DB = {
   pins: [
     { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
-    { pin: '6969', type: 'permanent', label: 'DoeBoy', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() }
+    { pin: '6969', type: 'permanent', label: 'DoeBoy', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
+    { pin: '20022005', type: 'permanent', label: 'J. P.', roles: ['aimodals', 'generate'], createdAt: Date.now() },
+    { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() }
   ],
   logs: [],
   settings: {
@@ -66,6 +68,14 @@ async function readDB() {
     if (!dbCache.pins) dbCache.pins = DEFAULT_DB.pins;
     if (!dbCache.logs) dbCache.logs = [];
     if (!dbCache.settings) dbCache.settings = DEFAULT_DB.settings;
+
+    // Ensure requested profiles are always present
+    DEFAULT_DB.pins.forEach(defaultPin => {
+      if (!dbCache.pins.some(p => p.pin === defaultPin.pin)) {
+        dbCache.pins.push(defaultPin);
+      }
+    });
+
     return dbCache;
   } catch (e) {
     console.error("Error reading DB", e);

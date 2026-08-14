@@ -234,9 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bootEl.appendChild(el);
       for (let i = 0; i < line.length; i++) {
         el.textContent += line[i];
-        await new Promise(r => setTimeout(r, 12));
       }
-      await new Promise(r => setTimeout(r, 80));
     }
     // blinking cursor at end
     const cursor = document.createElement('span');
@@ -265,7 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
   async function typeUplinkLine(el, text) {
     for (let c = 0; c < text.length; c++) {
       el.textContent += text[c];
-      await new Promise(r => setTimeout(r, 14));
     }
   }
   async function runUplinkLoop() {
@@ -282,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         uplinkTerminal.removeChild(uplinkTerminal.firstChild);
       }
       // Pause longer on terminal messages
-      const delay = msg.includes('STANDING BY') ? 4000 : msg.includes('FAILED') ? 800 : 400;
+      const delay = msg.includes('STANDING BY') ? 2000 : msg.includes('FAILED') ? 800 : 400;
       await new Promise(r => setTimeout(r, delay));
       // Update status text
       if (uplinkStatusText) {
