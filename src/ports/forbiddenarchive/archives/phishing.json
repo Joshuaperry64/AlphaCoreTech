@@ -1,0 +1,49 @@
+{
+    "title": "Phishing Attack Simulation",
+    "description": "A simulation designed for corporate security training to help employees recognize and respond to phishing attempts. It models the process of a targeted phishing campaign, from reconnaissance to payload delivery.",
+    "category": "social_engineering",
+    "difficulty": "Easy",
+    "requirements": [
+        "Email Server or SMTP Relay",
+        "Cloned Website",
+        "Payload (Optional)"
+    ],
+    "objective": "To simulate a targeted phishing campaign from reconnaissance to payload delivery, for the purpose of training and security awareness.",
+    "principles": "Phishing is a social engineering attack that uses deception to trick users into revealing sensitive information (like passwords or credit card numbers) or to deploy malicious software. It relies on creating a sense of urgency, trust, or authority by impersonating a legitimate entity.",
+    "steps": [
+        {
+            "title": "Target Reconnaissance",
+            "action": "Gather information about the target organization and its employees from public sources like social media (e.g., LinkedIn) and the company website.",
+            "detail": "This information (e.g., names, job titles, email formats) is used to craft a highly convincing and personalized phishing email, a technique known as 'spear phishing'."
+        },
+        {
+            "title": "Craft the Phishing Email",
+            "action": "Create a fraudulent email that appears to be from a legitimate source, such as a trusted colleague, the IT department, or a known vendor.",
+            "detail": "The email will contain a compelling call to action, such as a warning that an account will be suspended or an offer for a free product, to entice the user to click a malicious link."
+        },
+        {
+            "title": "Clone the Login Page",
+            "action": "Create a pixel-perfect clone of a legitimate website's login page, such as a corporate portal, webmail client, or bank website.",
+            "detail": "This page will be hosted on a server controlled by the attacker. The URL will often be disguised using URL shorteners or look-alike domains (typosquatting)."
+        },
+        {
+            "title": "Deploy the Campaign",
+            "action": "Send the phishing email to the targeted employees, often using a spoofed 'From' address to increase its appearance of legitimacy.",
+            "detail": "The email will contain a link to the cloned login page. The campaign is often timed to coincide with real-world events to increase its believability."
+        },
+        {
+            "title": "Harvest Credentials",
+            "action": "When an employee clicks the link and enters their credentials on the fake login page, the information is captured and stored on the attacker's server.",
+            "detail": "The fake page will typically redirect the user to the real website after they submit their information, to avoid arousing suspicion."
+        },
+        {
+            "title": "Deliver Payload & Obfuscate (Optional)",
+            "action": "After harvesting credentials, the user can be redirected to the legitimate website, or a malicious payload (e.g., ransomware, spyware) can be downloaded to their machine.",
+            "detail": "This simulation concludes with a report of compromised credentials and provides educational material on how the attack could have been prevented."
+        }
+    ],
+    "tips": [
+        "Always hover over links in emails to check the actual destination URL before clicking.",
+        "Be wary of emails that create a sense of urgency or demand immediate action. This is a common tactic to bypass critical thinking."
+    ]
+}

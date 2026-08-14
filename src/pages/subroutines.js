@@ -1,13 +1,14 @@
 /**
  * AlphaCore Expanded Subroutines Console Page & Web-Ported Projects Directory
- * Enhanced with 3-tier interactive hub, top bar search/category filtering, Section A (Core Kernel Subroutines),
- * Section B (Web-Ported Python Projects), interactive workspace container with lifecycle management, batch controls,
- * and execution streaming console.
+ * Overhauled for Milestone 2: Cyberpunk / Terminal UX, Search & Multi-Category Filtering,
+ * Alphabetical Sorting, Timeline / Recent View, Fullscreen Workspace Takeover, and Profile Security Clearance.
  */
 
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 import { getAllPorts } from '../ports/index.js';
+import { buildPinPad } from '../components/pinpad.js';
+import { showModal } from '../components/modal.js';
 
 const SUBROUTINES = [
   { id: 'SUB-01', name: 'SYNAPSE_PRUNING_V4', category: 'NEURAL', status: 'READY', desc: 'Prunes low-weight synapses to optimize cognitive throughput and reduce inferencing latency.' },
@@ -23,20 +24,27 @@ const SUBROUTINES = [
 export default function SubroutinesPage() {
   const container = createElement('div', { class: 'subroutines-page-container' });
   let activePortInstance = null;
+  let currentSortOrder = 'DEFAULT'; // 'DEFAULT', 'A-Z', 'Z-A'
+  let currentViewMode = 'GRID'; // 'GRID', 'TIMELINE'
 
   container.innerHTML = `
     <div class="section-header">
-      <h1 class="glitch" data-text="// SUBROUTINE_CONSOLE">// SUBROUTINE_CONSOLE</h1>
+      <h1 class="glitch cyber-typing-title" data-text="// SUBROUTINE_CONSOLE">// SUBROUTINE_CONSOLE</h1>
       <div class="header-line"></div>
+      <p class="cyber-subtitle" style="font-size:0.8rem; color:#888; margin-top:4px; font-family:'Share Tech Mono',monospace;">
+        DIRECT VIEW DIRECTORY // 57 WEB-PORTED PYTHON SUBROUTINES & CORE KERNEL SERVICES
+      </p>
     </div>
 
-    <!-- Quick Action & Filter Control Bar -->
-    <div class="sub-control-bar" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; background:rgba(12,18,30,0.8); border:1px solid rgba(6,182,212,0.3); padding:12px; border-radius:6px; align-items:center;">
+    <!-- Quick Action, Filtering, Sorting & Auth Control Bar -->
+    <div class="sub-control-bar" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; background:rgba(12,18,30,0.9); border:1px solid rgba(6,182,212,0.35); padding:14px; border-radius:6px; align-items:center; box-shadow:0 0 15px rgba(0,0,0,0.5);">
+      <!-- Real-time Search Input -->
       <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
         <span style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent, #06b6d4); font-weight:bold;">SEARCH:</span>
-        <input type="text" id="sub-search-ipt" placeholder="Search ID, name, description, category..." style="flex:1; background:rgba(0,0,0,0.5); border:1px solid var(--border, rgba(6,182,212,0.3)); color:#fff; padding:6px 10px; font-family:'Share Tech Mono',monospace; font-size:0.82rem; border-radius:3px; outline:none;" />
+        <input type="text" id="sub-search-ipt" placeholder="Search ID, name, description, category, source path..." style="flex:1; background:rgba(0,0,0,0.6); border:1px solid var(--border, rgba(6,182,212,0.3)); color:#fff; padding:6px 10px; font-family:'Share Tech Mono',monospace; font-size:0.82rem; border-radius:3px; outline:none;" />
       </div>
 
+      <!-- Domain / Topic Category Filter Dropdown -->
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent, #06b6d4); font-weight:bold;">CATEGORY:</span>
         <select id="sub-filter-cat" style="background:#0a0f19; color:var(--accent, #06b6d4); border:1px solid var(--border, rgba(6,182,212,0.3)); padding:6px 10px; font-family:'Share Tech Mono',monospace; font-size:0.82rem; border-radius:3px; outline:none;">
@@ -50,9 +58,38 @@ export default function SubroutinesPage() {
           <option value="DATA">DATA</option>
           <option value="HARDWARE">HARDWARE</option>
           <option value="UTILITIES">UTILITIES</option>
+          <option value="AI/ML">AI/ML</option>
+          <option value="SECURITY">SECURITY</option>
+          <option value="MOBILE">MOBILE</option>
+          <option value="AUDIO">AUDIO</option>
+          <option value="SYSTEM">SYSTEM</option>
+          <option value="NETWORK">NETWORK</option>
+          <option value="SIMULATION">SIMULATION</option>
+          <option value="REVERSE ENGINEERING">REVERSE ENGINEERING</option>
         </select>
       </div>
 
+      <!-- Alphabetical Sort Toggle -->
+      <button id="btn-sort-az" class="aim-btn aim-btn-sm" style="background:rgba(6,182,212,0.15); color:var(--accent, #06b6d4); border-color:var(--accent, #06b6d4); font-size:0.8rem; cursor:pointer;" title="Toggle A-Z / Z-A Sorting">
+        🔤 <span id="sort-order-label">SORT: DEFAULT</span>
+      </button>
+
+      <!-- Timeline / Recent View Toggle -->
+      <button id="btn-timeline-toggle" class="aim-btn aim-btn-sm" style="background:rgba(245,158,11,0.15); color:#f59e0b; border-color:#f59e0b; font-size:0.8rem; cursor:pointer;" title="Toggle Grid / Recent Timeline View">
+        ⏱️ <span id="view-mode-label">VIEW: GRID</span>
+      </button>
+
+      <!-- Profile Auth Clearance Badge & Button -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div id="sub-auth-badge" style="font-family:'Share Tech Mono',monospace; font-size:0.78rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#10b981; padding:4px 8px; border-radius:3px;">
+          CLEARANCE: <strong id="sub-profile-label">ARCHITECT</strong>
+        </div>
+        <button id="btn-sub-auth" class="aim-btn aim-btn-sm" style="background:rgba(168,85,247,0.15); color:#a855f7; border-color:#a855f7; font-size:0.75rem; cursor:pointer;" title="Authenticate / Switch Profile">
+          🔑 AUTH PROFILE
+        </button>
+      </div>
+
+      <!-- Batch Action Controls -->
       <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
         <button id="btn-run-all" class="aim-btn aim-btn-sm" style="background:rgba(6,182,212,0.2); color:var(--accent, #06b6d4); border-color:var(--accent, #06b6d4);">
           ▶ EXECUTE ALL
@@ -65,31 +102,36 @@ export default function SubroutinesPage() {
         </button>
       </div>
 
+      <!-- Autoscroll Toggle -->
       <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
         <label style="font-size:0.75rem; color:#aaa; font-family:'Share Tech Mono',monospace;">AUTOSCROLL</label>
         <input type="checkbox" id="chk-autoscroll" checked style="accent-color:var(--accent, #06b6d4);" />
       </div>
     </div>
 
-    <!-- Interactive Workspace Panel / Modal Container -->
-    <div id="workspace-panel" style="display:none; margin-bottom:20px; background:rgba(10,15,25,0.95); border:1px solid var(--accent, #06b6d4); border-radius:6px; overflow:hidden; box-shadow:0 0 20px rgba(6,182,212,0.2);">
-      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(6,182,212,0.15); padding:10px 16px; border-bottom:1px solid rgba(6,182,212,0.3);">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-family:'Orbitron',sans-serif; font-weight:bold; color:var(--accent, #06b6d4); font-size:0.9rem;" id="workspace-title">// INTERACTIVE WORKSPACE</span>
-          <span id="workspace-badge" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:3px; color:#aaa; font-family:'Share Tech Mono',monospace;"></span>
+    <!-- Quick Category Pill Tabs -->
+    <div id="sub-cat-pills-bar" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px;"></div>
+
+    <!-- Interactive Workspace Panel / Takeover Container -->
+    <div id="workspace-panel" style="display:none; margin-bottom:20px; background:rgba(10,15,25,0.98); border:2px solid var(--accent, #06b6d4); border-radius:6px; overflow:hidden; box-shadow:0 0 25px rgba(6,182,212,0.3); transition:all 0.3s ease;">
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(6,182,212,0.18); padding:12px 18px; border-bottom:1px solid rgba(6,182,212,0.35);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-family:'Orbitron',sans-serif; font-weight:bold; color:var(--accent, #06b6d4); font-size:1rem;" id="workspace-title">// INTERACTIVE WORKSPACE</span>
+          <span id="workspace-badge" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:3px 10px; border-radius:3px; color:#38bdf8; font-family:'Share Tech Mono',monospace; border:1px solid rgba(56,189,248,0.3);"></span>
         </div>
-        <button id="btn-close-workspace" class="aim-btn aim-btn-sm" style="background:rgba(239,68,68,0.2); color:#ef4444; border-color:#ef4444; font-size:0.75rem; cursor:pointer;">
+        <button id="btn-close-workspace" class="aim-btn aim-btn-sm" style="background:rgba(239,68,68,0.25); color:#ef4444; border:1px solid #ef4444; font-size:0.8rem; cursor:pointer; font-weight:bold; padding:6px 14px; border-radius:4px; box-shadow:0 0 10px rgba(239,68,68,0.3);">
           ✕ CLOSE WORKSPACE
         </button>
       </div>
-      <div id="workspace-container" style="padding:16px; min-height:180px;"></div>
+      <div id="workspace-container" style="padding:18px; min-height:220px;"></div>
     </div>
 
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; font-family:'Share Tech Mono',monospace;">
+    <!-- Subroutines Main Directory & Log Split View -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap:20px; font-family:'Share Tech Mono',monospace;">
       <!-- Directory Left Column: Core Kernel + Web-Ported Projects -->
       <div style="display:flex; flex-direction:column; gap:20px;">
         <!-- Section A: Core Kernel Subroutines List -->
-        <div class="panel" style="background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(6,182,212,0.3)); padding:18px;">
+        <div class="panel cyber-panel" style="background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(6,182,212,0.3)); padding:18px; border-radius:6px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
             <span style="font-family:'Orbitron',sans-serif; font-size:0.95rem; font-weight:700; color:#fff;" id="section-a-title">
               SECTION A: CORE KERNEL SUBROUTINES (${SUBROUTINES.length})
@@ -99,31 +141,34 @@ export default function SubroutinesPage() {
         </div>
 
         <!-- Section B: Web-Ported Python Projects -->
-        <div class="panel" style="background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(16,185,129,0.3)); padding:18px;">
+        <div class="panel cyber-panel" style="background:rgba(10,15,25,0.85); border:1px solid var(--border-accent, rgba(16,185,129,0.3)); padding:18px; border-radius:6px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
             <span style="font-family:'Orbitron',sans-serif; font-size:0.95rem; font-weight:700; color:#10b981;" id="section-b-title">
               SECTION B: WEB-PORTED PYTHON PROJECTS
             </span>
+            <span id="ported-count-badge" style="font-size:0.75rem; background:rgba(16,185,129,0.15); color:#10b981; padding:2px 8px; border-radius:3px; border:1px solid rgba(16,185,129,0.3);">
+              57 PORTS
+            </span>
           </div>
-          <div id="ported-projects-list" style="display:flex; flex-direction:column; gap:12px; max-height:550px; overflow-y:auto; padding-right:5px;"></div>
+          <div id="ported-projects-list" style="display:flex; flex-direction:column; gap:14px; max-height:600px; overflow-y:auto; padding-right:5px;"></div>
         </div>
       </div>
 
       <!-- Execution Console Output & Manual Trigger -->
       <div style="display:flex; flex-direction:column; gap:20px;">
-        <div class="panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.1); padding:18px; display:flex; flex-direction:column; flex:1;">
+        <div class="panel cyber-panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.1); padding:18px; display:flex; flex-direction:column; flex:1; border-radius:6px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
             <span style="font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; color:var(--accent, #06b6d4);">// EXECUTION_LOG</span>
             <span id="sub-active-status" style="font-size:0.75rem; color:#888;">IDLE</span>
           </div>
 
-          <div id="sub-console-output" style="flex:1; min-height:300px; max-height:450px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:4px; font-size:0.82rem; color:#aaa; overflow-y:auto; line-height:1.5; font-family:'Share Tech Mono',monospace;">
+          <div id="sub-console-output" style="flex:1; min-height:300px; max-height:480px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:4px; font-size:0.82rem; color:#aaa; overflow-y:auto; line-height:1.5; font-family:'Share Tech Mono',monospace;">
             <div style="color:#666;">> System idle. Select a subroutine or click batch actions to execute...</div>
           </div>
         </div>
 
         <!-- Manual CLI Command Input -->
-        <div class="panel" style="background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); padding:14px;">
+        <div class="panel cyber-panel" style="background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); padding:14px; border-radius:6px;">
           <div style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent, #06b6d4); margin-bottom:8px; font-weight:bold;">
             // MANUAL_COMMAND_DISPATCH
           </div>
@@ -139,6 +184,7 @@ export default function SubroutinesPage() {
     </div>
   `;
 
+  // Grab element references
   const listEl = container.querySelector('#subroutine-list');
   const portedListEl = container.querySelector('#ported-projects-list');
   const consoleEl = container.querySelector('#sub-console-output');
@@ -151,6 +197,53 @@ export default function SubroutinesPage() {
   const workspaceBadge = container.querySelector('#workspace-badge');
   const workspaceContainer = container.querySelector('#workspace-container');
   const btnCloseWorkspace = container.querySelector('#btn-close-workspace');
+  const btnSortAZ = container.querySelector('#btn-sort-az');
+  const sortOrderLabel = container.querySelector('#sort-order-label');
+  const btnTimelineToggle = container.querySelector('#btn-timeline-toggle');
+  const viewModeLabel = container.querySelector('#view-mode-label');
+  const subProfileLabel = container.querySelector('#sub-profile-label');
+  const btnSubAuth = container.querySelector('#btn-sub-auth');
+  const catPillsBar = container.querySelector('#sub-cat-pills-bar');
+  const portedCountBadge = container.querySelector('#ported-count-badge');
+
+  // Update profile label from session storage
+  function updateProfileDisplay() {
+    const prof = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('current_profile')) || 'Architect';
+    if (subProfileLabel) subProfileLabel.textContent = prof.toUpperCase();
+  }
+  updateProfileDisplay();
+
+  // Render quick category tab pills
+  const categoriesList = ['ALL', 'CORE KERNEL', 'PORTED PYTHON PROJECTS', 'NEURAL', 'CRYPTO', 'PERF', 'SEC', 'DATA', 'HARDWARE', 'UTILITIES', 'AI/ML', 'SECURITY', 'MOBILE', 'AUDIO', 'SYSTEM', 'NETWORK', 'SIMULATION', 'REVERSE ENGINEERING'];
+  
+  function renderCategoryPills() {
+    catPillsBar.innerHTML = '';
+    const currentCat = categoryFilter.value;
+
+    categoriesList.forEach(cat => {
+      const pill = document.createElement('button');
+      pill.className = `cat-tab-pill ${cat === currentCat ? 'active' : ''}`;
+      pill.style.cssText = `
+        background: ${cat === currentCat ? 'rgba(6,182,212,0.25)' : 'rgba(255,255,255,0.04)'};
+        color: ${cat === currentCat ? 'var(--accent, #06b6d4)' : '#aaa'};
+        border: 1px solid ${cat === currentCat ? 'var(--accent, #06b6d4)' : 'rgba(255,255,255,0.1)'};
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      `;
+      pill.textContent = cat;
+      pill.onclick = () => {
+        categoryFilter.value = cat;
+        renderCategoryPills();
+        renderHub();
+      };
+      catPillsBar.appendChild(pill);
+    });
+  }
+  renderCategoryPills();
 
   function cleanupActivePort() {
     if (activePortInstance) {
@@ -168,11 +261,68 @@ export default function SubroutinesPage() {
   function closeWorkspace() {
     cleanupActivePort();
     if (workspaceContainer) workspaceContainer.innerHTML = '';
-    if (workspacePanel) workspacePanel.style.display = 'none';
-    appendConsoleLine('[WORKSPACES] Closed active workspace panel.', '#888');
+    if (workspacePanel) {
+      workspacePanel.style.display = 'none';
+      workspacePanel.classList.remove('workspace-takeover-active');
+    }
+    appendConsoleLine('[WORKSPACES] Closed active workspace panel. Returned to main subroutines directory.', '#888');
   }
 
   btnCloseWorkspace.onclick = closeWorkspace;
+
+  // Sorting Handler
+  btnSortAZ.onclick = () => {
+    if (currentSortOrder === 'DEFAULT') currentSortOrder = 'A-Z';
+    else if (currentSortOrder === 'A-Z') currentSortOrder = 'Z-A';
+    else currentSortOrder = 'DEFAULT';
+    
+    sortOrderLabel.textContent = `SORT: ${currentSortOrder}`;
+    renderHub();
+  };
+
+  // Timeline / Recent View Handler
+  btnTimelineToggle.onclick = () => {
+    currentViewMode = currentViewMode === 'GRID' ? 'TIMELINE' : 'GRID';
+    viewModeLabel.textContent = `VIEW: ${currentViewMode}`;
+    showToast('INFO', `Switched view mode to ${currentViewMode}`);
+    renderHub();
+  };
+
+  // Profile Auth Modal Handler
+  btnSubAuth.onclick = () => {
+    const pinPadModal = buildPinPad({
+      authKey: 'subroutines_authenticated',
+      onSuccess: (res) => {
+        if (res && res.pinObj) {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('current_profile', res.pinObj.label);
+          }
+          updateProfileDisplay();
+          showToast('SUCCESS', `Authenticated as ${res.pinObj.label}`);
+          appendConsoleLine(`[AUTH] Identity verified for ${res.pinObj.label}. Clearance updated.`, '#10b981');
+        }
+      },
+      title: 'ALPHACORE // CLEARANCE_AUTHENTICATION',
+      subtitle: 'VERIFY PROFILE CLEARANCE PIN',
+      icon: '⚡'
+    });
+
+    showModal({
+      title: 'PROFILE SECURITY CLEARANCE',
+      content: pinPadModal,
+      onClose: () => {}
+    });
+  };
+
+  function isCategoryMatch(itemCategory, targetCategory) {
+    const ic = (itemCategory || '').toUpperCase();
+    const tc = (targetCategory || '').toUpperCase();
+
+    if (ic === tc) return true;
+    if (tc === 'SECURITY' && ic === 'SEC') return true;
+    if (tc === 'SEC' && ic === 'SECURITY') return true;
+    return false;
+  }
 
   function renderHub() {
     const cat = categoryFilter.value;
@@ -184,9 +334,9 @@ export default function SubroutinesPage() {
     if (cat === 'PORTED PYTHON PROJECTS') {
       filteredKernel = [];
     } else if (cat === 'ALL' || cat === 'CORE KERNEL') {
-      filteredKernel = SUBROUTINES;
+      filteredKernel = [...SUBROUTINES];
     } else {
-      filteredKernel = SUBROUTINES.filter(s => s.category.toUpperCase() === cat.toUpperCase());
+      filteredKernel = SUBROUTINES.filter(s => isCategoryMatch(s.category, cat));
     }
 
     if (query) {
@@ -196,6 +346,13 @@ export default function SubroutinesPage() {
         s.desc.toLowerCase().includes(query) ||
         s.category.toLowerCase().includes(query)
       );
+    }
+
+    // Apply sorting to kernel subroutines only when explicitly requested
+    if (currentSortOrder === 'Z-A') {
+      filteredKernel.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (currentSortOrder === 'A-Z') {
+      filteredKernel.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     if (filteredKernel.length === 0) {
@@ -241,9 +398,9 @@ export default function SubroutinesPage() {
     if (cat === 'CORE KERNEL') {
       filteredPorts = [];
     } else if (cat === 'ALL' || cat === 'PORTED PYTHON PROJECTS') {
-      filteredPorts = allPorts;
+      filteredPorts = [...allPorts];
     } else {
-      filteredPorts = allPorts.filter(p => p.category.toUpperCase() === cat.toUpperCase());
+      filteredPorts = allPorts.filter(p => isCategoryMatch(p.category, cat));
     }
 
     if (query) {
@@ -256,31 +413,49 @@ export default function SubroutinesPage() {
       );
     }
 
+    // Apply sorting / view mode
+    if (currentViewMode === 'TIMELINE') {
+      // Timeline view: newest ports at top
+      filteredPorts.reverse();
+    } else if (currentSortOrder === 'Z-A') {
+      filteredPorts.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    } else if (currentSortOrder === 'A-Z') {
+      filteredPorts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }
+
+    if (portedCountBadge) {
+      portedCountBadge.textContent = `${filteredPorts.length} / ${allPorts.length} PORTS`;
+    }
+
     if (filteredPorts.length === 0) {
       portedListEl.innerHTML = '<div style="color:#666; font-size:0.8rem; font-style:italic; padding:10px;">No web-ported Python projects match the current filter.</div>';
     } else {
       filteredPorts.forEach(port => {
         const card = document.createElement('div');
+        card.className = 'cyber-port-card';
         card.style.cssText = `
           background: rgba(16,185,129,0.03);
-          border: 1px solid rgba(16,185,129,0.2);
+          border: 1px solid rgba(16,185,129,0.25);
           padding: 14px;
-          border-radius: 4px;
-          transition: all 0.2s ease;
+          border-radius: 6px;
+          transition: all 0.25s ease;
+          position: relative;
         `;
+
+        const isPlaceholder = (port.description || '').includes('Requires Serverless Backend') || (port.version || '').includes('stub');
 
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="color:#10b981; font-weight:bold; font-size:0.95rem;">${port.name}</span>
+            <span style="color:#10b981; font-weight:bold; font-size:0.95rem; font-family:'Orbitron',sans-serif;">${port.name}</span>
             <div style="display:flex; gap:6px; align-items:center;">
-              <span style="font-size:0.7rem; color:#10b981; background:rgba(16,185,129,0.15); padding:2px 6px; border-radius:3px; border:1px solid rgba(16,185,129,0.3);">${port.category}</span>
+              <span style="font-size:0.7rem; color:${isPlaceholder ? '#fbbf24' : '#10b981'}; background:${isPlaceholder ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'}; padding:2px 6px; border-radius:3px; border:1px solid ${isPlaceholder ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'};">${port.category || 'UTILITIES'}</span>
               <span style="font-size:0.7rem; color:#888; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">v${port.version || '1.0.0'}</span>
             </div>
           </div>
           <div style="font-size:0.72rem; color:#38bdf8; margin-bottom:6px; font-family:'Share Tech Mono',monospace;">
             Source: ${port.pythonSourcePath || 'Python Original'}
           </div>
-          <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0;">${port.description}</p>
+          <p style="font-size:0.8rem; color:#aaa; margin:0 0 12px 0; line-height:1.4;">${port.description}</p>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
             <button class="launch-port-btn" style="flex:1; min-width:140px; background:rgba(16,185,129,0.2); border:1px solid #10b981; color:#10b981; padding:7px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; cursor:pointer; font-weight:bold;">
               🖥 LAUNCH WORKSPACE
@@ -310,13 +485,14 @@ export default function SubroutinesPage() {
     workspaceBadge.textContent = `${port.category} | v${port.version || '1.0.0'} | ${port.pythonSourcePath || 'Python'}`;
     workspaceContainer.innerHTML = '';
     workspacePanel.style.display = 'block';
+    workspacePanel.classList.add('workspace-takeover-active');
 
     try {
       port.render(workspaceContainer, {
         onLog: (msg, color) => appendConsoleLine(msg, color)
       });
       activePortInstance = port;
-      appendConsoleLine(`[WORKSPACES] Mounted interactive UI for ${port.name} (${port.id}).`, 'var(--accent, #06b6d4)');
+      appendConsoleLine(`[WORKSPACES] Fullscreen takeover active: Mounted interactive UI for ${port.name} (${port.id}).`, 'var(--accent, #06b6d4)');
       showToast('INFO', `Mounted workspace for ${port.name}`);
       workspacePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (err) {
@@ -350,7 +526,10 @@ export default function SubroutinesPage() {
     }
   }
 
-  categoryFilter.onchange = () => renderHub();
+  categoryFilter.onchange = () => {
+    renderCategoryPills();
+    renderHub();
+  };
   searchInput.oninput = () => renderHub();
 
   renderHub();

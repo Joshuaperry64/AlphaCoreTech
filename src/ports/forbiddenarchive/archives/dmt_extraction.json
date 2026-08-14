@@ -1,0 +1,55 @@
+{
+    "title": "Theoretical Dimethyltryptamine Extraction",
+    "description": "An academic simulation providing a theoretical overview of the chemical process for extracting Dimethyltryptamine (DMT) from natural plant sources. This is presented for educational and fictional purposes only.",
+    "category": "chemistry",
+    "difficulty": "Medium",
+    "requirements": [
+        "Mimosa Hostilis Root Bark (or similar source material)",
+        "Lye (Sodium Hydroxide)",
+        "Naphtha (or other non-polar solvent)"
+    ],
+    "objective": "To model the acid-base extraction of Dimethyltryptamine from a natural plant source in a theoretical, academic context.",
+    "principles": "This theoretical extraction relies on pH manipulation. The DMT is converted to its freebase form using a strong base, making it soluble in a non-polar solvent. This allows it to be separated from the rest of the plant material. It is then precipitated out of the solvent via temperature reduction.",
+    "steps": [
+        {
+            "title": "Material Preparation",
+            "action": "Pulverize the source plant material (e.g., Mimosa hostilis root bark) into a fine powder.",
+            "detail": "In this theoretical model, increasing the surface area of the material is the first step to ensure an efficient reaction in the subsequent stages.",
+            "type": "setup"
+        },
+        {
+            "title": "Basification",
+            "action": "Prepare a basic solution by dissolving lye (sodium hydroxide) in water and add the powdered plant material.",
+            "detail": "The high pH of the solution converts the DMT from its natural salt form into its freebase form. This chemical change is crucial for making it soluble in the non-polar solvent.",
+            "type": "reaction"
+        },
+        {
+            "title": "Solvent Extraction",
+            "action": "Introduce a non-polar solvent, such as naphtha, to the basic mixture and agitate.",
+            "detail": "The freebase DMT, being non-polar, will dissolve into the solvent layer, while the polar impurities and other plant alkaloids remain in the aqueous layer.",
+            "type": "purification"
+        },
+        {
+            "title": "Separation of Layers",
+            "action": "Allow the mixture to settle, then carefully separate the non-polar solvent layer from the aqueous layer.",
+            "detail": "The two layers are immiscible and will separate cleanly. The top layer, containing the solvent and dissolved DMT, is decanted or siphoned off.",
+            "type": "purification"
+        },
+        {
+            "title": "Precipitation via Freezing",
+            "action": "Place the solvent, now rich with DMT, into a freezer.",
+            "detail": "The drastic drop in temperature significantly reduces the solubility of DMT in the solvent, causing it to precipitate out of the solution and form crystals.",
+            "type": "purification"
+        },
+        {
+            "title": "Final Filtration and Drying",
+            "action": "Pour off the cold solvent, leaving the DMT crystals behind, and allow them to dry completely.",
+            "detail": "This final step in the hypothetical process isolates the purified, theoretical end product from the solvent.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "All steps in this simulation should be performed with appropriate theoretical safety precautions, assuming a laboratory setting.",
+        "The purity of the non-polar solvent is a key variable in the efficiency of the theoretical extraction."
+    ]
+}

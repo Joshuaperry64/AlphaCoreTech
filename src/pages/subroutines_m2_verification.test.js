@@ -102,7 +102,7 @@ describe('Milestone M2 Empirical Challenger Verification Suite', () => {
     let kernelText = container.querySelector('#subroutine-list').textContent;
     let portedCards = container.querySelectorAll('#ported-projects-list > div');
     expect(kernelText).toContain('No core kernel subroutines match');
-    expect(portedCards.length).toBe(2);
+    expect(portedCards.length).toBe(57);
 
     // Select HARDWARE (matches AlphaInventory)
     catSelect.value = 'HARDWARE';

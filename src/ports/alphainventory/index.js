@@ -40,8 +40,9 @@ export function render(container, options = {}) {
  * @returns {Promise<{ success: boolean, output: string, details: Object }>}
  */
 export async function execute(params = {}) {
-  const components = params.components || loadInventoryState().components || [];
-  const pins = params.pins || DEFAULT_PINS;
+  const safeParams = params || {};
+  const components = safeParams.components || loadInventoryState().components || [];
+  const pins = safeParams.pins || DEFAULT_PINS;
 
   const conflicts = detectConflicts(components, pins);
   const success = conflicts.length === 0;

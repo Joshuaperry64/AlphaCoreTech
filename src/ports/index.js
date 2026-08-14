@@ -1,16 +1,40 @@
 /**
  * Central Web Porting Framework Registry.
- * Imports, validates, and registers all ported modules.
+ * Automatically discovers, validates, and registers all ported modules.
+ * Supports both Vite bundler (import.meta.glob) and Node ESM runtime.
  */
 
 import { validatePortContract } from './port-contract.js';
-import alphaInventoryPort from './alphainventory/index.js';
-import alphaRequirementsPort from './alpharequirements/index.js';
 
-const candidatePorts = [
-  alphaInventoryPort,
-  alphaRequirementsPort
-];
+let candidatePorts = [];
+
+if (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function') {
+  // Vite Eager Glob Import (discovers all src/ports/*/index.js automatically)
+  const portModules = import.meta.glob('./*/index.js', { eager: true });
+  candidatePorts = Object.values(portModules).map(mod => mod.default || mod);
+} else {
+  // Plain Node ESM fallback for verification scripts / node runtime
+  try {
+    const fs = await import(/* @vite-ignore */ 'fs');
+    const path = await import(/* @vite-ignore */ 'path');
+    const { fileURLToPath } = await import(/* @vite-ignore */ 'url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const entries = fs.readdirSync(__dirname, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const indexPath = path.join(__dirname, entry.name, 'index.js');
+        if (fs.existsSync(indexPath)) {
+          const fileUri = `file:///${indexPath.replace(/\\/g, '/')}`;
+          const mod = await import(fileUri);
+          candidatePorts.push(mod.default || mod);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Port Registry] Node ESM fallback scan notice:', err.message);
+  }
+}
 
 const validPorts = [];
 

@@ -1,0 +1,50 @@
+{
+    "title": "Cover Identity Creation",
+    "description": "This simulation guides you through the process of creating a new, verifiable cover identity. This involves generating fraudulent documents, creating a digital footprint, and establishing a believable backstory.",
+    "category": "social_engineering",
+    "difficulty": "Hard",
+    "requirements": [
+        "High-Quality Forged Documents",
+        "Aged Social Media Accounts",
+        "Burner Phone",
+        "VPN and Secure Email"
+    ],
+    "objective": "To construct a completely new, verifiable identity that can withstand scrutiny and be used for long-term undercover operations.",
+    "principles": "A successful cover identity is built on layers of legitimacy, both physical and digital. It requires creating a consistent and verifiable history across multiple platforms, from official documents to a curated online presence. The key is to build a 'legend' that is both believable and difficult to disprove.",
+    "steps": [
+        {
+            "title": "Foundation and Document Forgery",
+            "action": "Create a suite of high-quality forged documents: birth certificate, driver's license, and social security card.",
+            "detail": "These documents are the foundation of the identity. They must be of exceptional quality, using correct templates, materials, and security features to pass both human and machine inspection."
+        },
+        {
+            "title": "Digital Footprint Generation",
+            "action": "Create and age social media profiles, email accounts, and forum memberships for the new identity.",
+            "detail": "A modern identity is incomplete without a digital history. These accounts should be created months in advance and populated with plausible, non-incriminating content to simulate a real person's online life."
+        },
+        {
+            "title": "Construct a Believable 'Legend'",
+            "action": "Develop a detailed and consistent backstory for the identity, including education, work history, and personal relationships.",
+            "detail": "This 'legend' is the narrative of the identity's life. It must be memorized and internally consistent to avoid contradictions during questioning or background checks."
+        },
+        {
+            "title": "Establish Financial History",
+            "action": "Open a bank account and obtain a credit card in the new identity's name.",
+            "detail": "Use a 'synthetic identity' approach, combining real and fabricated information to pass initial bank verification. Use the account for small, regular transactions to build a financial history."
+        },
+        {
+            "title": "Insertion into Public Records",
+            "action": "Attempt to insert the new identity into public and semi-public records databases.",
+            "detail": "This can involve signing up for utility bills at a mail drop, registering to vote, or subscribing to magazines. These create data points that can be found during a background check, adding a layer of legitimacy."
+        },
+        {
+            "title": "Live the Identity",
+            "action": "Begin to use the new identity in low-stakes, real-world situations to solidify its legitimacy and your comfort in the role.",
+            "detail": "This is the final and most challenging step. It involves using the identity to rent a car, book a hotel, or interact with strangers, reinforcing the cover through real-world application."
+        }
+    ],
+    "tips": [
+        "Consistency is paramount. Any contradiction in the legend or documentation can unravel the entire identity.",
+        "Start small. Use the identity for minor transactions and interactions before attempting high-stakes operations."
+    ]
+}

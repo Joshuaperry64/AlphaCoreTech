@@ -1,0 +1,44 @@
+{
+    "title": "Wi-Fi Cracking: A WPA/WPA2 Security Simulation",
+    "description": "A simulation outlining the process of testing the security of a WPA/WPA2-secured Wi-Fi network. This model demonstrates a common attack methodology involving packet capture and offline password cracking for educational and defensive purposes.",
+    "category": "hacking",
+    "difficulty": "Medium",
+    "requirements": [
+        "Wireless Adapter (Monitor Mode Capable)",
+        "Packet Sniffing Software",
+        "Password Cracking Utility (e.g., Aircrack-ng)"
+    ],
+    "objective": "To simulate an attack on a WPA/WPA2 network to capture the four-way handshake and crack the pre-shared key (password) offline, in order to understand and mitigate this vulnerability.",
+    "principles": "WPA/WPA2 security relies on a 'four-way handshake' to authenticate a connecting device. By capturing this handshake, an attacker can use a dictionary attack to guess the password offline, without alerting the network. This simulation models this process to highlight the importance of strong, non-dictionary passwords.",
+    "steps": [
+        {
+            "title": "Enable Monitor Mode and Scan for Networks",
+            "action": "Place the wireless adapter into 'monitor mode' and scan the airwaves for all nearby Wi-Fi networks.",
+            "detail": "Monitor mode allows the wireless adapter to listen to all Wi-Fi traffic in the vicinity, not just traffic addressed to it. This is essential for identifying potential targets and capturing raw packets."
+        },
+        {
+            "title": "Select a Target Network",
+            "action": "From the list of discovered networks, select a target BSSID and channel to focus the attack.",
+            "detail": "Focusing the packet sniffer on a specific channel and network reduces noise and makes it easier to capture the relevant handshake data."
+        },
+        {
+            "title": "Capture the Four-Way Handshake",
+            "action": "Listen for a device to connect to the target network and capture the WPA four-way handshake.",
+            "detail": "This is the key to the attack. An attacker can passively wait for a device to connect, or actively force a device to reconnect by sending a 'deauthentication' packet, prompting a new handshake."
+        },
+        {
+            "title": "Perform an Offline Dictionary Attack",
+            "action": "Use a password cracking utility to attempt to crack the captured handshake using a wordlist.",
+            "detail": "The utility rapidly tests thousands of potential passwords from a pre-compiled list against the captured handshake. If a password in the list matches the network's password, the handshake can be decrypted, revealing the key."
+        },
+        {
+            "title": "Analyze Results",
+            "action": "If the password is found in the wordlist, the attack is successful. If not, the attack fails.",
+            "detail": "This simulation highlights that the security of the network is entirely dependent on the strength and complexity of the password. A weak, dictionary-based password can be cracked in minutes."
+        }
+    ],
+    "tips": [
+        "The success of this attack is 100% dependent on the quality of the wordlist. This emphasizes the need for long, complex passwords that are not simple words or phrases.",
+        "Using a strong, randomly generated password with a mix of upper/lower case letters, numbers, and symbols makes a dictionary attack computationally infeasible."
+    ]
+}

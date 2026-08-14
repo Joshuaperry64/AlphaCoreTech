@@ -1,0 +1,48 @@
+{
+    "title": "Card Skimming Device Deployment",
+    "description": "A simulation demonstrating the mechanics of a card skimming attack. This involves installing a device to capture card data and a camera or overlay to capture PINs.",
+    "category": "hacking",
+    "difficulty": "Easy",
+    "requirements": [
+        "Miniature Card Skimmer",
+        "PIN Pad Overlay or Micro Camera"
+    ],
+    "objective": "To intercept and capture credit/debit card data (Track 2) and associated PINs from a public terminal (e.g., ATM, gas pump) using custom-made hardware.",
+    "principles": "The attack leverages two key components: a 'skimmer' device that fits over the real card slot to read the magnetic stripe data as the card is inserted, and a hidden camera or a fake PIN pad overlay to record the user's PIN. The collected data can then be exfiltrated and used to create cloned cards for fraudulent transactions.",
+    "steps": [
+        {
+            "title": "Equipment Preparation",
+            "action": "Ensure the skimming device is fully charged and has sufficient storage. Prepare the PIN pad overlay or micro camera.",
+            "detail": "The hardware must be prepared to look identical to the target machine's components. Any discrepancy in color, texture, or fit can expose the device."
+        },
+        {
+            "title": "Location Survey (Casing)",
+            "action": "Select a suitable terminal. The ideal location has high foot traffic but minimal direct surveillance or employee oversight.",
+            "detail": "Gas pumps and standalone ATMs are common targets. The goal is to maximize potential victims while minimizing the risk of discovery."
+        },
+        {
+            "title": "Install Skimmer Device",
+            "action": "Discreetly and quickly place the miniature skimmer over the card entry slot.",
+            "detail": "The device should fit snugly and appear as a natural part of the machine. This is often done in seconds to avoid drawing attention."
+        },
+        {
+            "title": "Install PIN Capture Device",
+            "action": "Position the PIN pad overlay on top of the existing keypad or place the micro camera in a position to view the keypad.",
+            "detail": "The PIN pad overlay records keystrokes directly. The camera must be carefully angled to have a clear view of the PIN entry."
+        },
+        {
+            "title": "Data Collection Period",
+            "action": "Allow the devices to remain in place for a set period (e.g., several hours or a full day) to collect data from multiple transactions.",
+            "detail": "The longer the device is in place, the more data is collected, but the risk of discovery also increases."
+        },
+        {
+            "title": "Retrieve Hardware and Data",
+            "action": "Return to the location to carefully and quickly remove the skimmer and PIN capture device.",
+            "detail": "This is another high-risk step. Once retrieved, the captured card data and PINs are downloaded for analysis and use."
+        }
+    ],
+    "tips": [
+        "Use social engineering (e.g., creating a minor distraction) to divert attention during the installation and retrieval phases.",
+        "Bluetooth-enabled skimmers allow for remote data retrieval, eliminating the need to physically retrieve the hardware and reducing risk."
+    ]
+}

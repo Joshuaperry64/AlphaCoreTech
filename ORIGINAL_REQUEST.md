@@ -94,3 +94,8 @@ To conserve API quota, all testing during the bulk port must be strictly program
 - [ ] A local script tests that `npm run build` (or the equivalent Netlify build command) executes successfully without throwing fatal errors caused by bulk-generated component boilerplate.
 - [ ] The agent provides a finalized summary report explicitly listing any projects that were given placeholders.
 
+## 2026-08-14T01:08:36Z
+
+Update: The user noted that while we were paused, some projects may have evolved or new ones might have been added to the workspace. Before proceeding with the bulk generation, please dispatch your Explorer agents to quickly rescan the workspace and update `catalog_analysis.json` and `PROJECT.md` so that everything is perfectly up to date.
+
+

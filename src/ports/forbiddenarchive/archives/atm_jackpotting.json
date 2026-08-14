@@ -1,0 +1,49 @@
+{
+    "title": "ATM Jackpotting",
+    "description": "This simulation walks you through the process of ATM jackpotting, a technique used to force an ATM to dispense all its cash. This requires a combination of physical access, custom hardware, and specialized software.",
+    "category": "hacking",
+    "difficulty": "Medium",
+    "requirements": [
+        "Endoscope",
+        "USB Drive with custom malware",
+        "Lockpick Set"
+    ],
+    "objective": "Force a targeted ATM to dispense all of its cash reserves by exploiting physical and software vulnerabilities.",
+    "principles": "The operation involves bypassing the ATM's physical security to gain access to internal components, then using custom malware to override the machine's cash dispensing commands, forcing it into a 'jackpot' mode.",
+    "steps": [
+        {
+            "title": "Bypass Physical Security",
+            "action": "Use a lockpick set to open the ATM's top or front panel, exposing the internal components.",
+            "detail": "The goal is to gain access without causing visible damage that would alert maintenance or law enforcement. Researching the target ATM model beforehand reveals the type of lock used."
+        },
+        {
+            "title": "Locate Internal USB Port",
+            "action": "Use an endoscope to locate a hidden internal USB port on the ATM's motherboard.",
+            "detail": "Manufacturers often include internal USB ports for diagnostics. These ports provide a direct interface to the machine's core software and are the primary vector for this attack."
+        },
+        {
+            "title": "Deploy Malware",
+            "action": "Insert the USB drive containing the custom malware into the identified port.",
+            "detail": "The malware is designed to exploit known vulnerabilities in the ATM's firmware. Once inserted, the malware will automatically execute, preparing to take control of the machine."
+        },
+        {
+            "title": "Execute Payload",
+            "action": "Using a connected device (e.g., a smartphone), trigger the malware's payload.",
+            "detail": "The payload overwrites the ATM's dispensing logic, replacing standard commands with a single 'dispense all' command."
+        },
+        {
+            "title": "Initiate Jackpotting",
+            "action": "Send the dispense command to the compromised ATM via the connected device.",
+            "detail": "The machine will now begin to dispense all of its cash cassettes without requiring a card or PIN. This is the point of no return."
+        },
+        {
+            "title": "Collect and Exfiltrate",
+            "action": "Quickly collect the dispensed cash and exit the area immediately.",
+            "detail": "The entire operation must be executed with speed and precision. Have a pre-planned exfiltration route to minimize exposure."
+        }
+    ],
+    "tips": [
+        "Perform thorough reconnaissance on the target ATM model to identify its specific physical and software vulnerabilities.",
+        "Time is the most critical factor. The operation should be completed in under three minutes to avoid detection."
+    ]
+}

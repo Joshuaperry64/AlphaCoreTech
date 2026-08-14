@@ -1,0 +1,50 @@
+{
+    "title": "Pulsar Dust Extraction",
+    "description": "This simulation models the process of extracting and refining pulsar dust from raw stellar-ice core samples. Pulsar dust is a highly energetic material with applications in advanced power systems.",
+    "category": "chemistry",
+    "difficulty": "Hard",
+    "requirements": [
+        "Raw Stellar-Ice Core",
+        "Magnetic Sieve",
+        "High-G Centrifuge",
+        "Laser Refiner"
+    ],
+    "objective": "To extract and refine highly energetic pulsar dust from raw stellar-ice core samples to a purity of 99.9% or higher.",
+    "principles": "The extraction leverages the high magnetic susceptibility of pulsar dust to separate it from the non-magnetic stellar ice. Further purification is achieved through centrifugal separation based on density and laser ablation of remaining micro-impurities.",
+    "steps": [
+        {
+            "title": "Core Fragmentation",
+            "action": "Use a high-frequency sonic drill to fracture the raw stellar-ice core into manageable fragments.",
+            "detail": "This initial step exposes the embedded pulsar dust particles, maximizing the surface area for the subsequent magnetic separation."
+        },
+        {
+            "title": "Magnetic Sieving",
+            "action": "Pass the fragmented ice through a series of increasingly powerful magnetic sieves.",
+            "detail": "The pulsar dust, being highly magnetic, will adhere to the sieves while the non-magnetic ice particles pass through. This is the primary separation method."
+        },
+        {
+            "title": "Centrifugal Separation",
+            "action": "The collected dust is mixed with a dense, inert liquid and spun in a high-G centrifuge.",
+            "detail": "The heavier pulsar dust is forced to the bottom of the centrifuge tubes, separating it from any lighter impurities that were collected along with the dust."
+        },
+        {
+            "title": "Laser Refining",
+            "action": "The semi-purified dust is spread into a thin layer and bombarded with a precisely tuned laser.",
+            "detail": "The laser is calibrated to a frequency that vaporizes any remaining non-pulsar impurities, leaving behind the pure, refined pulsar dust."
+        },
+        {
+            "title": "Purity Analysis",
+            "action": "Use a mass spectrometer to analyze the purity of the refined dust.",
+            "detail": "The purity must be above 99.9% to be considered stable and safe for use in advanced power systems. If purity is insufficient, the laser refining step must be repeated."
+        },
+        {
+            "title": "Energetic Containment",
+            "action": "The final product is stored in a magnetically shielded, vacuum-sealed container.",
+            "detail": "This prevents energy leakage and decay of the highly energetic material. Failure to contain it properly can result in a significant energy release."
+        }
+    ],
+    "tips": [
+        "The strength of the magnetic sieves must be carefully calibrated to avoid magnetizing the ice fragments themselves.",
+        "The laser refiner's frequency is the most critical variable. An incorrect frequency can destroy the pulsar dust along with the impurities."
+    ]
+}

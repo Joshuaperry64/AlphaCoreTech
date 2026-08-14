@@ -1,0 +1,50 @@
+{
+    "title": "AI-Powered Spear Phishing for Insider Information",
+    "description": "A defensive simulation modeling how an AI can be used to conduct a sophisticated spear-phishing campaign to acquire non-public, market-moving information for insider trading.",
+    "category": "ai_finance",
+    "difficulty": "Expert",
+    "requirements": [
+        "AI Language Model for content generation",
+        "Social Engineering Toolkit",
+        "Credential Harvesting Framework",
+        "Targeted list of corporate executives"
+    ],
+    "objective": "To simulate an AI-driven attack that targets high-level corporate executives to trick them into revealing confidential information that can be used to execute profitable trades.",
+    "principles": "This simulation demonstrates a highly advanced threat where an AI analyzes a target's online presence (social media, publications, interviews) to create a deeply personalized phishing email. The AI crafts a message that resonates with the target's interests and personality, making it almost indistinguishable from a legitimate email. The goal is to compromise the target's account to gain access to confidential documents, such as upcoming earnings reports or merger plans.",
+    "steps": [
+        {
+            "title": "AI-Driven Target Analysis",
+            "action": "The AI scours the internet for information about a specific high-level target (e.g., a CFO or VP of a publicly traded company).",
+            "detail": "The AI builds a psychographic profile of the target, including their communication style, professional interests, recent activities, and trusted contacts. This data is the foundation for the personalized attack."
+        },
+        {
+            "title": "Personalized Lure Generation",
+            "action": "Using its language model, the AI generates a custom spear-phishing email and a cloned login page that are tailored specifically to the target.",
+            "detail": "For example, the email might appear to be from a trusted colleague and reference a recent, real-world project the target is working on, making it highly convincing."
+        },
+        {
+            "title": "Execution and Credential Harvesting",
+            "action": "The phishing email is sent to the target. If the target clicks the link and enters their credentials, the AI captures them.",
+            "detail": "The simulation emphasizes the need for multi-factor authentication (MFA) as a primary defense, as a simple password compromise is often trivial for a determined attacker."
+        },
+        {
+            "title": "Automated Data Exfiltration",
+            "action": "Once the credentials are stolen, the AI logs into the target's email or cloud storage account.",
+            "detail": "The AI then uses natural language processing (NLP) to scan documents for keywords related to market-moving events (e.g., 'merger', 'acquisition', 'earnings forecast', 'layoffs'). It automatically exfiltrates the most sensitive documents."
+        },
+        {
+            "title": "Execute Pre-emptive Trades",
+            "action": "Based on the exfiltrated information, the AI's trading module executes trades on the stock market *before* the information becomes public.",
+            "detail": "For example, if the AI discovers an upcoming negative earnings report, it will short the stock. If it discovers a pending merger, it will buy the stock."
+        },
+        {
+            "title": "Covering Tracks",
+            "action": "The AI deletes the phishing emails from the target's sent and inbox folders and logs out.",
+            "detail": "The goal is to remain undetected for as long as possible, maximizing the time to profit from the stolen information."
+        }
+    ],
+    "tips": [
+        "This simulation highlights that even the most technically proficient individuals can be vulnerable to psychologically sophisticated attacks.",
+        "The primary defense is not technical, but human: a culture of healthy skepticism and a strict policy of verifying sensitive requests through a separate, secure channel."
+    ]
+}

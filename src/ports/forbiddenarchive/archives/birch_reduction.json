@@ -1,0 +1,55 @@
+{
+    "title": "Birch Reduction: A Theoretical Study",
+    "description": "An academic simulation demonstrating the Birch reduction, a chemical reaction used to convert aromatic compounds into 1,4-cyclohexadienes. This theoretical exercise explores the principles of dissolving metal reductions.",
+    "category": "chemistry",
+    "difficulty": "Medium",
+    "requirements": [
+        "Anhydrous Ammonia (Solvent)",
+        "Alkali Metal (e.g., Sodium)",
+        "Proton Source (e.g., Ethanol)"
+    ],
+    "objective": "Theoretically model the reduction of an aromatic ring to a diene using a solvated electron solution.",
+    "principles": "The Birch reduction involves the organic reduction of aromatic rings in a solution of liquid ammonia, an alkali metal, and an alcohol. The reaction is driven by the transfer of solvated electrons from the metal to the aromatic ring, followed by protonation.",
+    "steps": [
+        {
+            "title": "Establish the Reaction Environment",
+            "action": "Theoretically condense anhydrous ammonia gas to its liquid state at -33°C.",
+            "detail": "This step creates the necessary solvent environment for the solvated electrons to form. A cold finger or a dry ice/acetone bath is typically modeled for this purpose.",
+            "type": "setup"
+        },
+        {
+            "title": "Formation of Solvated Electrons",
+            "action": "Introduce an alkali metal, such as sodium, into the liquid ammonia.",
+            "detail": "The metal dissolves to form a characteristic deep blue solution, indicating the presence of solvated electrons (e[NH3]x-), which are the key reducing agents in this reaction.",
+            "type": "reaction"
+        },
+        {
+            "title": "Introduce the Aromatic Substrate",
+            "action": "Slowly add the aromatic starting material to the sodium-ammonia solution.",
+            "detail": "The solvated electrons attack the aromatic ring, forming a radical anion. This is the core electron-transfer step of the reduction.",
+            "type": "reaction"
+        },
+        {
+            "title": "Protonation of the Intermediate",
+            "action": "Add a proton source, such as ethanol, to the solution.",
+            "detail": "The alcohol protonates the radical anion intermediate. A second electron transfer and subsequent protonation yields the final diene product.",
+            "type": "reaction"
+        },
+        {
+            "title": "Solvent Evaporation",
+            "action": "Theoretically allow the ammonia to evaporate under a fume hood.",
+            "detail": "This removes the solvent, leaving behind the reaction mixture containing the desired diene product and other reagents.",
+            "type": "purification"
+        },
+        {
+            "title": "Theoretical Product Purification",
+            "action": "Model the purification of the final product using techniques like liquid-liquid extraction and distillation.",
+            "detail": "This separates the target diene from unreacted starting material and byproducts, yielding a theoretically pure compound.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "The reaction is highly sensitive to water, which would quench the solvated electrons. The environment must be anhydrous.",
+        "The choice of alcohol affects the final product. Less acidic alcohols prevent over-reduction of the diene."
+    ]
+}

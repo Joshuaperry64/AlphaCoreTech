@@ -1,0 +1,49 @@
+{
+    "title": "Advanced Lockpicking Simulation",
+    "description": "A simulation providing a hands-on experience with the art of lockpicking, focusing on high-security pin tumbler locks. The objective is to develop a feel for the internal mechanics and learn to defeat complex security features.",
+    "category": "hacking",
+    "difficulty": "Medium",
+    "requirements": [
+        "Tension Wrench (Top and Bottom of Keyway)",
+        "Set of Picks (Hook, Rake, Diamond)",
+        "Practice Locks with Security Pins"
+    ],
+    "objective": "To successfully pick a high-security pin tumbler lock by setting each pin at the shear line, including overcoming advanced security features like spool and serrated pins.",
+    "principles": "Lockpicking is the art of manipulating a lock's internal components without the original key. For pin tumbler locks, this involves using a tension wrench to apply slight rotation to the core and a pick to lift each pin to the shear line, where the core can rotate freely. Security pins are designed to provide false feedback, making this process more difficult.",
+    "steps": [
+        {
+            "title": "Apply Correct Tension",
+            "action": "Insert the tension wrench and apply light, constant rotational pressure in the direction the lock opens.",
+            "detail": "Tension is the most crucial and nuanced skill. Too much, and the pins will bind completely; too little, and they will drop back down after being set. The correct tension allows you to feel the subtle feedback from the pins."
+        },
+        {
+            "title": "Identify the Binding Pin",
+            "action": "Use a hook pick to gently probe the pins inside the lock to find the one that is under the most tension.",
+            "detail": "The binding pin is the first one that must be set. It will feel 'stuck' or offer more resistance than the other pins. The binding order is rarely sequential and must be discovered by feel."
+        },
+        {
+            "title": "Set the Binding Pin",
+            "action": "Apply upward pressure to the binding pin with your pick until you feel or hear a slight click.",
+            "detail": "This click indicates the driver pin has cleared the shear line. The tension wrench may rotate slightly, which is known as a 'false set' if security pins are present."
+        },
+        {
+            "title": "Find and Set Subsequent Pins",
+            "action": "Systematically find and set each remaining binding pin in sequence.",
+            "detail": "After setting a pin, the binding order may change. You must re-evaluate which pin is binding next and repeat the process until all pins are set."
+        },
+        {
+            "title": "Defeat Security Pins",
+            "action": "Encounter and overcome security pins such as spools or serrated pins.",
+            "detail": "Spool pins will give a deep false set and require you to slightly release tension to allow the core to counter-rotate. Serrated pins will give a series of small clicks, requiring careful pressure to set without over-lifting."
+        },
+        {
+            "title": "Open the Lock",
+            "action": "Once all pins are correctly set at the shear line, the lock will open.",
+            "detail": "The final pin setting will release the core, allowing it to rotate fully. The simulation is complete upon a successful open."
+        }
+    ],
+    "tips": [
+        "Practice on cutaway locks first to visualize the internal mechanics and understand how pins react to your tools.",
+        "Vary your tension constantly. Different locks and even different pins within the same lock can require different amounts of tension."
+    ]
+}

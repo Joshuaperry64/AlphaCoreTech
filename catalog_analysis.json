@@ -1,0 +1,601 @@
+{
+  "totalProjects": 57,
+  "simpleProjectsCount": 22,
+  "complexProjectsCount": 35,
+  "newlyAddedProjects": [
+    "AlphaController"
+  ],
+  "updatedProjects": [
+    {
+      "name": "AlphaComfy",
+      "field": "pythonFilesCount",
+      "prev": 1,
+      "curr": 11
+    },
+    {
+      "name": "AlphaComfy",
+      "field": "mainScript",
+      "prev": "bridge.py",
+      "curr": "main.py"
+    },
+    {
+      "name": "OpenWebUI",
+      "field": "pythonFilesCount",
+      "prev": 18,
+      "curr": 19
+    }
+  ],
+  "removedProjects": [],
+  "projects": [
+    {
+      "id": "port-alphaagency",
+      "name": "AlphaAgency",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaAgency",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "gui.py",
+      "pythonFilesCount": 2,
+      "description": "Agent swarm orchestration GUI and task delegation visualizer..."
+    },
+    {
+      "id": "port-alphaapk",
+      "name": "AlphaAPK",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaAPK",
+      "domain": "Mobile & Android",
+      "complexity": "Complex",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "APK reverse engineering, decompression, and Android manifest..."
+    },
+    {
+      "id": "port-alphaassistant",
+      "name": "AlphaAssistant",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaAssistant",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 80,
+      "description": "Multi-modal AI assistant suite with audio manager, agent loo..."
+    },
+    {
+      "id": "port-alphabrowser",
+      "name": "AlphaBrowser",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaBrowser",
+      "domain": "Network & Web",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 10,
+      "description": "Automated browser controller, web scraper, and DOM layout ex..."
+    },
+    {
+      "id": "port-alphacomfy",
+      "name": "AlphaComfy",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaComfy",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 11,
+      "description": "ComfyUI workflow bridge and image generation pipeline runner..."
+    },
+    {
+      "id": "port-alphacomms",
+      "name": "AlphaComms",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaComms",
+      "domain": "Network & Web",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 5,
+      "description": "Encrypted peer-to-peer communication node and socket protoco..."
+    },
+    {
+      "id": "port-alphaconcepts",
+      "name": "AlphaConcepts",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaConcepts",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "core\\ai_controller.py",
+      "pythonFilesCount": 10,
+      "description": "AI concept design explorer, prompt rule manager, and archite..."
+    },
+    {
+      "id": "port-alphacontroller",
+      "name": "AlphaController",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaController",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 6,
+      "description": "Neural interface & desktop symbiote client/server UI with fast VLM brain integration, autonomous input control, system logging, custom directives, and Modal cloud deployment."
+    },
+    {
+      "id": "port-alphadiagnostics",
+      "name": "AlphaDiagnostics",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaDiagnostics",
+      "domain": "Hardware & System",
+      "complexity": "Complex",
+      "mainScript": "laptop_gui\\main.py",
+      "pythonFilesCount": 14,
+      "description": "Hardware telemetry monitor and diagnostic dashboard (Laptop ..."
+    },
+    {
+      "id": "port-alphadpms",
+      "name": "AlphaDPMS",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaDPMS",
+      "domain": "System & Automation",
+      "complexity": "Simple",
+      "mainScript": "ai-memory-mcp_server.py",
+      "pythonFilesCount": 18,
+      "description": "Data Protection & Memory System (MCP server for persistent m..."
+    },
+    {
+      "id": "port-alphadrive",
+      "name": "AlphaDrive",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaDrive",
+      "domain": "Data & Storage",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 6,
+      "description": "Automated cloud/local file drive synchronizer and payload ba..."
+    },
+    {
+      "id": "port-alphaexploit",
+      "name": "AlphaExploit",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaExploit",
+      "domain": "Security & Cyber",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 10,
+      "description": "Cybersecurity vulnerability scanner, fuzzing suite, and expl..."
+    },
+    {
+      "id": "port-alphaeye",
+      "name": "AlphaEye",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaEye",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 10,
+      "description": "Computer vision pipeline, web-camera object tracking, and Op..."
+    },
+    {
+      "id": "port-alphagemini",
+      "name": "AlphaGemini",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaGemini",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Google Gemini API wrapper, multi-turn chat manager, and prom..."
+    },
+    {
+      "id": "port-alphaghidra",
+      "name": "AlphaGhidra",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaGhidra",
+      "domain": "Reverse Engineering & Security",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 1,
+      "description": "Ghidra headless disassembler automation & binary analysis br..."
+    },
+    {
+      "id": "port-alphagirl",
+      "name": "AlphaGirl",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaGirl",
+      "domain": "Audio & Speech",
+      "complexity": "Complex",
+      "mainScript": "opendan-tts-server\\src\\main.py",
+      "pythonFilesCount": 48,
+      "description": "Voice synthesis suite integrating ElevenLabs, Silero TTS, an..."
+    },
+    {
+      "id": "port-alphahats",
+      "name": "AlphaHATS",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaHATS",
+      "domain": "Security & Cyber",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 7,
+      "description": "Hardware-Assisted Telemetry & Security auditor for embedded ..."
+    },
+    {
+      "id": "port-alphaignition",
+      "name": "AlphaIgnition",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaIgnition",
+      "domain": "System & Automation",
+      "complexity": "Simple",
+      "mainScript": "Raspi_app\\main.py",
+      "pythonFilesCount": 1,
+      "description": "RasPi boot ignition sequence manager and remote hardware tri..."
+    },
+    {
+      "id": "port-alphainventory",
+      "name": "AlphaInventory",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaInventory",
+      "domain": "Data & System",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 1,
+      "description": "Hardware & software asset inventory tracker, component list ..."
+    },
+    {
+      "id": "port-alphaios",
+      "name": "AlphaIOS",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaIOS",
+      "domain": "Mobile & iOS",
+      "complexity": "Complex",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "iOS IPA analysis, plist inspector, and mobile device pairing..."
+    },
+    {
+      "id": "port-alphajail",
+      "name": "AlphaJail",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaJail",
+      "domain": "Security & Cyber",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "LLM jailbreak safety tester, adversarial prompt benchmark, a..."
+    },
+    {
+      "id": "port-alphalimiter",
+      "name": "alphalimiter",
+      "path": "C:\\Users\\josh6\\workspace\\alphalimiter",
+      "domain": "System & Network",
+      "complexity": "Complex",
+      "mainScript": "app.py",
+      "pythonFilesCount": 3,
+      "description": "Bandwidth throttling daemon, network speed limiter, and pack..."
+    },
+    {
+      "id": "port-alphalink",
+      "name": "AlphaLink",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaLink",
+      "domain": "Network & Web",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 22,
+      "description": "High-speed WebSocket bridge, tunnel manager, and remote cont..."
+    },
+    {
+      "id": "port-alphallm",
+      "name": "AlphaLLM",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaLLM",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 6,
+      "description": "Local LLM model downloader, quantization switcher, and infer..."
+    },
+    {
+      "id": "port-alphamainframe",
+      "name": "AlphaMainframe",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaMainframe",
+      "domain": "System & Platform",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Terminal mainframe interface, system command hub, and ASCII ..."
+    },
+    {
+      "id": "port-alphamodal",
+      "name": "AlphaModal",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaModal",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "Examples\\embeddings\\wikipedia\\main.py",
+      "pythonFilesCount": 94,
+      "description": "Modal serverless cloud function runner, Whisper fine-tuning,..."
+    },
+    {
+      "id": "port-alphamp3",
+      "name": "AlphaMP3",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaMP3",
+      "domain": "Audio & Speech",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 8,
+      "description": "Audio processing, MP3 tag editor, waveform analyzer, and for..."
+    },
+    {
+      "id": "port-alphamtk",
+      "name": "AlphaMTK",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaMTK",
+      "domain": "Mobile & Android",
+      "complexity": "Complex",
+      "mainScript": "mtk.py",
+      "pythonFilesCount": 100,
+      "description": "MediaTek (MTK) chipset low-level flasher, exploit toolkit, a..."
+    },
+    {
+      "id": "port-alphanexus",
+      "name": "AlphaNexus",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaNexus",
+      "domain": "Network & Web",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 10,
+      "description": "Distributed microservices gateway, message queue broker, and..."
+    },
+    {
+      "id": "port-alphaobfuscate",
+      "name": "AlphaObfuscate",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaObfuscate",
+      "domain": "Reverse Engineering & Security",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Python / JS code obfuscator, string encryptor, and AST trans..."
+    },
+    {
+      "id": "port-alphapocket",
+      "name": "AlphaPocket",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaPocket",
+      "domain": "Audio & Speech",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 2,
+      "description": "Pocket-sized offline audio note transcriber and micro voice ..."
+    },
+    {
+      "id": "port-alphaprompt",
+      "name": "AlphaPrompt",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaPrompt",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 12,
+      "description": "Interactive prompt engineering studio, system prompt builder..."
+    },
+    {
+      "id": "port-alpharequirements",
+      "name": "AlphaRequirements",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaRequirements",
+      "domain": "System & Utilities",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 9,
+      "description": "Python package dependency audit tool, vulnerability scanner,..."
+    },
+    {
+      "id": "port-alphascraper",
+      "name": "AlphaScraper",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaScraper",
+      "domain": "Network & Web",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Web scraping rules engine, HTML parser, and structured data ..."
+    },
+    {
+      "id": "port-alphasims",
+      "name": "AlphaSims",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaSims",
+      "domain": "Simulation & Gaming",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 67,
+      "description": "Text-based life simulator, multi-agent sandbox world, and st..."
+    },
+    {
+      "id": "port-alphaskills",
+      "name": "AlphaSkills",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaSkills",
+      "domain": "System & Utilities",
+      "complexity": "Simple",
+      "mainScript": "DPMS\\lambda\\hello_world.py",
+      "pythonFilesCount": 2,
+      "description": "Antigravity skill package builder, custom command provider, ..."
+    },
+    {
+      "id": "port-alphasync",
+      "name": "AlphaSync",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaSync",
+      "domain": "Data & Storage",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 19,
+      "description": "Real-time filesystem watcher, differential file sync, and ba..."
+    },
+    {
+      "id": "port-alphatmohs1",
+      "name": "AlphaTMOHS1",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaTMOHS1",
+      "domain": "Hardware & Mobile",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 5,
+      "description": "T-Mobile High-Speed Internet Gateway (TMOHS1) custom router ..."
+    },
+    {
+      "id": "port-alphatwrp",
+      "name": "AlphaTWRP",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaTWRP",
+      "domain": "Mobile & Android",
+      "complexity": "Complex",
+      "mainScript": "twrpdtgen\\twrpdtgen\\main.py",
+      "pythonFilesCount": 13,
+      "description": "TWRP recovery device tree generator (`twrpdtgen`) and boot i..."
+    },
+    {
+      "id": "port-alphavoice",
+      "name": "AlphaVoice",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaVoice",
+      "domain": "Audio & Speech",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 5,
+      "description": "Low-latency voice activity detector (VAD) and real-time audi..."
+    },
+    {
+      "id": "port-alphawallet",
+      "name": "AlphaWallet",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaWallet",
+      "domain": "Crypto & Data",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Cryptocurrency wallet tracker, offline key generator simulat..."
+    },
+    {
+      "id": "port-alphaweapon",
+      "name": "AlphaWeapon",
+      "path": "C:\\Users\\josh6\\workspace\\AlphaWeapon",
+      "domain": "Security & Cyber",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Adversarial payload generator, shellcode encoder, and securi..."
+    },
+    {
+      "id": "port-androidalpha",
+      "name": "AndroidAlpha",
+      "path": "C:\\Users\\josh6\\workspace\\AndroidAlpha",
+      "domain": "Mobile & Android",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 89,
+      "description": "Android device management suite, ADB shell controller, and a..."
+    },
+    {
+      "id": "port-apocalypticalpha",
+      "name": "ApocalypticAlpha",
+      "path": "C:\\Users\\josh6\\workspace\\ApocalypticAlpha",
+      "domain": "Simulation & Gaming",
+      "complexity": "Complex",
+      "mainScript": "Windows\\core\\ai_interface.py",
+      "pythonFilesCount": 2,
+      "description": "Survival RPG game core, post-apocalyptic narrative engine, a..."
+    },
+    {
+      "id": "port-audioalpha",
+      "name": "AudioAlpha",
+      "path": "C:\\Users\\josh6\\workspace\\AudioAlpha",
+      "domain": "Audio & Speech",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 7623,
+      "description": "Comprehensive audio processing engine, PyAudio recorder, and..."
+    },
+    {
+      "id": "port-br0k3nc0re",
+      "name": "bR0k3nC0Re",
+      "path": "C:\\Users\\josh6\\workspace\\bR0k3nC0Re",
+      "domain": "Security & Cyber",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 59,
+      "description": "System crash analyzer, core dump inspector, and kernel explo..."
+    },
+    {
+      "id": "port-dinivapepro",
+      "name": "DiniVapePro",
+      "path": "C:\\Users\\josh6\\workspace\\DiniVapePro",
+      "domain": "Hardware & IoT",
+      "complexity": "Complex",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Smart vaping hardware custom firmware flasher and Bluetooth ..."
+    },
+    {
+      "id": "port-fentanylresearch",
+      "name": "Fentanyl Research",
+      "path": "C:\\Users\\josh6\\workspace\\Fentanyl Research",
+      "domain": "Security & Data",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Research document database, safety protocol reference, and c..."
+    },
+    {
+      "id": "port-forbiddenarchive",
+      "name": "ForbiddenArchive",
+      "path": "C:\\Users\\josh6\\workspace\\ForbiddenArchive",
+      "domain": "Security & Cyber",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 156,
+      "description": "Encrypted document archive, stealth vault system, and secure..."
+    },
+    {
+      "id": "port-jcac10003",
+      "name": "JCAC10003",
+      "path": "C:\\Users\\josh6\\workspace\\JCAC10003",
+      "domain": "Hardware & Mobile",
+      "complexity": "Complex",
+      "mainScript": "scripts\\build_twrp_zip.py",
+      "pythonFilesCount": 4,
+      "description": "Custom Android build script, TWRP ZIP installer packager, an..."
+    },
+    {
+      "id": "port-liveapi",
+      "name": "LiveAPI",
+      "path": "C:\\Users\\josh6\\workspace\\LiveAPI",
+      "domain": "Network & AI",
+      "complexity": "Complex",
+      "mainScript": "main.py",
+      "pythonFilesCount": 12,
+      "description": "Real-time streaming API gateway, WebSocket live handler, and..."
+    },
+    {
+      "id": "port-ogad",
+      "name": "OGAD",
+      "path": "C:\\Users\\josh6\\workspace\\OGAD",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "scripts\\publish-sd-gguf.py",
+      "pythonFilesCount": 2,
+      "description": "Stable Diffusion GGUF model quantization utility and publish..."
+    },
+    {
+      "id": "port-openwebui",
+      "name": "OpenWebUI",
+      "path": "C:\\Users\\josh6\\workspace\\OpenWebUI",
+      "domain": "AI & ML",
+      "complexity": "Complex",
+      "mainScript": "heretic-1.4.0\\src\\heretic\\main.py",
+      "pythonFilesCount": 19,
+      "description": "Self-hosted web UI frontend for local LLMs (`heretic` backen..."
+    },
+    {
+      "id": "port-reeldeep",
+      "name": "ReelDeep",
+      "path": "C:\\Users\\josh6\\workspace\\ReelDeep",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "Deepfake detection benchmark dataset and video frame feature..."
+    },
+    {
+      "id": "port-roleplayalpha",
+      "name": "RoleplayAlpha",
+      "path": "C:\\Users\\josh6\\workspace\\RoleplayAlpha",
+      "domain": "Simulation & AI",
+      "complexity": "Complex",
+      "mainScript": "modal_app.py",
+      "pythonFilesCount": 2,
+      "description": "SillyTavern/Roleplay backend plugin and Modal cloud deployme..."
+    },
+    {
+      "id": "port-sillytavern",
+      "name": "SillyTavern",
+      "path": "C:\\Users\\josh6\\workspace\\SillyTavern",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "N/A",
+      "pythonFilesCount": 0,
+      "description": "LLM roleplay character card creator, preset manager, and cha..."
+    },
+    {
+      "id": "port-triplealpha",
+      "name": "TripleAlpha",
+      "path": "C:\\Users\\josh6\\workspace\\TripleAlpha",
+      "domain": "AI & ML",
+      "complexity": "Simple",
+      "mainScript": "main.py",
+      "pythonFilesCount": 12,
+      "description": "Triple-redundant AI reasoning engine, consensus voter, and m..."
+    }
+  ]
+}

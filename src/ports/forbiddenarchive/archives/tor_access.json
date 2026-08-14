@@ -1,0 +1,47 @@
+{
+    "title": "Tor Network Access: A Privacy Simulation",
+    "description": "An educational overview of accessing the Tor network, a system designed to enable anonymous communication. The goal is to understand the technology behind onion routing and its use in protecting user privacy and circumventing censorship.",
+    "category": "hacking",
+    "difficulty": "Easy",
+    "requirements": [
+        "Tor Browser"
+    ],
+    "objective": "To understand the technical principles of the Tor network, including circuit creation, onion routing, and the use of onion services, for the purpose of privacy and security education.",
+    "principles": "Tor (The Onion Router) provides anonymity by routing internet traffic through a free, worldwide, volunteer overlay network. It encrypts data in layers (like an onion) and sends it through a circuit of three relays. No single relay knows the complete path from source to destination, thus protecting the user's location and identity.",
+    "steps": [
+        {
+            "title": "Acquire and Install Tor Browser",
+            "action": "Download the official Tor Browser from its official source.",
+            "detail": "It is critical to use the official source to avoid compromised versions which may be distributed on third-party sites. The Tor Browser is a modified version of Firefox pre-configured for immediate network access."
+        },
+        {
+            "title": "Establish Network Connection",
+            "action": "Launch the Tor Browser to automatically establish a connection to the Tor network.",
+            "detail": "The browser will find a path and build a 'circuit' of relays. This process can sometimes take a few moments depending on network congestion."
+        },
+        {
+            "title": "Understand the Tor Circuit",
+            "action": "Observe the created circuit of three relays: an entry guard, a middle relay, and an exit relay.",
+            "detail": "Your traffic is encrypted in three layers. The entry guard knows who you are but not where you're going. The middle relay knows neither. The exit relay knows where you're going but not who you are. This separation is the core of Tor's anonymity."
+        },
+        {
+            "title": "Browse the Clearnet Anonymously",
+            "action": "Navigate to a standard 'clearnet' website.",
+            "detail": "Your traffic is routed through the Tor circuit, and your public IP address will appear to be that of the exit relay, masking your true location and identity from the destination website."
+        },
+        {
+            "title": "Access Onion Services",
+            "action": "Explore a special '.onion' address, also known as a Tor hidden service.",
+            "detail": "These services only exist and are only accessible from within the Tor network. They offer strong end-to-end encryption and anonymity for both the user and the service provider, as the connection never leaves the Tor network."
+        },
+        {
+            "title": "Request a New Circuit",
+            "action": "Use the 'New Circuit' feature in the browser to discard the current path and build a new one.",
+            "detail": "This provides a new exit relay and a new apparent IP address, which can be useful for bypassing IP-based blocks or simply enhancing privacy. This simulation concludes upon successfully loading a website through a new circuit."
+        }
+    ],
+    "tips": [
+        "For maximum security, avoid logging into personal accounts or providing real-world information while using Tor, as this can de-anonymize you at the application layer.",
+        "Tor protects your traffic from network surveillance, but it does not protect you from malware or phishing attacks. Remain vigilant and practice safe browsing habits."
+    ]
+}

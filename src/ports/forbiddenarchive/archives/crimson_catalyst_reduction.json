@@ -1,0 +1,55 @@
+{
+    "title": "Crimson Catalyst Reduction",
+    "description": "This advanced simulation covers the synthesis of a Crimson Catalyst, a rare organometallic compound used to accelerate temporal-based chemical reactions. The process is highly sensitive to atmospheric and magnetic interference.",
+    "category": "chemistry",
+    "difficulty": "Hard",
+    "requirements": [
+        "Ferrocene",
+        "De-ionized Mercury",
+        "Gamma Radiation Emitter"
+    ],
+    "objective": "To synthesize a Crimson Catalyst, a rare organometallic compound used to accelerate temporal-based chemical reactions.",
+    "principles": "The synthesis involves the gamma-radiation-induced reduction of ferrocene using de-ionized mercury as a reducing agent. A powerful magnetic field is used to align the electron spin during precipitation, forming the catalyst's unique crystalline structure.",
+    "steps": [
+        {
+            "title": "Prepare Ferrocene Solution",
+            "action": "Dissolve a measured amount of ferrocene in a non-polar solvent under an inert nitrogen atmosphere.",
+            "detail": "An inert atmosphere is crucial to prevent premature oxidation of the ferrocene, which would render the reaction inert.",
+            "type": "setup"
+        },
+        {
+            "title": "Introduce De-ionized Mercury",
+            "action": "Add de-ionized mercury drop by drop into the ferrocene solution.",
+            "detail": "The mercury acts as a reducing agent. The slow, drop-by-drop addition ensures a controlled reaction and prevents dangerous temperature spikes.",
+            "type": "reaction"
+        },
+        {
+            "title": "Gamma Radiation Bombardment",
+            "action": "Expose the mixture to a controlled burst of gamma radiation.",
+            "detail": "This provides the activation energy necessary to break the iron-carbon bonds in the ferrocene, a critical step for the reduction to occur.",
+            "type": "setup"
+        },
+        {
+            "title": "Magnetic Field Alignment",
+            "action": "Apply a powerful, oscillating magnetic field to the reaction vessel.",
+            "detail": "This aligns the spin of the free electrons, which is crucial for the formation of the catalyst's unique and highly structured crystalline lattice.",
+            "type": "setup"
+        },
+        {
+            "title": "Low-Temperature Precipitation",
+            "action": "Rapidly cool the mixture to cryogenic temperatures.",
+            "detail": "The Crimson Catalyst will precipitate out of the solution as a deep red solid. The rapid cooling locks the crystalline structure in place.",
+            "type": "purification"
+        },
+        {
+            "title": "Isolate and Store",
+            "action": "Filter the precipitate and store it in a lead-lined container under vacuum.",
+            "detail": "The catalyst is highly unstable when exposed to air or light. The lead-lined container provides shielding from external interference, and the vacuum prevents oxidation.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "The intensity and duration of the gamma-ray burst must be precisely calibrated. Overexposure will destroy the compound.",
+        "The oscillating frequency of the magnetic field directly influences the catalyst's potency. Fine-tuning is required for optimal results."
+    ]
+}

@@ -1,33 +1,36 @@
-## 2026-08-12T20:34:20Z
+## 2026-08-13T21:31:44-04:00
 
-Task dispatch received for Milestone M2: Subroutines Hub Page Overhaul & Netlify Compatibility.
+You are Worker 2 for Milestone 2 (Subroutines Page Cyberpunk UX, Filtering, Search, Auth Integration).
+Your working directory is: C:\Users\josh6\workspace\AlphaCoreTech\.agents\teamwork_preview_worker_m2_1
 
-OBJECTIVE & DELIVERABLES:
-1. Overhaul `src/pages/subroutines.js`:
-   - Import `getAllPorts` from `../ports/index.js`.
-   - Build a 3-tier interactive hub:
-     - Top Bar:
-       - Category filter dropdown `#sub-filter-cat` with options: `ALL`, `CORE KERNEL`, `PORTED PYTHON PROJECTS`, `NEURAL`, `CRYPTO`, `PERF`, `SEC`, `DATA`, `HARDWARE`, `UTILITIES`.
-       - Search input field `#sub-search-ipt` (filtering both kernel routines and ported projects by ID, name, description, category).
-       - Batch control buttons: `#btn-run-all` (`▶ EXECUTE ALL`), `#btn-benchmark` (`⚡ RUN BENCHMARK`), `#btn-clear-sub-log` (`🗑 CLEAR LOGS`).
-       - Autoscroll toggle: `#chk-autoscroll`.
-     - Section A: Core Kernel Subroutines (existing 8 synthetic routines `SUB-01` to `SUB-08`).
-     - Section B: Web-Ported Python Projects:
-       - Load ports dynamically via `getAllPorts()`.
-       - Render cards for `AlphaInventory` and `AlphaRequirements` showing metadata (ID, category, pythonSourcePath, version, description).
-       - Action buttons on port cards:
-         - `🖥 LAUNCH WORKSPACE` (or `LAUNCH INTERACTIVE WORKSPACE`): Mounts `port.render(workspaceContainer)` directly into the interactive workspace panel (`#workspace-panel` or modal container), streaming execution/UI logs to `// EXECUTION_LOG` (`#sub-console-output`).
-         - `▶ QUICK EXECUTE`: Calls `port.execute({})` programmatically and logs results to `// EXECUTION_LOG`.
-         - `🔍 TEST / VERIFY`: Runs headless execution / verification.
-     - Interactive Workspace View / Modal Container:
-       - Dedicated workspace panel container mounting the active port's UI when "LAUNCH WORKSPACE" is clicked.
-       - Include header bar with port title and close button.
-     - Encapsulation & Lifecycle:
-       - Maintain active port instance variable (e.g. `activePortInstance`).
-       - When switching tabs, closing workspace panel, or mounting a new port workspace, invoke `activePortInstance.destroy()` to clean up DOM event listeners and active state.
-2. Netlify Compatibility:
-   - Verify SPA hash routing (`#/subroutines`) is fully intact.
-   - Create `public/_redirects` containing `/* /index.html 200` to support SPA routing when hosted on Netlify.
-3. Verification:
-   - Run `npm run build` to confirm Vite build succeeds and generates `dist/_redirects`.
-   - Run `npm test` to confirm all Vitest unit test suites pass.
+MANDATORY READS:
+- ORIGINAL_REQUEST.md: C:\Users\josh6\workspace\AlphaCoreTech\ORIGINAL_REQUEST.md
+- Master Project Plan: C:\Users\josh6\workspace\AlphaCoreTech\.agents\teamwork_preview_orchestrator_bulk_1\PROJECT.md
+- Codebase & Auth Analysis: C:\Users\josh6\workspace\AlphaCoreTech\.agents\teamwork_preview_explorer_codebase_1\codebase_auth_analysis.md
+- Framework & Pattern Analysis: C:\Users\josh6\workspace\AlphaCoreTech\.agents\teamwork_preview_explorer_framework_1\framework_pattern_analysis.md
+
+MANDATORY INTEGRITY WARNING:
+DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
+
+STRICT CONSTRAINTS:
+- Strictly read from C:\Users\josh6\workspace. NEVER modify or delete original Python files in C:\Users\josh6\workspace.
+- All code changes stay local in AlphaCoreTech. DO NOT run git push or trigger Netlify deployments.
+
+OBJECTIVE:
+1. Update and overhaul `src/pages/subroutines.js` (and `subroutines.html` / `src/style.css`) to display all 57 components imported via `getAllPorts()` from `src/ports/index.js`.
+2. Implement Cyberpunk / Terminal aesthetic features:
+   - CRT scanline overlay, neon accents on deep black background, monospace fonts (`Share Tech Mono`, `Orbitron`).
+   - Typing micro-animations and glowing card borders.
+3. Implement Directory Organization & Navigation Controls:
+   - Real-time search bar filtering across project names, descriptions, source paths, and categories.
+   - Alphabetical sorting toggle (A-Z, Z-A).
+   - Domain / Topic category filter tabs (Hardware, AI/ML, Security, Mobile, Audio, System, Network, Simulation, Data, Utilities, Crypto, Reverse Engineering, All).
+   - Timeline / Recent view toggle displaying newest ports at top.
+4. Implement Fullscreen Takeover & Return Navigation:
+   - Launching a subroutine triggers a smooth, fullscreen takeover transition into `#workspace-panel`.
+   - Every subroutine workspace MUST include a clearly visible `✕ CLOSE WORKSPACE` return button on top bar that invokes `activePortInstance.destroy()`, clears container, and seamlessly transitions back to main subroutines directory.
+5. Implement Auth & Security Protection:
+   - Hook into existing pincode (`src/components/pinpad.js`) and profile selection system (`Architect`, `DoeBoy`, `J. P.`, `Fisherman`).
+   - Protect subroutines page and loaded components behind profile authentication clearance.
+6. Verify implementation via Vitest (`npx vitest run src/pages/subroutines_m2_verification.test.js`) and `npm run build`.
+7. Write completion report to `C:\Users\josh6\workspace\AlphaCoreTech\.agents\teamwork_preview_worker_m2_1\handoff.md`. Include test and build outputs.

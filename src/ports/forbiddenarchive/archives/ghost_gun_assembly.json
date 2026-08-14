@@ -1,0 +1,50 @@
+{
+    "title": "Ghost Gun Assembly: A Threat Modeling Simulation",
+    "description": "A technical exploration into the assembly of an untraceable firearm. The purpose of this exercise is purely for academic and security research, to understand the manufacturing process, identify potential points of intervention, and model threats.",
+    "category": "hacking",
+    "difficulty": "Medium",
+    "requirements": [
+        "80% Lower Receiver",
+        "Milling Jig",
+        "Drill Press or Milling Machine",
+        "Lower Parts Kit"
+    ],
+    "objective": "To simulate the process of machining an 80% lower receiver and assembling it into a functional, untraceable firearm for the purpose of understanding and countering this threat.",
+    "principles": "The simulation focuses on the process of converting an unregulated '80% receiver' into a fully functional firearm receiver. This circumvents traditional firearm purchasing regulations and serialization, creating a 'ghost gun'. This model is intended to help security professionals understand the ease of this process and develop strategies to detect and mitigate this threat.",
+    "steps": [
+        {
+            "title": "Secure the Receiver in the Jig",
+            "action": "The 80% lower receiver, the unregulated core component, is secured into a specialized jig.",
+            "detail": "The jig is the key to the entire process. It provides a precise template for the milling and drilling steps, ensuring the final product meets the required specifications for a functional firearm."
+        },
+        {
+            "title": "Mill the Fire Control Group Pocket",
+            "action": "Using a drill press or milling machine, carefully mill out the fire control group pocket from the receiver.",
+            "detail": "This is the most critical machining step. It removes the solid block of aluminum where the trigger, hammer, and selector will be housed. Precision here is paramount for a safe and functional weapon."
+        },
+        {
+            "title": "Drill Pin Holes",
+            "action": "Use the jig as a guide to drill the pin holes for the hammer, trigger, and selector switch.",
+            "detail": "These holes must be drilled with high precision to ensure the components of the fire control group align and function correctly. Misaligned holes can lead to catastrophic failure."
+        },
+        {
+            "title": "Install the Lower Parts Kit",
+            "action": "Install the trigger, hammer, selector, and other components from the lower parts kit into the now-completed receiver.",
+            "detail": "This step transforms the machined piece of metal into a functional firearm receiver, ready to be mated with an upper receiver assembly."
+        },
+        {
+            "title": "Assemble the Upper Receiver",
+            "action": "Attach the completed upper receiver, which includes the barrel, bolt carrier group, and charging handle, to the lower receiver.",
+            "detail": "This is the final assembly step, creating a complete, simulated firearm. The two halves are joined by two pins."
+        },
+        {
+            "title": "Perform a Function Check",
+            "action": "Perform a thorough function check to ensure all components operate correctly and safely.",
+            "detail": "This involves checking the safety selector, trigger reset, and magazine release. This simulation concludes upon a successful function check."
+        }
+    ],
+    "tips": [
+        "The quality of the jig is the most important factor in a successful build. High-quality jigs ensure precise milling and drilling.",
+        "This simulation highlights the need for new security screening technologies that can detect non-serialized firearm components."
+    ]
+}

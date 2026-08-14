@@ -1,0 +1,50 @@
+{
+    "title": "AI-Driven Arbitrage Trading",
+    "description": "A simulation of using a high-speed AI to exploit temporary price discrepancies of the same asset across different exchanges. This is a game of speed and predictive accuracy.",
+    "category": "ai_finance",
+    "difficulty": "Hard",
+    "requirements": [
+        "Real-Time Data Feeds from Multiple Exchanges",
+        "Low-Latency Trading Infrastructure",
+        "Predictive AI Price Model",
+        "Trading Capital"
+    ],
+    "objective": "To execute near-instantaneous trades across multiple markets to profit from small, fleeting price differences in a simulated environment.",
+    "principles": "This simulation models 'statistical arbitrage,' where an AI identifies minute, temporary price inefficiencies between exchanges. The AI must predict these discrepancies fractions of a second before they occur and execute buy (on the cheaper exchange) and sell (on the more expensive one) orders simultaneously to capture the difference. The profit per trade is tiny, but the volume of trades is massive.",
+    "steps": [
+        {
+            "title": "Data Ingestion and Normalization",
+            "action": "The AI ingests high-frequency data streams from dozens of simulated cryptocurrency exchanges.",
+            "detail": "The first challenge is to normalize this data, accounting for differences in API formats, timestamps, and data structures to create a unified, real-time view of the market."
+        },
+        {
+            "title": "Predictive Modeling",
+            "action": "A machine learning model analyzes the normalized data to predict short-term price movements and identify fleeting arbitrage opportunities.",
+            "detail": "The model doesn't just find existing price differences; it predicts them by identifying patterns that precede a price divergence between exchanges."
+        },
+        {
+            "title": "Latency Arbitrage Simulation",
+            "action": "The simulation models the co-location of trading servers in the same data centers as the exchange servers.",
+            "detail": "This minimizes network latency, creating a scenario where success is a race against other trading bots, measured in microseconds."
+        },
+        {
+            "title": "Optimal Trade Execution",
+            "action": "The AI calculates the optimal trade size to maximize profit without causing significant 'slippage' (price impact).",
+            "detail": "It must also factor in the trading fees on both exchanges, as these can easily erase the small profit margin from an arbitrage trade if not managed correctly."
+        },
+        {
+            "title": "Automated Simultaneous Execution",
+            "action": "The AI automatically executes the buy and sell orders across the two exchanges at the exact same moment.",
+            "detail": "The window of opportunity for a profitable arbitrage trade is often measured in milliseconds. The simulation requires perfect synchronization to be successful."
+        },
+        {
+            "title": "Real-Time Risk Management",
+            "action": "A risk management module monitors the profitability of the strategy and can automatically halt trading.",
+            "detail": "If the market becomes too volatile or the prediction model's accuracy drops, the system will pause to prevent losses. All trades are logged to a secure, immutable ledger for analysis."
+        }
+    ],
+    "tips": [
+        "Success in this simulation is a game of nanoseconds. It emphasizes the importance of highly optimized code and low-latency network connections.",
+        "The predictive model must be constantly retrained on new market data to adapt to changing conditions and remain profitable."
+    ]
+}

@@ -1,0 +1,49 @@
+{
+    "title": "Online Carding: An E-commerce Security Simulation",
+    "description": "A theoretical model of an online carding attack, where stolen credit card information is used to purchase goods or services. The goal is to understand the vulnerabilities in online payment systems and develop better fraud detection and prevention measures.",
+    "category": "hacking",
+    "difficulty": "Easy",
+    "requirements": [
+        "Compromised Credit Card Data (CVV)",
+        "VPN and SOCKS5 Proxy",
+        "Secure Drop Address"
+    ],
+    "objective": "To simulate the process of using compromised credit card data to fraudulently purchase goods from an online merchant, for the purpose of analyzing and improving e-commerce security.",
+    "principles": "Online carding exploits weaknesses in a merchant's payment processing and fraud detection systems. The simulation uses anonymization techniques (VPN, proxies) to obscure the attacker's identity and a 'drop' address to decouple the delivery from the attacker's location. The core of the simulation is to test the merchant's ability to distinguish a fraudulent transaction from a legitimate one.",
+    "steps": [
+        {
+            "title": "Data Acquisition",
+            "action": "The simulation begins with a dataset of compromised credit card numbers, expiration dates, and CVV codes.",
+            "detail": "This data is purely fictional for this exercise. In a real-world scenario, this data is sourced from phishing attacks, data breaches, or skimming operations."
+        },
+        {
+            "title": "Anonymize Digital Footprint",
+            "action": "Establish a secure and anonymous connection using a high-quality VPN and a SOCKS5 proxy.",
+            "detail": "This is a critical step to obscure the attacker's true IP address and location, making the transaction more difficult to trace back to its origin."
+        },
+        {
+            "title": "Target Selection and Analysis",
+            "action": "Identify a vulnerable online merchant. Merchants with weaker fraud detection systems are typically targeted.",
+            "detail": "The simulation involves analyzing a merchant's checkout process to identify potential weaknesses, such as a lack of 3D Secure (Verified by Visa, etc.) or lenient address verification (AVS)."
+        },
+        {
+            "title": "Card Verification ('Carding')",
+            "action": "Make a small, low-value purchase to verify that the stolen card is active and has not been reported.",
+            "detail": "This is often done through a small donation to a charity or a low-value digital gift card purchase. A successful small transaction indicates the card is 'live' and ready for a larger purchase."
+        },
+        {
+            "title": "Execute the Main Purchase",
+            "action": "Once the card is verified, proceed with the main purchase of the desired goods.",
+            "detail": "The shipping address is typically a secure 'drop' location (a vacant property, a re-shipping service, or a compromised address) to avoid linking the purchase to the attacker's real address."
+        },
+        {
+            "title": "Post-Transaction Analysis",
+            "action": "The simulation concludes with an analysis of the transaction, identifying the security flaws that allowed the fraudulent purchase to succeed.",
+            "detail": "This data, such as the lack of CVV verification or lax AVS checks, is used to build more robust theoretical models for fraud detection and prevention."
+        }
+    ],
+    "tips": [
+        "The billing and shipping addresses should be closely related if possible to bypass some AVS checks. Some attackers use services to find addresses in the same zip code as the cardholder.",
+        "Using a virtual machine that is reset after each attempt can prevent tracking through browser fingerprinting."
+    ]
+}

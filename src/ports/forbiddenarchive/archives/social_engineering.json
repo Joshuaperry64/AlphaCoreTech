@@ -1,0 +1,49 @@
+{
+    "title": "Advanced Social Engineering: A Defensive Simulation",
+    "description": "A simulation providing a practical guide to recognizing and defending against various social engineering techniques. The goal is to understand the psychological principles that underpin these attacks to better counter them.",
+    "category": "social_engineering",
+    "difficulty": "Medium",
+    "requirements": [
+        "Caller ID Spoofer (for simulation)",
+        "Voice Changer (for simulation)",
+        "Background Noise Generator (for simulation)"
+    ],
+    "objective": "To simulate a social engineering attack to understand the attacker's methodology and develop effective countermeasures and corporate security policies.",
+    "principles": "Social engineering exploits cognitive biases and human trust to manipulate individuals into divulging confidential information or performing actions. This simulation models these techniques to build resilience against them.",
+    "steps": [
+        {
+            "title": "Understanding Pretexting",
+            "action": "The simulation begins by modeling the creation of a 'pretext'—a fabricated scenario an attacker might use to justify their request for information.",
+            "detail": "This could involve impersonating a help desk technician or a vendor to build a false sense of legitimacy. The goal is to learn to identify when a story feels inconsistent or suspicious."
+        },
+        {
+            "title": "Analyzing Rapport Building",
+            "action": "The simulation demonstrates how attackers establish a connection with a target by feigning friendliness and helpfulness.",
+            "detail": "They often use information gathered during reconnaissance to create a false sense of familiarity. This highlights the importance of maintaining professional skepticism even in friendly interactions."
+        },
+        {
+            "title": "Recognizing Elicitation",
+            "action": "This module simulates the use of subtle, non-invasive questioning techniques to extract information from a target without arousing suspicion.",
+            "detail": "The goal is to train users to recognize when a conversation is subtly steering towards sensitive topics or non-public information."
+        },
+        {
+            "title": "Modeling Objection Handling",
+            "action": "The simulation presents common user objections and models how an attacker might have pre-planned responses to maintain control of the conversation.",
+            "detail": "This prepares users to deal with persistent attackers who will not be deterred by initial resistance."
+        },
+        {
+            "title": "Identifying Psychological Triggers",
+            "action": "This step demonstrates the use of psychological triggers like urgency ('Your account will be deleted in 5 minutes!') or authority ('This is the CEO's office calling').",
+            "detail": "These tactics are designed to pressure a target into complying before they can think critically. Recognizing these pressure tactics is a key defensive skill."
+        },
+        {
+            "title": "Post-Attack Analysis",
+            "action": "The simulation concludes by modeling how an attacker disengages naturally to avoid raising suspicion.",
+            "detail": "The final report analyzes the attack vector and provides best-practice defensive strategies, such as independently verifying requests through a separate, trusted communication channel."
+        }
+    ],
+    "tips": [
+        "Always verify unusual or urgent requests for information or action through a separate, trusted communication channel (e.g., calling the person back on a known number).",
+        "Implement a 'zero trust' policy for unsolicited requests for sensitive information, regardless of who the requester claims to be."
+    ]
+}

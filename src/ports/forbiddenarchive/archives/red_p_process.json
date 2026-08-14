@@ -1,0 +1,55 @@
+{
+    "title": "Red P Process: A Reaction Kinetics Simulation",
+    "description": "An academic simulation of the Red Phosphorus/Iodine (Red P) method for chemical reduction. This model focuses on the critical role of temperature control in a complex reaction.",
+    "category": "chemistry",
+    "difficulty": "Hard",
+    "requirements": [
+        "Pseudoephedrine (as starting material)",
+        "Red Phosphorus",
+        "Iodine"
+    ],
+    "objective": "To theoretically synthesize a target molecule from pseudoephedrine by controlling the reaction temperature in a simulated Red P process.",
+    "principles": "This method uses hydriodic acid (HI) to reduce a hydroxyl group. The HI is generated *in situ* from the reaction between red phosphorus and iodine in the presence of water. This simulation's core challenge is managing the reaction's high sensitivity to temperature, demonstrating a key concept in chemical engineering and process control.",
+    "steps": [
+        {
+            "title": "Reagent Combination",
+            "action": "Combine pseudoephedrine, red phosphorus, and iodine in the simulated reaction vessel.",
+            "detail": "The initial ratio of these chemicals is a key parameter that determines the potential yield and reaction rate in the simulation.",
+            "type": "setup"
+        },
+        {
+            "title": "Temperature Management",
+            "action": "Use the simulation controls to apply or remove heat, steering the reaction temperature into the optimal range.",
+            "detail": "The primary goal is to maintain the temperature between 100-120°C. This demonstrates the concept of an optimal temperature window for maximizing product yield and minimizing side reactions.",
+            "type": "reaction"
+        },
+        {
+            "title": "Monitor Reaction Progress",
+            "action": "Observe the progress bar, which represents the yield of the target molecule.",
+            "detail": "The progress bar will only increase when the temperature is within the optimal 100-120°C range, providing real-time feedback on the success of the temperature control.",
+            "type": "reaction"
+        },
+        {
+            "title": "Avoid Underheating",
+            "action": "Ensure the temperature does not drop below 100°C for extended periods.",
+            "detail": "Below this threshold, the reaction rate becomes negligible, and no progress will be made, illustrating the concept of activation energy.",
+            "type": "reaction"
+        },
+        {
+            "title": "Avoid Overheating",
+            "action": "Prevent the temperature from exceeding 120°C.",
+            "detail": "Above this range, the simulation models the degradation of the product through unwanted side reactions, causing the progress bar to decrease. This teaches the principle of thermal decomposition.",
+            "type": "reaction"
+        },
+        {
+            "title": "Prevent Catastrophic Failure",
+            "action": "Do not allow the temperature to reach the critical failure point of 180°C.",
+            "detail": "Exceeding this temperature will cause a simulated runaway reaction, leading to a catastrophic failure of the reaction vessel, ending the simulation.",
+            "type": "reaction"
+        }
+    ],
+    "tips": [
+        "This simulation is a lesson in patience and precision. Apply heat in short, controlled bursts rather than continuously.",
+        "Anticipate the natural cooling of the system and apply heat proactively to maintain the optimal temperature."
+    ]
+}

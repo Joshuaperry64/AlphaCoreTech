@@ -1,0 +1,55 @@
+{
+    "title": "Nagai Route: A Theoretical Chemical Synthesis Model",
+    "description": "An academic simulation of the Nagai route, a classic method for the reduction of pseudoephedrine. This theoretical model is for educational purposes only, exploring the chemical principles of reduction reactions.",
+    "category": "chemistry",
+    "difficulty": "Hard",
+    "requirements": [
+        "Pseudoephedrine (as a starting alcohol)",
+        "Red Phosphorus (as a catalyst)",
+        "Hydroiodic Acid (as a reducing agent)"
+    ],
+    "objective": "To theoretically model the reduction of the hydroxyl group in pseudoephedrine using the Nagai method, converting it to a deoxygenated product.",
+    "principles": "The Nagai route is a chemical reduction that uses hydroiodic acid as the primary reducing agent. Red phosphorus is used to regenerate the hydroiodic acid in-situ from the iodine formed during the reaction, allowing it to be used in catalytic amounts. This simulation explores this powerful but hazardous reduction pathway.",
+    "steps": [
+        {
+            "title": "Theoretical Reaction Setup",
+            "action": "Combine pseudoephedrine, red phosphorus, and hydroiodic acid in a simulated round-bottom flask.",
+            "detail": "In this model, the precise ratio of these reactants is a critical variable for a successful reaction. The simulation will highlight how this ratio affects yield and purity.",
+            "type": "setup"
+        },
+        {
+            "title": "Simulated Reflux",
+            "action": "The mixture is heated under a simulated reflux for several hours.",
+            "detail": "This step provides the necessary activation energy for the reduction to proceed. A key byproduct in this model is phosphine gas, a highly toxic substance, emphasizing the need for simulated fume hoods and safety protocols.",
+            "type": "reaction"
+        },
+        {
+            "title": "Neutralization of Acid",
+            "action": "After the reflux is complete, the mixture is cooled, and a base is slowly added to neutralize the excess hydroiodic acid.",
+            "detail": "This must be done carefully in the simulation to avoid a violent exothermic reaction, which could compromise the theoretical vessel.",
+            "type": "reaction"
+        },
+        {
+            "title": "Filtration of Solids",
+            "action": "Filter the theoretical mixture to remove the unreacted red phosphorus and other solid impurities.",
+            "detail": "The resulting liquid, or filtrate, contains the desired deoxygenated product in the simulation.",
+            "type": "purification"
+        },
+        {
+            "title": "Solvent-Based Extraction",
+            "action": "Use a non-polar solvent to extract the product from the aqueous solution.",
+            "detail": "This liquid-liquid extraction step separates the product based on its solubility, a core principle in organic chemistry purification.",
+            "type": "purification"
+        },
+        {
+            "title": "Crystallization and Isolation",
+            "action": "The solvent is evaporated in the simulation to crystallize the final product.",
+            "detail": "The resulting theoretical crystals are then collected and dried, completing the academic synthesis model.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "The regeneration of hydroiodic acid by red phosphorus is the key to this reaction's efficiency. The simulation allows for exploring the kinetics of this process.",
+        "This method is presented for its historical and chemical significance; modern chemistry offers safer and more efficient reduction methods."
+    ]
+}

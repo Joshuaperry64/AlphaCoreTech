@@ -1,0 +1,49 @@
+{
+    "title": "Real-Time Particle System Design",
+    "description": "A sandbox for designing and controlling real-time particle systems. Explore how various properties and forces interact to create complex visual effects like fire, smoke, explosions, and magical auras.",
+    "category": "hacking",
+    "difficulty": "Easy",
+    "requirements": [
+        "Emitter",
+        "Physics Module",
+        "Renderer"
+    ],
+    "objective": "To design and implement a real-time particle system capable of generating complex visual effects by manipulating particle properties and behaviors.",
+    "principles": "Particle systems are a computer graphics technique used to simulate 'fuzzy' phenomena. The system works by managing a large number of very small sprites or 3D models (particles), which are generated, moved, and rendered according to a set of rules. Their collective behavior creates the illusion of a complex, dynamic entity.",
+    "steps": [
+        {
+            "title": "Emitter Configuration",
+            "action": "Define the source of the particles. Set its shape (point, sphere, cone), size, and the rate at which particles are generated.",
+            "detail": "The emitter is the birth-place of all particles. Its configuration determines the overall shape and density of the visual effect. A high emission rate creates a thicker smoke, while a cone emitter can simulate a rocket thruster."
+        },
+        {
+            "title": "Particle Initialization",
+            "action": "Set the initial state for each particle upon its creation, including velocity, color, size, rotation, and lifespan.",
+            "detail": "Adding slight random variations to these initial properties is key to creating natural-looking effects and avoiding a uniform, artificial appearance."
+        },
+        {
+            "title": "Apply Physics and Forces",
+            "action": "Introduce forces to influence the particles after they are emitted. Apply constant forces like gravity or wind, or more complex vector fields for swirling motion.",
+            "detail": "The physics module updates the position and velocity of each particle on every frame. This is what gives the particle system its sense of motion and interaction with the environment."
+        },
+        {
+            "title": "Define Particle Behavior Over Time",
+            "action": "Control how particle properties (e.g., color, size, opacity) change throughout their lifespan.",
+            "detail": "For example, make smoke particles fade out and grow larger over time, or have sparks change color from bright yellow to a dull red as they 'cool down'. This is often controlled by 'over-lifetime' curves."
+        },
+        {
+            "title": "Configure Rendering",
+            "action": "Choose how the particles are drawn. Select a texture or sprite, and configure the blending mode.",
+            "detail": "Additive blending is used for glowing effects like fire and magic, where colors add up to white. Alpha blending is used for transparent effects like smoke. The choice of texture and blending mode defines the final look."
+        },
+        {
+            "title": "System Optimization",
+            "action": "Manage the performance of your particle system by implementing optimization techniques.",
+            "detail": "Techniques like culling (not rendering off-screen particles) and limiting the maximum number of particles are crucial to ensure a smooth frame rate, especially with thousands of particles on screen."
+        }
+    ],
+    "tips": [
+        "Start with a simple effect, like smoke, to understand the core principles before moving on to more complex effects like explosions.",
+        "Good texture design is half the battle. A well-designed, seamless texture can make a simple particle system look spectacular."
+    ]
+}

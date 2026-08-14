@@ -1,0 +1,56 @@
+{
+    "title": "\"Shake 'n' Bake\" Method: A Closed-System Reaction Simulation",
+    "description": "An academic simulation providing a theoretical overview of the 'one-pot' or 'shake 'n' bake' method for chemical synthesis. This process is known for its use of a single, sealed reaction vessel. This is for educational purposes only, to study reaction kinetics and gas pressure in a closed system.",
+    "category": "chemistry",
+    "difficulty": "Easy",
+    "requirements": [
+        "Pseudoephedrine (Starting material)",
+        "Ammonium Nitrate (Oxidizer)",
+        "Lithium (Reducing agent)",
+        "Water (Initiator)"
+    ],
+    "objective": "To theoretically model a one-pot reduction reaction and manage the resulting gas pressure to prevent a simulated vessel rupture.",
+    "principles": "This simulation models a reaction where an alkali metal (lithium) and an oxidizing agent (ammonium nitrate) react in the presence of water to create ammonia gas and a strong reducing environment. The primary challenge is not the chemistry itself, but managing the extreme pressure buildup of ammonia gas in a sealed container, making it a powerful lesson in the dangers of closed-system reactions.",
+    "steps": [
+        {
+            "title": "Reagent Preparation",
+            "action": "In this theoretical model, the process begins by crushing pseudoephedrine tablets and adding them to the reaction vessel.",
+            "detail": "This increases the surface area for the reaction, a fundamental concept for increasing reaction rates.",
+            "type": "setup"
+        },
+        {
+            "title": "Addition of Oxidizer",
+            "action": "Ammonium nitrate, theoretically sourced from cold packs, is added to the vessel.",
+            "detail": "This component will react with the lithium to generate the ammonia gas that drives the pressure system in this simulation.",
+            "type": "reaction"
+        },
+        {
+            "title": "Introduction of a Reducing Agent",
+            "action": "Lithium metal, theoretically sourced from batteries, is added.",
+            "detail": "Lithium is a powerful reducing agent that drives the chemical transformation of the starting material.",
+            "type": "reaction"
+        },
+        {
+            "title": "Reaction Initiation",
+            "action": "A small amount of water and a non-polar solvent are added to the mixture.",
+            "detail": "The water initiates the highly exothermic reaction between the ammonium nitrate and lithium, which begins to produce ammonia gas almost immediately.",
+            "type": "reaction"
+        },
+        {
+            "title": "Pressure Management",
+            "action": "The vessel is sealed and shaken to mix the reagents. The reaction produces ammonia gas, which must be periodically vented.",
+            "detail": "This is the most dangerous and critical step in the theoretical process. The simulation requires the user to monitor a pressure gauge and vent the gas to prevent a simulated vessel rupture.",
+            "type": "reaction"
+        },
+        {
+            "title": "Theoretical Product Extraction",
+            "action": "After the reaction is complete, the liquid is separated, and the final product is extracted from the non-polar solvent.",
+            "detail": "This simulation concludes when the theoretical product is isolated after successfully managing the pressure cycle.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "The primary learning objective of this simulation is understanding the immense danger of gas-producing reactions in sealed containers.",
+        "In this model, the rate of shaking directly impacts the reaction rate and thus the speed of pressure buildup."
+    ]
+}

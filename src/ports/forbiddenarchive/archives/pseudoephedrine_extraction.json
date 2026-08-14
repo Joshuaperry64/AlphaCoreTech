@@ -1,0 +1,56 @@
+{
+    "title": "Pseudoephedrine Extraction: A Theoretical Study",
+    "description": "An academic simulation detailing the process of extracting pseudoephedrine from a complex mixture. This simulation is a simplified, theoretical representation of a real-world acid-base extraction for educational purposes.",
+    "category": "chemistry",
+    "difficulty": "Medium",
+    "requirements": [
+        "Pseudoephedrine-containing mixture",
+        "Water (Polar Solvent)",
+        "Non-polar Solvent",
+        "Acid and Base for pH adjustment"
+    ],
+    "objective": "To theoretically isolate pure pseudoephedrine from a starting material containing various binders and fillers using solubility principles.",
+    "principles": "The theoretical extraction relies on the differential solubility of pseudoephedrine hydrochloride in water versus binders/fillers. It then uses pH manipulation to convert the pseudoephedrine to its freebase form, which is insoluble in water and can be precipitated and isolated.",
+    "steps": [
+        {
+            "title": "Material Comminution",
+            "action": "The first step in the model is to crush the starting material into a fine powder.",
+            "detail": "This dramatically increases the surface area, allowing the target compound to dissolve more readily in the solvent, leading to a more efficient theoretical extraction.",
+            "type": "setup"
+        },
+        {
+            "title": "Aqueous Dissolution",
+            "action": "The powdered mixture is dissolved in water.",
+            "detail": "Pseudoephedrine hydrochloride is highly soluble in water, while many common binders and fillers are not. This step selectively dissolves the active ingredient.",
+            "type": "setup"
+        },
+        {
+            "title": "Gravity Filtration",
+            "action": "The aqueous solution is filtered to remove insoluble materials.",
+            "detail": "This removes the insoluble binders and fillers, which are left behind on the filter paper. The filtrate now contains the dissolved pseudoephedrine.",
+            "type": "purification"
+        },
+        {
+            "title": "Solvent Wash",
+            "action": "A non-polar solvent is added to the filtrate, and the solution is acidified.",
+            "detail": "In an acidic state, pseudoephedrine remains in the aqueous layer. However, many non-polar impurities are more soluble in the non-polar solvent and will be drawn into it. This 'wash' purifies the pseudoephedrine solution.",
+            "type": "purification"
+        },
+        {
+            "title": "Basification and Precipitation",
+            "action": "The pH of the aqueous solution is raised significantly by adding a base.",
+            "detail": "At a high pH, pseudoephedrine is converted from its salt form to its freebase form. This form is not soluble in water and will precipitate out of the solution as a solid.",
+            "type": "reaction"
+        },
+        {
+            "title": "Final Isolation",
+            "action": "The solution is filtered a final time to collect the precipitate.",
+            "detail": "The solid pseudoephedrine precipitate is collected on the filter paper, while the remaining liquid is discarded. The collected solid is then dried, yielding the final, pure theoretical product.",
+            "type": "purification"
+        }
+    ],
+    "tips": [
+        "pH control is the most critical variable in this simulation. The success of the wash and precipitation steps depends entirely on achieving the correct pH.",
+        "This simulation demonstrates fundamental principles of acid-base extraction common in pharmaceutical and organic chemistry."
+    ]
+}

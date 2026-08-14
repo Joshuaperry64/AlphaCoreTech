@@ -48,8 +48,9 @@ export function render(container, options = {}) {
  * @returns {Promise<{ success: boolean, output: string, details: Object }>}
  */
 export async function execute(params = {}) {
-  const text = params.text || SAMPLE_PRESETS.standard;
-  const sourceCodeMap = params.sourceCodeMap || null;
+  const safeParams = params || {};
+  const text = safeParams.text || SAMPLE_PRESETS.standard;
+  const sourceCodeMap = safeParams.sourceCodeMap || null;
 
   const scanResult = scanRequirementsText(text, sourceCodeMap);
 
