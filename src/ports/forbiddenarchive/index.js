@@ -85,7 +85,7 @@ export function render(container, options = {}) {
 
       </div>
     </div>
-  \`;
+  `;
 
   const btnEncrypt = container.querySelector('#fa-btn-encrypt');
   const btnDecrypt = container.querySelector('#fa-btn-decrypt');
@@ -102,8 +102,8 @@ export function render(container, options = {}) {
       // The eager glob imports JSON as a default export or an object
       const data = localArchives[selectedPath].default || localArchives[selectedPath];
       txtInput.value = JSON.stringify(data, null, 2);
-      outputEl.innerHTML = \`<span style="color: #10b981;">> Loaded local archive: \${selectedPath.split('/').pop()}</span>\`;
-      if (options.onLog) options.onLog(\`[ForbiddenArchive] Loaded \${selectedPath}\`, '#10b981');
+      outputEl.innerHTML = `<span style="color: #10b981;">> Loaded local archive: ${selectedPath.split('/').pop()}</span>`;
+      if (options.onLog) options.onLog(`[ForbiddenArchive] Loaded ${selectedPath}`, '#10b981');
     } else {
       txtInput.value = '';
     }
@@ -139,14 +139,14 @@ export function render(container, options = {}) {
       const data = await res.json();
       
       if (!res.ok) {
-        outputEl.innerHTML = \`<span style="color: #ef4444;">> ERROR: \${data.error || 'Server error'}</span>\`;
-        if (options.onLog) options.onLog(\`[ForbiddenArchive] \${action} failed: \${data.error}\`, '#ef4444');
+        outputEl.innerHTML = `<span style="color: #ef4444;">> ERROR: ${data.error || 'Server error'}</span>`;
+        if (options.onLog) options.onLog(`[ForbiddenArchive] ${action} failed: ${data.error}`, '#ef4444');
       } else {
         outputEl.textContent = data.result;
-        if (options.onLog) options.onLog(\`[ForbiddenArchive] Payload successfully \${action}ed.\`, '#10b981');
+        if (options.onLog) options.onLog(`[ForbiddenArchive] Payload successfully ${action}ed.`, '#10b981');
       }
     } catch (err) {
-      outputEl.innerHTML = \`<span style="color: #ef4444;">> NETWORK ERROR: Could not reach /api/vault</span>\`;
+      outputEl.innerHTML = `<span style="color: #ef4444;">> NETWORK ERROR: Could not reach /api/vault</span>`;
     }
   }
 
@@ -175,7 +175,7 @@ export function render(container, options = {}) {
 export async function execute(params = {}) {
   return {
     success: false,
-    output: \`[\${name}] Headless execution not supported. Manual password entry required for AES-256.\`,
+    output: `[${name}] Headless execution not supported. Manual password entry required for AES-256.`,
   };
 }
 
