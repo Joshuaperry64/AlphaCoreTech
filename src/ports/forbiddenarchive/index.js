@@ -115,38 +115,56 @@ export function render(container, options = {}) {
   btnDecrypt.addEventListener('mouseenter', () => btnDecrypt.style.background = 'rgba(16,185,129,0.3)');
   btnDecrypt.addEventListener('mouseleave', () => btnDecrypt.style.background = 'rgba(16,185,129,0.15)');
 
+  // Web Crypto helpers — AES-256-GCM with PBKDF2 key derivation (100k rounds)
+  const _enc = new TextEncoder();
+  const _dec = new TextDecoder();
+
+  async function _deriveKey(password, salt) {
+    const keyMat = await crypto.subtle.importKey('raw', _enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      keyMat,
+      { name: 'AES-GCM', length: 256 },
+      false, ['encrypt', 'decrypt']
+    );
+  }
+
   async function processVault(action) {
     const text = txtInput.value.trim();
     const password = pwdInput.value;
-    
+
     if (!text || !password) {
       outputEl.innerHTML = '<span style="color: #ef4444;">> ERROR: Payload and Password are required.</span>';
       return;
     }
 
-    outputEl.innerHTML = '<span style="color: #888;">> Transmitting to secure vault...</span>';
-    
-    try {
-      const res = await fetch('/api/vault', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-pin': userPin
-        },
-        body: JSON.stringify({ action, text, password })
-      });
+    outputEl.innerHTML = '<span style="color: #a78bfa;">> Crunching AES-256-GCM locally...</span>';
 
-      const data = await res.json();
-      
-      if (!res.ok) {
-        outputEl.innerHTML = `<span style="color: #ef4444;">> ERROR: ${data.error || 'Server error'}</span>`;
-        if (options.onLog) options.onLog(`[ForbiddenArchive] ${action} failed: ${data.error}`, '#ef4444');
+    try {
+      if (action === 'encrypt') {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv   = crypto.getRandomValues(new Uint8Array(12));
+        const key  = await _deriveKey(password, salt);
+        const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, _enc.encode(text));
+
+        // Pack salt(16) + iv(12) + ciphertext into base64
+        const packed = new Uint8Array(28 + cipherBuf.byteLength);
+        packed.set(salt, 0); packed.set(iv, 16); packed.set(new Uint8Array(cipherBuf), 28);
+        outputEl.textContent = btoa(String.fromCharCode(...packed));
+        if (options.onLog) options.onLog('[ForbiddenArchive] Encrypted (AES-256-GCM, client-side).', '#10b981');
+
       } else {
-        outputEl.textContent = data.result;
-        if (options.onLog) options.onLog(`[ForbiddenArchive] Payload successfully ${action}ed.`, '#10b981');
+        const raw = Uint8Array.from(atob(text), c => c.charCodeAt(0));
+        if (raw.length < 29) throw new Error('Payload too short');
+        const salt = raw.slice(0, 16), iv = raw.slice(16, 28), cipher = raw.slice(28);
+        const key = await _deriveKey(password, salt);
+        const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+        outputEl.textContent = _dec.decode(plain);
+        if (options.onLog) options.onLog('[ForbiddenArchive] Decrypted successfully.', '#10b981');
       }
-    } catch (err) {
-      outputEl.innerHTML = `<span style="color: #ef4444;">> NETWORK ERROR: Could not reach /api/vault</span>`;
+    } catch {
+      outputEl.innerHTML = '<span style="color: #ef4444;">> FAILED: Wrong password or corrupted payload.</span>';
+      if (options.onLog) options.onLog('[ForbiddenArchive] Crypto operation failed.', '#ef4444');
     }
   }
 
