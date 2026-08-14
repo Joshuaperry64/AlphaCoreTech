@@ -93,7 +93,8 @@ export default function AnalyticsPage() {
     }
 
     // Shift data
-    const newVal = Math.min(90, Math.max(10, historyData[historyData.length - 1] + (Math.random() * 12 - 6)));
+    const mem = performance.memory ? (performance.memory.usedJSHeapSize / 1048576) : (Math.random() * 20 + 20);
+    const newVal = Math.min(90, Math.max(10, mem));
     historyData.shift();
     historyData.push(newVal);
 
@@ -187,7 +188,7 @@ export default function AnalyticsPage() {
 
   // Stress Test Action
   container.querySelector('#btn-run-stress-test').onclick = () => {
-    showToast('WARN', 'Initiating synthetic CPU stress test (1,000,000 operations)...');
+    showToast('WARN', 'Initiating CPU stress test (10,000,000 operations)...');
     const start = performance.now();
     let x = 0;
     for (let i = 0; i < 10000000; i++) {
@@ -197,10 +198,10 @@ export default function AnalyticsPage() {
     showToast('SUCCESS', `Stress test completed in ${elapsed} ms! Ops throughput nominal.`);
   };
 
-  // Garbage Collection simulation
+  // Reset Chart Data
   container.querySelector('#btn-force-gc').onclick = () => {
-    historyData = new Array(50).fill(15);
-    showToast('SUCCESS', 'Heap garbage collection forced. Allocation reset.');
+    historyData.fill(0);
+    showToast('SUCCESS', 'Chart data cleared.');
   };
 
   // Export Storage

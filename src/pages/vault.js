@@ -624,7 +624,7 @@ function buildVaultUI() {
         } else {
           // Fake background noise when stopped
           for (let i = 0; i < binCount; i++) {
-            dataArray[i] = Math.random() * 20;
+            dataArray[i] = 0;
           }
         }
 

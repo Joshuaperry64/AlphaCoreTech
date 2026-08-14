@@ -172,9 +172,7 @@ export default function Overview() {
         for (let c = 0; c < line.length; c++) {
           if (!document.getElementById('terminal-boot')) return;
           el.textContent += line[c];
-          await new Promise(r => setTimeout(r, 10));
         }
-        await new Promise(r => setTimeout(r, 60));
       }
       if (document.getElementById('terminal-boot')) {
         const cursor = document.createElement('span');
