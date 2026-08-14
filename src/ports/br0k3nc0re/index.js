@@ -74,7 +74,7 @@ export function render(container, options = {}) {
       </div>
 
     </div>
-  \`;
+  `;
 
   const authBox = container.querySelector('#br0k3n-auth-box');
   const dashboard = container.querySelector('#br0k3n-dashboard');
@@ -93,7 +93,7 @@ export function render(container, options = {}) {
     btn.addEventListener('mouseenter', () => btn.style.background = 'rgba(139,92,246,0.2)');
     btn.addEventListener('mouseleave', () => btn.style.background = 'rgba(255,255,255,0.05)');
     btn.addEventListener('click', () => {
-      terminal.innerHTML += \`<br/><span style="color:#ef4444;">> ERR: Native execution blocked by browser sandbox. Use local client.</span>\`;
+      terminal.innerHTML += `<br/><span style="color:#ef4444;">> ERR: Native execution blocked by browser sandbox. Use local client.</span>`;
       terminal.scrollTop = terminal.scrollHeight;
     });
   });
@@ -124,8 +124,8 @@ export function render(container, options = {}) {
         dashboard.style.display = 'flex';
         if (options.onLog) options.onLog('[bR0k3nC0Re] Architect uplink authorized.', '#34d399');
       } else {
-        authStatus.textContent = \`> ACCESS DENIED. STRICT ARCHITECT CLEARANCE REQUIRED.\`;
-        if (options.onLog) options.onLog(\`[bR0k3nC0Re] Auth failed: Profile was \${data.pinObj?.label || 'unknown'}\`, '#ef4444');
+        authStatus.textContent = `> ACCESS DENIED. STRICT ARCHITECT CLEARANCE REQUIRED.`;
+        if (options.onLog) options.onLog(`[bR0k3nC0Re] Auth failed: Profile was ${data.pinObj?.label || 'unknown'}`, '#ef4444');
       }
     } catch (err) {
       authStatus.textContent = "> NETWORK ERROR. CANNOT REACH AUTH SERVER.";
@@ -147,7 +147,7 @@ export function render(container, options = {}) {
 export async function execute(params = {}) {
   return {
     success: false,
-    output: \`[\${name}] Headless execution locked. Architect clearance required.\`,
+    output: `[${name}] Headless execution locked. Architect clearance required.`,
   };
 }
 
