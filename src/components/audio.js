@@ -1,3 +1,6 @@
+/**
+ * Global Audio Manager & Web Audio API Visualizer Engine
+ */
 let globalAudio = null;
 let audioCtx = null;
 let analyser = null;
@@ -6,14 +9,15 @@ let isPlaying = false;
 export function initGlobalAudio() {
   if (globalAudio) return globalAudio;
 
-  globalAudio = new Audio('skybeat.mp3');
-  globalAudio.loop = true; // Make it loop for persistent playback
+  globalAudio = new Audio('/skybeat.mp3');
+  globalAudio.loop = true;
   globalAudio.volume = 0.5;
 
   return globalAudio;
 }
 
 export function getAudioContext() {
+  if (!globalAudio) initGlobalAudio();
   if (audioCtx) return { audioCtx, analyser };
 
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -27,7 +31,7 @@ export function getAudioContext() {
     analyser.connect(audioCtx.destination);
     analyser.fftSize = 256;
   } catch (e) {
-    console.error("Failed to initialize audio context:", e);
+    console.warn("AudioContext setup notice:", e);
     return null;
   }
 
@@ -44,15 +48,14 @@ export function toggleAudio() {
     isPlaying = false;
   } else {
     isPlaying = true;
-    globalAudio.play().catch((e) => {
-      console.error(e);
+    globalAudio.play().then(() => {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }).catch((e) => {
+      console.warn("Audio play prevented:", e);
       isPlaying = false;
     });
-
-    // Resume context if suspended
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
   }
 
   return isPlaying;

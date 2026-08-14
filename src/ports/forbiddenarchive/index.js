@@ -12,7 +12,12 @@ export const description = 'Encrypted document archive and stealth vault system.
 export const pythonSourcePath = 'ForbiddenArchive/main.py';
 
 // Import all local JSON archives using Vite's eager glob
-const localArchives = import.meta.glob('./archives/*.json', { eager: true });
+let localArchives = {};
+try {
+  localArchives = import.meta.glob('./archives/*.json', { eager: true }) || {};
+} catch (e) {
+  console.warn('[ForbiddenArchive] Local archives glob notice:', e.message);
+}
 const archiveKeys = Object.keys(localArchives);
 
 let activeInstance = null;

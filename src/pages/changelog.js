@@ -9,6 +9,21 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.2 BUILD 95',
+    date: '2026.08.14',
+    badge: 'LATEST MILESTONE',
+    badgeColor: '#38bdf8',
+    title: '57 PYTHON SUBROUTINES BULK PORTING & CLIENT VAULT CRYPTO',
+    summary: 'Full porting of all 57 Python subroutines, pure browser Web Crypto API integration, client-side hardcoded PIN verification, and bR0k3nC0Re Architect lock.',
+    changes: [
+      'Ported all 57 Python projects into full-screen takeover web subroutines (`#/subroutines`).',
+      'Deployed pure browser Web Crypto API (AES-256-GCM + PBKDF2 100k rounds) for zero-backend ForbiddenArchive vault.',
+      'Rebuilt PIN Authentication system to hardcoded client-side verification eliminating backend dependencies.',
+      'Locked bR0k3nC0Re remote uplink strictly to Architect clearance profile.',
+      'Updated ports registry framework to guarantee seamless dynamic loading across all runtimes.'
+    ]
+  },
+  {
     version: 'v4.1 BUILD 89',
     date: '2026.07.24',
     badge: 'STABLE RELEASE',

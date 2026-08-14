@@ -1,6 +1,6 @@
 /**
  * Central Web Porting Framework Registry.
- * Automatically discovers, validates, and registers all ported modules.
+ * Automatically discovers, validates, and registers all 57 ported modules.
  * Supports both Vite bundler (import.meta.glob) and Node ESM runtime.
  */
 
@@ -8,12 +8,18 @@ import { validatePortContract } from './port-contract.js';
 
 let candidatePorts = [];
 
-if (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function') {
-  // Vite Eager Glob Import (discovers all src/ports/*/index.js automatically)
-  const portModules = import.meta.glob('./*/index.js', { eager: true });
-  candidatePorts = Object.values(portModules).map(mod => mod.default || mod);
-} else {
-  // Plain Node ESM fallback for verification scripts / node runtime
+try {
+  if (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function') {
+    // Vite Eager Glob Import (discovers all src/ports/*/index.js automatically)
+    const portModules = import.meta.glob('./*/index.js', { eager: true });
+    candidatePorts = Object.values(portModules).map(mod => mod.default || mod);
+  }
+} catch (e) {
+  console.warn('[Port Registry] Vite glob scan notice:', e.message);
+}
+
+// Fallback for Node ESM or environment where import.meta.glob wasn't evaluated
+if (!candidatePorts.length) {
   try {
     const fs = await import(/* @vite-ignore */ 'fs');
     const path = await import(/* @vite-ignore */ 'path');
@@ -38,7 +44,8 @@ if (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function'
 
 const validPorts = [];
 
-for (const port of candidatePorts) {
+for (const rawPort of candidatePorts) {
+  const port = (rawPort && rawPort.id) ? rawPort : (rawPort.default || rawPort);
   const result = validatePortContract(port);
   if (result.valid) {
     validPorts.push(port);
