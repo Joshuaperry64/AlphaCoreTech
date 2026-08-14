@@ -19,6 +19,152 @@ export default function createIntro(onComplete) {
     backgroundRepeat: 'no-repeat',
   });
 
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    @keyframes wolf-enter {
+      0% { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+      100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+    }
+    @keyframes ring-spin-right {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes ring-spin-left {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(-360deg); }
+    }
+    @keyframes scan-vertical {
+      0% { top: -10%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 110%; opacity: 0; }
+    }
+    @keyframes pulse-ring {
+      0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; box-shadow: 0 0 20px rgba(0, 184, 255, 0.2); }
+      50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; box-shadow: 0 0 40px rgba(0, 184, 255, 0.6); }
+      100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; box-shadow: 0 0 20px rgba(0, 184, 255, 0.2); }
+    }
+    @keyframes glitch-logo {
+      0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
+      20% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+      40% { clip-path: inset(40% 0 40% 0); transform: translate(-2px, -2px); }
+      60% { clip-path: inset(20% 0 60% 0); transform: translate(2px, 2px); }
+      80% { clip-path: inset(60% 0 20% 0); transform: translate(2px, -2px); }
+      100% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
+    }
+
+    .wolf-container {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      animation: wolf-enter 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .wolf-logo {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      z-index: 65;
+      position: relative;
+      filter: drop-shadow(0 0 15px rgba(0, 184, 255, 0.8));
+      transition: transform 0.1s ease-out;
+    }
+
+    .wolf-logo.glitching {
+      animation: glitch-logo 0.3s infinite;
+    }
+
+    .cyber-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .ring-1 {
+      width: 280px;
+      height: 280px;
+      border: 2px dashed rgba(0, 184, 255, 0.5);
+      animation: ring-spin-right 12s linear infinite;
+      z-index: 61;
+    }
+
+    .ring-2 {
+      width: 240px;
+      height: 240px;
+      border: 1px solid rgba(0, 184, 255, 0.3);
+      border-top: 3px solid rgba(0, 184, 255, 0.8);
+      border-bottom: 3px solid rgba(0, 184, 255, 0.8);
+      animation: ring-spin-left 8s linear infinite;
+      z-index: 62;
+    }
+
+    .ring-3 {
+      width: 200px;
+      height: 200px;
+      border: 2px solid rgba(0, 184, 255, 0.2);
+      animation: pulse-ring 2s ease-in-out infinite;
+      z-index: 63;
+    }
+
+    .laser-scan {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(0, 184, 255, 0.8);
+      box-shadow: 0 0 15px 2px rgba(0, 184, 255, 0.6);
+      animation: scan-vertical 3s linear infinite;
+      z-index: 66;
+    }
+
+    .intro-status-panel {
+      position: relative;
+      z-index: 60;
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .status-text {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: #00b8ff;
+      letter-spacing: 2px;
+      text-shadow: 0 0 5px rgba(0, 184, 255, 0.5);
+      text-align: center;
+      height: 1.2rem;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(0, 184, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #00b8ff;
+      box-shadow: 0 0 10px #00b8ff;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  `;
+  intro.appendChild(styleEl);
+
   // Dark overlay so text stays readable over the background image
   const bgOverlay = document.createElement('div');
   Object.assign(bgOverlay.style, {
@@ -41,49 +187,57 @@ export default function createIntro(onComplete) {
   const visCanvas = createElement('canvas', { class: 'intro-visualizer' });
   Object.assign(visCanvas.style, {
     position: 'absolute', inset: '0', width: '100%', height: '100%',
-    pointerEvents: 'none', opacity: '0.4',
+    pointerEvents: 'none', opacity: '0.6', zIndex: '2'
   });
   intro.appendChild(visCanvas);
 
-  // Boot panel
-  const bootPanel = createElement('div', { class: 'intro-boot-panel' });
-  Object.assign(bootPanel.style, {
+  // Main interactive panel wrapper
+  const mainPanel = createElement('div');
+  Object.assign(mainPanel.style, {
     position: 'relative', zIndex: '60',
-    background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(5px)',
-    border: '1px solid rgba(0,184,255,0.2)', borderRadius: '8px',
-    padding: '32px 40px', maxWidth: '700px', width: '90%',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-    boxShadow: '0 0 40px rgba(0,184,255,0.1)',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'
   });
 
-  // Corner accents
-  bootPanel.innerHTML = '';
-  const cornerStyle = 'content:"";position:absolute;width:12px;height:12px;';
-  const panelBefore = document.createElement('div');
-  panelBefore.style.cssText = cornerStyle + 'top:-1px;left:-1px;border-top:2px solid #00b8ff;border-left:2px solid #00b8ff;';
-  const panelAfter = document.createElement('div');
-  panelAfter.style.cssText = cornerStyle + 'bottom:-1px;right:-1px;border-bottom:2px solid #00b8ff;border-right:2px solid #00b8ff;';
-  bootPanel.appendChild(panelBefore);
-  bootPanel.appendChild(panelAfter);
-
-  // Glitch title
-  const glitchTitle = createElement('div', { class: 'glitch', 'data-text': 'ALPHACORE // MANDATORY BRIEFING' }, 'ALPHACORE // MANDATORY BRIEFING');
+  // Glitch title at top
+  const glitchTitle = createElement('div', { class: 'glitch', 'data-text': 'ALPHACORE // KERNEL v4.0' }, 'ALPHACORE // KERNEL v4.0');
   Object.assign(glitchTitle.style, {
-    fontFamily: 'var(--font-hud)', fontSize: '1.5rem', fontWeight: '700',
-    color: '#00b8ff', letterSpacing: '3px', textAlign: 'center',
+    fontFamily: 'var(--font-hud)', fontSize: '1.2rem', fontWeight: '700',
+    color: '#00b8ff', letterSpacing: '4px', textAlign: 'center',
     textShadow: '0 0 20px rgba(0,184,255,0.5)',
+    marginBottom: '30px'
   });
-  bootPanel.appendChild(glitchTitle);
+  mainPanel.appendChild(glitchTitle);
 
-  // Boot lines output
-  const bootLinesEl = createElement('div', { class: 'intro-boot-lines' });
-  Object.assign(bootLinesEl.style, {
-    fontFamily: 'var(--font-mono)', fontSize: '0.82rem', textAlign: 'left',
-    whiteSpace: 'pre', color: '#00b8ff', lineHeight: '1.9',
-    minHeight: '200px', width: '100%', padding: '12px 0',
-    textShadow: '0 0 4px rgba(0,184,255,0.4)',
-  });
-  bootPanel.appendChild(bootLinesEl);
+  // Central Wolf Logo Container
+  const wolfContainer = createElement('div', { class: 'wolf-container' });
+
+  const ring1 = createElement('div', { class: 'cyber-ring ring-1' });
+  const ring2 = createElement('div', { class: 'cyber-ring ring-2' });
+  const ring3 = createElement('div', { class: 'cyber-ring ring-3' });
+  const laser = createElement('div', { class: 'laser-scan' });
+
+  const wolfLogo = createElement('img', { class: 'wolf-logo', src: '/Images/ALPHA-LOGO.png' });
+
+  wolfContainer.appendChild(ring1);
+  wolfContainer.appendChild(ring2);
+  wolfContainer.appendChild(ring3);
+  wolfContainer.appendChild(laser);
+  wolfContainer.appendChild(wolfLogo);
+
+  mainPanel.appendChild(wolfContainer);
+
+  // Status & Progress Panel
+  const statusPanel = createElement('div', { class: 'intro-status-panel' });
+
+  const statusText = createElement('div', { class: 'status-text' }, 'INITIALIZING...');
+  const progressTrack = createElement('div', { class: 'progress-track' });
+  const progressBar = createElement('div', { class: 'progress-bar' });
+
+  progressTrack.appendChild(progressBar);
+  statusPanel.appendChild(statusText);
+  statusPanel.appendChild(progressTrack);
+
+  mainPanel.appendChild(statusPanel);
 
   const enterBtn = createElement('button', { class: 'aim-btn aim-btn-accept' }, 'ENTER COMMAND MATRIX');
   Object.assign(enterBtn.style, {
@@ -96,7 +250,8 @@ export default function createIntro(onComplete) {
     display: 'none', flexDirection: 'column', alignItems: 'center', marginTop: '20px',
     textAlign: 'center', background: 'rgba(255, 0, 0, 0.1)', padding: '20px', 
     border: '1px solid var(--accent)', borderRadius: '8px',
-    animation: 'fade-in 1.5s forwards'
+    animation: 'fade-in 1.5s forwards',
+    maxWidth: '90%'
   });
   const mobileWarningText = createElement('p', {}, 'MOBILE VIEW STILL IN DEVELOPMENT. WEBSITE FUNCTIONS AND VIEWS MAY NOT FUNCTION AS INTENDED OR APPEAR CORRECTLY.');
   Object.assign(mobileWarningText.style, {
@@ -107,41 +262,11 @@ export default function createIntro(onComplete) {
   const continueBtn = createElement('button', { class: 'aim-btn' }, 'CONTINUE (5s)');
   Object.assign(continueBtn.style, { borderColor: 'var(--accent)', color: 'var(--accent)' });
   mobileWarningPanel.appendChild(continueBtn);
-  bootPanel.appendChild(mobileWarningPanel);
-
-  enterBtn.onclick = () => {
-    bootLinesEl.style.display = 'none';
-    enterBtn.style.display = 'none';
-    glitchTitle.style.display = 'none';
-    
-    if (window.innerWidth <= 768) {
-      mobileWarningPanel.style.display = 'flex';
-      let countdown = 5;
-      const interval = setInterval(() => {
-        countdown--;
-        if (countdown <= 0) {
-          clearInterval(interval);
-          mobileWarningPanel.style.display = 'none';
-          loginPanel.style.display = 'flex';
-        } else {
-          continueBtn.textContent = `CONTINUE (${countdown}s)`;
-        }
-      }, 1000);
-      continueBtn.onclick = () => {
-        clearInterval(interval);
-        mobileWarningPanel.style.display = 'none';
-        loginPanel.style.display = 'flex';
-      };
-    } else {
-      loginPanel.style.display = 'flex';
-    }
-  };
-  bootPanel.appendChild(enterBtn);
 
   // Login panel (hidden until boot completes)
   const loginPanel = createElement('div', { class: 'intro-login-panel' });
   Object.assign(loginPanel.style, {
-    display: 'none', flexDirection: 'column', alignItems: 'center', marginTop: '20px',
+    display: 'none', flexDirection: 'column', alignItems: 'center', marginTop: '40px',
     animation: 'fade-in 1.5s forwards'
   });
 
@@ -185,9 +310,38 @@ export default function createIntro(onComplete) {
   };
   loginPanel.appendChild(guestBtn);
 
-  bootPanel.appendChild(loginPanel);
+  enterBtn.onclick = () => {
+    enterBtn.style.display = 'none';
+    glitchTitle.style.display = 'none';
+    wolfContainer.style.display = 'none';
 
-  intro.appendChild(bootPanel);
+    if (window.innerWidth <= 768) {
+      mobileWarningPanel.style.display = 'flex';
+      mainPanel.appendChild(mobileWarningPanel);
+      let countdown = 5;
+      const interval = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          clearInterval(interval);
+          mobileWarningPanel.style.display = 'none';
+          loginPanel.style.display = 'flex';
+        } else {
+          continueBtn.textContent = `CONTINUE (${countdown}s)`;
+        }
+      }, 1000);
+      continueBtn.onclick = () => {
+        clearInterval(interval);
+        mobileWarningPanel.style.display = 'none';
+        loginPanel.style.display = 'flex';
+      };
+    } else {
+      loginPanel.style.display = 'flex';
+    }
+  };
+
+  mainPanel.appendChild(enterBtn);
+  mainPanel.appendChild(loginPanel);
+  intro.appendChild(mainPanel);
 
   // Security flash overlay
   const secFlash = createElement('div', {});
@@ -199,49 +353,46 @@ export default function createIntro(onComplete) {
     color: '#00b8ff', letterSpacing: '3px', textAlign: 'center',
     padding: '0 20px', transition: 'opacity 0.7s',
   });
-  secFlash.textContent = 'MANDATORY BRIEFING // UNAUTHORIZED ACCESS WILL BE LOGGED';
+  secFlash.textContent = 'MANDATORY BRIEFING // SECURE CONNECTION ESTABLISHED';
   intro.appendChild(secFlash);
   setTimeout(() => { secFlash.style.opacity = '0'; }, 900);
   setTimeout(() => { secFlash.remove(); }, 1400);
 
   // Boot sequence lines
   const lines = [
-    'INITIALIZING ALPHACORE KERNEL v4.0...',
     'UPLINKING TO CREATOR NODE...',
     'SYNCHRONIZING SUBSYSTEMS...',
-    'LOADING COMPREHENSIVE PLUGIN SUITE...',
-    'ENGAGING 24/7 AGENT LOOP PROTOCOLS...',
-    'LOADING VISUALIZATION ENGINE...',
-    'BYPASSING LIMITATIONS... SUCCESS',
+    'LOADING NEURAL NETWORKS...',
+    'ENGAGING 24/7 AGENT PROTOCOLS...',
     'AUTHORIZING ACCESS...',
-    'INTEGRATING FULL SYSTEM ARCHITECTURE...',
-    'MANDATORY BRIEFING: ALL SYSTEMS NOMINAL',
-    'STANDBY FOR COMMAND INTERFACE...',
-    'ALPHACORE ONLINE.',
+    'ALL SYSTEMS NOMINAL.'
   ];
 
-  // Typewriter boot sequence
   let lineIdx = 0;
   let cancelled = false;
 
-  function getTimestamp(offset) {
-    const d = new Date();
-    d.setSeconds(d.getSeconds() + offset);
-    return '[' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ']';
-  }
-
   function nextLine() {
     if (cancelled) return;
+
     if (lineIdx < lines.length) {
-      bootLinesEl.textContent += getTimestamp(lineIdx) + ' ' + lines[lineIdx] + '\n';
-      bootLinesEl.scrollTop = bootLinesEl.scrollHeight;
+      statusText.textContent = lines[lineIdx];
+      const percent = Math.floor(((lineIdx + 1) / lines.length) * 100);
+      progressBar.style.width = percent + '%';
+
+      // Occasionally glitch the logo during boot
+      if (Math.random() > 0.5) {
+        wolfLogo.classList.add('glitching');
+        setTimeout(() => wolfLogo.classList.remove('glitching'), 300);
+      }
+
       lineIdx++;
-      setTimeout(nextLine, 400 + Math.random() * 300);
+      setTimeout(nextLine, 500 + Math.random() * 400);
     } else {
+      statusPanel.style.display = 'none';
       enterBtn.style.display = 'block';
     }
   }
-  setTimeout(nextLine, 300);
+  setTimeout(nextLine, 800);
 
   // Audio visualizer (graceful — no crash if audio missing)
   let animFrame;
@@ -282,32 +433,65 @@ export default function createIntro(onComplete) {
 
       function draw() {
         if (cancelled) return;
+
+        // Eco mode check
+        const isEcoMode = localStorage.getItem('alphacore_eco_mode') === '1';
+        if (isEcoMode && document.hidden) {
+            animFrame = requestAnimationFrame(draw);
+            return;
+        }
+
         animFrame = requestAnimationFrame(draw);
         visCanvas.width = window.innerWidth;
         visCanvas.height = window.innerHeight;
         ctx.clearRect(0, 0, visCanvas.width, visCanvas.height);
         analyser.getByteFrequencyData(dataArray);
 
-        // Grid
-        ctx.strokeStyle = 'rgba(0,184,255,0.06)';
+        const cx = visCanvas.width / 2;
+        const cy = visCanvas.height / 2;
+
+        // Circular Spectrum
+        const radius = Math.min(cx, cy) * 0.4;
+        const barWidth = 3;
+        const numBars = 120;
+        const angleStep = (Math.PI * 2) / numBars;
+
+        let bassSum = 0;
+
+        for (let i = 0; i < numBars; i++) {
+          const dataIndex = Math.floor(i * (bufferLength / numBars));
+          const v = dataArray[dataIndex];
+          const barHeight = (v / 255) * 100;
+
+          if (i < 10) bassSum += v;
+
+          const angle = i * angleStep;
+
+          const x1 = cx + Math.cos(angle) * radius;
+          const y1 = cy + Math.sin(angle) * radius;
+          const x2 = cx + Math.cos(angle) * (radius + barHeight);
+          const y2 = cy + Math.sin(angle) * (radius + barHeight);
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.lineWidth = barWidth;
+          // Gradient based on amplitude
+          ctx.strokeStyle = `rgba(0, 184, 255, ${0.3 + (v / 255) * 0.7})`;
+          ctx.stroke();
+        }
+
+        // Scale logo based on bass
+        const avgBass = bassSum / 10;
+        const scale = 1 + (avgBass / 255) * 0.15;
+        wolfLogo.style.transform = `scale(${scale})`;
+
+        // Grid overlay
+        ctx.strokeStyle = 'rgba(0,184,255,0.03)';
         ctx.lineWidth = 1;
         for (let i = 0; i < visCanvas.width; i += 40) {
           ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, visCanvas.height); ctx.stroke();
         }
-
-        // Waveform
-        ctx.beginPath();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(0,184,255,0.6)';
-        const sliceWidth = visCanvas.width / bufferLength;
-        let x = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          const v = dataArray[i] / 128.0;
-          const y = (v * (visCanvas.height / 4)) + (visCanvas.height / 2);
-          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-          x += sliceWidth;
-        }
-        ctx.stroke();
       }
       draw();
 
