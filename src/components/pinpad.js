@@ -1,68 +1,46 @@
 /**
- * Shared PIN authentication & PIN pad component for AlphaCore Tech.
- * Manages authorized PIN configurations, temporary durations, and OTP status.
+ * AlphaCore PIN Authentication System — v2.0
+ * Clean rewrite: no profile dropdown, pure server-side validation.
+ * User enters their PIN directly; server returns who they are.
  */
 
 import { logAction } from './logger.js';
 import { pushToServer } from './db_sync.js';
 
-// Load all registered PINs from localStorage or initialize defaults
-export function getPins() {
-  const data = localStorage.getItem('alphacore_pins');
-  let pins = [];
-  if (!data) {
-    pins = [
-      { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() }
-    ];
-  } else {
-    try {
-      pins = JSON.parse(data);
-    } catch (e) {
-      console.error('Failed to parse PINs from storage:', e);
-      pins = [];
-    }
-  }
+// ─── Local PIN Cache (for offline / post-sync use) ───────────────────────────
 
-  return pins;
+export function getPins() {
+  try {
+    const data = localStorage.getItem('alphacore_pins');
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
 }
 
-// Save PINs to localStorage
 export function savePins(pins, authPinOverride = null) {
   localStorage.setItem('alphacore_pins', JSON.stringify(pins));
   pushToServer('pins', pins, authPinOverride);
 }
 
-// Add a new security PIN (permanent, one-time, or temporary)
 export function addPin({ pin, type, durationSeconds, label, roles = [] }) {
   const pins = getPins();
-  const newPin = {
-    pin,
-    type,
-    label,
-    roles,
-    createdAt: Date.now()
-  };
-  
-  if (type === 'one-time') {
-    newPin.used = false;
-  } else if (type === 'temporary') {
-    const duration = parseInt(durationSeconds) || 300; // default to 5 minutes
-    newPin.expiresAt = Date.now() + duration * 1000;
+  const newPin = { pin, type, label, roles, createdAt: Date.now() };
+  if (type === 'one-time') newPin.used = false;
+  if (type === 'temporary') {
+    newPin.expiresAt = Date.now() + (parseInt(durationSeconds) || 300) * 1000;
   }
-  
   pins.push(newPin);
   savePins(pins);
   return newPin;
 }
 
-// Delete / Revoke a registered PIN
 export function revokePin(pinVal) {
-  let pins = getPins();
-  pins = pins.filter(p => p.pin !== pinVal);
-  savePins(pins);
+  savePins(getPins().filter(p => p.pin !== pinVal));
 }
 
-// Validate PIN entry securely via server
+// ─── Server Validation ────────────────────────────────────────────────────────
+
 export async function validatePin(pinVal, requiredRole = null) {
   try {
     const res = await fetch('/api/auth', {
@@ -70,62 +48,57 @@ export async function validatePin(pinVal, requiredRole = null) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: pinVal, requiredRole })
     });
-
-    if (!res.ok) {
-       return { valid: false, reason: 'SERVER ERROR' };
-    }
+    if (!res.ok) return { valid: false, reason: 'SERVER ERROR' };
     const result = await res.json();
 
+    // Clean up OTP from local cache if used
     if (result.valid && result.isOtp) {
-       // Since the OTP is about to be deleted from the server, we don't need to savePins locally
-       // because the next syncFromServer will grab the updated state, but we should clear it
-       // from localStorage if it exists so we don't accidentally try to use it before sync.
-       let pins = getPins();
-       pins = pins.filter(p => p.pin !== pinVal && p.label !== result.pinObj.label);
-       localStorage.setItem('alphacore_pins', JSON.stringify(pins));
+      savePins(getPins().filter(p => p.pin !== pinVal));
     }
 
     return result;
-  } catch (e) {
-    console.error('Auth request failed:', e);
+  } catch {
     return { valid: false, reason: 'NETWORK ERROR' };
   }
 }
 
-// Dynamic PIN Pad UI component creator
-export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '// SECURITY_LOCKOUT', subtitle = 'UNRESTRICTED ACCESS REQUIRED', icon = '🔒' }) {
+// ─── PIN Pad UI Component ─────────────────────────────────────────────────────
+
+/**
+ * Builds a standalone cyberpunk PIN pad.
+ *
+ * @param {Object} opts
+ * @param {Function} opts.onSuccess  - Called with the server's pinObj on success
+ * @param {string}  [opts.authKey]   - sessionStorage key to set on success
+ * @param {string}  [opts.requiredRole] - If set, server enforces this role
+ * @param {string}  [opts.title]
+ * @param {string}  [opts.subtitle]
+ * @param {string}  [opts.icon]
+ */
+export function buildPinPad({
+  onSuccess,
+  authKey = null,
+  requiredRole = null,
+  title = '// IDENTITY_VERIFICATION',
+  subtitle = 'ENTER YOUR ACCESS PIN',
+  icon = '⟁'
+} = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
-  
-  let availablePins = getPins();
-  if (requiredRole) {
-    availablePins = availablePins.filter(p => p.roles && p.roles.includes(requiredRole));
-  }
-  // Use p.label as the value because p.pin is no longer exposed to unauthenticated clients
-  const profileOptions = availablePins.map(p => `<option value="${p.label}">${p.label}</option>`).join('');
 
   wrap.innerHTML = `
-    <div class="aim-pin-box">
+    <div class="aim-pin-box" id="aim-pin-box-inner">
       <div class="aim-pin-header">
         <div class="aim-pin-icon">${icon}</div>
         <div class="aim-pin-title">${title}</div>
         <div class="aim-pin-subtitle">${subtitle}</div>
       </div>
-      
-      <div class="aim-pin-profile-select" style="margin-bottom: 15px; text-align: center;">
-        <select id="aim-pin-user-select" class="aim-select" style="width: 80%;">
-          <option value="" disabled selected>Select User Profile</option>
-          ${profileOptions}
-        </select>
-      </div>
-      
+
       <div class="aim-pin-display-wrap">
-        <div class="aim-pin-display" id="aim-pin-display">
-          <!-- Dots rendered dynamically -->
-        </div>
-        <div class="aim-pin-feedback" id="aim-pin-feedback">> ENTER VALID ACCESS PIN</div>
+        <div class="aim-pin-display" id="aim-pin-display"></div>
+        <div class="aim-pin-feedback" id="aim-pin-feedback">> AWAITING INPUT</div>
       </div>
-      
+
       <div class="aim-pinpad-grid">
         <button class="aim-pad-btn" data-val="1">1</button>
         <button class="aim-pad-btn" data-val="2">2</button>
@@ -144,18 +117,14 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
   `;
 
   let currentPin = '';
-  let selectedProfile = null;
-  const display = wrap.querySelector('#aim-pin-display');
-  const feedback = wrap.querySelector('#aim-pin-feedback');
-  const pinBox = wrap.querySelector('.aim-pin-box');
-  const userSelect = wrap.querySelector('#aim-pin-user-select');
-  
-  userSelect.addEventListener('change', (e) => {
-    selectedProfile = e.target.value;
-    handleClear();
-  });
+  let locked = false;
 
-  function updateDisplay() {
+  const pinBox  = wrap.querySelector('#aim-pin-box-inner');
+  const display  = wrap.querySelector('#aim-pin-display');
+  const feedback = wrap.querySelector('#aim-pin-feedback');
+
+  // ── Display helpers ────────────────────────────────────────────────────────
+  function renderDots() {
     display.innerHTML = '';
     for (let i = 0; i < currentPin.length; i++) {
       const dot = document.createElement('span');
@@ -164,137 +133,95 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
     }
   }
 
-  function handleInput(val) {
-    if (!selectedProfile) {
-      feedback.textContent = '> SELECT A USER PROFILE FIRST';
-      feedback.className = 'aim-pin-feedback aim-feedback-error';
-      setTimeout(() => {
-        if (!selectedProfile) {
-          feedback.textContent = '> ENTER VALID ACCESS PIN';
-          feedback.className = 'aim-pin-feedback';
-        }
-      }, 1500);
-      return;
-    }
+  function setFeedback(msg, state = '') {
+    feedback.textContent = `> ${msg}`;
+    feedback.className = `aim-pin-feedback${state ? ' aim-feedback-' + state : ''}`;
+  }
 
-    if (currentPin.length < 9) {
-      currentPin += val;
-      updateDisplay();
-      feedback.textContent = '> ENTERING PIN...';
-      feedback.className = 'aim-pin-feedback';
-    }
+  // ── Input handlers ─────────────────────────────────────────────────────────
+  function handleInput(val) {
+    if (locked) return;
+    if (currentPin.length >= 12) return;
+    currentPin += val;
+    renderDots();
+    setFeedback('ENTERING PIN...');
   }
 
   function handleClear() {
+    if (locked) return;
     currentPin = '';
-    updateDisplay();
-    feedback.textContent = '> ENTER VALID ACCESS PIN';
-    feedback.className = 'aim-pin-feedback';
+    renderDots();
+    setFeedback('AWAITING INPUT');
   }
 
   function handleBackspace() {
-    if (currentPin.length > 0) {
-      currentPin = currentPin.slice(0, -1);
-      updateDisplay();
-      if (currentPin.length === 0) {
-        feedback.textContent = '> ENTER VALID ACCESS PIN';
-      } else {
-        feedback.textContent = '> ENTERING PIN...';
-      }
-      feedback.className = 'aim-pin-feedback';
-    }
+    if (locked || !currentPin.length) return;
+    currentPin = currentPin.slice(0, -1);
+    renderDots();
+    setFeedback(currentPin.length ? 'ENTERING PIN...' : 'AWAITING INPUT');
   }
 
   async function handleEnter() {
-    if (!selectedProfile) {
-      handleFailure('SELECT A USER PROFILE FIRST');
+    if (locked) return;
+    if (!currentPin) {
+      setFeedback('ENTER A PIN FIRST', 'error');
       return;
     }
+
+    locked = true;
+    setFeedback('VERIFYING...', '');
+
     const result = await validatePin(currentPin, requiredRole);
+
     if (result.valid) {
-      // Validate that the label matches the selected profile (since option value is now the label)
-      if (result.pinObj.label !== selectedProfile) {
-        logAction('AUTH_FAILED', { reason: 'PIN DOES NOT MATCH SELECTED PROFILE' });
-        handleFailure('PIN INVALID FOR SELECTED PROFILE');
-        return;
-      }
-      logAction('AUTH_SUCCESS', { label: result.pinObj.label });
-      handleSuccess(result);
+      setFeedback('ACCESS GRANTED. DECRYPTING...', 'ok');
+      pinBox.classList.add('aim-access-granted');
+      window.removeEventListener('keydown', keyHandler);
+
+      logAction('AUTH_SUCCESS', { label: result.pinObj?.label });
+
+      setTimeout(() => {
+        if (authKey) sessionStorage.setItem(authKey, '1');
+        if (result.pinObj) {
+          sessionStorage.setItem('current_profile', result.pinObj.label);
+          if (!result.isOtp) sessionStorage.setItem('current_pin', result.pinObj.pin);
+          if (result.pinObj.roles) {
+            result.pinObj.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
+          }
+        }
+        onSuccess(result);
+      }, 1000);
     } else {
       logAction('AUTH_FAILED', { reason: result.reason });
-      handleFailure(result.reason);
+      setFeedback(result.reason || 'ACCESS DENIED', 'error');
+      pinBox.classList.add('aim-shake');
+      setTimeout(() => {
+        pinBox.classList.remove('aim-shake');
+        currentPin = '';
+        renderDots();
+        locked = false;
+        setFeedback('AWAITING INPUT');
+      }, 700);
     }
   }
 
-  function handleSuccess(result) {
-    feedback.textContent = '> ACCESS GRANTED. DECRYPTING...';
-    feedback.className = 'aim-pin-feedback aim-feedback-ok';
-    pinBox.classList.add('aim-access-granted');
-    
-    // Disable inputs
-    window.removeEventListener('keydown', keyHandler);
-    
-    setTimeout(() => {
-      if (authKey) sessionStorage.setItem(authKey, '1');
-      if (result && result.pinObj) {
-        sessionStorage.setItem('current_profile', result.pinObj.label);
-        if (!result.isOtp) {
-          sessionStorage.setItem('current_pin', result.pinObj.pin);
-        }
-        if (result.pinObj.roles) {
-          result.pinObj.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
-        }
-      }
-      onSuccess(result);
-    }, 1200);
-  }
-
-  function handleFailure(reason) {
-    feedback.textContent = `> ${reason}`;
-    feedback.className = 'aim-pin-feedback aim-feedback-error';
-    pinBox.classList.add('aim-shake');
-    
-    setTimeout(() => {
-      pinBox.classList.remove('aim-shake');
-      currentPin = '';
-      updateDisplay();
-    }, 600);
-  }
-
-  // Mouse / Touch click events
+  // ── Button events ──────────────────────────────────────────────────────────
   wrap.querySelectorAll('.aim-pad-btn[data-val]').forEach(btn => {
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      handleInput(btn.dataset.val);
-    };
+    btn.onclick = e => { e.stopPropagation(); handleInput(btn.dataset.val); };
   });
+  wrap.querySelector('#aim-pad-clear').onclick = e => { e.stopPropagation(); handleClear(); };
+  wrap.querySelector('#aim-pad-enter').onclick = e => { e.stopPropagation(); handleEnter(); };
 
-  wrap.querySelector('#aim-pad-clear').onclick = (e) => {
-    e.stopPropagation();
-    handleClear();
-  };
-
-  wrap.querySelector('#aim-pad-enter').onclick = (e) => {
-    e.stopPropagation();
-    handleEnter();
-  };
-
-  // Keyboard events
+  // ── Keyboard events ────────────────────────────────────────────────────────
   function keyHandler(e) {
-    if (e.key >= '0' && e.key <= '9') {
-      handleInput(e.key);
-    } else if (e.key === 'Backspace') {
-      handleBackspace();
-    } else if (e.key === 'Escape' || e.key === 'Delete') {
-      handleClear();
-    } else if (e.key === 'Enter') {
-      handleEnter();
-    }
+    if (e.key >= '0' && e.key <= '9') handleInput(e.key);
+    else if (e.key === 'Backspace') handleBackspace();
+    else if (e.key === 'Escape' || e.key === 'Delete') handleClear();
+    else if (e.key === 'Enter') handleEnter();
   }
-
   window.addEventListener('keydown', keyHandler);
 
-  // Clean up key listener if element is removed from DOM
+  // Auto-cleanup when removed from DOM
   const observer = new MutationObserver(() => {
     if (!document.body.contains(wrap)) {
       window.removeEventListener('keydown', keyHandler);
@@ -305,6 +232,8 @@ export function buildPinPad({ authKey, onSuccess, requiredRole = null, title = '
 
   return wrap;
 }
+
+// ─── requireAuth helper (used by individual pages) ────────────────────────────
 
 export function requireAuth(container, options) {
   if (options.authKey && sessionStorage.getItem(options.authKey)) {

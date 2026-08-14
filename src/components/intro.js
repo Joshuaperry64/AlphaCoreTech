@@ -283,13 +283,13 @@ export default function createIntro(onComplete) {
   });
   
   const pinPad = buildPinPad({
-    onSuccess: (res) => {
+    onSuccess: () => {
       cleanup();
       localStorage.setItem('alphacore_intro_complete', '1');
       if (onComplete) onComplete();
     },
     title: '// USER_AUTHENTICATION',
-    subtitle: 'PLEASE ENTER YOUR PIN'
+    subtitle: 'ENTER YOUR ACCESS PIN'
   });
   pinPadContainer.appendChild(pinPad);
   loginPanel.appendChild(pinPadContainer);

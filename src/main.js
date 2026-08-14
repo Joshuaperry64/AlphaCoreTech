@@ -86,30 +86,23 @@ function renderRoute() {
     loginContainer.style.cssText = 'display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;';
     
     loginContainer.appendChild(buildPinPad({
-      authKey: 'global_authenticated',
-      onSuccess: () => {
+      onSuccess: (result) => {
         if (sidebar) sidebar.style.display = '';
         if (mobileTopbar) mobileTopbar.style.display = '';
-        
-        // Update sidebar visual profile text immediately
+
+        // Update sidebar auth label
         const authVal = document.getElementById('sidebar-auth-val');
         if (authVal) {
           const profile = sessionStorage.getItem('current_profile');
           if (profile) authVal.textContent = profile.toUpperCase();
         }
-        
-        // Ensure role visibility on tabs applies immediately
-        import('./components/sidebar.js').then(module => {
-          const pins = JSON.parse(localStorage.getItem('alphacore_pins') || '[]');
-          const userPin = pins.find(p => p.label === sessionStorage.getItem('current_profile'));
-          const hasAdmin = userPin && userPin.roles && userPin.roles.includes('admin');
-          const adminTab = document.querySelector('a[data-route="/admin"]');
-          if (adminTab) adminTab.style.display = hasAdmin ? 'flex' : 'none';
-          
-          const hasVault = userPin && userPin.roles && userPin.roles.includes('vault');
-          const vaultTab = document.querySelector('a[data-route="/vault"]');
-          if (vaultTab) vaultTab.style.display = hasVault ? 'flex' : 'none';
-        });
+
+        // Show/hide admin & vault tabs based on roles
+        const roles = result?.pinObj?.roles || [];
+        const adminTab = document.querySelector('a[data-route="/admin"]');
+        if (adminTab) adminTab.style.display = roles.includes('admin') ? 'flex' : 'none';
+        const vaultTab = document.querySelector('a[data-route="/vault"]');
+        if (vaultTab) vaultTab.style.display = roles.includes('vault') ? 'flex' : 'none';
 
         showToast('SUCCESS', 'Handshake verified. Welcome back.');
         renderRoute();
