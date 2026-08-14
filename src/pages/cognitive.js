@@ -31,7 +31,15 @@ export default function CognitiveUplink() {
     </div>
 
     <!-- CHAT VIEW -->
-    <div class="uplink-grid cog-view active" id="cog-chat-view">
+    <div class="uplink-grid cog-view active" id="cog-chat-view" style="position: relative;">
+
+      <!-- COMING SOON OVERLAY -->
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,12,0.9); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; border-radius: 4px; border: 1px solid rgba(6,182,212,0.3); padding: 20px; text-align: center;">
+        <h2 class="glitch" data-text="COMING SOON" style="font-family: 'Orbitron', sans-serif; color: var(--accent, #06b6d4); font-size: clamp(1.8rem, 5vw, 2.5rem); letter-spacing: 2px; text-shadow: 0 0 15px rgba(6,182,212,0.6);">COMING SOON</h2>
+        <div style="background: var(--cyan, #06b6d4); color: #000; padding: 5px 15px; border-radius: 2px; font-family: 'Share Tech Mono', monospace; font-weight: bold; margin-top: 10px; font-size: clamp(0.9rem, 3vw, 1.1rem); box-shadow: 0 0 10px rgba(6,182,212,0.4);">// NEURAL CHAT</div>
+        <p style="color: #aaa; font-family: 'Share Tech Mono', monospace; font-size: clamp(0.85rem, 3vw, 1rem); margin-top: 20px; border-top: 1px dashed rgba(6,182,212,0.3); padding-top: 15px; width: 100%; max-width: 300px;">Neural Chat synthesis engine is undergoing final training.</p>
+      </div>
+
       <div class="panel chat-panel">
         <div class="panel-title">// NEURAL_BRIDGE — LIVE</div>
         <div class="chat-status-bar">
@@ -54,8 +62,8 @@ export default function CognitiveUplink() {
             <button class="aim-btn" id="cmd-animate" style="padding: 12px; font-size: 1rem; width: 100%;">// ANIMATE</button>
           </div>
           
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;"></textarea>
-          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;">
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;" disabled></textarea>
+          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;" disabled>
             <span class="chat-send-icon">⟩</span>
           </button>
         </div>
