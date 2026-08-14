@@ -119,13 +119,13 @@ export function render(container, options = {}) {
       
       const data = await res.json();
       
-      if (data.valid) {
+      if (data.valid && data.pinObj && data.pinObj.label === 'Architect') {
         authBox.style.display = 'none';
         dashboard.style.display = 'flex';
         if (options.onLog) options.onLog('[bR0k3nC0Re] Architect uplink authorized.', '#34d399');
       } else {
-        authStatus.textContent = \`> \${data.reason || 'ACCESS DENIED.'}\`;
-        if (options.onLog) options.onLog(\`[bR0k3nC0Re] Auth failed: \${data.reason}\`, '#ef4444');
+        authStatus.textContent = \`> ACCESS DENIED. STRICT ARCHITECT CLEARANCE REQUIRED.\`;
+        if (options.onLog) options.onLog(\`[bR0k3nC0Re] Auth failed: Profile was \${data.pinObj?.label || 'unknown'}\`, '#ef4444');
       }
     } catch (err) {
       authStatus.textContent = "> NETWORK ERROR. CANNOT REACH AUTH SERVER.";
