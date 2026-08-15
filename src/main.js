@@ -10,7 +10,7 @@ import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer } from './components/db_sync.js';
 import { buildPinPad } from './components/pinpad.js';
-import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying } from './components/audio.js';
+import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX } from './components/audio.js';
 import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
 import { showToast } from './components/toast.js';
@@ -73,51 +73,33 @@ function renderRoute() {
   void app.offsetWidth; // trigger reflow
   app.classList.add('page-transition');
 
-  // GLOBAL LOGIN WALL
+  // CHECK SESSION AUTHORIZATION
   const currentProfile = sessionStorage.getItem('current_profile');
   const sidebar = document.getElementById('sidebar');
   const mobileTopbar = document.getElementById('mobile-topbar');
-  
+
   if (!currentProfile) {
-    if (sidebar) sidebar.style.display = 'none';
-    if (mobileTopbar) mobileTopbar.style.display = 'none';
-    
-    const loginContainer = createElement('div', { class: 'global-login-page' });
-    loginContainer.style.cssText = 'display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;';
-    
-    loginContainer.appendChild(buildPinPad({
-      onSuccess: (result) => {
-        if (sidebar) sidebar.style.display = '';
-        if (mobileTopbar) mobileTopbar.style.display = '';
-
-        // Update sidebar auth label
-        const authVal = document.getElementById('sidebar-auth-val');
-        if (authVal) {
-          const profile = sessionStorage.getItem('current_profile');
-          if (profile) authVal.textContent = profile.toUpperCase();
-        }
-
-        // Show/hide admin & vault tabs based on roles
-        const roles = result?.pinObj?.roles || [];
-        const adminTab = document.querySelector('a[data-route="/admin"]');
-        if (adminTab) adminTab.style.display = roles.includes('admin') ? 'flex' : 'none';
-        const vaultTab = document.querySelector('a[data-route="/vault"]');
-        if (vaultTab) vaultTab.style.display = roles.includes('vault') ? 'flex' : 'none';
-
-        showToast('SUCCESS', 'Handshake verified. Welcome back.');
-        renderRoute();
-      },
-      title: 'ALPHACORE // IDENTITY_VERIFICATION',
-      subtitle: 'ESTABLISH SECURE HANDSHAKE',
-      icon: '⟁'
-    }));
-    
-    app.appendChild(loginContainer);
+    mountIntro(false);
     return;
-  } else {
-    if (sidebar) sidebar.style.display = '';
-    if (mobileTopbar) mobileTopbar.style.display = '';
   }
+
+  if (sidebar) sidebar.style.display = '';
+  if (mobileTopbar) mobileTopbar.style.display = '';
+
+  // Ensure sidebar profile label and tab visibility match active profile roles
+  const authVal = document.getElementById('sidebar-auth-val');
+  if (authVal) {
+    authVal.textContent = currentProfile.toUpperCase();
+    authVal.className = currentProfile === 'Guest' ? 's-val' : 's-val accent';
+  }
+
+  const isAdmin = sessionStorage.getItem('admin_authenticated') === '1';
+  const isVault = sessionStorage.getItem('vault_authenticated') === '1';
+
+  const adminTab = document.querySelector('a[data-route="/admin"]');
+  if (adminTab) adminTab.style.display = isAdmin ? 'flex' : 'none';
+  const vaultTab = document.querySelector('a[data-route="/vault"]');
+  if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
 
   const routeFn = routes[hash] || routes['/'];
   app.appendChild(routeFn());
@@ -125,24 +107,27 @@ function renderRoute() {
 }
 
 function mountIntro(force) {
-  syncFromServer().then(() => {
-    if (!force && localStorage.getItem('alphacore_intro_complete')) {
-      renderRoute();
-      return;
-    }
-    
-    const app = document.getElementById('app');
-    app.innerHTML = '';
-    
-    const introEl = createIntro(() => {
-      renderRoute();
-    });
-    
-    app.appendChild(introEl);
+  const sidebar = document.getElementById('sidebar');
+  const mobileTopbar = document.getElementById('mobile-topbar');
+  if (sidebar) sidebar.style.display = 'none';
+  if (mobileTopbar) mobileTopbar.style.display = 'none';
+
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  
+  const introEl = createIntro(() => {
+    if (sidebar) sidebar.style.display = '';
+    if (mobileTopbar) mobileTopbar.style.display = '';
+    renderRoute();
   });
+  
+  app.appendChild(introEl);
 }
 
-window.addEventListener('hashchange', renderRoute);
+window.addEventListener('hashchange', () => {
+  playSFX('navigate', 0.5);
+  renderRoute();
+});
 window.addEventListener('DOMContentLoaded', () => {
   // Init global systems
   initThemeSwitcher();
@@ -205,7 +190,8 @@ window.addEventListener('DOMContentLoaded', () => {
   initSidebar();
   initModal();
 
-  // Mount intro or render route directly
+  // Mount intro sequence on fresh load (always presents intro + pinpad login)
+  sessionStorage.removeItem('current_profile');
   mountIntro(false);
 
   // Add replay intro to sidebar

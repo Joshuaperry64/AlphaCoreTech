@@ -36,7 +36,10 @@ export function initModal() {
   });
 }
 
+import { playSFX } from './audio.js';
+
 export function showModal(title, description) {
+  playSFX('modal', 0.5);
   const modal = document.getElementById('stat-modal');
   const modalTitle = document.getElementById('modal-title');
   const modalDesc = document.getElementById('modal-desc');

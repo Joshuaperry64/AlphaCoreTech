@@ -22,35 +22,59 @@ export function initSidebar() {
   updateClock();
   clockInterval = setInterval(updateClock, 1000);
 
-  // Auth profile display
+  // Auth profile display & profile switcher trigger
   const authVal = document.getElementById('sidebar-auth-val');
   if (authVal) {
-    const profile = sessionStorage.getItem('current_profile');
-    if (profile) {
-      authVal.textContent = profile.toUpperCase();
-      if (profile.toLowerCase() === 'guest') {
-        authVal.className = 's-val';
-      }
-      
-      const pins = getPins();
-      const userPin = pins.find(p => p.label === profile);
-      const hasAdmin = userPin && userPin.roles && userPin.roles.includes('admin');
-      const adminTab = document.querySelector('a[data-route="/admin"]');
-      if (adminTab) {
-        adminTab.style.display = hasAdmin ? 'flex' : 'none';
-      }
-      
-      const visionTab = document.querySelector('a[data-route="/vision"]');
-      if (visionTab) {
-        visionTab.style.display = hasAdmin ? 'flex' : 'none';
-      }
-      
-      const hasVault = userPin && userPin.roles && userPin.roles.includes('vault');
-      const vaultTab = document.querySelector('a[data-route="/vault"]');
-      if (vaultTab) {
-        vaultTab.style.display = hasVault ? 'flex' : 'none';
-      }
-    }
+    const profile = sessionStorage.getItem('current_profile') || 'Guest';
+    authVal.textContent = profile.toUpperCase();
+    authVal.className = profile === 'Guest' ? 's-val' : 's-val accent';
+    authVal.style.cursor = 'pointer';
+    authVal.title = profile === 'Guest' ? 'Click to authenticate profile via PIN' : `Active: ${profile}. Click to switch/logout.`;
+
+    const isAdmin = sessionStorage.getItem('admin_authenticated') === '1';
+    const isVault = sessionStorage.getItem('vault_authenticated') === '1';
+
+    const adminTab = document.querySelector('a[data-route="/admin"]');
+    if (adminTab) adminTab.style.display = isAdmin ? 'flex' : 'none';
+    const vaultTab = document.querySelector('a[data-route="/vault"]');
+    if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
+
+    authVal.onclick = () => {
+      import('./modal.js').then(({ showModal }) => {
+        import('./pinpad.js').then(({ buildPinPad }) => {
+          const pinPadEl = buildPinPad({
+            onSuccess: (res) => {
+              showModal({ title: '', content: '' }); // close modal
+              window.location.reload();
+            },
+            title: '// SWITCH_PROFILE_SESSION',
+            subtitle: 'ENTER ARCHITECT OR USER PIN',
+            icon: '🔑'
+          });
+
+          const modalWrap = document.createElement('div');
+          modalWrap.appendChild(pinPadEl);
+
+          if (sessionStorage.getItem('current_profile') !== 'Guest') {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.className = 'aim-btn';
+            logoutBtn.style.cssText = 'width: 100%; margin-top: 12px; background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444;';
+            logoutBtn.textContent = 'LOGOUT TO GUEST PROFILE';
+            logoutBtn.onclick = () => {
+              sessionStorage.clear();
+              sessionStorage.setItem('current_profile', 'Guest');
+              window.location.reload();
+            };
+            modalWrap.appendChild(logoutBtn);
+          }
+
+          showModal({
+            title: 'PROFILE SECURITY AUTHENTICATION',
+            content: modalWrap
+          });
+        });
+      });
+    };
   }
 
   // Uptime

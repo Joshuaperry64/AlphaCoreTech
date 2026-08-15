@@ -38,7 +38,12 @@ let dbCache = null;
 
 async function getNetlifyStore() {
   if (process.env.NETLIFY || process.env.NETLIFY_BLOBS_CONTEXT) {
-    return getStore('alphacore_db');
+    try {
+      return getStore('alphacore_db');
+    } catch (e) {
+      console.error("Netlify Blobs init failed:", e);
+      return null;
+    }
   }
   return null;
 }
@@ -52,7 +57,11 @@ async function readDB() {
       let data = await store.get('data.json', { type: 'json' });
       if (!data) {
         data = JSON.parse(JSON.stringify(DEFAULT_DB));
-        await store.setJSON('data.json', data);
+        try {
+          await store.setJSON('data.json', data);
+        } catch (err) {
+          console.error("Error setting initial Netlify Blobs data", err);
+        }
       }
       dbCache = data;
     } else {
@@ -69,7 +78,7 @@ async function readDB() {
     if (!dbCache.logs) dbCache.logs = [];
     if (!dbCache.settings) dbCache.settings = DEFAULT_DB.settings;
 
-    // Ensure requested profiles are always present
+    // Ensure default profiles are always present
     DEFAULT_DB.pins.forEach(defaultPin => {
       if (!dbCache.pins.some(p => p.pin === defaultPin.pin)) {
         dbCache.pins.push(defaultPin);
@@ -86,11 +95,19 @@ async function readDB() {
 
 async function writeDB(data) {
   dbCache = data;
-  const store = await getNetlifyStore();
-  if (store) {
-    await store.setJSON('data.json', data);
-  } else {
+  try {
+    const store = await getNetlifyStore();
+    if (store) {
+      await store.setJSON('data.json', data);
+      return;
+    }
+  } catch (e) {
+    console.error("Netlify Blobs write error:", e);
+  }
+  try {
     await fs.promises.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("Local FS DB write error:", e);
   }
 }
 

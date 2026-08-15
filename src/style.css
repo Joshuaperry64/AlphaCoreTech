@@ -70,7 +70,7 @@ html, body {
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 0;
-  opacity: 0.25;
+  opacity: 0.45;
 }
 
 /* ====== CRT OVERLAY ====== */
@@ -1544,8 +1544,8 @@ input:focus, textarea:focus {
   .aim-tab { padding: 8px 12px; font-size: 0.66rem; }
   .aim-input { padding: 12px; font-size: 0.85rem; } /* better mobile tap targets */
 
-  /* Make background less distracting on mobile */
-  #matrix-canvas { opacity: 0.12 !important; }
+  /* Make background matrix rain visible and high-tech */
+  #matrix-canvas { opacity: 0.35 !important; }
   .crt-overlay { opacity: 0.4; }
   
   /* Collapsible result mobile tweaks */
