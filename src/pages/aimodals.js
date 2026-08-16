@@ -353,10 +353,23 @@ function buildTxt2Img() {
     }, 2500);
 
     try {
+      // Derive backwards-compatible flags for legacy modal endpoints if needed
+      let juggFlag = '0';
+      let cyberFlag = '0';
+      if (modelStr.includes('juggernaut')) { juggFlag = '1'; }
+      if (modelStr.includes('cyberrealistic')) { cyberFlag = '1'; }
+      if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
+
       const params = new URLSearchParams({
         prompt,
         model: modelStr,
         checkpoint: modelStr,
+        model_name: modelStr,
+        checkpoint_name: modelStr,
+        base_model: modelStr,
+        selected_model: modelStr,
+        JuggernautXL: juggFlag,
+        CyberRealisticXL: cyberFlag,
         negative_prompt: neg,
         guidance_scale: cfg,
         num_inference_steps: steps,
