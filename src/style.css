@@ -3066,4 +3066,148 @@ body.eco-mode .glitch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ==========================================================================
+   CYBERPUNK VISUAL ENHANCEMENTS: SPARKS, ROTATING TECH, CRT & SIDEBAR GLITCH
+   ========================================================================== */
+
+/* Bottom Uptime HUD Pill */
+.bottom-hud-uptime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(4, 8, 16, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 1.5px;
+  backdrop-filter: blur(8px);
+  user-select: none;
+}
+.bottom-hud-uptime .hud-label {
+  color: var(--blue-dim, #0077aa);
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+.bottom-hud-uptime .hud-val {
+  color: #00f0ff;
+  font-weight: 700;
+  text-shadow: 0 0 8px #00f0ff;
+}
+
+/* Metal Edge Sparks & Laser Slide */
+.aim-panel, .panel, .sidebar {
+  position: relative;
+}
+.aim-panel::before, .panel::before, .sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -10%; width: 40px; height: 2px;
+  background: linear-gradient(90deg, transparent, #00f0ff, #ffffff, #00f0ff, transparent);
+  box-shadow: 0 0 10px #00f0ff, 0 0 18px #ffffff;
+  animation: metal-spark-top 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 99;
+}
+@keyframes metal-spark-top {
+  0% { left: -10%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 105%; opacity: 0; }
+}
+
+.aim-panel::after, .panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: -10%; width: 35px; height: 2px;
+  background: linear-gradient(90deg, transparent, #ff003c, #ffffff, #ff003c, transparent);
+  box-shadow: 0 0 10px #ff003c, 0 0 18px #ffffff;
+  animation: metal-spark-bottom 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.5s;
+  pointer-events: none;
+  z-index: 99;
+}
+@keyframes metal-spark-bottom {
+  0% { right: -10%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { right: 105%; opacity: 0; }
+}
+
+/* Rotating Tech Rings & Orbital Accents */
+@keyframes tech-spin-clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes tech-spin-counter {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+.tech-spin {
+  display: inline-block;
+  animation: tech-spin-clockwise 10s linear infinite;
+}
+.tech-spin-ccw {
+  display: inline-block;
+  animation: tech-spin-counter 14s linear infinite;
+}
+.tech-spin-fast {
+  display: inline-block;
+  animation: tech-spin-clockwise 3.5s linear infinite;
+}
+
+/* Container CRT Scanlines Grid Texture */
+.aim-panel, .panel, .intro-boot-terminal {
+  background-image: 
+    linear-gradient(rgba(0, 184, 255, 0.02) 1px, transparent 1px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2) 1px, transparent 1px, transparent 3px) !important;
+  background-size: 100% 100%, 100% 4px !important;
+}
+
+/* Sidebar Cyberpunk Glitch Effects */
+.sidebar-brand:hover .brand-name {
+  animation: sidebar-text-glitch 0.4s steps(2, start) infinite;
+}
+.sidebar-brand:hover .brand-logo {
+  animation: sidebar-logo-glitch 0.3s ease infinite;
+}
+
+@keyframes sidebar-logo-glitch {
+  0% { transform: translate(0); filter: drop-shadow(0 0 8px #00f0ff); }
+  25% { transform: translate(-3px, 1px); filter: drop-shadow(-3px 0 #ff003c) drop-shadow(3px 0 #00f0ff); }
+  50% { transform: translate(2px, -2px); filter: drop-shadow(3px -1px #ff003c); }
+  75% { transform: translate(-1px, 2px); filter: drop-shadow(-2px 2px #00f0ff); }
+  100% { transform: translate(0); filter: drop-shadow(0 0 8px #00f0ff); }
+}
+
+@keyframes sidebar-text-glitch {
+  0% { text-shadow: 2px 0 0 #ff003c, -2px 0 0 #00f0ff; }
+  25% { text-shadow: -2px 0 0 #ff003c, 2px 0 0 #00f0ff; }
+  50% { text-shadow: 1px -1px 0 #ff003c, -1px 1px 0 #00f0ff; }
+  75% { text-shadow: -1px 1px 0 #ff003c, 1px -1px 0 #00f0ff; }
+  100% { text-shadow: 0 0 8px #00f0ff; }
+}
+
+.nav-item:hover .nav-icon {
+  animation: tech-spin-clockwise 2.5s linear infinite;
+  color: #00f0ff;
+  text-shadow: 0 0 10px #00f0ff;
+}
+
+.nav-item:hover .nav-label, .nav-item.active .nav-label {
+  animation: nav-label-pulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes nav-label-pulse {
+  0% { text-shadow: 0 0 4px rgba(0, 240, 255, 0.4); }
+  50% { text-shadow: 0 0 10px rgba(0, 240, 255, 0.9), 1px 0 0 #ff003c; }
+  100% { text-shadow: 0 0 4px rgba(0, 240, 255, 0.4); }
+}
+
+.sidebar-footer .status-row:hover .s-val {
+  animation: sidebar-text-glitch 0.3s steps(2, start) infinite;
+  color: #00f0ff;
 }

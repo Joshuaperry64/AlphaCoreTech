@@ -79,14 +79,20 @@ export function initSidebar() {
 
   // Uptime
   function updateUptime() {
-    const uptimeEl = document.getElementById('uptime-counter');
-    if (!uptimeEl) return;
     const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
     const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
     const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
     const s = (elapsed % 60).toString().padStart(2, '0');
-    uptimeEl.textContent = `${h}:${m}:${s}`;
+    const timeStr = `${h}:${m}:${s}`;
+
+    const uptimeEl = document.getElementById('uptime-counter');
+    if (uptimeEl) uptimeEl.textContent = timeStr;
+
+    const uptimeBottomEl = document.getElementById('uptime-counter-bottom');
+    if (uptimeBottomEl) uptimeBottomEl.textContent = timeStr;
   }
+  updateUptime();
+  if (uptimeInterval) clearInterval(uptimeInterval);
   uptimeInterval = setInterval(updateUptime, 1000);
 
   // Mobile hamburger
