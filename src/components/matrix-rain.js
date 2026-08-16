@@ -1,7 +1,4 @@
-/**
- * Matrix Rain — Shared canvas background animation
- * Initialized once globally. Never duplicated.
- */
+import { getAudioContext } from './audio.js';
 
 let isEcoMode = localStorage.getItem('alphacore_eco_mode') === 'true';
 
@@ -31,6 +28,7 @@ export function initMatrixRain() {
   const fontSize = 16;
   let cols = Math.floor(canvas.width / fontSize);
   let drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+  let freqArray = null;
 
   window.addEventListener('resize', () => {
     const newCols = Math.floor(canvas.width / fontSize);
@@ -60,21 +58,41 @@ export function initMatrixRain() {
 
     lastDrawTime = timestamp - (delta % interval);
 
-    ctx.fillStyle = 'rgba(3, 4, 8, 0.16)';
+    // Audio reactivity sampling
+    let audioEnergy = 0;
+    try {
+      const audioData = getAudioContext();
+      if (audioData && audioData.analyser && audioData.audioCtx && audioData.audioCtx.state === 'running') {
+        if (!freqArray || freqArray.length !== audioData.analyser.frequencyBinCount) {
+          freqArray = new Uint8Array(audioData.analyser.frequencyBinCount);
+        }
+        audioData.analyser.getByteFrequencyData(freqArray);
+        let sum = 0;
+        const sampleBins = Math.min(16, freqArray.length);
+        for (let i = 0; i < sampleBins; i++) {
+          sum += freqArray[i];
+        }
+        audioEnergy = (sum / sampleBins) / 255;
+      }
+    } catch {}
+
+    ctx.fillStyle = `rgba(3, 4, 8, ${0.16 + (audioEnergy * 0.1)})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = '#00f0ff';
+    ctx.fillStyle = audioEnergy > 0.4 ? '#a5f3fc' : '#00f0ff';
     ctx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`;
-    ctx.shadowColor = '#00b8ff';
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = audioEnergy > 0.4 ? '#06b6d4' : '#00b8ff';
+    ctx.shadowBlur = 6 + Math.floor(audioEnergy * 20);
     
+    const step = audioEnergy > 0.35 ? 2 : 1;
+
     for (let i = 0; i < drops.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)];
       ctx.fillText(char, i * fontSize, drops[i] * fontSize);
       if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
         drops[i] = 0;
       }
-      drops[i]++;
+      drops[i] += step;
     }
   }
 

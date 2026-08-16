@@ -171,16 +171,16 @@ window.addEventListener('DOMContentLoaded', () => {
   sessionStorage.removeItem('current_profile');
   mountIntro(false);
 
-  // Add replay intro to sidebar
+  // Add lock system / login to sidebar
   const nav = document.getElementById('sidebar-nav');
   if (nav) {
-    const replay = document.createElement('a');
-    replay.href = '#';
-    replay.className = 'nav-item';
-    replay.setAttribute('data-label', 'Replay Intro');
-    replay.innerHTML = '<span class="nav-icon">↻</span><span class="nav-label">REPLAY INTRO</span><span class="nav-arrow">›</span>';
-    replay.onclick = e => { e.preventDefault(); localStorage.removeItem('alphacore_intro_complete'); mountIntro(true); };
-    nav.appendChild(replay);
+    const lockLink = document.createElement('a');
+    lockLink.href = '#';
+    lockLink.className = 'nav-item';
+    lockLink.setAttribute('data-label', 'Lock System');
+    lockLink.innerHTML = '<span class="nav-icon">🔒</span><span class="nav-label">LOCK SYSTEM</span><span class="nav-arrow">›</span>';
+    lockLink.onclick = e => { e.preventDefault(); sessionStorage.removeItem('current_profile'); mountIntro(true); };
+    nav.appendChild(lockLink);
   }
 
   // Close sidebar on nav click (mobile)

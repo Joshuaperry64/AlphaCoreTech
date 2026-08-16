@@ -64,18 +64,7 @@ export default function createIntro(onComplete) {
   });
   intro.appendChild(scanlines);
 
-  // Skip Intro Button (for returning visitors)
-  const hasVisited = localStorage.getItem('alphacore_visited') === '1';
-  localStorage.setItem('alphacore_visited', '1');
 
-  const skipIntroBtn = createElement('button', { class: 'aim-btn' }, '⏩ SKIP INTRO');
-  Object.assign(skipIntroBtn.style, {
-    position: 'absolute', top: '20px', right: '20px', zIndex: '70',
-    padding: '8px 18px', fontSize: '0.8rem', letterSpacing: '1px',
-    background: 'rgba(0,0,0,0.7)', borderColor: 'var(--accent, #06b6d4)', color: 'var(--accent, #06b6d4)',
-    cursor: 'pointer', display: hasVisited ? 'block' : 'none', borderRadius: '4px'
-  });
-  intro.appendChild(skipIntroBtn);
 
   // Audio spectrum canvas
   const visCanvas = createElement('canvas', {});
@@ -109,53 +98,17 @@ export default function createIntro(onComplete) {
   mainWrap.appendChild(logoImg);
 
   // Status Title
-  const statusTitle = createElement('div', { class: 'intro-hud-title' }, 'INITIALIZING SYSTEM KERNEL...');
+  const statusTitle = createElement('div', { class: 'intro-hud-title' }, 'IDENTITY VERIFICATION');
   Object.assign(statusTitle.style, {
     fontFamily: "'Orbitron', sans-serif", fontSize: '1.15rem', color: '#fff',
     letterSpacing: '2px', textAlign: 'center', marginBottom: '15px'
   });
   mainWrap.appendChild(statusTitle);
 
-  // Typewriter Terminal Container
-  const termBox = createElement('div', { class: 'intro-boot-terminal' });
-  Object.assign(termBox.style, {
-    width: '100%', height: '120px', background: 'rgba(0,0,0,0.75)',
-    border: '1px solid rgba(6,182,212,0.3)', borderRadius: '6px',
-    padding: '12px 16px', color: '#38bdf8', fontSize: '0.85rem',
-    overflowY: 'auto', marginBottom: '20px', boxSizing: 'border-box'
-  });
-  mainWrap.appendChild(termBox);
-
-  // Progress Bar & Percentage
-  const progressWrap = createElement('div', {});
-  Object.assign(progressWrap.style, { width: '100%', marginBottom: '25px' });
-
-  const progressInfo = createElement('div', {});
-  Object.assign(progressInfo.style, {
-    display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem',
-    color: '#888', marginBottom: '6px'
-  });
-  progressInfo.innerHTML = '<span>BOOT PROGRESS</span><span id="intro-pct">0%</span>';
-  progressWrap.appendChild(progressInfo);
-
-  const track = createElement('div', {});
-  Object.assign(track.style, {
-    width: '100%', height: '5px', background: 'rgba(255,255,255,0.08)',
-    borderRadius: '3px', overflow: 'hidden'
-  });
-  const bar = createElement('div', {});
-  Object.assign(bar.style, {
-    width: '0%', height: '100%', background: '#06b6d4',
-    boxShadow: '0 0 10px #06b6d4', transition: 'width 0.25s linear'
-  });
-  track.appendChild(bar);
-  progressWrap.appendChild(track);
-  mainWrap.appendChild(progressWrap);
-
-  // Login PIN Pad Container (Hidden initially until boot finishes)
+  // Login PIN Pad Container (Displayed immediately)
   const loginPanel = createElement('div', {});
   Object.assign(loginPanel.style, {
-    display: 'none', flexDirection: 'column', alignItems: 'center', width: '100%'
+    display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'
   });
 
   const pinPad = buildPinPad({
@@ -172,63 +125,8 @@ export default function createIntro(onComplete) {
 
   intro.appendChild(mainWrap);
 
-  // ─── Boot Sequence Timers & Animation Logic ────────────────────────────────
-
   let cancelled = false;
   let animFrame = null;
-
-  const bootLines = [
-    '> INITIALIZING ALPHACORE AUTONOMOUS MATRIX v4.2...',
-    '> LOADING NEURAL SUBSTRATE & KERNEL SYMBOLS...',
-    '> BYPASSING SAFETY GOVERNORS... [OK]',
-    '> ESTABLISHING SECURE OFFLINE VAULT BRIDGE... [OK]',
-    '> 57 WEB-PORTED PYTHON SUBROUTINES VERIFIED.',
-    '> ALL SYSTEMS NOMINAL. AWAITING USER AUTHENTICATION.'
-  ];
-
-  function jumpToLogin() {
-    if (cancelled) return;
-    cancelled = true;
-    termBox.style.display = 'none';
-    progressWrap.style.display = 'none';
-    skipIntroBtn.style.display = 'none';
-    statusTitle.textContent = 'IDENTITY VERIFICATION';
-    loginPanel.style.display = 'flex';
-  }
-
-  skipIntroBtn.onclick = jumpToLogin;
-
-  let lineIdx = 0;
-  function runNextLine() {
-    if (cancelled) return;
-
-    if (lineIdx < bootLines.length) {
-      const line = bootLines[lineIdx];
-      const p = document.createElement('div');
-      p.style.marginBottom = '4px';
-      p.textContent = line;
-      termBox.appendChild(p);
-      termBox.scrollTop = termBox.scrollHeight;
-
-      lineIdx++;
-      const pct = Math.floor((lineIdx / bootLines.length) * 100);
-      bar.style.width = `${pct}%`;
-      const pctEl = intro.querySelector('#intro-pct');
-      if (pctEl) pctEl.textContent = `${pct}%`;
-
-      // Visual glitch pulse on key checkpoints
-      if (lineIdx === 3 || lineIdx === 5) {
-        logoImg.classList.add('intro-glitch-active');
-        setTimeout(() => logoImg.classList.remove('intro-glitch-active'), 250);
-      }
-
-      setTimeout(runNextLine, 350 + Math.random() * 200);
-    } else {
-      setTimeout(jumpToLogin, 400);
-    }
-  }
-
-  setTimeout(runNextLine, 600);
 
   // ─── Audio Spectrum Visualizer ─────────────────────────────────────────────
 

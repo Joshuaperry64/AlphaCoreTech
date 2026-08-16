@@ -122,8 +122,9 @@ function buildResult(urls = []) {
         <img class="aim-result-img" id="aim-result-img" src="${urls[0]}" alt="Generated output" />
       </div>
       <div class="aim-result-actions" style="display:flex; justify-content:space-between; align-items:center;">
-        <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:10px;">
+        <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:6px; align-items:center;">
           <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
+          <button class="aim-btn aim-btn-dl" id="aim-slideshow-btn" title="Toggle Auto Slideshow">▶ AUTO</button>
           <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
         </div>
         <div style="display:flex; gap:10px;">
@@ -160,6 +161,41 @@ function buildResult(urls = []) {
     thumbContainer.style.marginTop = '10px';
     thumbContainer.style.overflowX = 'auto';
     thumbContainer.style.padding = '4px 0';
+
+    let slideshowTimer = null;
+    const slideshowBtn = el.querySelector('#aim-slideshow-btn');
+
+    function stopSlideshow() {
+      if (slideshowTimer) {
+        clearInterval(slideshowTimer);
+        slideshowTimer = null;
+      }
+      if (slideshowBtn) {
+        slideshowBtn.innerHTML = '▶ AUTO';
+        slideshowBtn.style.background = '';
+      }
+    }
+
+    function advanceSlide() {
+      currentIdx = (currentIdx + 1) % urls.length;
+      imgEl.src = urls[currentIdx];
+      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      Array.from(thumbContainer.children).forEach((t, i) => {
+        t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent';
+      });
+    }
+
+    if (slideshowBtn) {
+      slideshowBtn.onclick = () => {
+        if (slideshowTimer) {
+          stopSlideshow();
+        } else {
+          slideshowBtn.innerHTML = '⏸ PAUSE';
+          slideshowBtn.style.background = 'rgba(6, 182, 212, 0.3)';
+          slideshowTimer = setInterval(advanceSlide, 2200);
+        }
+      };
+    }
     
     // Add thumbnails
     urls.forEach((u, idx) => {
@@ -174,6 +210,7 @@ function buildResult(urls = []) {
       thumb.style.transition = 'border 0.2s';
       
       thumb.onclick = () => {
+        stopSlideshow();
         currentIdx = idx;
         imgEl.src = urls[currentIdx];
         countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
@@ -189,6 +226,7 @@ function buildResult(urls = []) {
     
     // Keep next/prev buttons but update thumbnails highlighting
     el.querySelector('#aim-prev-btn').onclick = () => {
+      stopSlideshow();
       currentIdx = (currentIdx - 1 + urls.length) % urls.length;
       imgEl.src = urls[currentIdx];
       countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
@@ -196,6 +234,7 @@ function buildResult(urls = []) {
     };
     
     el.querySelector('#aim-next-btn').onclick = () => {
+      stopSlideshow();
       currentIdx = (currentIdx + 1) % urls.length;
       imgEl.src = urls[currentIdx];
       countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
