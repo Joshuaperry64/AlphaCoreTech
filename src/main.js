@@ -215,6 +215,84 @@ window.addEventListener('DOMContentLoaded', () => {
   initSidebar();
   initModal();
 
+  // Restore Synthwave Overdrive Theme if previously unlocked
+  if (localStorage.getItem('alphacore_synthwave_active') === '1') {
+    document.body.classList.add('synthwave-overdrive');
+  }
+
+  // ─── Secret Easter Egg Listener ──────────────────────────────────────
+  const secretSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let keyIndex = 0;
+  let typedString = '';
+
+  function triggerSecretOverdrive() {
+    const isActive = document.body.classList.toggle('synthwave-overdrive');
+    if (isActive) {
+      localStorage.setItem('alphacore_synthwave_active', '1');
+      sessionStorage.setItem('generate_authenticated', '1');
+      sessionStorage.setItem('admin_authenticated', '1');
+      playSFX('modal', 0.8);
+
+      import('./components/modal.js').then(({ showModal }) => {
+        showModal({
+          title: '✦ SECRET PROTOCOL ACTIVATED',
+          content: `
+            <div style="text-align: center; padding: 20px; font-family: 'Share Tech Mono', monospace;">
+              <div style="font-size: 3.5rem; margin-bottom: 10px; animation: pulse 0.6s infinite alternate;">🌆</div>
+              <h2 class="glitch" data-text="SYNTHWAVE OVERDRIVE" style="font-family: 'Orbitron', sans-serif; color: #ff007f; font-size: 1.6rem; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,0,127,0.8);">
+                SYNTHWAVE OVERDRIVE UNLOCKED
+              </h2>
+              <div style="background: rgba(255,0,127,0.15); border: 1px solid #ff007f; color: #00f0ff; padding: 12px; border-radius: 4px; font-size: 0.9rem; margin: 15px 0; font-weight: bold;">
+                ✨ REWARD GRANTED: Full Neon Palette Inversion & Permanent Session Override Unlocked!
+              </div>
+              <p style="color: #aaa; font-size: 0.85rem; line-height: 1.5;">
+                You have discovered the secret Vaporwave Overdrive Protocol! Cyberpunk UI color tokens updated to high-octane Hot Magenta & Neon Cyan.
+              </p>
+            </div>
+          `
+        });
+      });
+    } else {
+      localStorage.removeItem('alphacore_synthwave_active');
+      showToast('INFO', 'Synthwave Overdrive Theme Deactivated');
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    // Secret Konami Code Check
+    if (e.key.toLowerCase() === secretSeq[keyIndex].toLowerCase()) {
+      keyIndex++;
+      if (keyIndex === secretSeq.length) {
+        triggerSecretOverdrive();
+        keyIndex = 0;
+      }
+    } else {
+      keyIndex = 0;
+    }
+
+    // Secret Word Typing Check ("synthwave" or "overdrive")
+    typedString += e.key.toLowerCase();
+    if (typedString.length > 20) typedString = typedString.slice(-20);
+    if (typedString.includes('synthwave') || typedString.includes('overdrive')) {
+      typedString = '';
+      triggerSecretOverdrive();
+    }
+  });
+
+  // Triple click brand version badge trigger
+  const brandVer = document.querySelector('.brand-version');
+  if (brandVer) {
+    let verClicks = 0;
+    brandVer.style.cursor = 'pointer';
+    brandVer.addEventListener('click', () => {
+      verClicks++;
+      if (verClicks >= 3) {
+        verClicks = 0;
+        triggerSecretOverdrive();
+      }
+    });
+  }
+
   // Initial route render (triggers intro + pinpad login if not authenticated)
   renderRoute();
 

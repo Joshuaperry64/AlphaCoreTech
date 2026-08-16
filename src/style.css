@@ -24,6 +24,19 @@
   --radius:             2px;
 }
 
+/* ====== SYNTHWAVE OVERDRIVE EASTER EGG THEME ====== */
+body.synthwave-overdrive {
+  --blue: #00f0ff;
+  --blue-dim: #0088cc;
+  --accent: #ff007f;
+  --accent-dim: #99004d;
+  --accent-glow: rgba(255, 0, 127, 0.3);
+  --bg: #060012;
+  --panel-bg: rgba(18, 2, 40, 0.94);
+  --border: rgba(255, 0, 127, 0.3);
+  --border-dim: rgba(0, 240, 255, 0.15);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
