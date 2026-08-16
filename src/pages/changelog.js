@@ -9,9 +9,28 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.3 BUILD 102',
+    date: '2026.08.16',
+    badge: 'LATEST MILESTONE',
+    badgeColor: '#ff007f',
+    title: 'AI PROMPT ENHANCER, LIVE VLLM COGNITIVE CORE & GUEST PREVIEW SYSTEM',
+    summary: 'Major release featuring the new AI Prompt Enhancer, live Modal VLLM Gemma Cognitive Core, sitewide Guest Preview system, music-reactive visual animations, and cyberpunk aesthetic polish.',
+    changes: [
+      'Rebuilt Prompt Lab into an interactive AI Prompt Enhancer & Master Matrix Generator (`#/promptlab`) with artistic style presets and negative prompt generators.',
+      'Unlocked live Cognitive Core (`#/cognitive`) connecting directly to the Modal VLLM Gemma AI Agent backend.',
+      'Deployed sitewide Guest Mode preview banners and interactive PIN login modal triggers across all pages.',
+      'Added Slideshow Auto-advance, ✨ AI ENHANCE button, hyperparameter samplers (Euler, DPM++, DDIM), Denoise, and Aspect Ratio controls to AI Modals (`#/aimodals`).',
+      'Engineered Audio-Reactive frequency energy scaling into background matrix rain glow and drop speed.',
+      'Completely purged obsolete Mainframe OS links, routes, and port modules.',
+      'Updated Framepack Studio to provide direct Architect clearance execution and public preview overlays.',
+      'Added high-voltage metal edge sparks, rotating tech gear icons, CRT scanline grid textures, and sidebar RGB text/logo glitch animations.',
+      'Implemented a secret Easter Egg protocol with dynamic UI color palette inversion and hidden reward unlocks.'
+    ]
+  },
+  {
     version: 'v4.2 BUILD 95',
     date: '2026.08.14',
-    badge: 'LATEST MILESTONE',
+    badge: 'STABLE RELEASE',
     badgeColor: '#38bdf8',
     title: '57 PYTHON SUBROUTINES BULK PORTING & CLIENT VAULT CRYPTO',
     summary: 'Full porting of all 57 Python subroutines, pure browser Web Crypto API integration, client-side hardcoded PIN verification, and bR0k3nC0Re Architect lock.',
