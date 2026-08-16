@@ -159,32 +159,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const playAudioBtn = document.getElementById('play-audio-btn');
   if (playAudioBtn) {
     playAudioBtn.addEventListener('click', () => {
-      const isPlaying = toggleAudio();
-      if (isPlaying) {
-        playAudioBtn.innerHTML = '&#10074;&#10074;';
-        playAudioBtn.title = "Pause Music";
-        showToast('INFO', 'Audio Stream Playing');
-      } else {
-        playAudioBtn.innerHTML = '&#9658;';
-        playAudioBtn.title = "Play Music";
-        showToast('INFO', 'Audio Stream Paused');
-      }
+      const isNowPlaying = toggleAudio();
+      showToast('INFO', isNowPlaying ? 'Audio Stream Playing' : 'Audio Stream Paused');
     });
-
-    let firstInteraction = false;
-    document.body.addEventListener('click', () => {
-      if (!firstInteraction) {
-        firstInteraction = true;
-        const audio = getGlobalAudio() || initGlobalAudio();
-        if (audio.paused) {
-           audio.play().then(() => {
-             setAudioPlaying(true);
-             playAudioBtn.innerHTML = '&#10074;&#10074;';
-             playAudioBtn.title = "Pause Music";
-           }).catch(()=>{});
-        }
-      }
-    }, { once: true });
   }
 
   initSidebar();

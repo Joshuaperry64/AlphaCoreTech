@@ -57,14 +57,29 @@ export function initGlobalAudio() {
   globalAudio.loop = true;
   globalAudio.volume = 0.5;
 
+  globalAudio.addEventListener('play', () => {
+    isPlaying = true;
+    const playBtn = document.getElementById('play-audio-btn');
+    if (playBtn) {
+      playBtn.innerHTML = '&#10074;&#10074;';
+      playBtn.title = "Pause Music";
+    }
+  });
+
+  globalAudio.addEventListener('pause', () => {
+    isPlaying = false;
+    const playBtn = document.getElementById('play-audio-btn');
+    if (playBtn) {
+      playBtn.innerHTML = '&#9658;';
+      playBtn.title = "Play Music";
+    }
+  });
+
   if (!unlockBound && typeof window !== 'undefined') {
     unlockBound = true;
     const unlockAudio = () => {
       if (globalAudio && globalAudio.paused) {
         globalAudio.play().then(() => {
-          isPlaying = true;
-          const playBtn = document.getElementById('play-audio-btn');
-          if (playBtn) playBtn.innerHTML = '&#10074;&#10074;';
           if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
           }
@@ -110,22 +125,19 @@ export function toggleAudio() {
     initGlobalAudio();
   }
 
-  if (isPlaying) {
+  if (!globalAudio.paused) {
     globalAudio.pause();
-    isPlaying = false;
   } else {
-    isPlaying = true;
     globalAudio.play().then(() => {
       if (audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
     }).catch((e) => {
       console.warn("Audio play prevented:", e);
-      isPlaying = false;
     });
   }
 
-  return isPlaying;
+  return !globalAudio.paused;
 }
 
 export function setAudioPlaying(playing) {

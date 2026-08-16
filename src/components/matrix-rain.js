@@ -28,41 +28,45 @@ export function initMatrixRain() {
   window.addEventListener('resize', resize);
 
   const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
-  const fontSize = 18;
+  const fontSize = 16;
   let cols = Math.floor(canvas.width / fontSize);
-  let drops = Array(cols).fill(1);
+  let drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
 
   window.addEventListener('resize', () => {
     const newCols = Math.floor(canvas.width / fontSize);
     if (newCols !== cols) {
-      const newDrops = Array(newCols).fill(1);
-      for (let i = 0; i < Math.min(cols, newCols); i++) {
-        newDrops[i] = drops[i];
-      }
+      const newDrops = Array.from({ length: newCols }, (_, i) => i < drops.length ? drops[i] : Math.floor(Math.random() * -50));
       drops = newDrops;
       cols = newCols;
     }
   });
 
   let lastDrawTime = 0;
-  const fps = 24;
+  const fps = 30;
   const interval = 1000 / fps;
 
   function draw(timestamp) {
     requestAnimationFrame(draw);
 
-    if (document.hidden || isEcoMode) return;
+    if (document.hidden || isEcoMode) {
+      if (isEcoMode) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
 
     const delta = timestamp - lastDrawTime;
     if (delta < interval) return;
 
     lastDrawTime = timestamp - (delta % interval);
 
-    ctx.fillStyle = 'rgba(3, 3, 5, 0.12)';
+    ctx.fillStyle = 'rgba(3, 4, 8, 0.16)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = '#00b8ff';
-    ctx.font = `${fontSize}px 'Share Tech Mono', monospace`;
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`;
+    ctx.shadowColor = '#00b8ff';
+    ctx.shadowBlur = 8;
     
     for (let i = 0; i < drops.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)];

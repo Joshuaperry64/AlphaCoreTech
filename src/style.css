@@ -70,7 +70,9 @@ html, body {
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 0;
-  opacity: 0.45;
+  opacity: 0.75;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
 /* ====== CRT OVERLAY ====== */
@@ -3005,6 +3007,10 @@ input:focus, textarea:focus {
   border-color: rgba(255, 200, 0, 0.5);
   box-shadow: 0 0 15px rgba(255, 200, 0, 0.4);
   color: #ffc800;
+}
+
+body.eco-mode #matrix-canvas {
+  opacity: 0 !important;
 }
 
 body.eco-mode .crt-overlay {
