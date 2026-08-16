@@ -61,11 +61,27 @@ function updateActiveNav(hash) {
 }
 
 function renderRoute() {
-  if (!location.hash || location.hash === '#') {
-    window.history.replaceState(null, '', '#/');
+  const currentProfile = sessionStorage.getItem('current_profile');
+  const sidebar = document.getElementById('sidebar');
+  const mobileTopbar = document.getElementById('mobile-topbar');
+
+  // UNAUTHENTICATED: Intro & PIN Pad attached straight to root
+  if (!currentProfile) {
+    if (location.hash && location.hash !== '#') {
+      window.history.replaceState(null, '', location.pathname);
+    }
+    mountIntro(false);
+    return;
   }
 
-  const hash = location.hash.replace(/^#/, '') || '/';
+  // AUTHENTICATED: Root URL / or #/ redirects to #/overview
+  if (!location.hash || location.hash === '#' || location.hash === '#/') {
+    window.history.replaceState(null, '', '#/overview');
+  }
+
+  const rawHash = location.hash.replace(/^#/, '') || '/overview';
+  const hash = rawHash === '/' ? '/overview' : rawHash;
+
   const app = document.getElementById('app');
   app.innerHTML = '';
   app.scrollTop = 0;
@@ -74,16 +90,6 @@ function renderRoute() {
   app.classList.remove('page-transition');
   void app.offsetWidth; // trigger reflow
   app.classList.add('page-transition');
-
-  // CHECK SESSION AUTHORIZATION
-  const currentProfile = sessionStorage.getItem('current_profile');
-  const sidebar = document.getElementById('sidebar');
-  const mobileTopbar = document.getElementById('mobile-topbar');
-
-  if (!currentProfile) {
-    mountIntro(false);
-    return;
-  }
 
   document.body.classList.remove('intro-mode');
   if (sidebar) sidebar.style.display = '';
@@ -104,9 +110,9 @@ function renderRoute() {
   const vaultTab = document.querySelector('a[data-route="/vault"]');
   if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
 
-  const isGuest = currentProfile === 'Guest' || !currentProfile;
+  const isGuest = currentProfile === 'Guest';
 
-  const routeFn = routes[hash] || routes['/'];
+  const routeFn = routes[hash] || routes['/overview'] || routes['/'];
   const pageElement = routeFn();
 
   if (isGuest) {
@@ -170,6 +176,7 @@ function mountIntro(force) {
     document.body.classList.remove('intro-mode');
     if (sidebar) sidebar.style.display = '';
     if (mobileTopbar) mobileTopbar.style.display = '';
+    window.location.hash = '#/overview';
     renderRoute();
   });
   

@@ -130,28 +130,16 @@ export default function createIntro(onComplete) {
 
   // ─── Audio Spectrum Visualizer ─────────────────────────────────────────────
 
+  // ─── Audio Spectrum Visualizer & Defer Playback ───────────────────────────
+
   function startAudioVisualizer() {
     try {
       const audio = initGlobalAudio();
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(() => {
-        const unlock = () => {
-          audio.play().then(() => setAudioPlaying(true)).catch(() => {});
-          document.removeEventListener('click', unlock);
-        };
-        document.addEventListener('click', unlock);
-      });
 
-      const audioSetup = getAudioContext();
-      if (!audioSetup) return;
-
-      const { analyser } = audioSetup;
-      if (!analyser) return;
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
       const canvasCtx = visCanvas.getContext('2d');
+      if (!canvasCtx) return;
+
+      let tick = 0;
 
       function drawVis() {
         if (cancelled) return;
@@ -160,33 +148,51 @@ export default function createIntro(onComplete) {
         visCanvas.width = window.innerWidth;
         visCanvas.height = 80;
         canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-        analyser.getByteFrequencyData(dataArray);
 
-        const barWidth = (visCanvas.width / bufferLength) * 2.5;
-        let x = 0;
+        tick += 0.05;
+        const audioSetup = getAudioContext();
         let bassSum = 0;
 
-        for (let i = 0; i < bufferLength; i++) {
-          const barHeight = (dataArray[i] / 255) * 60;
-          if (i < 8) bassSum += dataArray[i];
+        if (audioSetup && audioSetup.analyser) {
+          const { analyser } = audioSetup;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          analyser.getByteFrequencyData(dataArray);
 
-          canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.2 + (dataArray[i] / 255) * 0.6})`;
-          canvasCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
+          const barWidth = (visCanvas.width / bufferLength) * 2.5;
+          let x = 0;
 
-          x += barWidth + 1;
+          for (let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * 60;
+            if (i < 8) bassSum += dataArray[i];
+
+            canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.2 + (dataArray[i] / 255) * 0.6})`;
+            canvasCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+          }
+        } else {
+          // Ambient fallback wave before audio interaction
+          const bars = 64;
+          const barWidth = visCanvas.width / bars;
+          for (let i = 0; i < bars; i++) {
+            const h = Math.abs(Math.sin(tick + i * 0.15)) * 25 + 5;
+            canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.15 + (h / 30) * 0.3})`;
+            canvasCtx.fillRect(i * barWidth, visCanvas.height - h, barWidth - 1, h);
+          }
         }
 
-        // Pulse logo scale subtly to bass
         const avgBass = bassSum / 8;
         const scale = 1 + (avgBass / 255) * 0.08;
         logoImg.style.transform = `scale(${scale})`;
       }
 
       drawVis();
-    } catch {}
+    } catch (e) {
+      // Non-critical visualizer fallback
+    }
   }
 
-  setTimeout(startAudioVisualizer, 800);
+  setTimeout(startAudioVisualizer, 300);
 
   // Cleanup
   function cleanup() {
