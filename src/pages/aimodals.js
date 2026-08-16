@@ -1270,9 +1270,9 @@ function buildTxt2Vid() {
       });
       
       const endpoint = 'https://ai-alphacore-tech--txt2vid-wan-14b-model-web.modal.run/stream';
-      const res = await fetch(\`\${endpoint}?\${params}\`);
+      const res = await fetch(`${endpoint}?${params}`);
       
-      if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -1282,19 +1282,19 @@ function buildTxt2Vid() {
 
       const resultEl = document.createElement('div');
       resultEl.className = 'aim-result-view';
-      resultEl.innerHTML = \`
+      resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="\${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" src="${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
         <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
           <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
         </div>
-      \`;
+      `;
 
       resultEl.querySelector('#aim-dl-vid-btn').onclick = () => {
         const a = document.createElement('a');
         a.href = url;
-        a.download = \`alphacore_video_\${Date.now()}.mp4\`;
+        a.download = `alphacore_video_${Date.now()}.mp4`;
         a.click();
       };
 
@@ -1305,9 +1305,10 @@ function buildTxt2Vid() {
     } catch (err) {
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
-      setStatus(wrap, '#t2v-status', \`FAILURE: \${err.message}\`, 'error');
+      setStatus(wrap, '#t2v-status', `FAILURE: ${err.message}`, 'error');
     } finally {
       genBtn.disabled = false;
+
     }
   });
 
