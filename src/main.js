@@ -61,6 +61,10 @@ function updateActiveNav(hash) {
 }
 
 function renderRoute() {
+  if (!location.hash || location.hash === '#') {
+    window.history.replaceState(null, '', '#/');
+  }
+
   const hash = location.hash.replace(/^#/, '') || '/';
   const app = document.getElementById('app');
   app.innerHTML = '';
