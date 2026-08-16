@@ -381,6 +381,24 @@ body.sidebar-collapsed .main-content {
   scroll-behavior: smooth;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+body.intro-mode #sidebar,
+body.intro-mode #mobile-topbar {
+  display: none !important;
+}
+
+body.intro-mode .main-content {
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: fixed !important;
+  z-index: 999999 !important;
+}
 .main-content::-webkit-scrollbar { width: 4px; }
 .main-content::-webkit-scrollbar-track { background: transparent; }
 .main-content::-webkit-scrollbar-thumb { background: var(--blue-dark); border-radius: 4px; }

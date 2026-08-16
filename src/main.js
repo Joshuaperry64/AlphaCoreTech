@@ -83,6 +83,7 @@ function renderRoute() {
     return;
   }
 
+  document.body.classList.remove('intro-mode');
   if (sidebar) sidebar.style.display = '';
   if (mobileTopbar) mobileTopbar.style.display = '';
 
@@ -107,6 +108,7 @@ function renderRoute() {
 }
 
 function mountIntro(force) {
+  document.body.classList.add('intro-mode');
   const sidebar = document.getElementById('sidebar');
   const mobileTopbar = document.getElementById('mobile-topbar');
   if (sidebar) sidebar.style.display = 'none';
@@ -116,6 +118,7 @@ function mountIntro(force) {
   app.innerHTML = '';
   
   const introEl = createIntro(() => {
+    document.body.classList.remove('intro-mode');
     if (sidebar) sidebar.style.display = '';
     if (mobileTopbar) mobileTopbar.style.display = '';
     renderRoute();
@@ -167,9 +170,8 @@ window.addEventListener('DOMContentLoaded', () => {
   initSidebar();
   initModal();
 
-  // Mount intro sequence on fresh load (always presents intro + pinpad login)
-  sessionStorage.removeItem('current_profile');
-  mountIntro(false);
+  // Initial route render (triggers intro + pinpad login if not authenticated)
+  renderRoute();
 
   // Add lock system / login to sidebar
   const nav = document.getElementById('sidebar-nav');
