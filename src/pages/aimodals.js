@@ -256,7 +256,7 @@ function buildTxt2Img() {
           <option value="unholyDesireMixFoolS_v60.safetensors">UNHOLY DESIRE MIX</option>
           <option value="autismmixSDXL_autismmixPony.safetensors">AUTISMMIX PONY</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH V9</option>
-          <option value="epicrealismXL_pureFix.safetensors">EPICREALISM PURE FIX</option>
+          <option value="epicrealismXL_pureFix.safetensors">EPICREALISM</option>
         </select>
       </div>
     </div>
