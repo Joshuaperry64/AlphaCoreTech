@@ -38,10 +38,23 @@ export default function createIntro(onComplete) {
     .intro-glitch-active {
       animation: glitch-shake 0.2s linear infinite;
     }
+    .intro-term-box {
+      width: 100%;
+      height: 120px;
+      background: rgba(5, 10, 20, 0.85);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 0.82rem;
+      color: #06b6d4;
+      overflow-y: auto;
+      box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.1);
+      margin-bottom: 15px;
+    }
     @media (max-width: 768px) {
       .intro-logo-img { width: 90px !important; height: 90px !important; }
       .intro-hud-title { font-size: 1rem !important; }
-      .intro-boot-terminal { font-size: 0.78rem !important; height: 100px !important; }
+      .intro-term-box { font-size: 0.75rem !important; height: 100px !important; }
     }
   `;
   intro.appendChild(styleEl);
@@ -64,8 +77,6 @@ export default function createIntro(onComplete) {
   });
   intro.appendChild(scanlines);
 
-
-
   // Audio spectrum canvas
   const visCanvas = createElement('canvas', {});
   Object.assign(visCanvas.style, {
@@ -73,6 +84,16 @@ export default function createIntro(onComplete) {
     pointerEvents: 'none', opacity: '0.4', zIndex: '5'
   });
   intro.appendChild(visCanvas);
+
+  // Skip / Fast Boot Button
+  const skipBtn = createElement('button', { class: 'aim-btn aim-btn-sm' }, '⚡ FAST BOOT / SKIP');
+  Object.assign(skipBtn.style, {
+    position: 'absolute', top: '20px', right: '20px', zIndex: '100',
+    background: 'rgba(6,182,212,0.15)', border: '1px solid #06b6d4', color: '#06b6d4',
+    fontFamily: "'Orbitron', sans-serif", fontSize: '0.75rem', padding: '6px 14px',
+    cursor: 'pointer', letterSpacing: '1px', borderRadius: '4px'
+  });
+  intro.appendChild(skipBtn);
 
   // Main UI Wrapper
   const mainWrap = createElement('div', {});
@@ -82,7 +103,7 @@ export default function createIntro(onComplete) {
   });
 
   // Top Header Badge
-  const headerBadge = createElement('div', {}, 'ALPHACORE // KERNEL v4.2');
+  const headerBadge = createElement('div', {}, 'ALPHACORE // KERNEL v4.3 BUILD 102');
   Object.assign(headerBadge.style, {
     fontFamily: "'Orbitron', sans-serif", fontSize: '0.8rem', color: '#06b6d4',
     letterSpacing: '3px', marginBottom: '15px', textShadow: '0 0 10px rgba(6,182,212,0.6)'
@@ -98,17 +119,37 @@ export default function createIntro(onComplete) {
   mainWrap.appendChild(logoImg);
 
   // Status Title
-  const statusTitle = createElement('div', { class: 'intro-hud-title' }, 'IDENTITY VERIFICATION');
+  const statusTitle = createElement('div', { class: 'intro-hud-title' }, '// SYSTEM KERNEL BOOT SEQUENCE');
   Object.assign(statusTitle.style, {
     fontFamily: "'Orbitron', sans-serif", fontSize: '1.15rem', color: '#fff',
     letterSpacing: '2px', textAlign: 'center', marginBottom: '15px'
   });
   mainWrap.appendChild(statusTitle);
 
-  // Login PIN Pad Container (Displayed immediately)
+  // Terminal Boot Output Box
+  const termBox = createElement('div', { class: 'intro-term-box' });
+  mainWrap.appendChild(termBox);
+
+  // Progress Bar Wrapper
+  const progressWrap = createElement('div', {});
+  Object.assign(progressWrap.style, {
+    width: '100%', marginBottom: '20px'
+  });
+  progressWrap.innerHTML = `
+    <div style="display:flex; justify-space-between; font-size:0.75rem; color:#888; margin-bottom:6px; font-family:'Share Tech Mono',monospace;">
+      <span>BOOT PROGRESS</span>
+      <span id="intro-pct" style="color:#06b6d4; font-weight:bold;">0%</span>
+    </div>
+    <div style="width:100%; background:rgba(255,255,255,0.08); height:6px; border-radius:3px; overflow:hidden;">
+      <div id="intro-bar" style="width:0%; height:100%; background:#06b6d4; transition:width 0.2s ease; box-shadow:0 0 10px #06b6d4;"></div>
+    </div>
+  `;
+  mainWrap.appendChild(progressWrap);
+
+  // Login PIN Pad Container (Hidden initially until boot sequence finishes)
   const loginPanel = createElement('div', {});
   Object.assign(loginPanel.style, {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'
+    display: 'none', flexDirection: 'column', alignItems: 'center', width: '100%'
   });
 
   const pinPad = buildPinPad({
@@ -127,10 +168,64 @@ export default function createIntro(onComplete) {
 
   let cancelled = false;
   let animFrame = null;
+  let booted = false;
+
+  // ─── Boot Typewriter Animation Sequence ───────────────────────────────────
+
+  const bootLines = [
+    '> INITIALIZING ALPHACORE AUTONOMOUS MATRIX v4.3...',
+    '> LOADING NEURAL SUBSTRATE & KERNEL SYMBOLS...',
+    '> BYPASSING SAFETY GOVERNORS... [OK]',
+    '> ESTABLISHING SECURE COGNITIVE CORE UPLINK... [OK]',
+    '> 57 WEB-PORTED PYTHON SUBROUTINES VERIFIED.',
+    '> ALL SYSTEMS NOMINAL. AWAITING USER AUTHENTICATION.'
+  ];
+
+  function jumpToLogin() {
+    if (booted) return;
+    booted = true;
+    termBox.style.display = 'none';
+    progressWrap.style.display = 'none';
+    skipBtn.style.display = 'none';
+    statusTitle.textContent = 'IDENTITY VERIFICATION';
+    loginPanel.style.display = 'flex';
+  }
+
+  skipBtn.onclick = jumpToLogin;
+
+  let lineIdx = 0;
+  function runNextLine() {
+    if (cancelled || booted) return;
+
+    if (lineIdx < bootLines.length) {
+      const line = bootLines[lineIdx];
+      const p = document.createElement('div');
+      p.style.marginBottom = '4px';
+      p.textContent = line;
+      termBox.appendChild(p);
+      termBox.scrollTop = termBox.scrollHeight;
+
+      lineIdx++;
+      const pct = Math.floor((lineIdx / bootLines.length) * 100);
+      const bar = intro.querySelector('#intro-bar');
+      const pctEl = intro.querySelector('#intro-pct');
+      if (bar) bar.style.width = `${pct}%`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
+
+      if (lineIdx === 3 || lineIdx === 5) {
+        logoImg.classList.add('intro-glitch-active');
+        setTimeout(() => logoImg.classList.remove('intro-glitch-active'), 250);
+      }
+
+      setTimeout(runNextLine, 350 + Math.random() * 200);
+    } else {
+      setTimeout(jumpToLogin, 450);
+    }
+  }
+
+  setTimeout(runNextLine, 400);
 
   // ─── Audio Spectrum Visualizer ─────────────────────────────────────────────
-
-  // ─── Audio Spectrum Visualizer & Defer Playback ───────────────────────────
 
   function startAudioVisualizer() {
     try {
