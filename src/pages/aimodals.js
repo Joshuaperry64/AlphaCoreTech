@@ -647,16 +647,10 @@ function buildImg2Img() {
     </div>
 
     <div class="aim-row">
-      <div class="aim-field aim-field-half">
+      <div class="aim-field" style="width: 100%;">
         <label class="aim-label" for="i2i-batch">BATCH COUNT (1-${maxBatchCount}) ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
         <input class="aim-input" type="number" id="i2i-batch" min="1" max="${maxBatchCount}" value="1" />
       </div>
-        <div class="aim-field" id="i2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
-          <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
-          <select class="aim-input aim-lora-select" id="i2i-lora" multiple ${sessionStorage.getItem('darkness_mode_active') === 'true' ? '' : 'disabled'}>
-            ${LORA_OPTIONS}
-          </select>
-        </div>
     </div>
 
     <details class="aim-advanced">
@@ -826,12 +820,6 @@ function buildImg2Img() {
       return;
     }
 
-    const loraSelect = wrap.querySelector('#i2i-lora');
-    let lora = '';
-    if (loraSelect && !loraSelect.disabled) {
-      lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
-    }
-    
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
       neg = ''; // Override negative prompt, removing restrictions.
@@ -1141,20 +1129,55 @@ function buildMainUI() {
 
 /* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
 function buildFramepack() {
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
-  
-  requireAuth(wrap, {
-    authKey: 'alphacore_auth_fp',
-    title: '// FRAMEPACK STUDIO',
-    subtitle: 'RESTRICTED GPU ACCESS',
-    requiredRole: 'admin',
-    onSuccess: () => {
-      wrap.innerHTML = '';
-      wrap.appendChild(buildFramepackContent());
-    }
-  });
-  
+
+  if (isArchitect) {
+    wrap.appendChild(buildFramepackContent());
+    return wrap;
+  }
+
+  // Non-architect profile: Display blurred preview background with public notice stamp
+  wrap.innerHTML = `
+    <div style="position: relative; width: 100%; min-height: 520px; border-radius: 8px; overflow: hidden; background: #030712;">
+      <!-- Blurred Framepack Interface Preview -->
+      <div style="filter: blur(8px) brightness(0.35); opacity: 0.5; pointer-events: none; user-select: none; padding: 20px;">
+        <div class="aim-panel-header">
+          <span class="aim-panel-icon">🎬</span>
+          <span class="aim-panel-title">FRAMEPACK STUDIO</span>
+          <span class="aim-panel-badge">H100 GPU</span>
+        </div>
+        <div class="aim-row" style="margin-bottom: 20px;">
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            Framepack Studio requires a dedicated H100 container. Framepack video synthesis engine rendering queue.
+          </p>
+        </div>
+        <div class="aim-row" style="display:flex; gap:10px; justify-content: center; margin-bottom: 20px;">
+          <button class="aim-btn" style="padding: 15px 30px; font-size: 1.1rem;">LAUNCH IN BROWSER</button>
+          <button class="aim-btn aim-btn-decline" style="padding: 15px 30px; font-size: 1.1rem;">OPEN IN NEW TAB</button>
+        </div>
+        <div style="width:100%; height:320px; border:1px solid rgba(255,255,255,0.1); border-radius:10px; background: rgba(0,0,0,0.6);"></div>
+      </div>
+
+      <!-- Cyberpunk Public Notice Stamp Overlay -->
+      <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,8,15,0.75); backdrop-filter: blur(4px); padding: 30px; text-align: center; border: 1px solid rgba(6,182,212,0.4); border-radius: 8px;">
+        <div style="font-size: 3rem; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(6,182,212,0.6));">🚧</div>
+        <h2 class="glitch" data-text="FRAMEPACK STUDIO" style="font-family: 'Orbitron', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent, #06b6d4); margin: 0 0 10px 0;">FRAMEPACK STUDIO</h2>
+        
+        <div style="background: rgba(255,0,60,0.15); border: 2px solid #ff003c; color: #ff003c; padding: 12px 28px; border-radius: 4px; font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: bold; letter-spacing: 1.5px; margin-top: 12px; box-shadow: 0 0 25px rgba(255,0,60,0.4); transform: rotate(-1deg); text-transform: uppercase;">
+          ⚠️ NOT QUITE READY FOR PUBLIC USE. STAY TUNED!
+        </div>
+
+        <p style="color: #aaa; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; margin-top: 22px; max-width: 460px; line-height: 1.5;">
+          Framepack H100 Neural Video Synthesis is restricted during active profile deployment. Full public access will unlock upon model optimization.
+        </p>
+      </div>
+    </div>
+  `;
+
   return wrap;
 }
 
