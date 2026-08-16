@@ -15,14 +15,13 @@ export default function CognitiveUplink() {
       <h1 class="glitch" data-text="// COGNITIVE_CORE">// COGNITIVE_CORE</h1>
       <div class="header-line"></div>
       
-      <div class="aim-status-panel" style="margin-top: 15px; padding: 10px; border: 1px solid var(--accent); background: rgba(255,0,60,0.05); display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-        <div id="cog-backend-status" style="font-weight: bold; flex: 1; color: #00ffff; font-family: 'Courier New', monospace;">STATUS: ❄ COLD BOOT</div>
-        <button id="cog-lock-btn" class="aim-btn aim-btn-sm" style="font-size: 0.8rem; padding: 6px 12px;">🔒 LOCK ON (15M)</button>
-        <button id="cog-shutdown-btn" class="aim-btn aim-btn-sm aim-btn-decline" style="font-size: 0.8rem; padding: 6px 12px; margin-top: 0;">⏻ SHUT DOWN</button>
+      <div class="aim-status-panel" style="margin-top: 15px; padding: 10px 16px; border: 1px solid var(--accent, #06b6d4); background: rgba(6,182,212,0.05); display: flex; align-items: center; justify-content: space-between;">
+        <div id="cog-backend-status" style="font-weight: bold; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;">● SYSTEM ONLINE: VLLM NEURAL ENGINE ACTIVE</div>
+        <span style="font-size:0.75rem; color:#888; font-family:'Share Tech Mono',monospace;">ENDPOINT: MODAL GEMMA AGENT</span>
       </div>
     </div>
 
-    <div class="aim-row" style="margin-bottom: 20px;">
+    <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
       <div class="aim-seg aim-seg-3" id="cog-tabs">
         <button class="aim-seg-btn active" data-target="cog-chat-view">NEURAL CHAT</button>
         <button class="aim-seg-btn" data-target="cog-memory-view">MEMORY MATRIX</button>
@@ -32,13 +31,6 @@ export default function CognitiveUplink() {
 
     <!-- CHAT VIEW -->
     <div class="uplink-grid cog-view active" id="cog-chat-view" style="position: relative;">
-
-      <!-- COMING SOON OVERLAY -->
-      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,12,0.9); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; border-radius: 4px; border: 1px solid rgba(6,182,212,0.3); padding: 20px; text-align: center;">
-        <h2 class="glitch" data-text="COMING SOON" style="font-family: 'Orbitron', sans-serif; color: var(--accent, #06b6d4); font-size: clamp(1.8rem, 5vw, 2.5rem); letter-spacing: 2px; text-shadow: 0 0 15px rgba(6,182,212,0.6);">COMING SOON</h2>
-        <div style="background: var(--cyan, #06b6d4); color: #000; padding: 5px 15px; border-radius: 2px; font-family: 'Share Tech Mono', monospace; font-weight: bold; margin-top: 10px; font-size: clamp(0.9rem, 3vw, 1.1rem); box-shadow: 0 0 10px rgba(6,182,212,0.4);">// NEURAL CHAT</div>
-        <p style="color: #aaa; font-family: 'Share Tech Mono', monospace; font-size: clamp(0.85rem, 3vw, 1rem); margin-top: 20px; border-top: 1px dashed rgba(6,182,212,0.3); padding-top: 15px; width: 100%; max-width: 300px;">Neural Chat synthesis engine is undergoing final training.</p>
-      </div>
 
       <div class="panel chat-panel">
         <div class="panel-title">// NEURAL_BRIDGE — LIVE</div>

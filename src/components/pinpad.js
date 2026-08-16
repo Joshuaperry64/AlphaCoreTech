@@ -433,6 +433,5 @@ function triggerBypassOverloadSequence() {
       crashOverlay.remove();
       window.location.reload();
     };
-  }, 2000);
+  }, 5000);
 }
-
