@@ -60,7 +60,7 @@ function updateActiveNav(hash) {
   });
 }
 
-function renderRoute() {
+async function renderRoute() {
   const currentProfile = sessionStorage.getItem('current_profile');
   const sidebar = document.getElementById('sidebar');
   const mobileTopbar = document.getElementById('mobile-topbar');
@@ -70,7 +70,41 @@ function renderRoute() {
     if (location.hash && location.hash !== '#') {
       window.history.replaceState(null, '', location.pathname);
     }
-    mountIntro(false);
+    
+    document.body.classList.add('intro-mode');
+    if (sidebar) sidebar.style.display = 'none';
+    if (mobileTopbar) mobileTopbar.style.display = 'none';
+    const brControls = document.querySelector('.bottom-right-controls');
+    if (brControls) brControls.style.display = '';
+    
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    
+    const { introContainer, cleanup } = await createIntro(app);
+    
+    const loginPanel = document.createElement('div');
+    Object.assign(loginPanel.style, {
+      display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%'
+    });
+    
+    const pinPad = buildPinPad({
+      onSuccess: () => {
+        cleanup();
+        localStorage.setItem('alphacore_intro_complete', '1');
+        document.body.classList.remove('intro-mode');
+        if (sidebar) sidebar.style.display = '';
+        if (mobileTopbar) mobileTopbar.style.display = '';
+        const brControls = document.querySelector('.bottom-right-controls');
+        if (brControls) brControls.style.display = '';
+        window.location.hash = '#/overview';
+        renderRoute();
+      },
+      title: '// ALPHACORE IDENTITY_VERIFICATION',
+      subtitle: 'ENTER SECURE ACCESS PIN'
+    });
+    
+    loginPanel.appendChild(pinPad);
+    introContainer.appendChild(loginPanel);
     return;
   }
 
@@ -94,6 +128,8 @@ function renderRoute() {
   document.body.classList.remove('intro-mode');
   if (sidebar) sidebar.style.display = '';
   if (mobileTopbar) mobileTopbar.style.display = '';
+  const brControls = document.querySelector('.bottom-right-controls');
+  if (brControls) brControls.style.display = '';
 
   // Ensure sidebar profile label and tab visibility match active profile roles
   const authVal = document.getElementById('sidebar-auth-val');
@@ -162,32 +198,12 @@ function renderRoute() {
   updateActiveNav(hash);
 }
 
-function mountIntro(force) {
-  document.body.classList.add('intro-mode');
-  const sidebar = document.getElementById('sidebar');
-  const mobileTopbar = document.getElementById('mobile-topbar');
-  if (sidebar) sidebar.style.display = 'none';
-  if (mobileTopbar) mobileTopbar.style.display = 'none';
-
-  const app = document.getElementById('app');
-  app.innerHTML = '';
-  
-  const introEl = createIntro(() => {
-    document.body.classList.remove('intro-mode');
-    if (sidebar) sidebar.style.display = '';
-    if (mobileTopbar) mobileTopbar.style.display = '';
-    window.location.hash = '#/overview';
-    renderRoute();
-  });
-  
-  app.appendChild(introEl);
-}
-
 window.addEventListener('hashchange', () => {
   playSFX('navigate', 0.5);
   renderRoute();
 });
-window.addEventListener('DOMContentLoaded', () => {
+
+function initApp() {
   // Init global systems
   initThemeSwitcher();
   initCommandPalette();
@@ -248,17 +264,11 @@ window.addEventListener('DOMContentLoaded', () => {
         showModal({
           title: '✦ SECRET PROTOCOL ACTIVATED',
           content: `
-            <div style="text-align: center; padding: 20px; font-family: 'Share Tech Mono', monospace;">
-              <div style="font-size: 3.5rem; margin-bottom: 10px; animation: pulse 0.6s infinite alternate;">🌆</div>
-              <h2 class="glitch" data-text="SYNTHWAVE OVERDRIVE" style="font-family: 'Orbitron', sans-serif; color: #ff007f; font-size: 1.6rem; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,0,127,0.8);">
-                SYNTHWAVE OVERDRIVE UNLOCKED
-              </h2>
-              <div style="background: rgba(255,0,127,0.15); border: 1px solid #ff007f; color: #00f0ff; padding: 12px; border-radius: 4px; font-size: 0.9rem; margin: 15px 0; font-weight: bold;">
-                ✨ REWARD GRANTED: Full Neon Palette Inversion & Permanent Session Override Unlocked!
-              </div>
-              <p style="color: #aaa; font-size: 0.85rem; line-height: 1.5;">
-                You have discovered the secret Vaporwave Overdrive Protocol! Cyberpunk UI color tokens updated to high-octane Hot Magenta & Neon Cyan.
-              </p>
+            <div style="text-align: center; font-family: 'Share Tech Mono', monospace; line-height: 1.6;">
+              <div style="font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 20px #ff00ff;">SYSTEM OVERDRIVE ENGAGED</div>
+              <div style="color: #06b6d4;">SYNTHWAVE THEME UNLOCKED.</div>
+              <div style="color: #10b981;">ALL SUBSYSTEMS AUTHENTICATED.</div>
+              <div style="color: #ff003c; margin-top: 15px; font-size: 0.85rem;">"We're in."</div>
             </div>
           `
         });
@@ -270,8 +280,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('keydown', (e) => {
-    // Secret Konami Code Check
-    if (e.key.toLowerCase() === secretSeq[keyIndex].toLowerCase()) {
+    // 1. Konami Code Logic
+    if (e.key === secretSeq[keyIndex]) {
       keyIndex++;
       if (keyIndex === secretSeq.length) {
         triggerSecretOverdrive();
@@ -281,12 +291,14 @@ window.addEventListener('DOMContentLoaded', () => {
       keyIndex = 0;
     }
 
-    // Secret Word Typing Check ("synthwave" or "overdrive")
-    typedString += e.key.toLowerCase();
-    if (typedString.length > 20) typedString = typedString.slice(-20);
-    if (typedString.includes('synthwave') || typedString.includes('overdrive')) {
-      typedString = '';
-      triggerSecretOverdrive();
+    // 2. Text-based cheat code fallback
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      typedString += e.key.toLowerCase();
+      if (typedString.length > 20) typedString = typedString.slice(-20);
+      if (typedString.includes('iddqd') || typedString.includes('alphacore')) {
+        triggerSecretOverdrive();
+        typedString = '';
+      }
     }
   });
 
@@ -304,9 +316,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Initial route render (triggers intro + pinpad login if not authenticated)
-  renderRoute();
-
   // Add lock system / login to sidebar
   const nav = document.getElementById('sidebar-nav');
   if (nav) {
@@ -315,7 +324,7 @@ window.addEventListener('DOMContentLoaded', () => {
     lockLink.className = 'nav-item';
     lockLink.setAttribute('data-label', 'Lock System');
     lockLink.innerHTML = '<span class="nav-icon">🔒</span><span class="nav-label">LOCK SYSTEM</span><span class="nav-arrow">›</span>';
-    lockLink.onclick = e => { e.preventDefault(); sessionStorage.removeItem('current_profile'); mountIntro(true); };
+    lockLink.onclick = e => { e.preventDefault(); sessionStorage.removeItem('current_profile'); window.location.hash = '#'; renderRoute(); };
     nav.appendChild(lockLink);
   }
 
@@ -348,4 +357,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
   document.body.appendChild(pixel);
-});
+}
+
+// Ensure the #/ hash exists on direct root load, then init
+if (!window.location.hash) {
+  window.history.replaceState(null, '', '#/');
+}
+
+// Call init functions and kickoff initial route render
+initApp();
+renderRoute();

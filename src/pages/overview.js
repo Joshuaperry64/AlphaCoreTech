@@ -61,12 +61,7 @@ export default function Overview() {
         <a href="#/admin" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚙ ADMINISTRATION</a>
       </div>
 
-      <div class="alpha-hero-wrap">
-        <img src="/Images/wallpapernew.png" class="alpha-hero-img desktop-hero" alt="Alpha Core">
-        <img src="/Images/wallpapernew.png" class="alpha-hero-img mobile-hero" alt="Alpha Core">
-        <div class="alpha-hero-overlay"></div>
-        <div class="hero-scan"></div>
-      </div>
+
 
       <div id="telemetry-hud-mount"></div>
 
