@@ -9,7 +9,7 @@ import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
-  <option value="New_Amateurs_XL.safetensors">NEW AMATEURS XL</option>
+  <option value="New_Amateurs_XL.safetensors">AMATEUR</option>
 `;
 
 function getModalSettings() {
@@ -231,7 +231,7 @@ function buildTxt2Img() {
     <div class="aim-panel-header">
       <span class="aim-panel-icon">✦</span>
       <span class="aim-panel-title">TEXT TO IMAGE</span>
-      <span class="aim-panel-badge">SDXL MERGER</span>
+      <span class="aim-panel-badge">SDXL ENGINE</span>
     </div>
 
     <div class="aim-field">
@@ -339,7 +339,6 @@ function buildTxt2Img() {
 
     genBtn.disabled = true;
     setStatus(wrap, '#t2i-status', 'ROUTING TO GPU NODE...', 'info');
-    resultSlot.innerHTML = '';
     const loader = buildLoader('SYNTHESIZING IMAGE...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
@@ -436,6 +435,7 @@ function buildTxt2Img() {
 
       const resultEl = buildResult(url);
       resultEl.classList.remove('hidden');
+      resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#t2i-status', 'ARTIFACT RENDERED SUCCESSFULLY.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'T2I', prompt, batchSize });
@@ -652,7 +652,6 @@ function buildImg2Img() {
 
     genBtn.disabled = true;
     setStatus(wrap, '#i2i-status', 'ROUTING TO GPU NODE...', 'info');
-    resultSlot.innerHTML = '';
     const loader = buildLoader('PROCESSING EDIT...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
@@ -739,6 +738,7 @@ function buildImg2Img() {
 
       const resultEl = buildResult(url);
       resultEl.classList.remove('hidden');
+      resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
       setStatus(wrap, '#i2i-status', 'EDIT APPLIED SUCCESSFULLY.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'I2I', prompt, batchSize });
