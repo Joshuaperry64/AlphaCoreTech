@@ -62,8 +62,7 @@ function updateActiveNav(hash) {
 
 function renderRoute() {
   if (!location.hash || location.hash === '#') {
-    location.hash = '#/';
-    return;
+    window.history.replaceState(null, '', '#/');
   }
 
   const hash = location.hash.replace(/^#/, '') || '/';
