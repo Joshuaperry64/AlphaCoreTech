@@ -285,6 +285,18 @@ function buildTxt2Img() {
       <textarea class="aim-textarea" id="t2i-prompt" rows="4" placeholder="Describe what you want to generate..."></textarea>
     </div>
 
+    ${(() => {
+      const injected = localStorage.getItem('alphacore_injected_prompt');
+      if (injected) {
+        localStorage.removeItem('alphacore_injected_prompt');
+        setTimeout(() => {
+          const pInput = wrap.querySelector('#t2i-prompt');
+          if (pInput) pInput.value = injected;
+        }, 50);
+      }
+      return '';
+    })()}
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">SPEED MODE</label>
@@ -617,24 +629,6 @@ function buildImg2Img() {
       </div>
     </div>
 
-    <details class="aim-advanced" style="margin-bottom: 15px;">
-      <summary class="aim-advanced-toggle">▶ REFERENCE IMAGES (UP TO 5)</summary>
-      <div class="aim-advanced-body" style="display:flex; gap:10px; overflow-x:auto;">
-        ${[1,2,3,4,5].map(i => `
-        <div class="aim-field" style="min-width: 100px;">
-          <div class="aim-dropzone" id="i2i-ref-dropzone${i}" style="height: 100px; min-height: 100px;">
-            <input type="file" id="i2i-ref-file${i}" accept="image/*" class="aim-file-input" />
-            <div class="aim-dropzone-inner" id="i2i-ref-dz-inner${i}" style="padding: 10px;">
-              <div class="aim-dz-icon" style="font-size: 1.2rem;">📁</div>
-              <div class="aim-dz-text" style="font-size: 0.7rem;">REF ${i}</div>
-            </div>
-            <img class="aim-dz-preview hidden" id="i2i-ref-preview${i}" alt="preview" />
-          </div>
-        </div>
-        `).join('')}
-      </div>
-    </details>
-
     <div class="aim-field">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <label class="aim-label" for="i2i-prompt" style="margin:0;">EDIT INSTRUCTION</label>
@@ -807,16 +801,6 @@ function buildImg2Img() {
 
   bindDropzone(fileInput, dropzone, dzInner, preview);
   bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
-  
-  const refInputs = [];
-  for (let i = 1; i <= 5; i++) {
-    const fInput = wrap.querySelector(`#i2i-ref-file${i}`);
-    const dz = wrap.querySelector(`#i2i-ref-dropzone${i}`);
-    const dzI = wrap.querySelector(`#i2i-ref-dz-inner${i}`);
-    const prv = wrap.querySelector(`#i2i-ref-preview${i}`);
-    bindDropzone(fInput, dz, dzI, prv);
-    refInputs.push(fInput);
-  }
 
   // Generate
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
@@ -876,10 +860,6 @@ function buildImg2Img() {
       const formData = new FormData();
       formData.append('image', file);
       if (file2) formData.append('image2', file2);
-      refInputs.forEach((inp, idx) => {
-        const refFile = inp._droppedFile || inp.files[0];
-        if (refFile) formData.append(`ref${idx+1}`, refFile);
-      });
       formData.append('prompt', prompt);
       formData.append('negative_prompt', neg);
       formData.append('num_inference_steps', steps);
