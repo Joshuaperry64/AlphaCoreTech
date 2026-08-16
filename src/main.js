@@ -100,8 +100,55 @@ function renderRoute() {
   const vaultTab = document.querySelector('a[data-route="/vault"]');
   if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
 
+  const isGuest = currentProfile === 'Guest' || !currentProfile;
+
   const routeFn = routes[hash] || routes['/'];
-  app.appendChild(routeFn());
+  const pageElement = routeFn();
+
+  if (isGuest) {
+    const banner = document.createElement('div');
+    banner.className = 'guest-preview-banner';
+    banner.style.cssText = `
+      background: rgba(255, 0, 60, 0.12);
+      border: 1px solid #ff003c;
+      border-radius: 6px;
+      padding: 12px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      box-shadow: 0 0 20px rgba(255,0,60,0.15);
+    `;
+    banner.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.3rem;">🔒</span>
+        <div>
+          <div style="font-family: 'Orbitron', sans-serif; font-weight: bold; color: #ff003c; font-size: 0.85rem; letter-spacing: 1px;">
+            GUEST PREVIEW MODE // FULL EXECUTION LOCKED
+          </div>
+          <div style="font-size: 0.78rem; color: #ccc; margin-top: 2px;">
+            System features & active execution pipelines are strictly preview only. Login with your profile PIN to unlock full access.
+          </div>
+        </div>
+      </div>
+      <button id="guest-login-banner-btn" class="aim-btn aim-btn-sm" style="background: rgba(255,0,60,0.25); border-color: #ff003c; color: #fff; padding: 8px 16px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px;">
+        🔑 LOGIN / UNLOCK
+      </button>
+    `;
+
+    banner.querySelector('#guest-login-banner-btn').onclick = () => {
+      import('./components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// PROFILE_LOGIN', subtitle: 'ENTER ARCHITECT OR USER PIN TO UNLOCK' });
+      });
+    };
+
+    app.appendChild(banner);
+  }
+
+  app.appendChild(pageElement);
   updateActiveNav(hash);
 }
 

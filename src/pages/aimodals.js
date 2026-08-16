@@ -393,8 +393,8 @@ function buildTxt2Img() {
       </div>
     </details>
 
-      <button class="aim-btn-generate" id="t2i-gen-btn" ${sessionStorage.getItem('generate_authenticated') ? '' : 'disabled'}>
-        <span class="aim-btn-icon">⚡</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE SYNTHESIS' : 'ACCESS DENIED'}
+      <button class="aim-btn-generate" id="t2i-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}">
+        <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE SYNTHESIS' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
       </button>
 
     <div class="aim-status-bar" id="t2i-status"></div>
@@ -431,6 +431,13 @@ function buildTxt2Img() {
 
   // Generate
   wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#t2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image generation.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE IMAGES' });
+      });
+      return;
+    }
     const prompt = wrap.querySelector('#t2i-prompt').value.trim();
     if (!prompt) { setStatus(wrap, '#t2i-status', 'ERROR: Prompt matrix is empty.', 'error'); return; }
 
@@ -714,8 +721,8 @@ function buildImg2Img() {
       </div>
     </details>
 
-    <button class="aim-btn aim-btn-generate" id="i2i-gen-btn" ${sessionStorage.getItem('generate_authenticated') ? '' : 'disabled'}>
-      <span class="aim-btn-icon">⚡</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIATE EDIT' : 'ACCESS DENIED'}
+    <button class="aim-btn aim-btn-generate" id="i2i-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}">
+      <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIATE EDIT' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
     </button>
 
     <div class="aim-status-bar" id="i2i-status"></div>
@@ -798,6 +805,13 @@ function buildImg2Img() {
 
   // Generate
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#i2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image editing.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO EDIT IMAGES' });
+      });
+      return;
+    }
     const file = fileInput._droppedFile || fileInput.files[0];
     const file2 = fileInput2._droppedFile || fileInput2.files[0];
     if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No primary image loaded.', 'error'); return; }

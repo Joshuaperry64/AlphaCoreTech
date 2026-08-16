@@ -308,6 +308,41 @@ export function requireAuth(container, options) {
   }
 }
 
+export function openLoginModal({ title = '// PROFILE_AUTHENTICATION', subtitle = 'ENTER ACCESS PIN TO UNLOCK FULL FEATURES' } = {}) {
+  import('./modal.js').then(({ showModal }) => {
+    const pinPadEl = buildPinPad({
+      onSuccess: () => {
+        showModal({ title: '', content: '' });
+        window.location.reload();
+      },
+      title,
+      subtitle,
+      icon: '🔑'
+    });
+
+    const modalWrap = document.createElement('div');
+    modalWrap.appendChild(pinPadEl);
+
+    if (sessionStorage.getItem('current_profile') && sessionStorage.getItem('current_profile') !== 'Guest') {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.className = 'aim-btn';
+      logoutBtn.style.cssText = 'width: 100%; margin-top: 12px; background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444;';
+      logoutBtn.textContent = 'LOGOUT TO GUEST PROFILE';
+      logoutBtn.onclick = () => {
+        sessionStorage.clear();
+        sessionStorage.setItem('current_profile', 'Guest');
+        window.location.reload();
+      };
+      modalWrap.appendChild(logoutBtn);
+    }
+
+    showModal({
+      title: 'AUTH_SESSION_GATEWAY',
+      content: modalWrap
+    });
+  });
+}
+
 // ─── Easter Egg: Cracked Screen, Red Overload & Fake 404 Crash Sequence ─────────
 
 function triggerBypassOverloadSequence() {
