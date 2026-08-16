@@ -9,7 +9,9 @@ import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
-  <option value="New_Amateurs_XL.safetensors">AMATEUR</option>
+  <option value="epiCRealismHelper.safetensors">EPICREALISM HELPER</option>
+  <option value="custom_training.safetensors">CUSTOM TRAINING</option>
+  <option value="cunny.safetensors">CUNNY</option>
 `;
 
 function getModalSettings() {
@@ -309,10 +311,11 @@ function buildTxt2Img() {
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2i-model-select">BASE MODEL</label>
         <select class="aim-input" id="t2i-model-select">
+          <option value="0x7RealisticFreedom_omegaSDXL.safetensors">REALISTIC FREEDOM OMEGA</option>
           <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
-          <option value="cyberrealistic_final.safetensors">CYBERREALISTIC FINAL</option>
-          <option value="unholyDesireMixFoolS_v60.safetensors">UNHOLY DESIRE MIX</option>
-          <option value="autismmixSDXL_autismmixPony.safetensors">AUTISMMIX PONY</option>
+          <option value="cyberrealisticXL_desireV30.safetensors">CYBERREALISTIC DESIRE V30</option>
+          <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE SINISTER V80</option>
+          <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH V9</option>
           <option value="epicrealismXL_pureFix.safetensors">EPICREALISM</option>
         </select>
@@ -341,13 +344,9 @@ function buildTxt2Img() {
         </div>
         
         <div class="aim-row" style="margin-top:12px;">
-          <div class="aim-field aim-field-half">
+          <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale).toFixed(1)}</span></label>
             <input class="aim-range" type="range" id="t2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceScale}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="t2i-denoise">DENOISING STRENGTH: <span class="aim-val-display" id="t2i-denoise-val">0.75</span></label>
-            <input class="aim-range" type="range" id="t2i-denoise" min="0.05" max="1.00" step="0.05" value="0.75" />
           </div>
         </div>
 
@@ -375,11 +374,7 @@ function buildTxt2Img() {
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="t2i-seed">SEED (-1 FOR RANDOM)</label>
-            <input class="aim-input" type="number" id="t2i-seed" value="-1" placeholder="-1" />
-          </div>
-          <div class="aim-field aim-field-half">
+          <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="t2i-aspect">ASPECT RATIO</label>
             <select class="aim-input" id="t2i-aspect">
               <option value="1024x1024" selected>1:1 Square (1024x1024)</option>
@@ -425,9 +420,7 @@ function buildTxt2Img() {
   const cfgVal = wrap.querySelector('#t2i-cfg-val');
   if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
 
-  const denoiseInput = wrap.querySelector('#t2i-denoise');
-  const denoiseVal = wrap.querySelector('#t2i-denoise-val');
-  if (denoiseInput && denoiseVal) denoiseInput.addEventListener('input', () => { denoiseVal.textContent = parseFloat(denoiseInput.value).toFixed(2); });
+
 
   // Generate
   wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
@@ -445,10 +438,8 @@ function buildTxt2Img() {
     const modelStr = wrap.querySelector('#t2i-model-select').value;
     let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
-    const denoise = parseFloat(wrap.querySelector('#t2i-denoise')?.value || '0.75');
     const scheduler = wrap.querySelector('#t2i-scheduler')?.value || 'Euler a';
     const clipSkip = wrap.querySelector('#t2i-clip-skip')?.value || '1';
-    const seed = parseInt(wrap.querySelector('#t2i-seed')?.value || '-1');
     const aspect = wrap.querySelector('#t2i-aspect')?.value || '1024x1024';
     const [w, h] = aspect.split('x').map(n => parseInt(n));
 
@@ -513,9 +504,6 @@ function buildTxt2Img() {
         lora: lora,
         scheduler: scheduler,
         sampler: scheduler,
-        denoising_strength: denoise,
-        strength: denoise,
-        seed: seed,
         clip_skip: clipSkip,
         width: w,
         height: h,
@@ -669,13 +657,9 @@ function buildImg2Img() {
         </div>
         
         <div class="aim-row" style="margin-top:12px;">
-          <div class="aim-field aim-field-half">
+          <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="i2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg).toFixed(1)}</span></label>
             <input class="aim-range" type="range" id="i2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceImg}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2i-denoise">DENOISING STRENGTH: <span class="aim-val-display" id="i2i-denoise-val">0.75</span></label>
-            <input class="aim-range" type="range" id="i2i-denoise" min="0.05" max="1.00" step="0.05" value="0.75" />
           </div>
         </div>
 
@@ -703,11 +687,7 @@ function buildImg2Img() {
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2i-seed">SEED (-1 FOR RANDOM)</label>
-            <input class="aim-input" type="number" id="i2i-seed" value="-1" placeholder="-1" />
-          </div>
-          <div class="aim-field aim-field-half">
+          <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="i2i-aspect">ASPECT RATIO</label>
             <select class="aim-input" id="i2i-aspect">
               <option value="1024x1024" selected>1:1 Square (1024x1024)</option>
@@ -754,14 +734,6 @@ function buildImg2Img() {
   if (i2iCfgInput && i2iCfgVal) {
     i2iCfgInput.addEventListener('input', () => {
       i2iCfgVal.textContent = parseFloat(i2iCfgInput.value).toFixed(1);
-    });
-  }
-
-  const i2iDenoiseInput = wrap.querySelector('#i2i-denoise');
-  const i2iDenoiseVal = wrap.querySelector('#i2i-denoise-val');
-  if (i2iDenoiseInput && i2iDenoiseVal) {
-    i2iDenoiseInput.addEventListener('input', () => {
-      i2iDenoiseVal.textContent = parseFloat(i2iDenoiseInput.value).toFixed(2);
     });
   }
 
@@ -821,10 +793,8 @@ function buildImg2Img() {
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#i2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
-    const denoise = parseFloat(wrap.querySelector('#i2i-denoise')?.value || '0.75');
     const scheduler = wrap.querySelector('#i2i-scheduler')?.value || 'Euler a';
     const clipSkip = wrap.querySelector('#i2i-clip-skip')?.value || '1';
-    const seed = parseInt(wrap.querySelector('#i2i-seed')?.value || '-1');
     const aspect = wrap.querySelector('#i2i-aspect')?.value || '1024x1024';
     const [w, h] = aspect.split('x').map(n => parseInt(n));
 
@@ -870,9 +840,6 @@ function buildImg2Img() {
       formData.append('lora', lora);
       formData.append('scheduler', scheduler);
       formData.append('sampler', scheduler);
-      formData.append('denoising_strength', denoise);
-      formData.append('strength', denoise);
-      formData.append('seed', seed);
       formData.append('clip_skip', clipSkip);
       formData.append('width', w);
       formData.append('height', h);
@@ -1014,6 +981,9 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="img2img" id="aim-tab-i2i">
         <span class="aim-tab-icon">⟁</span> IMG2IMG
       </button>
+      <button class="aim-tab" data-tab="txt2vid" id="aim-tab-t2v">
+        <span class="aim-tab-icon">🎥</span> TXT2VID
+      </button>
       <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
         <span class="aim-tab-icon">🎬</span> FRAMEPACK
       </button>
@@ -1037,6 +1007,8 @@ function buildMainUI() {
         currentPanel = buildTxt2Img();
       } else if (tab.dataset.tab === 'img2img') {
         currentPanel = buildImg2Img();
+      } else if (tab.dataset.tab === 'txt2vid') {
+        currentPanel = buildTxt2Vid();
       } else {
         currentPanel = buildFramepack();
       }
@@ -1139,6 +1111,207 @@ function buildMainUI() {
   });
 
   return root;
+}
+
+/* ─── TXT2VID PANEL ─────────────────────────────────────────── */
+function buildTxt2Vid() {
+  const settings = getModalSettings();
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  
+  const wrap = document.createElement('div');
+  wrap.className = 'aim-panel';
+  wrap.innerHTML = `
+    <div class="aim-panel-header">
+      <span class="aim-panel-icon">🎥</span>
+      <span class="aim-panel-title">TEXT TO VIDEO</span>
+      <span class="aim-panel-badge">WAN-14B ENGINE</span>
+    </div>
+
+    <div class="aim-field">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" for="t2v-prompt" style="margin:0;">CINEMATIC PROMPT</label>
+      </div>
+      <textarea class="aim-textarea" id="t2v-prompt" rows="3" placeholder="Describe the video you want to generate (e.g., A cinematic video of a serene waterfall...)"></textarea>
+    </div>
+    
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="t2v-speed">SPEED MODE (INFERENCE STEPS)</label>
+        <div class="aim-seg aim-seg-3" id="t2v-speed">
+          <button class="aim-seg-btn active" data-steps="25">⚡ FAST (25)</button>
+          <button class="aim-seg-btn" data-steps="40">⚖ NORMAL (40)</button>
+          <button class="aim-seg-btn" data-steps="60">🎯 FOCUSED (60)</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="aim-advanced">
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
+      <div class="aim-advanced-body">
+        <div class="aim-field">
+          <label class="aim-label" for="t2v-neg">NEGATIVE PROMPT</label>
+          <textarea class="aim-textarea aim-textarea-sm" id="t2v-neg" rows="2">low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, deformed, ugly, pixelated</textarea>
+        </div>
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field" style="width: 100%;">
+            <label class="aim-label" for="t2v-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="t2v-cfg-val">5.0</span></label>
+            <input class="aim-range" type="range" id="t2v-cfg" min="1" max="15" step="0.5" value="5.0" />
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2v-fps">TARGET FPS</label>
+            <select class="aim-input" id="t2v-fps">
+              <option value="16" selected>16 FPS (Standard)</option>
+              <option value="24">24 FPS (Cinematic)</option>
+              <option value="30">30 FPS (Smooth)</option>
+            </select>
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2v-resolution">RESOLUTION (W x H)</label>
+            <select class="aim-input" id="t2v-resolution">
+              <option value="832x480" selected>832 x 480 (Widescreen SD)</option>
+              <option value="480x832">480 x 832 (Vertical SD)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field" style="width: 100%;">
+            <label class="aim-label" for="t2v-frames">TOTAL FRAMES: <span class="aim-val-display" id="t2v-frames-val">81</span></label>
+            <input class="aim-range" type="range" id="t2v-frames" min="16" max="129" step="1" value="81" />
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <button class="aim-btn-generate" id="t2v-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}">
+      <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE VIDEO SYNTHESIS' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
+    </button>
+
+    <div class="aim-status-bar" id="t2v-status"></div>
+    <div id="t2v-loader-slot"></div>
+    <div id="t2v-result-slot"></div>
+  `;
+
+  // Range displays
+  const cfgInput = wrap.querySelector('#t2v-cfg');
+  const cfgVal = wrap.querySelector('#t2v-cfg-val');
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+
+  const framesInput = wrap.querySelector('#t2v-frames');
+  const framesVal = wrap.querySelector('#t2v-frames-val');
+  if (framesInput && framesVal) framesInput.addEventListener('input', () => { framesVal.textContent = framesInput.value; });
+
+  // Speed selector
+  wrap.querySelectorAll('#t2v-speed .aim-seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('#t2v-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Generate
+  wrap.querySelector('#t2v-gen-btn').addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#t2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE VIDEO' });
+      });
+      return;
+    }
+    const prompt = wrap.querySelector('#t2v-prompt').value.trim();
+    if (!prompt) { setStatus(wrap, '#t2v-status', 'ERROR: Cinematic prompt is empty.', 'error'); return; }
+
+    const steps = parseInt(wrap.querySelector('#t2v-speed .aim-seg-btn.active').dataset.steps);
+    let neg = wrap.querySelector('#t2v-neg').value;
+    const cfg = parseFloat(wrap.querySelector('#t2v-cfg').value).toFixed(1);
+    const fps = parseInt(wrap.querySelector('#t2v-fps').value);
+    const numFrames = parseInt(wrap.querySelector('#t2v-frames').value);
+    const resolution = wrap.querySelector('#t2v-resolution').value;
+    const [w, h] = resolution.split('x').map(n => parseInt(n));
+
+    // Check for darkness mode and override negative prompt
+    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
+      neg = ''; // Override negative prompt, removing restrictions.
+      console.warn('[DARKNESS] NSFW governors disabled for this T2V request.');
+    }
+
+    const loaderSlot = wrap.querySelector('#t2v-loader-slot');
+    const resultSlot = wrap.querySelector('#t2v-result-slot');
+    const genBtn = wrap.querySelector('#t2v-gen-btn');
+
+    genBtn.disabled = true;
+    setStatus(wrap, '#t2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
+    const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
+    loaderSlot.innerHTML = '';
+    loaderSlot.appendChild(loader);
+
+    const loaderMessages = ['SYNTHESIZING VIDEO...','DIFFUSING FRAMES...','RENDERING ARTIFACT...','FINALIZING OUTPUT...'];
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loaderMessages.length;
+      const ltEl = loaderSlot.querySelector('#aim-loader-text');
+      if (ltEl) ltEl.textContent = loaderMessages[msgIdx];
+    }, 4500);
+
+    try {
+      const params = new URLSearchParams({
+        prompt,
+        negative_prompt: neg,
+        guidance_scale: cfg,
+        num_inference_steps: steps,
+        width: w,
+        height: h,
+        num_frames: numFrames,
+        fps: fps
+      });
+      
+      const endpoint = 'https://ai-alphacore-tech--txt2vid-wan-14b-model-web.modal.run/stream';
+      const res = await fetch(\`\${endpoint}?\${params}\`);
+      
+      if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+      
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+
+      const resultEl = document.createElement('div');
+      resultEl.className = 'aim-result-view';
+      resultEl.innerHTML = \`
+        <div class="aim-result-frame">
+          <video id="aim-result-vid" src="\${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+        </div>
+        <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
+          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
+        </div>
+      \`;
+
+      resultEl.querySelector('#aim-dl-vid-btn').onclick = () => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = \`alphacore_video_\${Date.now()}.mp4\`;
+        a.click();
+      };
+
+      resultSlot.innerHTML = '';
+      resultSlot.appendChild(resultEl);
+      setStatus(wrap, '#t2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
+      if (window._aimNotifyWarm) window._aimNotifyWarm();
+    } catch (err) {
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+      setStatus(wrap, '#t2v-status', \`FAILURE: \${err.message}\`, 'error');
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+
+  return wrap;
 }
 
 /* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
