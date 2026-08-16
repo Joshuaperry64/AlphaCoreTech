@@ -264,6 +264,10 @@ function buildResult(urls = []) {
 /* ─── TXT2IMG PANEL ─────────────────────────────────────────── */
 function buildTxt2Img() {
   const settings = getModalSettings();
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const maxBatchCount = isArchitect ? 20 : 5;
+
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
   wrap.innerHTML = `
@@ -274,7 +278,10 @@ function buildTxt2Img() {
     </div>
 
     <div class="aim-field">
-      <label class="aim-label" for="t2i-prompt">PROMPT MATRIX</label>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" for="t2i-prompt" style="margin:0;">PROMPT MATRIX</label>
+        <button class="aim-btn aim-btn-sm" id="t2i-enhance-btn" style="padding:2px 10px; font-size:0.75rem; background:rgba(6,182,212,0.15); border-color:var(--accent); color:var(--accent);" title="Auto-enhance prompt with AI matrix descriptors">✨ AI ENHANCE</button>
+      </div>
       <textarea class="aim-textarea" id="t2i-prompt" rows="4" placeholder="Describe what you want to generate..."></textarea>
     </div>
 
@@ -302,8 +309,8 @@ function buildTxt2Img() {
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-10)</label>
-        <input class="aim-input" type="number" id="t2i-batch" min="1" max="10" value="1" />
+        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-${maxBatchCount}) ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
+        <input class="aim-input" type="number" id="t2i-batch" min="1" max="${maxBatchCount}" value="1" />
       </div>
         <div class="aim-field" id="t2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
           <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
@@ -314,15 +321,62 @@ function buildTxt2Img() {
     </div>
 
     <details class="aim-advanced">
-      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS & HYPERPARAMETERS</summary>
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="t2i-neg">NEGATIVE PROMPT</label>
           <textarea class="aim-textarea aim-textarea-sm" id="t2i-neg" rows="2">${settings.negativePrompt}</textarea>
         </div>
-        <div class="aim-field">
-          <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale).toFixed(1)}</span></label>
-          <input class="aim-range" type="range" id="t2i-cfg" min="1" max="15" step="0.5" value="${settings.guidanceScale}" />
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale).toFixed(1)}</span></label>
+            <input class="aim-range" type="range" id="t2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceScale}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-denoise">DENOISING STRENGTH: <span class="aim-val-display" id="t2i-denoise-val">0.75</span></label>
+            <input class="aim-range" type="range" id="t2i-denoise" min="0.05" max="1.00" step="0.05" value="0.75" />
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-scheduler">SAMPLER / SCHEDULER</label>
+            <select class="aim-input" id="t2i-scheduler">
+              <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
+              <option value="Euler">Euler</option>
+              <option value="DPM++ 2M">DPM++ 2M</option>
+              <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
+              <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
+              <option value="DDIM">DDIM</option>
+              <option value="UniPC">UniPC</option>
+              <option value="Heun">Heun</option>
+            </select>
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-clip-skip">CLIP SKIP</label>
+            <select class="aim-input" id="t2i-clip-skip">
+              <option value="1" selected>Clip Skip 1 (Standard)</option>
+              <option value="2">Clip Skip 2 (Anime/SDXL)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-seed">SEED (-1 FOR RANDOM)</label>
+            <input class="aim-input" type="number" id="t2i-seed" value="-1" placeholder="-1" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="t2i-aspect">ASPECT RATIO</label>
+            <select class="aim-input" id="t2i-aspect">
+              <option value="1024x1024" selected>1:1 Square (1024x1024)</option>
+              <option value="832x1216">2:3 Portrait (832x1216)</option>
+              <option value="1216x832">3:2 Landscape (1216x832)</option>
+              <option value="1024x1536">9:16 Mobile Tall (1024x1536)</option>
+              <option value="1536x1024">16:9 Widescreen (1536x1024)</option>
+            </select>
+          </div>
         </div>
       </div>
     </details>
@@ -336,6 +390,16 @@ function buildTxt2Img() {
     <div id="t2i-result-slot"></div>
   `;
 
+  // AI Prompt Enhance listener
+  wrap.querySelector('#t2i-enhance-btn').addEventListener('click', () => {
+    const promptInput = wrap.querySelector('#t2i-prompt');
+    const enhanced = enhancePromptWithAI(promptInput.value);
+    if (enhanced) {
+      promptInput.value = enhanced;
+      setStatus(wrap, '#t2i-status', 'PROMPT MATRIX ENHANCED WITH AI DESCRIPTORS.', 'ok');
+    }
+  });
+
   // Wire up segment controls
   wrap.querySelectorAll('#t2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -344,11 +408,14 @@ function buildTxt2Img() {
     });
   });
 
-
-  // CFG display
+  // Range displays
   const cfgInput = wrap.querySelector('#t2i-cfg');
   const cfgVal = wrap.querySelector('#t2i-cfg-val');
-  cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+
+  const denoiseInput = wrap.querySelector('#t2i-denoise');
+  const denoiseVal = wrap.querySelector('#t2i-denoise-val');
+  if (denoiseInput && denoiseVal) denoiseInput.addEventListener('input', () => { denoiseVal.textContent = parseFloat(denoiseInput.value).toFixed(2); });
 
   // Generate
   wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
@@ -359,7 +426,19 @@ function buildTxt2Img() {
     const modelStr = wrap.querySelector('#t2i-model-select').value;
     let neg = wrap.querySelector('#t2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
+    const denoise = parseFloat(wrap.querySelector('#t2i-denoise')?.value || '0.75');
+    const scheduler = wrap.querySelector('#t2i-scheduler')?.value || 'Euler a';
+    const clipSkip = wrap.querySelector('#t2i-clip-skip')?.value || '1';
+    const seed = parseInt(wrap.querySelector('#t2i-seed')?.value || '-1');
+    const aspect = wrap.querySelector('#t2i-aspect')?.value || '1024x1024';
+    const [w, h] = aspect.split('x').map(n => parseInt(n));
+
     const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
+    if (batchSize > maxBatchCount) {
+      setStatus(wrap, '#t2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'archetect' for unlimited batching.`, 'error');
+      return;
+    }
+
     const loraSelect = wrap.querySelector('#t2i-lora');
     let lora = '';
     if (loraSelect && !loraSelect.disabled) {
@@ -413,8 +492,14 @@ function buildTxt2Img() {
         num_inference_steps: steps,
         batch_size: batchSize,
         lora: lora,
-        scheduler: 'Euler',
-        seed: -1,
+        scheduler: scheduler,
+        sampler: scheduler,
+        denoising_strength: denoise,
+        strength: denoise,
+        seed: seed,
+        clip_skip: clipSkip,
+        width: w,
+        height: h,
       });
       const res = await fetch(`${settings.txt2imgUrl}stream?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -494,13 +579,17 @@ function buildTxt2Img() {
 /* ─── IMG2IMG PANEL ─────────────────────────────────────────── */
 function buildImg2Img() {
   const settings = getModalSettings();
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const maxBatchCount = isArchitect ? 20 : 5;
+
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
   wrap.innerHTML = `
     <div class="aim-panel-header">
-      <span class="aim-panel-icon">⟁</span>
-      <span class="aim-panel-title">IMAGE TO IMAGE</span>
-      <span class="aim-panel-badge">QWEN EDIT+</span>
+      <span class="aim-panel-icon">🎨</span>
+      <span class="aim-panel-title">IMAGE TO IMAGE EDITING</span>
+      <span class="aim-panel-badge">QWEN EDIT PLUS</span>
     </div>
 
     <div class="aim-row" style="display:flex; gap:10px;">
@@ -547,7 +636,10 @@ function buildImg2Img() {
     </details>
 
     <div class="aim-field">
-      <label class="aim-label" for="i2i-prompt">EDIT INSTRUCTION</label>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" for="i2i-prompt" style="margin:0;">EDIT INSTRUCTION</label>
+        <button class="aim-btn aim-btn-sm" id="i2i-enhance-btn" style="padding:2px 10px; font-size:0.75rem; background:rgba(6,182,212,0.15); border-color:var(--accent); color:var(--accent);" title="Auto-enhance instruction with AI matrix descriptors">✨ AI ENHANCE</button>
+      </div>
       <textarea class="aim-textarea" id="i2i-prompt" rows="3" placeholder="Describe the edits you want applied to the image..."></textarea>
     </div>
 
@@ -562,8 +654,8 @@ function buildImg2Img() {
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-10)</label>
-        <input class="aim-input" type="number" id="i2i-batch" min="1" max="10" value="1" />
+        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-${maxBatchCount}) ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
+        <input class="aim-input" type="number" id="i2i-batch" min="1" max="${maxBatchCount}" value="1" />
       </div>
         <div class="aim-field" id="i2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
           <label class="aim-label" for="i2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
@@ -574,15 +666,62 @@ function buildImg2Img() {
     </div>
 
     <details class="aim-advanced">
-      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS & HYPERPARAMETERS</summary>
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="i2i-neg">NEGATIVE PROMPT</label>
           <textarea class="aim-textarea aim-textarea-sm" id="i2i-neg" rows="2">${settings.negativePrompt}</textarea>
         </div>
-        <div class="aim-field" style="margin-top: 12px;">
-          <label class="aim-label" for="i2i-cfg">GUIDANCE SCALE <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg).toFixed(1)}</span></label>
-          <input class="aim-range" type="range" id="i2i-cfg" min="1" max="15" step="0.5" value="${settings.guidanceImg}" />
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg).toFixed(1)}</span></label>
+            <input class="aim-range" type="range" id="i2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceImg}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-denoise">DENOISING STRENGTH: <span class="aim-val-display" id="i2i-denoise-val">0.75</span></label>
+            <input class="aim-range" type="range" id="i2i-denoise" min="0.05" max="1.00" step="0.05" value="0.75" />
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-scheduler">SAMPLER / SCHEDULER</label>
+            <select class="aim-input" id="i2i-scheduler">
+              <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
+              <option value="Euler">Euler</option>
+              <option value="DPM++ 2M">DPM++ 2M</option>
+              <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
+              <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
+              <option value="DDIM">DDIM</option>
+              <option value="UniPC">UniPC</option>
+              <option value="Heun">Heun</option>
+            </select>
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-clip-skip">CLIP SKIP</label>
+            <select class="aim-input" id="i2i-clip-skip">
+              <option value="1" selected>Clip Skip 1 (Standard)</option>
+              <option value="2">Clip Skip 2 (Anime/SDXL)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-seed">SEED (-1 FOR RANDOM)</label>
+            <input class="aim-input" type="number" id="i2i-seed" value="-1" placeholder="-1" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2i-aspect">ASPECT RATIO</label>
+            <select class="aim-input" id="i2i-aspect">
+              <option value="1024x1024" selected>1:1 Square (1024x1024)</option>
+              <option value="832x1216">2:3 Portrait (832x1216)</option>
+              <option value="1216x832">3:2 Landscape (1216x832)</option>
+              <option value="1024x1536">9:16 Mobile Tall (1024x1536)</option>
+              <option value="1536x1024">16:9 Widescreen (1536x1024)</option>
+            </select>
+          </div>
         </div>
       </div>
     </details>
@@ -596,6 +735,16 @@ function buildImg2Img() {
     <div id="i2i-result-slot"></div>
   `;
 
+  // AI Prompt Enhance listener
+  wrap.querySelector('#i2i-enhance-btn').addEventListener('click', () => {
+    const promptInput = wrap.querySelector('#i2i-prompt');
+    const enhanced = enhancePromptWithAI(promptInput.value);
+    if (enhanced) {
+      promptInput.value = enhanced;
+      setStatus(wrap, '#i2i-status', 'EDIT INSTRUCTION ENHANCED WITH AI DESCRIPTORS.', 'ok');
+    }
+  });
+
   // Speed selector
   wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -604,12 +753,20 @@ function buildImg2Img() {
     });
   });
 
-  // Guidance scale display
+  // Range displays
   const i2iCfgInput = wrap.querySelector('#i2i-cfg');
   const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
   if (i2iCfgInput && i2iCfgVal) {
     i2iCfgInput.addEventListener('input', () => {
       i2iCfgVal.textContent = parseFloat(i2iCfgInput.value).toFixed(1);
+    });
+  }
+
+  const i2iDenoiseInput = wrap.querySelector('#i2i-denoise');
+  const i2iDenoiseVal = wrap.querySelector('#i2i-denoise-val');
+  if (i2iDenoiseInput && i2iDenoiseVal) {
+    i2iDenoiseInput.addEventListener('input', () => {
+      i2iDenoiseVal.textContent = parseFloat(i2iDenoiseInput.value).toFixed(2);
     });
   }
 
@@ -672,7 +829,19 @@ function buildImg2Img() {
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#i2i-neg').value;
     const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
+    const denoise = parseFloat(wrap.querySelector('#i2i-denoise')?.value || '0.75');
+    const scheduler = wrap.querySelector('#i2i-scheduler')?.value || 'Euler a';
+    const clipSkip = wrap.querySelector('#i2i-clip-skip')?.value || '1';
+    const seed = parseInt(wrap.querySelector('#i2i-seed')?.value || '-1');
+    const aspect = wrap.querySelector('#i2i-aspect')?.value || '1024x1024';
+    const [w, h] = aspect.split('x').map(n => parseInt(n));
+
     const batchSize = parseInt(wrap.querySelector('#i2i-batch').value) || 1;
+    if (batchSize > maxBatchCount) {
+      setStatus(wrap, '#i2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'archetect' for unlimited batching.`, 'error');
+      return;
+    }
+
     const loraSelect = wrap.querySelector('#i2i-lora');
     let lora = '';
     if (loraSelect && !loraSelect.disabled) {
@@ -717,7 +886,14 @@ function buildImg2Img() {
       formData.append('true_cfg_scale', cfg);
       formData.append('batch_size', batchSize);
       formData.append('lora', lora);
-      formData.append('seed', -1);
+      formData.append('scheduler', scheduler);
+      formData.append('sampler', scheduler);
+      formData.append('denoising_strength', denoise);
+      formData.append('strength', denoise);
+      formData.append('seed', seed);
+      formData.append('clip_skip', clipSkip);
+      formData.append('width', w);
+      formData.append('height', h);
 
       const res = await fetch(`${settings.img2imgUrl}stream`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
