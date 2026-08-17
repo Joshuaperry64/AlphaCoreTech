@@ -14,7 +14,6 @@ export default function createIntro(container) {
       position: 'fixed', inset: '0', zIndex: '99999',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'rgba(3, 4, 8, 0.4)',
-      backgroundImage: 'radial-gradient(circle at 50% 40%, rgba(6,182,212,0.15) 0%, rgba(3,4,8,0.65) 80%)',
       backdropFilter: 'blur(2px)',
       color: '#e2e8f0', fontFamily: "'Share Tech Mono', monospace",
       overflowX: 'hidden', overflowY: 'auto', padding: '20px'

@@ -14,11 +14,6 @@ export default function CognitiveUplink() {
     <div class="section-header">
       <h1 class="glitch" data-text="// COGNITIVE_CORE">// COGNITIVE_CORE</h1>
       <div class="header-line"></div>
-      
-      <div class="aim-status-panel" style="margin-top: 15px; padding: 10px 16px; border: 1px solid var(--accent, #06b6d4); background: rgba(6,182,212,0.05); display: flex; align-items: center; justify-content: space-between;">
-        <div id="cog-backend-status" style="font-weight: bold; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;">● SYSTEM ONLINE: VLLM NEURAL ENGINE ACTIVE</div>
-        <span style="font-size:0.75rem; color:#888; font-family:'Share Tech Mono',monospace;">ENDPOINT: MODAL GEMMA AGENT</span>
-      </div>
     </div>
 
     <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
@@ -454,95 +449,7 @@ export default function CognitiveUplink() {
        } catch(e) { console.error(e); }
     }
 
-    // --- Backend Status Logic ---
-    let lockInterval = null;
-    let expireTime = 0;
-    let displayInterval = null;
-    let lockEndTime = 0;
-    const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
-
-    function updateStatusDisplay() {
-      const statusEl = container.querySelector('#cog-backend-status');
-      const lockBtn = container.querySelector('#cog-lock-btn');
-      if (!statusEl) return;
-      const now = Date.now();
-      
-      if (now < lockEndTime) {
-        const remaining = Math.floor((lockEndTime - now) / 1000);
-        const m = Math.floor(remaining / 60);
-        const s = remaining % 60;
-        statusEl.textContent = `STATUS: 🔒 LOCKED WARM (${m}:${s.toString().padStart(2, '0')})`;
-        statusEl.style.color = '#ff003c';
-        if (lockBtn) lockBtn.style.opacity = '0.5';
-      } else if (now < expireTime) {
-        const remaining = Math.floor((expireTime - now) / 1000);
-        const m = Math.floor(remaining / 60);
-        const s = remaining % 60;
-        statusEl.textContent = `STATUS: 🔥 WARM (${m}:${s.toString().padStart(2, '0')})`;
-        statusEl.style.color = '#ffaa00';
-        if (lockBtn) lockBtn.style.opacity = '1';
-      } else {
-        statusEl.textContent = `STATUS: ❄ COLD BOOT`;
-        statusEl.style.color = '#00ffff';
-        if (lockBtn) lockBtn.style.opacity = '1';
-        if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
-      }
-    }
-
-    window._cogNotifyWarm = () => {
-      expireTime = Math.max(expireTime, Date.now() + IDLE_TIMEOUT_MS);
-      if (!displayInterval) displayInterval = setInterval(() => {
-        if (!container.isConnected) {
-          clearInterval(displayInterval);
-          displayInterval = null;
-          return;
-        }
-        updateStatusDisplay();
-      }, 1000);
-      updateStatusDisplay();
-    };
-
-    container.querySelector('#cog-lock-btn').addEventListener('click', () => {
-      if (Date.now() < lockEndTime) return; // Already locked
-      if (!confirm('WARNING: Locking the backend prevents it from spinning down for 15 minutes. This will incur consistent compute costs even if idle. Are you sure?')) return;
-      
-      lockEndTime = Date.now() + (15 * 60 * 1000);
-      expireTime = Math.max(expireTime, lockEndTime);
-      
-      if (lockInterval) clearInterval(lockInterval);
-      // Ping every 2 minutes
-      lockInterval = setInterval(() => {
-        if (!container.isConnected || Date.now() >= lockEndTime) {
-          clearInterval(lockInterval);
-          lockInterval = null;
-          return;
-        }
-        fetch(`${MODAL_API}/api/ping`).catch(()=>{});
-        window._cogNotifyWarm();
-      }, 2 * 60 * 1000);
-      
-      // Initial ping
-      fetch(`${MODAL_API}/api/ping`).catch(()=>{});
-      
-      if (!displayInterval) displayInterval = setInterval(() => {
-        if (!container.isConnected) {
-          clearInterval(displayInterval);
-          displayInterval = null;
-          return;
-        }
-        updateStatusDisplay();
-      }, 1000);
-      updateStatusDisplay();
-    });
-
-    container.querySelector('#cog-shutdown-btn').addEventListener('click', async () => {
-      if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
-      lockEndTime = 0;
-      expireTime = 0;
-      updateStatusDisplay();
-      
-      try { fetch(`${MODAL_API}/api/shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){};
-    });
+    window._cogNotifyWarm = () => {};
 
   }, 50);
 

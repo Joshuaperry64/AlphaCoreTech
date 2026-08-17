@@ -40,7 +40,7 @@ export function initMatrixRain() {
   });
 
   let lastDrawTime = 0;
-  const fps = 15;
+  const fps = 10;
   const interval = 1000 / fps;
 
   function draw(timestamp) {
@@ -76,15 +76,15 @@ export function initMatrixRain() {
       }
     } catch {}
 
-    // Subtle fade for trails (lower alpha = longer trails and brighter text)
-    ctx.fillStyle = `rgba(3, 4, 8, ${0.08 + (audioEnergy * 0.05)})`;
+    // Subtle fade for trails (higher alpha = shorter trails and dimmer text)
+    ctx.fillStyle = `rgba(3, 4, 8, ${0.15 + (audioEnergy * 0.05)})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     ctx.font = `bold ${fontSize}px 'Share Tech Mono', monospace`;
     
     for (let i = 0; i < drops.length; i++) {
       // Add randomness so not all columns drop every frame (slows it down more naturally)
-      if (Math.random() > 0.6) continue;
+      if (Math.random() > 0.7) continue;
 
       const char = chars[Math.floor(Math.random() * chars.length)];
       
@@ -92,20 +92,20 @@ export function initMatrixRain() {
       let y = drops[i] * fontSize;
       
       // --- GLITCH EFFECT LOGIC ---
-      const isGlitching = Math.random() < 0.02 + (audioEnergy * 0.1);
+      const isGlitching = Math.random() < 0.01 + (audioEnergy * 0.05);
       
       if (isGlitching) {
         // Randomly displace X and Y slightly for a jitter effect
         x += (Math.random() - 0.5) * 8;
-        // Occasional color shift (Cyan / Magenta / White)
-        const colors = ['#ff003c', '#00f0ff', '#ffffff', '#a5f3fc'];
+        // Occasional color shift (Dimmer Cyan / Magenta)
+        const colors = ['rgba(180,0,50,0.9)', 'rgba(0,140,160,0.9)'];
         ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
         ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 4;
       } else {
-        ctx.fillStyle = audioEnergy > 0.4 ? '#a5f3fc' : '#00f0ff';
-        ctx.shadowColor = audioEnergy > 0.4 ? '#06b6d4' : '#00b8ff';
-        ctx.shadowBlur = 4 + Math.floor(audioEnergy * 15);
+        ctx.fillStyle = audioEnergy > 0.4 ? 'rgba(0, 160, 180, 0.9)' : 'rgba(0, 90, 110, 0.9)';
+        ctx.shadowColor = audioEnergy > 0.4 ? 'rgba(0,180,200,0.5)' : 'rgba(0,100,120,0.5)';
+        ctx.shadowBlur = Math.floor(audioEnergy * 5);
       }
 
       ctx.fillText(char, x, y);

@@ -267,8 +267,8 @@ function buildResult(urls = []) {
 function buildTxt2Img() {
   const settings = getModalSettings();
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
-  const maxBatchCount = isArchitect ? 20 : 5;
+  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
@@ -305,18 +305,18 @@ function buildTxt2Img() {
         <div class="aim-seg aim-seg-3" id="t2i-speed">
           <button class="aim-seg-btn active" data-steps="${settings.stepsFastTxt}">⚡ FAST</button>
           <button class="aim-seg-btn" data-steps="${settings.stepsNormalTxt}">⚖ NORMAL</button>
-          <button class="aim-seg-btn" data-steps="${settings.stepsFocusedTxt}">🎯 FOCUSED</button>
+          <button class="aim-seg-btn" data-steps="${settings.stepsFocusedTxt}">🎯 DETAILED</button>
         </div>
       </div>
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2i-model-select">BASE MODEL</label>
         <select class="aim-input" id="t2i-model-select">
-          <option value="0x7RealisticFreedom_omegaSDXL.safetensors">REALISTIC FREEDOM OMEGA</option>
+          <option value="0x7RealisticFreedom_omegaSDXL.safetensors">FREEDOM OMEGA</option>
           <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
-          <option value="cyberrealisticXL_desireV30.safetensors">CYBERREALISTIC DESIRE V30</option>
-          <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE SINISTER V80</option>
+          <option value="cyberrealisticXL_desireV30.safetensors">CYBER REALISTIC</option>
+          <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE</option>
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
-          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH V9</option>
+          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
           <option value="epicrealismXL_pureFix.safetensors">EPICREALISM</option>
         </select>
       </div>
@@ -445,7 +445,7 @@ function buildTxt2Img() {
 
     const batchSize = parseInt(wrap.querySelector('#t2i-batch').value) || 1;
     if (batchSize > maxBatchCount) {
-      setStatus(wrap, '#t2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'archetect' for unlimited batching.`, 'error');
+      setStatus(wrap, '#t2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'architect' for unlimited batching.`, 'error');
       return;
     }
 
@@ -587,8 +587,8 @@ function buildTxt2Img() {
 function buildImg2Img() {
   const settings = getModalSettings();
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
-  const maxBatchCount = isArchitect ? 20 : 5;
+  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
@@ -630,6 +630,16 @@ function buildImg2Img() {
         <button class="aim-btn aim-btn-sm" id="i2i-enhance-btn" style="padding:2px 10px; font-size:0.75rem; background:rgba(6,182,212,0.15); border-color:var(--accent); color:var(--accent);" title="Auto-enhance instruction with AI matrix descriptors">✨ AI ENHANCE</button>
       </div>
       <textarea class="aim-textarea" id="i2i-prompt" rows="3" placeholder="Describe the edits you want applied to the image..."></textarea>
+      <div class="aim-quick-actions" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Enhance details, upscale quality, make high resolution, sharp focus, masterpiece">✨ Enhance Image</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Convert to cyberpunk style, neon lights, high tech, futuristic city, dark alleys">🌃 Cyberpunk</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Make photorealistic, highly detailed, 8k resolution, cinematic lighting, natural textures">📸 Photorealistic</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Change background to a dark futuristic sci-fi laboratory, deep shadows">🧪 Sci-Fi Lab BG</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Anime style, studio ghibli, vivid colors, hand drawn, cel shaded">🎨 Anime Style</button>
+        ${isArchitect ? `
+          <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="Completely naked, remove all clothing, photorealistic, highly detailed, sharp focus, anatomically correct, keeping the same person, preserve original body type and proportions, maintain the original pose and facial expression.">🔥 Nudify</button>
+        ` : ''}
+      </div>
     </div>
 
     <div class="aim-field">
@@ -637,7 +647,7 @@ function buildImg2Img() {
       <div class="aim-seg aim-seg-3" id="i2i-speed">
         <button class="aim-seg-btn active" data-steps="${settings.stepsFastImg}">⚡ FAST</button>
         <button class="aim-seg-btn" data-steps="${settings.stepsNormalImg}">⚖ NORMAL</button>
-        <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 FOCUSED</button>
+        <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 DETAILED</button>
       </div>
     </div>
 
@@ -720,6 +730,13 @@ function buildImg2Img() {
     }
   });
 
+  wrap.querySelectorAll('.i2i-quick-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const promptInput = wrap.querySelector('#i2i-prompt');
+      promptInput.value = btn.dataset.prompt;
+    });
+  });
+
   // Speed selector
   wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -800,7 +817,7 @@ function buildImg2Img() {
 
     const batchSize = parseInt(wrap.querySelector('#i2i-batch').value) || 1;
     if (batchSize > maxBatchCount) {
-      setStatus(wrap, '#i2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'archetect' for unlimited batching.`, 'error');
+      setStatus(wrap, '#i2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'architect' for unlimited batching.`, 'error');
       return;
     }
 
@@ -837,7 +854,8 @@ function buildImg2Img() {
       formData.append('num_inference_steps', steps);
       formData.append('true_cfg_scale', cfg);
       formData.append('batch_size', batchSize);
-      formData.append('lora', lora);
+      // This 'lora' variable does not exist in this scope, assuming it's a bug from original code.
+      // formData.append('lora', lora); 
       formData.append('scheduler', scheduler);
       formData.append('sampler', scheduler);
       formData.append('clip_skip', clipSkip);
@@ -966,12 +984,6 @@ function buildMainUI() {
       <h1 class="glitch aim-title" data-text="AI MODALS // SYNTHESIS_ENGINE">AI MODALS // SYNTHESIS_ENGINE</h1>
       <div class="header-line"></div>
       <p class="aim-subtitle">Neural image synthesis via Modal GPU infrastructure. Select a generation mode below.</p>
-      
-      <div class="aim-status-panel" style="margin-top: 15px; padding: 10px; border: 1px solid var(--accent); background: rgba(255,0,60,0.05); display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-        <div id="aim-backend-status" style="font-weight: bold; flex: 1; color: #00ffff; font-family: 'Courier New', monospace;">STATUS: ❄ COLD BOOT</div>
-        <button id="aim-lock-btn" class="aim-btn aim-btn-sm" style="font-size: 0.8rem; padding: 6px 12px;">🔒 LOCK ON (15M)</button>
-        <button id="aim-shutdown-btn" class="aim-btn aim-btn-sm aim-btn-decline" style="font-size: 0.8rem; padding: 6px 12px; margin-top: 0;">⏻ SHUT DOWN</button>
-      </div>
     </div>
 
     <div class="aim-tabs" id="aim-tabs">
@@ -1016,99 +1028,7 @@ function buildMainUI() {
     });
   });
 
-  // --- Backend Status Logic ---
-  const settings = getModalSettings();
-  let lockInterval = null;
-  let expireTime = 0;
-  let displayInterval = null;
-  let lockEndTime = 0;
-  const IDLE_TIMEOUT_MS = 3 * 60 * 1000;
-
-  function updateStatusDisplay() {
-    const statusEl = root.querySelector('#aim-backend-status');
-    const lockBtn = root.querySelector('#aim-lock-btn');
-    if (!statusEl) return;
-    const now = Date.now();
-    
-    if (now < lockEndTime) {
-      const remaining = Math.floor((lockEndTime - now) / 1000);
-      const m = Math.floor(remaining / 60);
-      const s = remaining % 60;
-      statusEl.textContent = `STATUS: 🔒 LOCKED WARM (${m}:${s.toString().padStart(2, '0')})`;
-      statusEl.style.color = '#ff003c';
-      if (lockBtn) lockBtn.style.opacity = '0.5';
-    } else if (now < expireTime) {
-      const remaining = Math.floor((expireTime - now) / 1000);
-      const m = Math.floor(remaining / 60);
-      const s = remaining % 60;
-      statusEl.textContent = `STATUS: 🔥 WARM (${m}:${s.toString().padStart(2, '0')})`;
-      statusEl.style.color = '#ffaa00';
-      if (lockBtn) lockBtn.style.opacity = '1';
-    } else {
-      statusEl.textContent = `STATUS: ❄ COLD BOOT`;
-      statusEl.style.color = '#00ffff';
-      if (lockBtn) lockBtn.style.opacity = '1';
-      if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
-    }
-  }
-
-  window._aimNotifyWarm = () => {
-    expireTime = Math.max(expireTime, Date.now() + IDLE_TIMEOUT_MS);
-    if (!displayInterval) displayInterval = setInterval(() => {
-      if (!root.isConnected) {
-        clearInterval(displayInterval);
-        displayInterval = null;
-        return;
-      }
-      updateStatusDisplay();
-    }, 1000);
-    updateStatusDisplay();
-  };
-
-  root.querySelector('#aim-lock-btn').addEventListener('click', () => {
-    if (Date.now() < lockEndTime) return; // Already locked
-    if (!confirm('WARNING: Locking the backend prevents it from spinning down for 15 minutes. This will incur consistent compute costs even if idle. Are you sure?')) return;
-    
-    lockEndTime = Date.now() + (15 * 60 * 1000);
-    expireTime = Math.max(expireTime, lockEndTime);
-    
-    if (lockInterval) clearInterval(lockInterval);
-    // Ping every 2 minutes
-    lockInterval = setInterval(() => {
-      if (!root.isConnected || Date.now() >= lockEndTime) {
-        clearInterval(lockInterval);
-        lockInterval = null;
-        return;
-      }
-      fetch(`${settings.txt2imgUrl}ping`).catch(()=>{});
-      fetch(`${settings.img2imgUrl}ping`).catch(()=>{});
-      window._aimNotifyWarm();
-    }, 2 * 60 * 1000);
-    
-    // Initial ping
-    fetch(`${settings.txt2imgUrl}ping`).catch(()=>{});
-    fetch(`${settings.img2imgUrl}ping`).catch(()=>{});
-    
-    if (!displayInterval) displayInterval = setInterval(() => {
-      if (!root.isConnected) {
-        clearInterval(displayInterval);
-        displayInterval = null;
-        return;
-      }
-      updateStatusDisplay();
-    }, 1000);
-    updateStatusDisplay();
-  });
-
-  root.querySelector('#aim-shutdown-btn').addEventListener('click', async () => {
-    if (lockInterval) { clearInterval(lockInterval); lockInterval = null; }
-    lockEndTime = 0;
-    expireTime = 0;
-    updateStatusDisplay();
-    
-    try { fetch(`${settings.txt2imgUrl}shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){}
-    try { fetch(`${settings.img2imgUrl}shutdown`, { method: 'POST' }).catch(()=>{}); } catch(e){}
-  });
+  window._aimNotifyWarm = () => {};
 
   return root;
 }
@@ -1140,7 +1060,7 @@ function buildTxt2Vid() {
         <div class="aim-seg aim-seg-3" id="t2v-speed">
           <button class="aim-seg-btn active" data-steps="25">⚡ FAST (25)</button>
           <button class="aim-seg-btn" data-steps="40">⚖ NORMAL (40)</button>
-          <button class="aim-seg-btn" data-steps="60">🎯 FOCUSED (60)</button>
+          <button class="aim-seg-btn" data-steps="60">🎯 DETAILED (60)</button>
         </div>
       </div>
     </div>
@@ -1318,7 +1238,7 @@ function buildTxt2Vid() {
 /* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
 function buildFramepack() {
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'archetect' || currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
