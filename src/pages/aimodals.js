@@ -93,13 +93,17 @@ function buildLoader(text = 'SYNTHESIZING...') {
   return el;
 }
 
-function updateProgress(loader, step, maxSteps) {
+function updateProgress(loader, step, maxSteps, extraText = '') {
   const wrap = loader.querySelector('.aim-progress-wrap');
   const bar = loader.querySelector('.aim-progress-bar');
+  const sub = loader.querySelector('.aim-loader-sub');
   if (wrap && bar) {
     wrap.style.display = 'block';
     const pct = Math.min(100, Math.round(((step + 1) / maxSteps) * 100));
     bar.style.width = `${pct}%`;
+  }
+  if (sub && extraText) {
+    sub.textContent = `MODAL GPU ACTIVE — PLEASE WAIT ${extraText}`;
   }
 }
 
@@ -530,23 +534,46 @@ function buildTxt2Img() {
             try {
               const data = JSON.parse(dataStr);
               if (data.step !== undefined && data.max_steps !== undefined) {
-                updateProgress(loader, data.step, data.max_steps);
-              } else if (data.image_b64) {
-                const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                let progressText = data.total_images ? ` | BATCH STATUS: ${data.images_completed}/${data.total_images} COMPLETE` : '';
+                updateProgress(loader, data.step, data.max_steps, progressText);
+              } else if (data.image_b64_partial) {
+                const b64s = Array.isArray(data.image_b64_partial) ? data.image_b64_partial : [data.image_b64_partial];
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                b64s.forEach(b64 => {
+                
+                const partialUrls = b64s.map(b64 => {
                    saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', 'data:image/png;base64,' + b64);
+                   const byteCharacters = atob(b64);
+                   const byteNumbers = new Array(byteCharacters.length);
+                   for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                   const byteArray = new Uint8Array(byteNumbers);
+                   const blob = new Blob([byteArray], {type: 'image/png'});
+                   return URL.createObjectURL(blob);
                 });
-                url = b64s.map(b64 => {
-                  const byteCharacters = atob(b64);
-                  const byteNumbers = new Array(byteCharacters.length);
-                  for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                  }
-                  const byteArray = new Uint8Array(byteNumbers);
-                  const blob = new Blob([byteArray], {type: 'image/png'});
-                  return URL.createObjectURL(blob);
-                });
+                
+                if (!url) url = [];
+                url.push(...partialUrls);
+                
+                // Show intermediate partial batch results
+                resultSlot.innerHTML = '';
+                const resultEl = buildResult(url);
+                resultEl.classList.remove('hidden');
+                resultSlot.appendChild(resultEl);
+              } else if (data.image_b64) {
+                if (!url) url = [];
+                // If it already collected partials, skip reprocessing, else process it
+                if (url.length === 0) {
+                  const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                  const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                  url = b64s.map(b64 => {
+                     saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', 'data:image/png;base64,' + b64);
+                     const byteCharacters = atob(b64);
+                     const byteNumbers = new Array(byteCharacters.length);
+                     for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                     const byteArray = new Uint8Array(byteNumbers);
+                     const blob = new Blob([byteArray], {type: 'image/png'});
+                     return URL.createObjectURL(blob);
+                  });
+                }
               } else if (data.error) {
                 throw new Error(data.error);
               }
@@ -636,7 +663,7 @@ function buildImg2Img() {
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Make photorealistic, highly detailed, 8k resolution, cinematic lighting, natural textures">📸 Photorealistic</button>
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Change background to a dark futuristic sci-fi laboratory, deep shadows">🧪 Sci-Fi Lab BG</button>
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Anime style, studio ghibli, vivid colors, hand drawn, cel shaded">🎨 Anime Style</button>
-        ${isArchitect ? `
+        ${currentProfile !== 'guest' ? `
           <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="Completely naked, remove all clothing, photorealistic, highly detailed, sharp focus, anatomically correct, keeping the same person, preserve original body type and proportions, maintain the original pose and facial expression.">🔥 Nudify</button>
         ` : ''}
       </div>
@@ -884,23 +911,46 @@ function buildImg2Img() {
             try {
               const data = JSON.parse(dataStr);
               if (data.step !== undefined && data.max_steps !== undefined) {
-                updateProgress(loader, data.step, data.max_steps);
-              } else if (data.image_b64) {
-                const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                let progressText = data.total_images ? ` | BATCH STATUS: ${data.images_completed}/${data.total_images} COMPLETE` : '';
+                updateProgress(loader, data.step, data.max_steps, progressText);
+              } else if (data.image_b64_partial) {
+                const b64s = Array.isArray(data.image_b64_partial) ? data.image_b64_partial : [data.image_b64_partial];
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                b64s.forEach(b64 => {
+                
+                const partialUrls = b64s.map(b64 => {
                    saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', 'data:image/png;base64,' + b64);
+                   const byteCharacters = atob(b64);
+                   const byteNumbers = new Array(byteCharacters.length);
+                   for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                   const byteArray = new Uint8Array(byteNumbers);
+                   const blob = new Blob([byteArray], {type: 'image/png'});
+                   return URL.createObjectURL(blob);
                 });
-                url = b64s.map(b64 => {
-                  const byteCharacters = atob(b64);
-                  const byteNumbers = new Array(byteCharacters.length);
-                  for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                  }
-                  const byteArray = new Uint8Array(byteNumbers);
-                  const blob = new Blob([byteArray], {type: 'image/png'});
-                  return URL.createObjectURL(blob);
-                });
+                
+                if (!url) url = [];
+                url.push(...partialUrls);
+                
+                // Show intermediate partial batch results
+                resultSlot.innerHTML = '';
+                const resultEl = buildResult(url);
+                resultEl.classList.remove('hidden');
+                resultSlot.appendChild(resultEl);
+              } else if (data.image_b64) {
+                if (!url) url = [];
+                // If it already collected partials, skip reprocessing, else process it
+                if (url.length === 0) {
+                  const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                  const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                  url = b64s.map(b64 => {
+                     saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', 'data:image/png;base64,' + b64);
+                     const byteCharacters = atob(b64);
+                     const byteNumbers = new Array(byteCharacters.length);
+                     for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                     const byteArray = new Uint8Array(byteNumbers);
+                     const blob = new Blob([byteArray], {type: 'image/png'});
+                     return URL.createObjectURL(blob);
+                  });
+                }
               } else if (data.error) {
                 throw new Error(data.error);
               }
@@ -1045,6 +1095,10 @@ function buildTxt2Vid() {
       <span class="aim-panel-icon">🎥</span>
       <span class="aim-panel-title">TEXT TO VIDEO</span>
       <span class="aim-panel-badge">WAN-14B ENGINE</span>
+    </div>
+
+    <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
+      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> The Wan-14B Text-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
     </div>
 
     <div class="aim-field">
@@ -1194,8 +1248,50 @@ function buildTxt2Vid() {
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let url = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); 
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                updateProgress(loader, data.step, data.max_steps);
+              } else if (data.video_b64) {
+                const b64 = data.video_b64;
+                const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                saveVideoToGallery(profile, prompt, 'Straight Video Gen (T2V)', 'data:video/mp4;base64,' + b64);
+                
+                const byteCharacters = atob(b64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'video/mp4'});
+                url = URL.createObjectURL(blob);
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) {
+                throw e; 
+              }
+            }
+          }
+        }
+      }
 
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
@@ -1260,7 +1356,16 @@ function buildFramepack() {
         </div>
         <div class="aim-row" style="margin-bottom: 20px;">
           <p style="color: var(--text-muted); font-size: 0.9rem;">
-            Framepack Studio requires a dedicated H100 container. Framepack video synthesis engine rendering queue.
+  const percent = Math.floor((current / total) * 100);
+  loader.innerHTML = \`
+    <div style="font-family:'Share Tech Mono', monospace; margin-bottom:8px; font-size:0.9rem; color:var(--accent);">
+      SYNTHESIZING MATRIX: \${percent}% (STEP \${current}/\${total})\${extraText}
+    </div>
+    <div style="width:100%; background:rgba(6,182,212,0.1); border-radius:2px; height:8px; overflow:hidden;">
+      <div style="width:\${percent}%; background:var(--accent); height:100%; transition:width 0.2s;"></div>
+    </div>
+  \`;
+}mepack video synthesis engine rendering queue.
           </p>
         </div>
         <div class="aim-row" style="display:flex; gap:10px; justify-content: center; margin-bottom: 20px;">
