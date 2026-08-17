@@ -24,7 +24,7 @@ const COMMANDS = [
   { icon: '📑', title: 'Go to System Event Logs', path: '#/logs' },
   { icon: '⌬', title: 'Go to Research Center', path: '#/research' },
   { icon: '◬', title: 'Go to System Lore', path: '#/lore' },
-  { icon: '◈', title: 'Go to Creator Auth', path: '#/creator' },
+  { icon: '◈', title: 'Go to Architect Auth', path: '#/architect' },
   { icon: '⚡', title: 'Toggle Performance / Eco Mode', action: 'toggle-eco' },
   { icon: '🎵', title: 'Toggle Background Audio', action: 'toggle-audio' },
   { icon: '🎨', title: 'Set Theme: Cyan Protocol', action: 'theme-cyan' },

@@ -6,7 +6,7 @@ import { createElement } from '../components/utils.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
 
-const MODAL_API = ""; // AI chat endpoint removed for now
+const MODAL_API = "https://ai-alphacore-tech--alpha-unfiltered-web.modal.run/chat"; // Alpha-Unfiltered endpoint
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
@@ -49,8 +49,8 @@ export default function CognitiveUplink() {
             <button class="aim-btn" id="cmd-animate" style="padding: 12px; font-size: 1rem; width: 100%;">// ANIMATE</button>
           </div>
           
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;" disabled></textarea>
-          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;" disabled>
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;"></textarea>
+          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;">
             <span class="chat-send-icon">⟩</span>
           </button>
         </div>
@@ -59,10 +59,10 @@ export default function CognitiveUplink() {
       <div class="panel uplink-info-panel" style="display: flex; flex-direction: column;">
         <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
           <span>// LIVE_MODAL_LOGS</span>
-          <a href="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-modal-gui-local-llm" target="_blank" class="aim-btn aim-btn-sm" style="font-size: 0.6rem; padding: 4px 8px; text-decoration: none;">EXTERNAL &nearr;</a>
+          <a href="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-unfiltered" target="_blank" class="aim-btn aim-btn-sm" style="font-size: 0.6rem; padding: 4px 8px; text-decoration: none;">EXTERNAL &nearr;</a>
         </div>
         <div style="flex-grow: 1; min-height: 300px; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative;">
-          <iframe src="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-modal-gui-local-llm" style="width: 100%; height: 100%; border: none; background: #000;"></iframe>
+          <iframe src="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-unfiltered" style="width: 100%; height: 100%; border: none; background: #000;"></iframe>
         </div>
 
         <div style="margin-top: 15px;">

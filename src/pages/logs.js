@@ -8,8 +8,38 @@ import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 import { getLogs, logAction, clearLogs } from '../components/logger.js';
 
+import { triggerBypassOverloadSequence } from '../components/pinpad.js';
+
 export default function LogsPage() {
   const container = createElement('div', { class: 'logs-page-container' });
+
+  const profile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  if (profile !== 'architect') {
+    container.innerHTML = `
+      <div class="page-header">
+        <h1 class="page-title">SYSTEM EVENT LOGS</h1>
+      </div>
+      <div style="position: relative; width: 100%; min-height: 500px; border-radius: 8px; overflow: hidden; background: #030712;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #ff003c; border: 2px solid #ff003c; padding: 30px; background: rgba(0,0,0,0.8); box-shadow: 0 0 30px rgba(255,0,60,0.3); border-radius: 8px; min-width: 300px;">
+          <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
+          <h2 style="margin: 0 0 10px 0; letter-spacing: 2px;">SECURITY LOCKOUT</h2>
+          <p style="margin: 0 0 20px 0; color: #aaa; font-family: monospace;">EVENT LOGS REQUIRE ARCHITECT MAIN PROFILE CLEARANCE.</p>
+          <button class="aim-btn" id="logs-bypass-btn" style="width: 100%; padding: 8px; background: rgba(255,0,60,0.1); border: 1px solid rgba(255,0,60,0.4); color: #ff003c; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">
+            ⚡ [SYSTEM BYPASS]
+          </button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const bypassBtn = container.querySelector('#logs-bypass-btn');
+      if (bypassBtn) {
+        bypassBtn.onclick = () => {
+          triggerBypassOverloadSequence();
+        };
+      }
+    }, 0);
+    return container;
+  }
 
   let livePollingActive = false;
   let pollingInterval = null;

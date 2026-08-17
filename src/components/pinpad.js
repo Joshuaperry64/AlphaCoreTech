@@ -122,7 +122,8 @@ export function buildPinPad({
   requiredRole = null,
   title = '// IDENTITY_VERIFICATION',
   subtitle = 'ENTER YOUR ACCESS PIN',
-  icon = '⟁'
+  icon = '⟁',
+  isLoginScreen = false
 } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
@@ -154,10 +155,7 @@ export function buildPinPad({
       </div>
 
       <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-        <button class="aim-btn" id="aim-pin-guest-btn" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #ccc; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">
-          👤 CONTINUE AS GUEST
-        </button>
-        <button class="aim-btn" id="aim-pin-bypass-btn" style="width: 100%; padding: 8px; background: rgba(255,0,60,0.1); border: 1px solid rgba(255,0,60,0.4); color: #ff003c; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">
+        <button class="aim-btn" id="aim-pin-bypass-btn" style="width: 100%; padding: 10px; background: ${isLoginScreen ? 'rgba(0,255,100,0.1)' : 'rgba(255,0,60,0.1)'}; border: 1px solid ${isLoginScreen ? 'rgba(0,255,100,0.4)' : 'rgba(255,0,60,0.4)'}; color: ${isLoginScreen ? '#00ff64' : '#ff003c'}; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;">
           ⚡ [SYSTEM BYPASS]
         </button>
       </div>
@@ -259,25 +257,29 @@ export function buildPinPad({
   wrap.querySelector('#aim-pad-enter').onclick = e => { e.stopPropagation(); handleEnter(); };
 
   // Guest button listener
-  const guestBtn = wrap.querySelector('#aim-pin-guest-btn');
-  if (guestBtn) {
-    guestBtn.onclick = (e) => {
-      e.stopPropagation();
-      sessionStorage.clear();
-      sessionStorage.setItem('current_profile', 'Guest');
-      setFeedback('GUEST ACCESS GRANTED...', 'ok');
-      setTimeout(() => {
-        onSuccess({ valid: true, pinObj: { label: 'Guest', roles: [] } });
-      }, 400);
-    };
-  }
-
   // Bypass Easter Egg button listener
   const bypassBtn = wrap.querySelector('#aim-pin-bypass-btn');
   if (bypassBtn) {
     bypassBtn.onclick = (e) => {
       e.stopPropagation();
-      triggerBypassOverloadSequence();
+      if (isLoginScreen) {
+        // Unique successful bypass animation
+        bypassBtn.innerHTML = '⚡ BYPASS SUCCESSFUL...';
+        bypassBtn.style.background = 'rgba(0,255,100,0.3)';
+        bypassBtn.style.boxShadow = '0 0 20px rgba(0,255,100,0.8)';
+        bypassBtn.style.borderColor = '#00ff64';
+        bypassBtn.style.color = '#fff';
+        setFeedback('SYSTEM BYPASSED. GUEST ACCESS GRANTED.', 'ok');
+        
+        sessionStorage.clear();
+        sessionStorage.setItem('current_profile', 'Guest');
+        setTimeout(() => {
+          onSuccess({ valid: true, pinObj: { label: 'Guest', roles: [] } });
+        }, 800);
+      } else {
+        // Standard kernel crash reboot
+        triggerBypassOverloadSequence();
+      }
     };
   }
 
@@ -308,7 +310,12 @@ export function requireAuth(container, options) {
   }
 }
 
-export function openLoginModal({ title = '// PROFILE_AUTHENTICATION', subtitle = 'ENTER ACCESS PIN TO UNLOCK FULL FEATURES' } = {}) {
+export function openLoginModal({ 
+  title = '// PROFILE_AUTHENTICATION',
+  subtitle = 'ENTER ACCESS PIN TO UNLOCK FULL FEATURES',
+  icon = '🔒',
+  isLoginScreen = false
+} = {}) {
   import('./modal.js').then(({ showModal }) => {
     const pinPadEl = buildPinPad({
       onSuccess: () => {
@@ -345,7 +352,7 @@ export function openLoginModal({ title = '// PROFILE_AUTHENTICATION', subtitle =
 
 // ─── Easter Egg: Cracked Screen, Red Overload & Fake 404 Crash Sequence ─────────
 
-function triggerBypassOverloadSequence() {
+export function triggerBypassOverloadSequence() {
   // Play custom bypass.mp3 sound effect (5 seconds duration)
   playSFX('bypass', 0.9);
 
@@ -466,6 +473,8 @@ function triggerBypassOverloadSequence() {
 
     fake404.querySelector('#btn-reboot-404').onclick = () => {
       crashOverlay.remove();
+      sessionStorage.clear();
+      window.location.hash = '#/';
       window.location.reload();
     };
   }, 5000);

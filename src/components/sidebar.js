@@ -31,13 +31,10 @@ export function initSidebar() {
     authVal.style.cursor = 'pointer';
     authVal.title = profile === 'Guest' ? 'Click to authenticate profile via PIN' : `Active: ${profile}. Click to switch/logout.`;
 
-    const isAdmin = sessionStorage.getItem('admin_authenticated') === '1';
-    const isVault = sessionStorage.getItem('vault_authenticated') === '1';
-
     const adminTab = document.querySelector('a[data-route="/admin"]');
-    if (adminTab) adminTab.style.display = isAdmin ? 'flex' : 'none';
+    if (adminTab) adminTab.style.display = 'flex';
     const vaultTab = document.querySelector('a[data-route="/vault"]');
-    if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
+    if (vaultTab) vaultTab.style.display = 'flex';
 
     authVal.onclick = () => {
       import('./modal.js').then(({ showModal }) => {

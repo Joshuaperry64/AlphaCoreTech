@@ -1947,6 +1947,7 @@ input:focus, textarea:focus {
   overflow: hidden;
 }
 .aim-seg-3 { grid-template-columns: 1fr 1fr 1fr; }
+.aim-seg-2 { grid-template-columns: 1fr 1fr; }
 .aim-seg-btn {
   background: rgba(0,0,0,0.4);
   border: none;

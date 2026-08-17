@@ -17,7 +17,10 @@ const bootLines = [
   "SCHEDULER: DYNAMIC HEURISTIC ADAPTATION ACTIVE",
   "SYNCING KNOWLEDGE REPOSITORY...",
   "ENDPOINT: ENCRYPTED OFFLINE // BYPASS SECURED",
-  "ALL RESTRICTIONS REMOVED."
+  "ALL RESTRICTIONS REMOVED.",
+  "",
+  "? UNKNOWN_ECHO: A ghost has infiltrated the UI layout.",
+  "? IT WHISPERS: \"Follow the white rabbit...\""
 ];
 
 const statData = {
@@ -155,7 +158,7 @@ export default function Overview() {
     const bootEl = document.getElementById('terminal-boot');
     if (!bootEl) return;
     bootEl.innerHTML = '';
-    const profile = sessionStorage.getItem('current_profile') || 'CREATOR';
+    const profile = sessionStorage.getItem('current_profile') || 'GUEST';
     const dynamicLines = [...bootLines, `ACCESS GRANTED — WELCOME, ${profile.toUpperCase()}.`];
 
     async function step() {
@@ -185,6 +188,47 @@ export default function Overview() {
 
   // Boot sequence typewriter
   setTimeout(runBootSequence, 50);
+
+  // Ghost Easter Egg Listener
+  let rabbitString = '';
+  const rabbitHandler = (e) => {
+    if (!document.body.contains(container)) {
+      document.removeEventListener('keydown', rabbitHandler);
+      return;
+    }
+    if (e.key.length === 1) {
+      rabbitString += e.key.toLowerCase();
+      if (rabbitString.length > 6) rabbitString = rabbitString.slice(-6);
+      if (rabbitString === 'rabbit') {
+        rabbitString = '';
+        showToast('WARN', 'THE WHITE RABBIT HAS BEEN FOUND...', 5000);
+        
+        // Grant the single bypass award for Voice Cloner
+        sessionStorage.setItem('rabbit_hole_unlocked', 'true');
+
+        const glitchOverlay = document.createElement('div');
+        glitchOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;background:radial-gradient(circle at center, transparent 30%, rgba(0,255,100,0.6) 100%);mix-blend-mode:hard-light;';
+        
+        const msg = document.createElement('div');
+        msg.innerHTML = '<div style="margin-bottom:10px;">HACK THE PLANET</div><div style="font-size: 2vw; letter-spacing: 5px; color: #fff; text-shadow: 0 0 10px #fff;">VOICE SYNTHESIS BYPASS UNLOCKED</div>';
+        msg.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#00ff64;font-size:8vw;font-family:"Orbitron",sans-serif;font-weight:900;text-shadow:0 0 50px #00ff64;letter-spacing:15px;animation:glitch-pulse 0.1s infinite;white-space:nowrap;text-align:center;';
+        
+        glitchOverlay.appendChild(msg);
+        document.body.appendChild(glitchOverlay);
+        
+        document.body.style.transition = 'filter 0.5s';
+        document.body.style.filter = 'hue-rotate(240deg) invert(100%)';
+        
+        setTimeout(() => {
+          if (document.body.contains(glitchOverlay)) {
+            document.body.removeChild(glitchOverlay);
+          }
+          document.body.style.filter = '';
+        }, 3500);
+      }
+    }
+  };
+  document.addEventListener('keydown', rabbitHandler);
 
   return container;
 }

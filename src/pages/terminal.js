@@ -89,7 +89,7 @@ export default function TerminalPage() {
         break;
 
       case 'status':
-        const profile = sessionStorage.getItem('current_profile') || 'CREATOR';
+        const profile = sessionStorage.getItem('current_profile') || 'GUEST';
         appendLine(`[SYS STATUS] Profile: <span style="color:#10b981;">${profile.toUpperCase()}</span> | Clearance: <span style="color:#06b6d4;">ADMIN_S_6</span> | Core: <span style="color:#a855f7;">ALPHA v4.0</span>`, '#eee');
         break;
 
@@ -117,7 +117,7 @@ export default function TerminalPage() {
 
       case 'logs':
         appendLine('Displaying last 3 system event logs:', '#06b6d4');
-        appendLine('  [LOG-8801] AUTH: User session verified for role CREATOR.');
+        appendLine('  [LOG-8801] AUTH: User session verified for role GUEST.');
         appendLine('  [LOG-8802] NEURAL: Neural handshake established with 128 threads.');
         appendLine('  [LOG-8803] PERF: Throttled frame loop to 12 FPS.');
         break;

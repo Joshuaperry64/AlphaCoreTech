@@ -18,7 +18,7 @@ import { showToast } from './components/toast.js';
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
 import Diagnostics from './pages/diagnostics.js';
-import CreatorProfile from './pages/creator.js';
+import ArchitectProfile from './pages/creator.js';
 import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
 import AiModals from './pages/aimodals.js';
@@ -28,8 +28,8 @@ import VisionProcessor from './pages/vision.js';
 import LogsPage from './pages/logs.js';
 import SubroutinesPage from './pages/subroutines.js';
 import PromptLabPage from './pages/promptlab.js';
-import AnalyticsPage from './pages/analytics.js';
-import TerminalPage from './pages/terminal.js';
+import ReconPage from './pages/recon.js';
+import VoiceClonerPage from './pages/voicecloner.js';
 import ChangelogPage from './pages/changelog.js';
 import NetworkMatrixPage from './pages/network.js';
 
@@ -37,7 +37,7 @@ const routes = {
   '/': Overview,
   '/lore': Lore,
   '/diagnostics': Diagnostics,
-  '/creator': CreatorProfile,
+  '/architect': ArchitectProfile,
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
   '/aimodals': AiModals,
@@ -47,8 +47,8 @@ const routes = {
   '/logs': LogsPage,
   '/subroutines': SubroutinesPage,
   '/promptlab': PromptLabPage,
-  '/analytics': AnalyticsPage,
-  '/terminal': TerminalPage,
+  '/recon': ReconPage,
+  '/voice': VoiceClonerPage,
   '/changelog': ChangelogPage,
   '/network': NetworkMatrixPage,
 };
@@ -88,6 +88,7 @@ async function renderRoute() {
     });
     
     const pinPad = buildPinPad({
+      isLoginScreen: true,
       onSuccess: () => {
         cleanup();
         localStorage.setItem('alphacore_intro_complete', '1');
@@ -138,13 +139,10 @@ async function renderRoute() {
     authVal.className = currentProfile === 'Guest' ? 's-val' : 's-val accent';
   }
 
-  const isAdmin = sessionStorage.getItem('admin_authenticated') === '1';
-  const isVault = sessionStorage.getItem('vault_authenticated') === '1';
-
   const adminTab = document.querySelector('a[data-route="/admin"]');
-  if (adminTab) adminTab.style.display = isAdmin ? 'flex' : 'none';
+  if (adminTab) adminTab.style.display = 'flex';
   const vaultTab = document.querySelector('a[data-route="/vault"]');
-  if (vaultTab) vaultTab.style.display = isVault ? 'flex' : 'none';
+  if (vaultTab) vaultTab.style.display = 'flex';
 
   const isGuest = currentProfile === 'Guest';
 
@@ -180,14 +178,25 @@ async function renderRoute() {
           </div>
         </div>
       </div>
-      <button id="guest-login-banner-btn" class="aim-btn aim-btn-sm" style="background: rgba(255,0,60,0.25); border-color: #ff003c; color: #fff; padding: 8px 16px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px;">
-        🔑 LOGIN / UNLOCK
-      </button>
+      <div style="display: flex; gap: 8px;">
+        <button id="guest-login-banner-btn" class="aim-btn aim-btn-sm" style="background: rgba(255,0,60,0.25); border-color: #ff003c; color: #fff; padding: 8px 16px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px;">
+          🔑 LOGIN / UNLOCK
+        </button>
+        <button id="guest-bypass-banner-btn" class="aim-btn aim-btn-sm" style="background: rgba(255,0,60,0.1); border-color: rgba(255,0,60,0.4); color: #ff003c; padding: 8px 16px; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px;">
+          ⚡ [SYSTEM BYPASS]
+        </button>
+      </div>
     `;
 
     banner.querySelector('#guest-login-banner-btn').onclick = () => {
       import('./components/pinpad.js').then(({ openLoginModal }) => {
         openLoginModal({ title: '// PROFILE_LOGIN', subtitle: 'ENTER ARCHITECT OR USER PIN TO UNLOCK' });
+      });
+    };
+
+    banner.querySelector('#guest-bypass-banner-btn').onclick = () => {
+      import('./components/pinpad.js').then(({ triggerBypassOverloadSequence }) => {
+        triggerBypassOverloadSequence();
       });
     };
 
@@ -256,8 +265,6 @@ function initApp() {
     const isActive = document.body.classList.toggle('synthwave-overdrive');
     if (isActive) {
       localStorage.setItem('alphacore_synthwave_active', '1');
-      sessionStorage.setItem('generate_authenticated', '1');
-      sessionStorage.setItem('admin_authenticated', '1');
       playSFX('modal', 0.8);
 
       import('./components/modal.js').then(({ showModal }) => {
@@ -267,8 +274,7 @@ function initApp() {
             <div style="text-align: center; font-family: 'Share Tech Mono', monospace; line-height: 1.6;">
               <div style="font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 20px #ff00ff;">SYSTEM OVERDRIVE ENGAGED</div>
               <div style="color: #06b6d4;">SYNTHWAVE THEME UNLOCKED.</div>
-              <div style="color: #10b981;">ALL SUBSYSTEMS AUTHENTICATED.</div>
-              <div style="color: #ff003c; margin-top: 15px; font-size: 0.85rem;">"We're in."</div>
+              <div style="color: #ff003c; margin-top: 15px; font-size: 0.85rem;">"Aesthetic Override Complete."</div>
             </div>
           `
         });

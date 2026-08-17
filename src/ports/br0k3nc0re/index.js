@@ -10,6 +10,8 @@ export const version = '2.0.0-uplink';
 export const description = 'Remote uplink to the bR0k3nC0Re desktop AI suite. [RESTRICTED: ARCHITECT CLEARANCE ONLY]';
 export const pythonSourcePath = 'bR0k3nC0Re/main.py';
 
+import { triggerBypassOverloadSequence } from '../../components/pinpad.js';
+
 let activeInstance = null;
 
 export function render(container, options = {}) {
@@ -44,6 +46,9 @@ export function render(container, options = {}) {
         </div>
         <button id="br0k3n-btn-auth" style="margin-top: 12px; width: 100%; max-width: 300px; background: rgba(139,92,246,0.15); border: 1px solid #a78bfa; color: #a78bfa; padding: 12px; border-radius: 4px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-weight: bold; transition: all 0.2s;">
           AUTHORIZE UPLINK
+        </button>
+        <button id="br0k3n-bypass-btn" style="margin-top: 8px; width: 100%; max-width: 300px; padding: 8px; background: rgba(255,0,60,0.1); border: 1px solid rgba(255,0,60,0.4); color: #ff003c; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">
+          ⚡ [SYSTEM BYPASS]
         </button>
         <div id="br0k3n-auth-status" style="margin-top: 16px; font-size: 0.85rem; color: #ef4444; min-height: 20px;"></div>
       </div>
@@ -82,6 +87,14 @@ export function render(container, options = {}) {
   const pinInput = container.querySelector('#br0k3n-pin');
   const authStatus = container.querySelector('#br0k3n-auth-status');
   const terminal = container.querySelector('#br0k3n-terminal');
+  const bypassBtn = container.querySelector('#br0k3n-bypass-btn');
+
+  if (bypassBtn) {
+    bypassBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerBypassOverloadSequence();
+    });
+  }
 
   // Hover effect for auth button
   btnAuth.addEventListener('mouseenter', () => btnAuth.style.background = 'rgba(139,92,246,0.3)');

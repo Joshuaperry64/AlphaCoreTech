@@ -16,22 +16,33 @@ const LORA_OPTIONS = `
 
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
+    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
-    stepsFastTxt: 10,
-    stepsNormalTxt: 20,
-    stepsFocusedTxt: 50,
-    stepsFastImg: 8,
-    stepsNormalImg: 17,
-    stepsFocusedImg: 30
+    stepsFastTxt: 20,
+    stepsNormalTxt: 30,
+    stepsFocusedTxt: 60,
+    stepsFastImg: 15,
+    stepsNormalImg: 25,
+    stepsFocusedImg: 40
   };
   try {
-    const custom = localStorage.getItem('alphacore_modal_settings');
-    if (custom) {
-      return { ...defaults, ...JSON.parse(custom) };
+    const customStr = localStorage.getItem('alphacore_modal_settings');
+    if (customStr) {
+      const custom = JSON.parse(customStr);
+      // Migrate old steps to new realistic ones
+      if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
+        custom.stepsFastTxt = 20;
+        custom.stepsNormalTxt = 30;
+        custom.stepsFocusedTxt = 60;
+        custom.stepsFastImg = 15;
+        custom.stepsNormalImg = 25;
+        custom.stepsFocusedImg = 40;
+        localStorage.setItem('alphacore_modal_settings', JSON.stringify(custom));
+      }
+      return { ...defaults, ...custom };
     }
   } catch (e) {
     console.error(e);
@@ -271,7 +282,7 @@ function buildResult(urls = []) {
 function buildTxt2Img() {
   const settings = getModalSettings();
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
   const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
@@ -307,8 +318,8 @@ function buildTxt2Img() {
       <div class="aim-field aim-field-half">
         <label class="aim-label">SPEED MODE</label>
         <div class="aim-seg aim-seg-3" id="t2i-speed">
-          <button class="aim-seg-btn active" data-steps="${settings.stepsFastTxt}">⚡ FAST</button>
-          <button class="aim-seg-btn" data-steps="${settings.stepsNormalTxt}">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="${settings.stepsFastTxt}">⚡ FAST</button>
+          <button class="aim-seg-btn active" data-steps="${settings.stepsNormalTxt}">⚖ NORMAL</button>
           <button class="aim-seg-btn" data-steps="${settings.stepsFocusedTxt}">🎯 DETAILED</button>
         </div>
       </div>
@@ -614,7 +625,7 @@ function buildTxt2Img() {
 function buildImg2Img() {
   const settings = getModalSettings();
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
   const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
@@ -669,12 +680,21 @@ function buildImg2Img() {
       </div>
     </div>
 
-    <div class="aim-field">
-      <label class="aim-label">PROCESSING MODE</label>
-      <div class="aim-seg aim-seg-3" id="i2i-speed">
-        <button class="aim-seg-btn active" data-steps="${settings.stepsFastImg}">⚡ FAST</button>
-        <button class="aim-seg-btn" data-steps="${settings.stepsNormalImg}">⚖ NORMAL</button>
-        <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 DETAILED</button>
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label">PROCESSING MODE</label>
+        <div class="aim-seg aim-seg-3" id="i2i-speed">
+          <button class="aim-seg-btn" data-steps="${settings.stepsFastImg}">⚡ FAST</button>
+          <button class="aim-seg-btn active" data-steps="${settings.stepsNormalImg}">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 DETAILED</button>
+        </div>
+      </div>
+      <div class="aim-field aim-field-half">
+        <label class="aim-label">IMAGE TO IMAGE MODEL</label>
+        <div class="aim-seg aim-seg-2" id="i2i-model-select">
+          <button class="aim-seg-btn active" data-model="qwen">🧠 QWEN</button>
+          <button class="aim-seg-btn" data-model="flux">🌀 FLUX</button>
+        </div>
       </div>
     </div>
 
@@ -768,6 +788,14 @@ function buildImg2Img() {
   wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Model selector
+  wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
@@ -889,7 +917,12 @@ function buildImg2Img() {
       formData.append('width', w);
       formData.append('height', h);
 
-      const res = await fetch(`${settings.img2imgUrl}stream`, { method: 'POST', body: formData });
+      const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active').dataset.model;
+      const i2iEndpoint = selectedI2iModel === 'flux' 
+        ? 'https://ai-alphacore-tech--img2img-flux-v2-model-web.modal.run/' 
+        : settings.img2imgUrl;
+
+      const res = await fetch(`${i2iEndpoint}stream`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const reader = res.body.getReader();
@@ -1046,6 +1079,9 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="txt2vid" id="aim-tab-t2v">
         <span class="aim-tab-icon">🎥</span> TXT2VID
       </button>
+      <button class="aim-tab" data-tab="img2vid" id="aim-tab-i2v">
+        <span class="aim-tab-icon">🎞️</span> IMG2VID
+      </button>
       <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
         <span class="aim-tab-icon">🎬</span> FRAMEPACK
       </button>
@@ -1071,6 +1107,8 @@ function buildMainUI() {
         currentPanel = buildImg2Img();
       } else if (tab.dataset.tab === 'txt2vid') {
         currentPanel = buildTxt2Vid();
+      } else if (tab.dataset.tab === 'img2vid') {
+        currentPanel = buildImg2Vid();
       } else {
         currentPanel = buildFramepack();
       }
@@ -1112,9 +1150,9 @@ function buildTxt2Vid() {
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2v-speed">SPEED MODE (INFERENCE STEPS)</label>
         <div class="aim-seg aim-seg-3" id="t2v-speed">
-          <button class="aim-seg-btn active" data-steps="25">⚡ FAST (25)</button>
-          <button class="aim-seg-btn" data-steps="40">⚖ NORMAL (40)</button>
-          <button class="aim-seg-btn" data-steps="60">🎯 DETAILED (60)</button>
+          <button class="aim-seg-btn active" data-steps="30">⚡ FAST (30)</button>
+          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL (50)</button>
+          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED (80)</button>
         </div>
       </div>
     </div>
@@ -1331,10 +1369,304 @@ function buildTxt2Vid() {
   return wrap;
 }
 
+/* ─── IMG2VID PANEL ─────────────────────────────────────────── */
+function buildImg2Vid() {
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  
+  const wrap = document.createElement('div');
+  wrap.className = 'aim-panel';
+  wrap.innerHTML = `
+    <div class="aim-panel-header">
+      <span class="aim-panel-icon">🎞️</span>
+      <span class="aim-panel-title">IMAGE TO VIDEO</span>
+      <span class="aim-panel-badge">WAN-14B ENGINE</span>
+    </div>
+
+    <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
+      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> The Wan-14B Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
+    </div>
+
+    <div class="aim-row">
+      <div class="aim-field" style="width: 100%;">
+        <label class="aim-label">PRIMARY STARTING IMAGE</label>
+        <div class="aim-dropzone" id="i2v-dropzone">
+          <input type="file" id="i2v-file" accept="image/*" class="aim-file-input" />
+          <div class="aim-dropzone-inner" id="i2v-dz-inner">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP IMAGE</div>
+          </div>
+          <img class="aim-dz-preview hidden" id="i2v-preview" alt="preview" />
+        </div>
+      </div>
+    </div>
+
+    <div class="aim-field">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" for="i2v-prompt" style="margin:0;">CINEMATIC PROMPT</label>
+      </div>
+      <textarea class="aim-textarea" id="i2v-prompt" rows="3" placeholder="Describe the motion/video you want to generate from the image..."></textarea>
+    </div>
+    
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="i2v-speed">SPEED MODE (INFERENCE STEPS)</label>
+        <div class="aim-seg aim-seg-3" id="i2v-speed">
+          <button class="aim-seg-btn active" data-steps="30">⚡ FAST (30)</button>
+          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL (50)</button>
+          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED (80)</button>
+        </div>
+      </div>
+    </div>
+
+    <details class="aim-advanced">
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
+      <div class="aim-advanced-body">
+        <div class="aim-field">
+          <label class="aim-label" for="i2v-neg">NEGATIVE PROMPT</label>
+          <textarea class="aim-textarea aim-textarea-sm" id="i2v-neg" rows="2">low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, deformed, ugly, pixelated</textarea>
+        </div>
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field" style="width: 100%;">
+            <label class="aim-label" for="i2v-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="i2v-cfg-val">5.0</span></label>
+            <input class="aim-range" type="range" id="i2v-cfg" min="1" max="15" step="0.5" value="5.0" />
+          </div>
+        </div>
+
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2v-fps">TARGET FPS</label>
+            <select class="aim-input" id="i2v-fps">
+              <option value="16" selected>16 FPS (Standard)</option>
+              <option value="24">24 FPS (Cinematic)</option>
+              <option value="30">30 FPS (Smooth)</option>
+            </select>
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="i2v-resolution">RESOLUTION (W x H)</label>
+            <select class="aim-input" id="i2v-resolution">
+              <option value="832x480" selected>832 x 480 (Widescreen SD)</option>
+              <option value="480x832">480 x 832 (Vertical SD)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="aim-row" style="margin-top:12px;">
+          <div class="aim-field" style="width: 100%;">
+            <label class="aim-label" for="i2v-frames">TOTAL FRAMES: <span class="aim-val-display" id="i2v-frames-val">81</span></label>
+            <input class="aim-range" type="range" id="i2v-frames" min="16" max="129" step="1" value="81" />
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <button class="aim-btn-generate" id="i2v-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}">
+      <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE VIDEO SYNTHESIS' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
+    </button>
+
+    <div class="aim-status-bar" id="i2v-status"></div>
+    <div id="i2v-loader-slot"></div>
+    <div id="i2v-result-slot"></div>
+  `;
+
+  // Range displays
+  const cfgInput = wrap.querySelector('#i2v-cfg');
+  const cfgVal = wrap.querySelector('#i2v-cfg-val');
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+
+  const framesInput = wrap.querySelector('#i2v-frames');
+  const framesVal = wrap.querySelector('#i2v-frames-val');
+  if (framesInput && framesVal) framesInput.addEventListener('input', () => { framesVal.textContent = framesInput.value; });
+
+  // Speed selector
+  wrap.querySelectorAll('#i2v-speed .aim-seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('#i2v-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  
+  // Dropzone handling
+  const fileInput = wrap.querySelector('#i2v-file');
+  const dropzone = wrap.querySelector('#i2v-dropzone');
+  const dzInner = wrap.querySelector('#i2v-dz-inner');
+  const preview = wrap.querySelector('#i2v-preview');
+
+  function showPreview(file) {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.classList.remove('hidden');
+    dzInner.classList.add('hidden');
+    dropzone.classList.add('has-preview');
+  }
+
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) showPreview(fileInput.files[0]); });
+  dropzone.addEventListener('click', e => {
+    if (e.target === fileInput || e.target.classList.contains('aim-dz-preview')) return;
+    fileInput.click();
+  });
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) { fileInput._droppedFile = file; showPreview(file); }
+  });
+
+  // Generate
+  wrap.querySelector('#i2v-gen-btn').addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#i2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE VIDEO' });
+      });
+      return;
+    }
+    const file = fileInput._droppedFile || fileInput.files[0];
+    if (!file) { setStatus(wrap, '#i2v-status', 'ERROR: No starting image loaded.', 'error'); return; }
+    
+    const prompt = wrap.querySelector('#i2v-prompt').value.trim();
+    if (!prompt) { setStatus(wrap, '#i2v-status', 'ERROR: Cinematic prompt is empty.', 'error'); return; }
+
+    const steps = parseInt(wrap.querySelector('#i2v-speed .aim-seg-btn.active').dataset.steps);
+    let neg = wrap.querySelector('#i2v-neg').value;
+    const cfg = parseFloat(wrap.querySelector('#i2v-cfg').value).toFixed(1);
+    const fps = parseInt(wrap.querySelector('#i2v-fps').value);
+    const numFrames = parseInt(wrap.querySelector('#i2v-frames').value);
+    const resolution = wrap.querySelector('#i2v-resolution').value;
+    const [w, h] = resolution.split('x').map(n => parseInt(n));
+
+    // Check for darkness mode and override negative prompt
+    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
+      neg = ''; 
+      console.warn('[DARKNESS] NSFW governors disabled for this I2V request.');
+    }
+
+    const loaderSlot = wrap.querySelector('#i2v-loader-slot');
+    const resultSlot = wrap.querySelector('#i2v-result-slot');
+    const genBtn = wrap.querySelector('#i2v-gen-btn');
+
+    genBtn.disabled = true;
+    setStatus(wrap, '#i2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
+    const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
+    loaderSlot.innerHTML = '';
+    loaderSlot.appendChild(loader);
+
+    const loaderMessages = ['SYNTHESIZING VIDEO...','DIFFUSING FRAMES...','RENDERING ARTIFACT...','FINALIZING OUTPUT...'];
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loaderMessages.length;
+      const ltEl = loaderSlot.querySelector('#aim-loader-text');
+      if (ltEl) ltEl.textContent = loaderMessages[msgIdx];
+    }, 4500);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('prompt', prompt);
+      formData.append('negative_prompt', neg);
+      formData.append('guidance_scale', cfg);
+      formData.append('num_inference_steps', steps);
+      formData.append('width', w);
+      formData.append('height', h);
+      formData.append('num_frames', numFrames);
+      formData.append('fps', fps);
+      
+      const endpoint = 'https://ai-alphacore-tech--img2vid-wan-model-web.modal.run/stream';
+      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let url = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); 
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                updateProgress(loader, data.step, data.max_steps);
+              } else if (data.video_b64) {
+                const b64 = data.video_b64;
+                const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                import('../components/vision_db.js').then(({ saveVideoToGallery }) => {
+                  saveVideoToGallery(profile, prompt, 'Image to Video Gen (I2V)', 'data:video/mp4;base64,' + b64);
+                }).catch(console.error);
+                
+                const byteCharacters = atob(b64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'video/mp4'});
+                url = URL.createObjectURL(blob);
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) {
+                throw e; 
+              }
+            }
+          }
+        }
+      }
+
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+
+      const resultEl = document.createElement('div');
+      resultEl.className = 'aim-result-view';
+      resultEl.innerHTML = `
+        <div class="aim-result-frame">
+          <video id="aim-result-vid" src="${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+        </div>
+        <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
+          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
+        </div>
+      `;
+
+      resultEl.querySelector('#aim-dl-vid-btn').onclick = () => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alphacore_video_${Date.now()}.mp4`;
+        a.click();
+      };
+
+      resultSlot.innerHTML = '';
+      resultSlot.appendChild(resultEl);
+      setStatus(wrap, '#i2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
+      if (window._aimNotifyWarm) window._aimNotifyWarm();
+    } catch (err) {
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+      setStatus(wrap, '#i2v-status', `FAILURE: ${err.message}`, 'error');
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+
+  return wrap;
+}
+
 /* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
 function buildFramepack() {
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || currentProfile === 'creator' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
@@ -1356,16 +1688,7 @@ function buildFramepack() {
         </div>
         <div class="aim-row" style="margin-bottom: 20px;">
           <p style="color: var(--text-muted); font-size: 0.9rem;">
-  const percent = Math.floor((current / total) * 100);
-  loader.innerHTML = \`
-    <div style="font-family:'Share Tech Mono', monospace; margin-bottom:8px; font-size:0.9rem; color:var(--accent);">
-      SYNTHESIZING MATRIX: \${percent}% (STEP \${current}/\${total})\${extraText}
-    </div>
-    <div style="width:100%; background:rgba(6,182,212,0.1); border-radius:2px; height:8px; overflow:hidden;">
-      <div style="width:\${percent}%; background:var(--accent); height:100%; transition:width 0.2s;"></div>
-    </div>
-  \`;
-}mepack video synthesis engine rendering queue.
+            Framepack video synthesis engine rendering queue.
           </p>
         </div>
         <div class="aim-row" style="display:flex; gap:10px; justify-content: center; margin-bottom: 20px;">

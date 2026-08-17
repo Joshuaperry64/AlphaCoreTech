@@ -30,15 +30,15 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-merger-inference-web.modal.run/',
+    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
-    stepsFastTxt: 10,
-    stepsFocusedTxt: 50,
-    stepsNormalTxt: 20,
-    stepsFastImg: 8,
-    stepsFocusedImg: 30,
-    stepsNormalImg: 17,
+    stepsFastTxt: 20,
+    stepsNormalTxt: 30,
+    stepsFocusedTxt: 60,
+    stepsFastImg: 15,
+    stepsNormalImg: 25,
+    stepsFocusedImg: 40,
     guidanceImg: 4.0
   };
 

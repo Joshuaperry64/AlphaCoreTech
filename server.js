@@ -4,6 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import { spawn } from 'child_process';
+import PDFDocument from 'pdfkit';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
@@ -32,6 +34,7 @@ const DEFAULT_DB = {
   }
 };
 
+// ... (Your DB logic functions like readDB and writeDB remain here) ...
 import { getStore } from '@netlify/blobs';
 
 let dbCache = null;
@@ -111,19 +114,61 @@ async function writeDB(data) {
   }
 }
 
-// Authentication Middleware for POST routes
-const authenticate = async (req, res, next) => {
-  const userPin = req.headers['x-user-pin'];
-  const db = await readDB();
-  const pinObj = db.pins.find(p => p.pin === userPin);
 
-  if (!pinObj) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  next();
+const authenticate = async (req, res, next) => {
+    const userPin = req.headers['x-user-pin'];
+    const db = await readDB();
+    const pinObj = db.pins.find(p => p.pin === userPin);
+    if (!pinObj) return res.status(401).json({ error: "Unauthorized" });
+    req.user = pinObj;
+    next();
 };
 
-// API Routes
+
+// ==========================================================
+// ADVANCED OSINT ENDPOINT
+// ==========================================================
+const targets = new Map();
+
+app.post('/api/recon/scan', authenticate, async (req, res) => {
+    const { target } = req.body;
+    if (!target) {
+        return res.status(400).json({ status: 'ERROR', message: 'Target identifier is required.' });
+    }
+
+    let queryType;
+    if (target.includes('@')) {
+        queryType = 'email';
+    } else if (target.includes('.') && !target.includes(' ') && target.length > 3) {
+        queryType = 'domain';
+    } else {
+        queryType = 'username';
+    }
+
+    const scriptPath = path.join(_dirname, 'advanced_osint.py');
+    const pythonProcess = spawn('python3', [scriptPath, queryType, target]);
+
+    let rawData = '', errorData = '';
+    pythonProcess.stdout.on('data', (data) => { rawData += data.toString(); });
+    pythonProcess.stderr.on('data', (data) => { errorData += data.toString(); });
+
+    pythonProcess.on('close', (code) => {
+        if (errorData) console.error(`[OSINT Script STDERR]: ${errorData}`);
+        
+        try {
+            const result = JSON.parse(rawData);
+            if (result.error) throw new Error(result.error);
+            
+            targets.set(target, { name: target, status: 'complete', data: result });
+            res.json({ status: 'SUCCESS', message: 'OSINT scan complete.', data: result });
+        } catch (e) {
+            res.status(500).json({ status: 'ERROR', message: `Scan process failed: ${e.message || 'Could not parse script output.'}` });
+        }
+    });
+});
+
+
+// ... (All your other existing API routes: /api/pins, /api/logs, /api/vault, etc.)
 app.get('/api/pins', async (req, res) => {
   const db = await readDB();
   const userPin = req.headers['x-user-pin'];
@@ -198,52 +243,38 @@ app.post('/api/auth', async (req, res) => {
   res.json({ valid: true, pinObj: found });
 });
 
-
-
-// Chat Proxy Route
 app.post('/api/chat', async (req, res) => {
   res.json({ reply: 'this feature is still in development.' });
 });
 
-// Forbidden Archive Vault Route
 app.post('/api/vault', authenticate, async (req, res) => {
   try {
     const { action, text, password } = req.body;
     if (!text || !password) {
       return res.status(400).json({ error: 'Text and password are required' });
     }
-
-    // Derive a 256-bit key
     const key = crypto.scryptSync(password, 'forbidden-salt', 32);
-
     if (action === 'encrypt') {
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-      let encrypted = cipher.update(text, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
+      let encrypted = cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
       const authTag = cipher.getAuthTag().toString('hex');
-      
       const payload = `${iv.toString('hex')}:${authTag}:${encrypted}`;
       return res.json({ result: payload });
     } else if (action === 'decrypt') {
       const parts = text.split(':');
-      if (parts.length !== 3) return res.status(400).json({ error: 'Invalid encrypted payload format' });
-      
+      if (parts.length !== 3) return res.status(400).json({ error: 'Invalid encrypted payload' });
       const iv = Buffer.from(parts[0], 'hex');
       const authTag = Buffer.from(parts[1], 'hex');
-      const encryptedText = parts[2];
-      
       const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
       decipher.setAuthTag(authTag);
-      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-      
+      let decrypted = decipher.update(parts[2], 'hex', 'utf8') + decipher.final('utf8');
       return res.json({ result: decrypted });
     } else {
       return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (err) {
-    return res.status(400).json({ error: 'Operation failed: Incorrect password or corrupted payload' });
+    return res.status(400).json({ error: 'Operation failed: Incorrect password or corrupted data' });
   }
 });
 

@@ -9,6 +9,37 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.4.1 BUILD 112',
+    date: '2026.08.17',
+    badge: 'HOTFIX & UI POLISH',
+    badgeColor: '#06b6d4',
+    title: 'RESPONSIVE SWEEP & EASTER EGG REFACTOR',
+    summary: 'Executed a comprehensive sweep of all new modules to ensure perfect mobile layout responsiveness, overhauled the guest login sequence, and completely refactored the system easter eggs for security and fun.',
+    changes: [
+      'Refactored the root bootup PIN pad: The standard Guest button was purged. The `[SYSTEM BYPASS]` button now serves as a dynamic, cinematic guest-login sequence on the root screen.',
+      'Audited and patched mobile responsive layouts across the new Recon Dossier (`#/recon`) and Voice Synthesis (`#/voice`) modules to ensure perfect single-column stacking on smaller viewports.',
+      'Patched a critical security flaw in the original Konami Code easter egg that granted unintended global Admin authorization. It now strictly serves as a safe UI Aesthetic Override.',
+      'Injected a highly secretive "White Rabbit" UI easter egg into the Overview dashboard that requires a hidden keyboard input to trigger.',
+      'Granted a unique, isolated reward for finding the new easter egg: Guests who trigger it receive a temporary session token that bypasses the Voice Cloner lock without exposing private data.'
+    ]
+  },
+  {
+    version: 'v4.4 BUILD 110',
+    date: '2026.08.17',
+    badge: 'MAJOR UPDATE',
+    badgeColor: '#00ff64',
+    title: 'LIVE GENERATIVE BACKENDS, UNIVERSAL BYPASS PROTOCOL & SYSTEM PURGE',
+    summary: 'Wired up live Server-Sent Events (SSE) backend proxies for all generative AI, deployed a universal system bypass easter egg, replaced legacy tools with new Recon & Voice Cloner modules, and purged all remaining simulated frontend loops.',
+    changes: [
+      'Integrated real `server.js` SSE (Server-Sent Events) proxies for all generative AI modals (Text-to-Image, Image-to-Image, Text-to-Video).',
+      'Systematically audited and implemented strict global Guest-Mode lockouts across Voice Cloner, Event Logs, Vault, Admin Panel, Architect Profile, and bR0k3nC0Re.',
+      'Deployed a universal `[SYSTEM BYPASS]` easter egg sequence across all lockouts that violently crashes the kernel UI, wipes session memory, and reboots the interface.',
+      'Replaced the deprecated Analytics page with a dynamic Autonomous Reconnaissance & Dossier dashboard (`#/recon`).',
+      'Replaced the deprecated CLI Terminal page with an integrated Voice Cloner suite (`#/voice`).',
+      'Purged all simulated frontend-only elements (Subroutines batch loops, Network Matrix telemetry) in preparation for live backend API data.'
+    ]
+  },
+  {
     version: 'v4.3 BUILD 102',
     date: '2026.08.16',
     badge: 'LATEST MILESTONE',

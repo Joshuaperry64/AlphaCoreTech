@@ -1,32 +1,52 @@
 /**
- * Creator Profile Page
- * Enhanced with interactive clearance toggle, terminal command runner, and action buttons.
+ * Architect Profile Page
+ * System's ultimate authority dashboard.
  */
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 
-export default function CreatorProfile() {
-  const container = createElement('div', { class: 'creator-page' });
+import { triggerBypassOverloadSequence } from '../components/pinpad.js';
+
+export default function ArchitectProfile() {
+  const container = createElement('div', { class: 'architect-page' });
+
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  
+  if (currentProfile === 'guest') {
+    container.innerHTML = `
+      <div class="section-header" style="margin-bottom:30px;">
+        <h1 class="glitch" data-text="// AUTHORIZED_ARCHITECT">// AUTHORIZED_ARCHITECT</h1>
+        <div class="header-line"></div>
+      </div>
+      <div style="position: relative; width: 100%; min-height: 400px; border-radius: 8px; overflow: hidden; background: #030712;">
+        <div style="filter: blur(8px) brightness(0.35); opacity: 0.5; pointer-events: none; user-select: none; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #0f172a, #0f172a 10px, #1e293b 10px, #1e293b 20px);"></div>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #ff003c; border: 2px solid #ff003c; padding: 30px; background: rgba(0,0,0,0.8); box-shadow: 0 0 30px rgba(255,0,60,0.3); border-radius: 8px; min-width: 300px;">
+          <div style="font-size: 40px; margin-bottom: 15px;">🔒</div>
+          <h2 style="margin: 0 0 10px 0; letter-spacing: 2px;">SECURITY LOCKOUT</h2>
+          <p style="margin: 0 0 20px 0; color: #aaa; font-family: monospace;">ARCHITECT IDENTITY DATABASE LOCKED. AUTHENTICATED USERS ONLY.</p>
+          <button class="aim-btn" id="architect-bypass-btn" style="width: 100%; padding: 8px; background: rgba(255,0,60,0.1); border: 1px solid rgba(255,0,60,0.4); color: #ff003c; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.2s;">
+            ⚡ [SYSTEM BYPASS]
+          </button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const bypassBtn = container.querySelector('#architect-bypass-btn');
+      if (bypassBtn) {
+        bypassBtn.onclick = () => {
+          triggerBypassOverloadSequence();
+        };
+      }
+    }, 0);
+    return container;
+  }
+
   container.innerHTML = `
-    <div class="section-header">
-      <h1 class="glitch" data-text="// AUTHORIZED_CREATOR">// AUTHORIZED_CREATOR</h1>
+    <div class="section-header" style="margin-bottom:30px;">
+      <h1 class="glitch" data-text="// AUTHORIZED_ARCHITECT">// AUTHORIZED_ARCHITECT</h1>
       <div class="header-line"></div>
     </div>
 
-    <!-- Creator Quick Toolbar -->
-    <div class="panel" style="margin-bottom:20px; padding:12px 18px; background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-family:'Orbitron',sans-serif; font-size:0.85rem; color:var(--accent,#06b6d4); font-weight:bold;">CREATOR CONTROLS:</span>
-        <button id="btn-ping-creator-node" class="aim-btn aim-btn-sm" style="background:rgba(6,182,212,0.15); border-color:var(--accent,#06b6d4); color:var(--accent,#06b6d4);">
-          ⚡ PING NODE (RTX 5090)
-        </button>
-        <button id="btn-toggle-override" class="aim-btn aim-btn-sm" style="background:rgba(16,185,129,0.15); border-color:#10b981; color:#10b981;">
-          🛡 OVERRIDE: ACTIVE
-        </button>
-      </div>
-
-      <button id="btn-copy-clearance" class="aim-btn aim-btn-sm" style="background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.2); color:#ccc;">
-        📋 COPY CLEARANCE HASH
       </button>
     </div>
 
