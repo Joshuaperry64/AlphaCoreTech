@@ -4,7 +4,7 @@
  */
 import { createElement } from '../components/utils.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
-import { saveImageToGallery } from '../components/vision_db.js';
+import { saveImageToGallery, saveVideoToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
@@ -32,7 +32,6 @@ function getModalSettings() {
     const customStr = localStorage.getItem('alphacore_modal_settings');
     if (customStr) {
       const custom = JSON.parse(customStr);
-      // Migrate old steps to new realistic ones
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;
         custom.stepsNormalTxt = 30;
@@ -153,7 +152,6 @@ function buildResult(urls = []) {
     </div>
   `;
 
-  // Toggle collapsibility
   el.querySelector('#aim-result-toggle').onclick = () => {
     const area = el.querySelector('#aim-result-content-area');
     const icon = el.querySelector('#aim-result-toggle-icon');
@@ -171,7 +169,6 @@ function buildResult(urls = []) {
     const countEl = el.querySelector('.aim-batch-count');
     const actionsRow = el.querySelector('.aim-result-actions');
     
-    // Create thumbnails container
     const thumbContainer = document.createElement('div');
     thumbContainer.className = 'aim-result-thumbnails';
     thumbContainer.style.display = 'flex';
@@ -215,7 +212,6 @@ function buildResult(urls = []) {
       };
     }
     
-    // Add thumbnails
     urls.forEach((u, idx) => {
       const thumb = document.createElement('img');
       thumb.src = u;
@@ -239,10 +235,8 @@ function buildResult(urls = []) {
       thumbContainer.appendChild(thumb);
     });
     
-    // Insert thumbnails before actions row
     actionsRow.parentNode.insertBefore(thumbContainer, actionsRow);
     
-    // Keep next/prev buttons but update thumbnails highlighting
     el.querySelector('#aim-prev-btn').onclick = () => {
       stopSlideshow();
       currentIdx = (currentIdx - 1 + urls.length) % urls.length;
@@ -264,7 +258,7 @@ function buildResult(urls = []) {
         const a = document.createElement('a');
         a.href = u;
         a.download = `alphacore_output_${Date.now()}_${idx}.png`;
-        setTimeout(() => a.click(), idx * 200); // Stagger downloads
+        setTimeout(() => a.click(), idx * 200); 
       });
     };
   }
@@ -286,7 +280,7 @@ function buildResult(urls = []) {
           id: Date.now().toString() + '_' + idx,
           owner: currentProfile,
           filename: `GENERATION_${Date.now()}_${idx}.png`,
-          content: u, // This is already a base64 data URI
+          content: u, 
           type: 'image/png',
           shared: false,
           createdAt: Date.now()
@@ -440,9 +434,17 @@ function buildTxt2Img() {
       </div>
     </details>
 
+    <div style="display:flex; flex-direction:column; gap:8px;">
       <button class="aim-btn-generate" id="t2i-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}">
         <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIALIZE SYNTHESIS' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
       </button>
+      
+      ${isArchitect ? `
+      <button class="aim-btn-generate" id="t2i-stream-btn" style="background:rgba(16,185,129,0.15); border-color:#10b981; color:#10b981;">
+        <span class="aim-btn-icon">♾️</span> INITIATE STREAM GENERATION
+      </button>
+      ` : ''}
+    </div>
 
     <div class="aim-status-bar" id="t2i-status"></div>
     <div id="t2i-loader-slot"></div>
@@ -459,7 +461,6 @@ function buildTxt2Img() {
     }
   });
 
-  // Wire up segment controls
   wrap.querySelectorAll('#t2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#t2i-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
@@ -467,17 +468,14 @@ function buildTxt2Img() {
     });
   });
 
-  // Range displays
   const cfgInput = wrap.querySelector('#t2i-cfg');
   const cfgVal = wrap.querySelector('#t2i-cfg-val');
   if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
 
-  // Detailifier Toggle
   const detailifierBtn = wrap.querySelector('#t2i-detailifier-btn');
   if (detailifierBtn) {
-    // Also bind click to the label wrapper so clicking text works
     detailifierBtn.parentElement.addEventListener('click', (e) => {
-      e.preventDefault(); // prevent default label click behavior
+      e.preventDefault();
       const isActive = detailifierBtn.dataset.active === 'true';
       detailifierBtn.dataset.active = !isActive ? 'true' : 'false';
       detailifierBtn.style.background = !isActive ? 'rgba(16, 185, 129, 0.4)' : 'rgba(0,0,0,0.5)';
@@ -488,9 +486,150 @@ function buildTxt2Img() {
     });
   }
 
+  // --- STREAM GENERATOR LOGIC ---
+  let isStreaming = false;
+  const streamBtn = wrap.querySelector('#t2i-stream-btn');
+  if (streamBtn) {
+    streamBtn.addEventListener('click', async () => {
+      if (isStreaming) {
+        isStreaming = false;
+        streamBtn.innerHTML = '<span class="aim-btn-icon">♾️</span> INITIATE STREAM GENERATION';
+        streamBtn.style.background = 'rgba(16,185,129,0.15)';
+        streamBtn.style.color = '#10b981';
+        setStatus(wrap, '#t2i-status', 'STREAM GENERATION TERMINATED.', 'info');
+        return;
+      }
 
+      isStreaming = true;
+      streamBtn.innerHTML = '<span class="aim-btn-icon">🛑</span> STOP STREAM GENERATION';
+      streamBtn.style.background = 'rgba(255,0,60,0.15)';
+      streamBtn.style.color = '#ff003c';
+      
+      const schedulers = ["Euler a", "Euler", "DPM++ 2M", "DPM++ 2M Karras", "DPM++ SDE Karras", "DDIM", "UniPC", "Heun"];
+      const loaderSlot = wrap.querySelector('#t2i-loader-slot');
+      const resultSlot = wrap.querySelector('#t2i-result-slot');
+      
+      while (isStreaming) {
+        const prompt = wrap.querySelector('#t2i-prompt').value.trim();
+        if (!prompt) { 
+           setStatus(wrap, '#t2i-status', 'ERROR: Prompt matrix is empty.', 'error'); 
+           isStreaming = false; break; 
+        }
+        
+        const steps = parseInt(wrap.querySelector('#t2i-speed .aim-seg-btn.active').dataset.steps);
+        const modelStr = wrap.querySelector('#t2i-model-select').value;
+        let neg = wrap.querySelector('#t2i-neg').value;
+        const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value);
+        const clipSkip = wrap.querySelector('#t2i-clip-skip')?.value || '1';
+        const aspect = wrap.querySelector('#t2i-aspect')?.value || '1024x1024';
+        const [w, h] = aspect.split('x').map(n => parseInt(n));
+        
+        let lora = '';
+        const loraSelect = wrap.querySelector('#t2i-lora');
+        if (loraSelect && !loraSelect.disabled) {
+          lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+        }
+        if (detailifierBtn && detailifierBtn.dataset.active === 'true') {
+          lora = lora ? lora + ',detailifier.safetensors' : 'detailifier.safetensors';
+        }
+        if (sessionStorage.getItem('darkness_mode_active') === 'true') { neg = ''; }
+        
+        const randomScheduler = schedulers[Math.floor(Math.random() * schedulers.length)];
+        const randomSeed = Math.floor(Math.random() * 2147483647);
+        
+        setStatus(wrap, '#t2i-status', `STREAM ACTIVE // SEED: ${randomSeed} | ENGINE: ${randomScheduler}`, 'info');
+        const loader = buildLoader(`STREAM SYNTHESIZING... [SEED ${randomSeed}]`);
+        loaderSlot.innerHTML = '';
+        loaderSlot.appendChild(loader);
+        
+        try {
+          let juggFlag = '0'; let cyberFlag = '0';
+          if (modelStr.includes('juggernaut')) juggFlag = '1';
+          if (modelStr.includes('cyberrealistic')) cyberFlag = '1';
+          if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
+          
+          const params = new URLSearchParams({
+            prompt, model: modelStr, checkpoint: modelStr, model_name: modelStr,
+            checkpoint_name: modelStr, base_model: modelStr, selected_model: modelStr,
+            JuggernautXL: juggFlag, CyberRealisticXL: cyberFlag, negative_prompt: neg,
+            guidance_scale: cfg, num_inference_steps: steps, batch_size: 1, 
+            lora: lora, scheduler: randomScheduler, sampler: randomScheduler, clip_skip: clipSkip,
+            width: w, height: h, seed: randomSeed
+          });
 
-  // Generate
+          const res = await fetch(`${settings.txt2imgUrl}stream?${params}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let urlList = null;
+          
+          while (true) {
+            if (!isStreaming) {
+              await reader.cancel();
+              break;
+            }
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); 
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.substring(6);
+                try {
+                  const data = JSON.parse(dataStr);
+                  if (data.step !== undefined && data.max_steps !== undefined) {
+                    updateProgress(loader, data.step, data.max_steps, ' [STREAM LOOP ACTIVE]');
+                  } else if (data.image_b64) {
+                    const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                    const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                    
+                    urlList = await Promise.all(b64s.map(async (b64) => {
+                       const dataUrl = 'data:image/png;base64,' + b64;
+                       saveImageToGallery(profile, prompt, `Stream Gen [${randomScheduler}]`, dataUrl);
+                       const response = await fetch(dataUrl);
+                       const blob = await response.blob();
+                       return URL.createObjectURL(blob);
+                    }));
+                  } else if (data.error) { throw new Error(data.error); }
+                } catch (e) {
+                  if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) throw e;
+                }
+              }
+            }
+          }
+          
+          if (!isStreaming) break; 
+          
+          loaderSlot.innerHTML = '';
+          if (urlList && urlList.length > 0) {
+            const resultEl = buildResult(urlList);
+            resultEl.classList.remove('hidden');
+            resultSlot.innerHTML = ''; 
+            resultSlot.appendChild(resultEl);
+          }
+          
+          await new Promise(r => setTimeout(r, 500));
+          
+        } catch (err) {
+          setStatus(wrap, '#t2i-status', `STREAM FAILURE: ${err.message}. Retrying...`, 'error');
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      
+      if (streamBtn) {
+        streamBtn.innerHTML = '<span class="aim-btn-icon">♾️</span> INITIATE STREAM GENERATION';
+        streamBtn.style.background = 'rgba(16,185,129,0.15)';
+        streamBtn.style.color = '#10b981';
+      }
+      loaderSlot.innerHTML = '';
+    });
+  }
+
+  // Generate (Standard)
   wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
       setStatus(wrap, '#t2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image generation.', 'error');
@@ -527,10 +666,8 @@ function buildTxt2Img() {
       lora = lora ? lora + ',detailifier.safetensors' : 'detailifier.safetensors';
     }
 
-    // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
-      neg = ''; // Override negative prompt, removing restrictions.
-      console.warn('[DARKNESS] NSFW governors disabled for this T2I request.');
+      neg = ''; 
     }
 
     const loaderSlot = wrap.querySelector('#t2i-loader-slot');
@@ -552,7 +689,6 @@ function buildTxt2Img() {
     }, 2500);
 
     try {
-      // Derive backwards-compatible flags for legacy modal endpoints if needed
       let juggFlag = '0';
       let cyberFlag = '0';
       if (modelStr.includes('juggernaut')) { juggFlag = '1'; }
@@ -608,39 +744,33 @@ function buildTxt2Img() {
                 const b64s = Array.isArray(data.image_b64_partial) ? data.image_b64_partial : [data.image_b64_partial];
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
                 
-                const partialUrls = b64s.map(b64 => {
-                   saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', 'data:image/png;base64,' + b64);
-                   const byteCharacters = atob(b64);
-                   const byteNumbers = new Array(byteCharacters.length);
-                   for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                   const byteArray = new Uint8Array(byteNumbers);
-                   const blob = new Blob([byteArray], {type: 'image/png'});
+                const partialUrls = await Promise.all(b64s.map(async (b64) => {
+                   const dataUrl = 'data:image/png;base64,' + b64;
+                   saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', dataUrl);
+                   const response = await fetch(dataUrl);
+                   const blob = await response.blob();
                    return URL.createObjectURL(blob);
-                });
+                }));
                 
                 if (!url) url = [];
                 url.push(...partialUrls);
                 
-                // Show intermediate partial batch results
                 resultSlot.innerHTML = '';
                 const resultEl = buildResult(url);
                 resultEl.classList.remove('hidden');
                 resultSlot.appendChild(resultEl);
               } else if (data.image_b64) {
                 if (!url) url = [];
-                // If it already collected partials, skip reprocessing, else process it
                 if (url.length === 0) {
                   const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
                   const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                  url = b64s.map(b64 => {
-                     saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', 'data:image/png;base64,' + b64);
-                     const byteCharacters = atob(b64);
-                     const byteNumbers = new Array(byteCharacters.length);
-                     for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                     const byteArray = new Uint8Array(byteNumbers);
-                     const blob = new Blob([byteArray], {type: 'image/png'});
+                  url = await Promise.all(b64s.map(async (b64) => {
+                     const dataUrl = 'data:image/png;base64,' + b64;
+                     saveImageToGallery(profile, prompt, 'Straight Image Gen (T2I)', dataUrl);
+                     const response = await fetch(dataUrl);
+                     const blob = await response.blob();
                      return URL.createObjectURL(blob);
-                  });
+                  }));
                 }
               } else if (data.error) {
                 throw new Error(data.error);
@@ -833,7 +963,6 @@ function buildImg2Img() {
     <div id="i2i-result-slot"></div>
   `;
 
-  // AI Prompt Enhance listener
   wrap.querySelector('#i2i-enhance-btn').addEventListener('click', () => {
     const promptInput = wrap.querySelector('#i2i-prompt');
     const enhanced = enhancePromptWithAI(promptInput.value);
@@ -847,15 +976,12 @@ function buildImg2Img() {
     btn.addEventListener('click', () => {
       const promptInput = wrap.querySelector('#i2i-prompt');
       const userText = promptInput.value.trim();
-      // Prepend any existing user text to the preset, so "portrait of john" + Cyberpunk = "portrait of john, Convert to cyberpunk..."
       promptInput.value = userText ? `${userText}, ${btn.dataset.prompt}` : btn.dataset.prompt;
-      // Auto-initiate synthesis
       const genBtn = wrap.querySelector('#i2i-gen-btn');
       if (genBtn) genBtn.click();
     });
   });
 
-  // Speed selector
   wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2i-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
@@ -863,7 +989,6 @@ function buildImg2Img() {
     });
   });
 
-  // Model selector
   wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(b => b.classList.remove('active'));
@@ -871,7 +996,6 @@ function buildImg2Img() {
     });
   });
 
-  // Range displays
   const i2iCfgInput = wrap.querySelector('#i2i-cfg');
   const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
   if (i2iCfgInput && i2iCfgVal) {
@@ -880,7 +1004,6 @@ function buildImg2Img() {
     });
   }
 
-  // Detailifier Toggle
   const i2iDetailifierBtn = wrap.querySelector('#i2i-detailifier-btn');
   if (i2iDetailifierBtn) {
     i2iDetailifierBtn.parentElement.addEventListener('click', (e) => {
@@ -933,7 +1056,6 @@ function buildImg2Img() {
   bindDropzone(fileInput, dropzone, dzInner, preview);
   bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
 
-  // Generate
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
       setStatus(wrap, '#i2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image editing.', 'error');
@@ -967,10 +1089,8 @@ function buildImg2Img() {
       lora = 'detailifier.safetensors';
     }
 
-    // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
-      neg = ''; // Override negative prompt, removing restrictions.
-      console.warn('[DARKNESS] NSFW governors disabled for this I2I request.');
+      neg = ''; 
     }
 
     const loaderSlot = wrap.querySelector('#i2i-loader-slot');
@@ -1001,8 +1121,6 @@ function buildImg2Img() {
       formData.append('true_cfg_scale', cfg);
       formData.append('lora', lora || 'none');
       formData.append('batch_size', batchSize);
-      // This 'lora' variable does not exist in this scope, assuming it's a bug from original code.
-      // formData.append('lora', lora); 
       formData.append('scheduler', scheduler);
       formData.append('sampler', scheduler);
       formData.append('clip_skip', clipSkip);
@@ -1042,39 +1160,33 @@ function buildImg2Img() {
                 const b64s = Array.isArray(data.image_b64_partial) ? data.image_b64_partial : [data.image_b64_partial];
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
                 
-                const partialUrls = b64s.map(b64 => {
-                   saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', 'data:image/png;base64,' + b64);
-                   const byteCharacters = atob(b64);
-                   const byteNumbers = new Array(byteCharacters.length);
-                   for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                   const byteArray = new Uint8Array(byteNumbers);
-                   const blob = new Blob([byteArray], {type: 'image/png'});
+                const partialUrls = await Promise.all(b64s.map(async (b64) => {
+                   const dataUrl = 'data:image/png;base64,' + b64;
+                   saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', dataUrl);
+                   const response = await fetch(dataUrl);
+                   const blob = await response.blob();
                    return URL.createObjectURL(blob);
-                });
+                }));
                 
                 if (!url) url = [];
                 url.push(...partialUrls);
                 
-                // Show intermediate partial batch results
                 resultSlot.innerHTML = '';
                 const resultEl = buildResult(url);
                 resultEl.classList.remove('hidden');
                 resultSlot.appendChild(resultEl);
               } else if (data.image_b64) {
                 if (!url) url = [];
-                // If it already collected partials, skip reprocessing, else process it
                 if (url.length === 0) {
                   const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
                   const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                  url = b64s.map(b64 => {
-                     saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', 'data:image/png;base64,' + b64);
-                     const byteCharacters = atob(b64);
-                     const byteNumbers = new Array(byteCharacters.length);
-                     for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                     const byteArray = new Uint8Array(byteNumbers);
-                     const blob = new Blob([byteArray], {type: 'image/png'});
+                  url = await Promise.all(b64s.map(async (b64) => {
+                     const dataUrl = 'data:image/png;base64,' + b64;
+                     saveImageToGallery(profile, prompt, 'Straight Image Gen (I2I)', dataUrl);
+                     const response = await fetch(dataUrl);
+                     const blob = await response.blob();
                      return URL.createObjectURL(blob);
-                  });
+                  }));
                 }
               } else if (data.error) {
                 throw new Error(data.error);
@@ -1126,7 +1238,6 @@ export default function AiModals() {
 
   function showNextStep() {
     container.innerHTML = '';
-    // If disclaimer not accepted this session, show it first
     if (!sessionStorage.getItem('aim_disclaimer_accepted')) {
       container.appendChild(buildDisclaimer(() => {
         container.innerHTML = '';
@@ -1311,7 +1422,6 @@ function buildTxt2Vid() {
     <div id="t2v-result-slot"></div>
   `;
 
-  // Range displays
   const cfgInput = wrap.querySelector('#t2v-cfg');
   const cfgVal = wrap.querySelector('#t2v-cfg-val');
   if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
@@ -1320,7 +1430,6 @@ function buildTxt2Vid() {
   const framesVal = wrap.querySelector('#t2v-frames-val');
   if (framesInput && framesVal) framesInput.addEventListener('input', () => { framesVal.textContent = framesInput.value; });
 
-  // Speed selector
   wrap.querySelectorAll('#t2v-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#t2v-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
@@ -1328,7 +1437,6 @@ function buildTxt2Vid() {
     });
   });
 
-  // Generate
   wrap.querySelector('#t2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
       setStatus(wrap, '#t2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
@@ -1348,10 +1456,8 @@ function buildTxt2Vid() {
     const resolution = wrap.querySelector('#t2v-resolution').value;
     const [w, h] = resolution.split('x').map(n => parseInt(n));
 
-    // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
-      neg = ''; // Override negative prompt, removing restrictions.
-      console.warn('[DARKNESS] NSFW governors disabled for this T2V request.');
+      neg = ''; 
     }
 
     const loaderSlot = wrap.querySelector('#t2v-loader-slot');
@@ -1412,15 +1518,11 @@ function buildTxt2Vid() {
               } else if (data.video_b64) {
                 const b64 = data.video_b64;
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                saveVideoToGallery(profile, prompt, 'Straight Video Gen (T2V)', 'data:video/mp4;base64,' + b64);
+                const dataUrl = 'data:video/mp4;base64,' + b64;
+                saveVideoToGallery(profile, prompt, 'Straight Video Gen (T2V)', dataUrl);
                 
-                const byteCharacters = atob(b64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: 'video/mp4'});
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
                 url = URL.createObjectURL(blob);
               } else if (data.error) {
                 throw new Error(data.error);
@@ -1465,7 +1567,6 @@ function buildTxt2Vid() {
       setStatus(wrap, '#t2v-status', `FAILURE: ${err.message}`, 'error');
     } finally {
       genBtn.disabled = false;
-
     }
   });
 
@@ -1578,7 +1679,6 @@ function buildImg2Vid() {
     <div id="i2v-result-slot"></div>
   `;
 
-  // Range displays
   const cfgInput = wrap.querySelector('#i2v-cfg');
   const cfgVal = wrap.querySelector('#i2v-cfg-val');
   if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
@@ -1587,7 +1687,6 @@ function buildImg2Vid() {
   const framesVal = wrap.querySelector('#i2v-frames-val');
   if (framesInput && framesVal) framesInput.addEventListener('input', () => { framesVal.textContent = framesInput.value; });
 
-  // Speed selector
   wrap.querySelectorAll('#i2v-speed .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2v-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
@@ -1595,7 +1694,6 @@ function buildImg2Vid() {
     });
   });
   
-  // Dropzone handling
   const fileInput = wrap.querySelector('#i2v-file');
   const dropzone = wrap.querySelector('#i2v-dropzone');
   const dzInner = wrap.querySelector('#i2v-dz-inner');
@@ -1624,7 +1722,6 @@ function buildImg2Vid() {
     if (file && file.type.startsWith('image/')) { fileInput._droppedFile = file; showPreview(file); }
   });
 
-  // Generate
   wrap.querySelector('#i2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
       setStatus(wrap, '#i2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
@@ -1646,10 +1743,8 @@ function buildImg2Vid() {
     const numFrames = parseInt(wrap.querySelector('#i2v-frames').value);
     const resolution = wrap.querySelector('#i2v-resolution').value;
 
-    // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
       neg = ''; 
-      console.warn('[DARKNESS] NSFW governors disabled for this I2V request.');
     }
 
     const loaderSlot = wrap.querySelector('#i2v-loader-slot');
@@ -1723,17 +1818,11 @@ function buildImg2Vid() {
               } else if (data.video_b64) {
                 const b64 = data.video_b64;
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
-                import('../components/vision_db.js').then(({ saveVideoToGallery }) => {
-                  saveVideoToGallery(profile, prompt, 'Image to Video Gen (I2V)', 'data:video/mp4;base64,' + b64);
-                }).catch(console.error);
+                const dataUrl = 'data:video/mp4;base64,' + b64;
+                saveVideoToGallery(profile, prompt, 'Image to Video Gen (I2V)', dataUrl);
                 
-                const byteCharacters = atob(b64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: 'video/mp4'});
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
                 url = URL.createObjectURL(blob);
               } else if (data.error) {
                 throw new Error(data.error);
@@ -1797,10 +1886,8 @@ function buildFramepack() {
     return wrap;
   }
 
-  // Non-architect profile: Display blurred preview background with public notice stamp
   wrap.innerHTML = `
     <div style="position: relative; width: 100%; min-height: 520px; border-radius: 8px; overflow: hidden; background: #030712;">
-      <!-- Blurred Framepack Interface Preview -->
       <div style="filter: blur(8px) brightness(0.35); opacity: 0.5; pointer-events: none; user-select: none; padding: 20px;">
         <div class="aim-panel-header">
           <span class="aim-panel-icon">🎬</span>
@@ -1819,7 +1906,6 @@ function buildFramepack() {
         <div style="width:100%; height:320px; border:1px solid rgba(255,255,255,0.1); border-radius:10px; background: rgba(0,0,0,0.6);"></div>
       </div>
 
-      <!-- Cyberpunk Public Notice Stamp Overlay -->
       <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,8,15,0.75); backdrop-filter: blur(4px); padding: 30px; text-align: center; border: 1px solid rgba(6,182,212,0.4); border-radius: 8px;">
         <div style="font-size: 3rem; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(6,182,212,0.6));">🚧</div>
         <h2 class="glitch" data-text="FRAMEPACK STUDIO" style="font-family: 'Orbitron', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent, #06b6d4); margin: 0 0 10px 0;">FRAMEPACK STUDIO</h2>
@@ -1920,10 +2006,9 @@ function showDocsModal() {
 /* ─── AI ENHANCE UTILITY ─────────────────────────────────────────── */
 function enhancePromptWithAI(prompt) {
   if (!prompt || prompt.trim() === '') return '';
-  const cleanPrompt = prompt.trim().replace(/,\s*$/, ''); // Remove trailing comma if any
+  const cleanPrompt = prompt.trim().replace(/,\s*$/, ''); 
   const enhancements = "masterpiece, best quality, ultra-detailed, highly detailed, photorealistic, 8k resolution, cinematic lighting, sharp focus, intricate details, award-winning photography";
   
-  // Don't append if it already looks enhanced to prevent spam
   if (cleanPrompt.includes('masterpiece') && cleanPrompt.includes('best quality')) {
     return cleanPrompt; 
   }
