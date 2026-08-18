@@ -4,7 +4,7 @@
  */
 import { createElement } from '../components/utils.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
-import { saveImageToGallery, saveVideoToGallery } from '../components/vision_db.js';
+import { saveImageToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 
 const LORA_OPTIONS = `
@@ -1519,7 +1519,14 @@ function buildTxt2Vid() {
                 const b64 = data.video_b64;
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
                 const dataUrl = 'data:video/mp4;base64,' + b64;
-                saveVideoToGallery(profile, prompt, 'Straight Video Gen (T2V)', dataUrl);
+                
+                import('../components/vision_db.js').then(mod => {
+                  if (typeof mod.saveVideoToGallery === 'function') {
+                    mod.saveVideoToGallery(profile, prompt, 'Straight Video Gen (T2V)', dataUrl);
+                  } else if (typeof mod.saveImageToGallery === 'function') {
+                    mod.saveImageToGallery(profile, prompt, 'Straight Video Gen (T2V)', dataUrl);
+                  }
+                }).catch(console.error);
                 
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
@@ -1819,7 +1826,14 @@ function buildImg2Vid() {
                 const b64 = data.video_b64;
                 const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
                 const dataUrl = 'data:video/mp4;base64,' + b64;
-                saveVideoToGallery(profile, prompt, 'Image to Video Gen (I2V)', dataUrl);
+                
+                import('../components/vision_db.js').then(mod => {
+                  if (typeof mod.saveVideoToGallery === 'function') {
+                    mod.saveVideoToGallery(profile, prompt, 'Image to Video Gen (I2V)', dataUrl);
+                  } else if (typeof mod.saveImageToGallery === 'function') {
+                    mod.saveImageToGallery(profile, prompt, 'Image to Video Gen (I2V)', dataUrl);
+                  }
+                }).catch(console.error);
                 
                 const response = await fetch(dataUrl);
                 const blob = await response.blob();
