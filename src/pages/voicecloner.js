@@ -19,8 +19,8 @@ export default function VoiceClonerPage() {
         <span class="aim-panel-badge" style="background: rgba(0,255,100,0.1); color: #00ff64; border-color: #00ff64; white-space: nowrap;">H100 ONLINE</span>
       </div>
       <div style="flex: 1; background: #000; position: relative;" id="vc-iframe-container">
-        <!-- Standard Modal Gradio deployment URL format for 'rvc-voice-clone' -->
-        <iframe src="https://ai-alphacore-tech--rvc-voice-clone-web.modal.run" style="width: 100%; height: 100%; border: none;"></iframe>
+        <!-- V2 Modal Deployment URL -->
+        <iframe src="https://ai-alphacore-tech--voice-cloning-ui-web-ui.modal.run" style="width: 100%; height: 100%; border: none;"></iframe>
         
         ${isGuest ? `
         <!-- Guest Preview Blocker Overlay -->

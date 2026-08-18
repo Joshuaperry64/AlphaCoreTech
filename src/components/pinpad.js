@@ -238,6 +238,7 @@ export function buildPinPad({
       }, 900);
     } else {
       try { logAction('AUTH_FAILED', { reason: result.reason }); } catch {}
+      playSFX('incorrect', 0.7);
       setFeedback(result.reason || 'ACCESS DENIED', 'error');
       pinBox.classList.add('aim-shake');
       setTimeout(() => {

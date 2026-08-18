@@ -10,7 +10,7 @@ import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer } from './components/db_sync.js';
 import { buildPinPad } from './components/pinpad.js';
-import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX } from './components/audio.js';
+import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX, initAudioVisualizer } from './components/audio.js';
 import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
 import { showToast } from './components/toast.js';
@@ -217,6 +217,7 @@ function initApp() {
   initThemeSwitcher();
   initCommandPalette();
   initMatrixRain();
+  initAudioVisualizer();
   
   // Setup Eco Mode Button
   const ecoBtn = document.getElementById('eco-mode-btn');

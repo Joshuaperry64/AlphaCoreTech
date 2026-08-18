@@ -78,13 +78,7 @@ export default function createIntro(container) {
     });
     intro.appendChild(scanlines);
 
-    // Audio spectrum canvas
-    const visCanvas = createElement('canvas', {});
-    Object.assign(visCanvas.style, {
-      position: 'absolute', bottom: '0', left: '0', width: '100%', height: '80px',
-      pointerEvents: 'none', opacity: '0.4', zIndex: '5'
-    });
-    intro.appendChild(visCanvas);
+    // Scanlines kept for intro
 
     // Skip / Fast Boot Button
     const skipBtn = createElement('button', { class: 'aim-btn aim-btn-sm' }, '⚡ FAST BOOT / SKIP');
@@ -274,68 +268,6 @@ export default function createIntro(container) {
     }
 
     setTimeout(runNextFitsLine, 200);
-
-    // ─── Audio Spectrum Visualizer ─────────────────────────────────────────────
-
-    function startAudioVisualizer() {
-      try {
-        const audio = initGlobalAudio();
-
-        const canvasCtx = visCanvas.getContext('2d');
-        if (!canvasCtx) return;
-
-        let tick = 0;
-
-        function drawVis() {
-          if (cancelled) return;
-          animFrame = requestAnimationFrame(drawVis);
-
-          visCanvas.width = window.innerWidth;
-          visCanvas.height = 80;
-          canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
-
-          tick += 0.05;
-          const audioSetup = getAudioContext();
-          let bassSum = 0;
-
-          if (audioSetup && audioSetup.analyser) {
-            const { analyser } = audioSetup;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-
-            const barWidth = (visCanvas.width / bufferLength) * 2.5;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-              const barHeight = (dataArray[i] / 255) * 60;
-              if (i < 8) bassSum += dataArray[i];
-
-              canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.2 + (dataArray[i] / 255) * 0.6})`;
-              canvasCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
-              x += barWidth + 1;
-            }
-          } else {
-            const bars = 64;
-            const barWidth = visCanvas.width / bars;
-            for (let i = 0; i < bars; i++) {
-              const h = Math.abs(Math.sin(tick + i * 0.15)) * 25 + 5;
-              canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.15 + (h / 30) * 0.3})`;
-              canvasCtx.fillRect(i * barWidth, visCanvas.height - h, barWidth - 1, h);
-            }
-          }
-
-          const avgBass = bassSum / 8;
-          const scale = 1 + (avgBass / 255) * 0.08;
-          logoImg.style.transform = `scale(${scale})`;
-        }
-
-        drawVis();
-      } catch (e) {
-      }
-    }
-
-    setTimeout(startAudioVisualizer, 300);
 
     function cleanup() {
       cancelled = true;

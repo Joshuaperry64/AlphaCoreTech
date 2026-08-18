@@ -6,7 +6,7 @@ import { createElement } from '../components/utils.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
 
-const MODAL_API = "https://ai-alphacore-tech--alpha-unfiltered-web.modal.run/chat"; // Alpha-Unfiltered endpoint
+const MODAL_API = "https://ai-alphacore-tech--cognitive-core-web.modal.run/chat"; // Cognitive-Core endpoint
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });

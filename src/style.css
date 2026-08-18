@@ -83,7 +83,7 @@ html, body {
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 0;
-  opacity: 0.75;
+  opacity: 0.6;
   transition: opacity 0.4s ease;
   pointer-events: none;
 }
@@ -1578,7 +1578,7 @@ input:focus, textarea:focus {
   .aim-input { padding: 12px; font-size: 0.85rem; } /* better mobile tap targets */
 
   /* Make background matrix rain visible and high-tech */
-  #matrix-canvas { opacity: 0.35 !important; }
+  #matrix-canvas { opacity: 0.6 !important; }
   .crt-overlay { opacity: 0.4; }
   
   /* Collapsible result mobile tweaks */
@@ -3060,6 +3060,15 @@ body.eco-mode #matrix-canvas {
 
 body.eco-mode .crt-overlay {
   display: none !important;
+}
+
+body.eco-mode *,
+body.eco-mode *::before,
+body.eco-mode *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+  backdrop-filter: none !important;
 }
 
 body.eco-mode .glitch {

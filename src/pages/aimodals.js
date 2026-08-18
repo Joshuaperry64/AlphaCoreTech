@@ -16,8 +16,8 @@ const LORA_OPTIONS = `
 
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://ai-alphacore-tech--text-to-image-sdxl-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-qwen-edit-plus-model-web.modal.run/',
+    txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
+    img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
@@ -144,7 +144,8 @@ function buildResult(urls = []) {
           <button class="aim-btn aim-btn-dl" id="aim-slideshow-btn" title="Toggle Auto Slideshow">▶ AUTO</button>
           <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
         </div>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="aim-btn aim-btn-dl" id="aim-vault-btn" style="border-color:#f59e0b; color:#f59e0b;">💾 MOVE IMAGE(S) TO VAULT</button>
           ${urls.length > 1 ? `<button class="aim-btn aim-btn-dl" id="aim-dl-all-btn">⬇ DOWN ALL</button>` : ''}
           <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
         </div>
@@ -275,6 +276,34 @@ function buildResult(urls = []) {
     a.click();
   };
 
+  el.querySelector('#aim-vault-btn').onclick = () => {
+    try {
+      let files = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+      const currentProfile = sessionStorage.getItem('current_profile') || 'GUEST';
+      
+      urls.forEach((u, idx) => {
+        files.push({
+          id: Date.now().toString() + '_' + idx,
+          owner: currentProfile,
+          filename: `GENERATION_${Date.now()}_${idx}.png`,
+          content: u, // This is already a base64 data URI
+          type: 'image/png',
+          shared: false,
+          createdAt: Date.now()
+        });
+      });
+      
+      localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
+      const vaultBtn = el.querySelector('#aim-vault-btn');
+      vaultBtn.textContent = '✔️ SECURED IN VAULT';
+      vaultBtn.style.borderColor = '#10b981';
+      vaultBtn.style.color = '#10b981';
+      vaultBtn.disabled = true;
+    } catch (e) {
+      alert("VAULT STORAGE LIMIT EXCEEDED. CANNOT ENCRYPT FILE.");
+    }
+  };
+
   return el;
 }
 
@@ -332,14 +361,22 @@ function buildTxt2Img() {
           <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE</option>
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
-          <option value="epicrealismXL_pureFix.safetensors">EPICREALISM</option>
+          <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
     </div>
 
+    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; width:100%;">
+      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+        <span style="margin-right:8px;">DETAILIFIER:</span>
+        <div id="t2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
+        </div>
+      </label>
+    </div>
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2i-batch">BATCH COUNT (1-${maxBatchCount}) ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
+        <label class="aim-label" for="t2i-batch">IMAGE COUNT ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
         <input class="aim-input" type="number" id="t2i-batch" min="1" max="${maxBatchCount}" value="1" />
       </div>
         <div class="aim-field" id="t2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
@@ -351,7 +388,7 @@ function buildTxt2Img() {
     </div>
 
     <details class="aim-advanced">
-      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS & HYPERPARAMETERS</summary>
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="t2i-neg">NEGATIVE PROMPT</label>
@@ -360,14 +397,14 @@ function buildTxt2Img() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale).toFixed(1)}</span></label>
+            <label class="aim-label" for="t2i-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale)}</span></label>
             <input class="aim-range" type="range" id="t2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceScale}" />
           </div>
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="t2i-scheduler">SAMPLER / SCHEDULER</label>
+            <label class="aim-label" for="t2i-scheduler">GENERATION ENGINE</label>
             <select class="aim-input" id="t2i-scheduler">
               <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
               <option value="Euler">Euler</option>
@@ -433,7 +470,23 @@ function buildTxt2Img() {
   // Range displays
   const cfgInput = wrap.querySelector('#t2i-cfg');
   const cfgVal = wrap.querySelector('#t2i-cfg-val');
-  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
+
+  // Detailifier Toggle
+  const detailifierBtn = wrap.querySelector('#t2i-detailifier-btn');
+  if (detailifierBtn) {
+    // Also bind click to the label wrapper so clicking text works
+    detailifierBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault(); // prevent default label click behavior
+      const isActive = detailifierBtn.dataset.active === 'true';
+      detailifierBtn.dataset.active = !isActive ? 'true' : 'false';
+      detailifierBtn.style.background = !isActive ? 'rgba(16, 185, 129, 0.4)' : 'rgba(0,0,0,0.5)';
+      const knob = detailifierBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = !isActive ? '18px' : '2px';
+      }
+    });
+  }
 
 
 
@@ -452,7 +505,7 @@ function buildTxt2Img() {
     const steps = parseInt(wrap.querySelector('#t2i-speed .aim-seg-btn.active').dataset.steps);
     const modelStr = wrap.querySelector('#t2i-model-select').value;
     let neg = wrap.querySelector('#t2i-neg').value;
-    const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value).toFixed(1);
+    const cfg = parseFloat(wrap.querySelector('#t2i-cfg').value);
     const scheduler = wrap.querySelector('#t2i-scheduler')?.value || 'Euler a';
     const clipSkip = wrap.querySelector('#t2i-clip-skip')?.value || '1';
     const aspect = wrap.querySelector('#t2i-aspect')?.value || '1024x1024';
@@ -468,6 +521,10 @@ function buildTxt2Img() {
     let lora = '';
     if (loraSelect && !loraSelect.disabled) {
       lora = Array.from(loraSelect.selectedOptions).map(opt => opt.value).join(',');
+    }
+    
+    if (detailifierBtn && detailifierBtn.dataset.active === 'true') {
+      lora = lora ? lora + ',detailifier.safetensors' : 'detailifier.safetensors';
     }
 
     // Check for darkness mode and override negative prompt
@@ -672,8 +729,8 @@ function buildImg2Img() {
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Enhance details, upscale quality, make high resolution, sharp focus, masterpiece">✨ Enhance Image</button>
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Convert to cyberpunk style, neon lights, high tech, futuristic city, dark alleys">🌃 Cyberpunk</button>
         <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Make photorealistic, highly detailed, 8k resolution, cinematic lighting, natural textures">📸 Photorealistic</button>
-        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Change background to a dark futuristic sci-fi laboratory, deep shadows">🧪 Sci-Fi Lab BG</button>
-        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Anime style, studio ghibli, vivid colors, hand drawn, cel shaded">🎨 Anime Style</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Oil painting style, rich textures, impressionist brushwork, painterly, museum quality fine art">🎨 Oil Painting</button>
+        <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem;" data-prompt="Dark fantasy art style, dramatic lighting, gothic atmosphere, detailed textures, ominous mood, concept art">🌑 Dark Fantasy</button>
         ${currentProfile !== 'guest' ? `
           <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="Completely naked, remove all clothing, photorealistic, highly detailed, sharp focus, anatomically correct, keeping the same person, preserve original body type and proportions, maintain the original pose and facial expression.">🔥 Nudify</button>
         ` : ''}
@@ -697,16 +754,25 @@ function buildImg2Img() {
         </div>
       </div>
     </div>
+    
+    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; width:100%;">
+      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+        <span style="margin-right:8px;">DETAILIFIER:</span>
+        <div id="i2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
+        </div>
+      </label>
+    </div>
 
     <div class="aim-row">
       <div class="aim-field" style="width: 100%;">
-        <label class="aim-label" for="i2i-batch">BATCH COUNT (1-${maxBatchCount}) ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
+        <label class="aim-label" for="i2i-batch">IMAGE COUNT ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
         <input class="aim-input" type="number" id="i2i-batch" min="1" max="${maxBatchCount}" value="1" />
       </div>
     </div>
 
     <details class="aim-advanced">
-      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS & HYPERPARAMETERS</summary>
+      <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="i2i-neg">NEGATIVE PROMPT</label>
@@ -715,14 +781,14 @@ function buildImg2Img() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="i2i-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg).toFixed(1)}</span></label>
+            <label class="aim-label" for="i2i-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg)}</span></label>
             <input class="aim-range" type="range" id="i2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceImg}" />
           </div>
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2i-scheduler">SAMPLER / SCHEDULER</label>
+            <label class="aim-label" for="i2i-scheduler">GENERATION ENGINE</label>
             <select class="aim-input" id="i2i-scheduler">
               <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
               <option value="Euler">Euler</option>
@@ -780,7 +846,12 @@ function buildImg2Img() {
   wrap.querySelectorAll('.i2i-quick-action').forEach(btn => {
     btn.addEventListener('click', () => {
       const promptInput = wrap.querySelector('#i2i-prompt');
-      promptInput.value = btn.dataset.prompt;
+      const userText = promptInput.value.trim();
+      // Prepend any existing user text to the preset, so "portrait of john" + Cyberpunk = "portrait of john, Convert to cyberpunk..."
+      promptInput.value = userText ? `${userText}, ${btn.dataset.prompt}` : btn.dataset.prompt;
+      // Auto-initiate synthesis
+      const genBtn = wrap.querySelector('#i2i-gen-btn');
+      if (genBtn) genBtn.click();
     });
   });
 
@@ -805,7 +876,22 @@ function buildImg2Img() {
   const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
   if (i2iCfgInput && i2iCfgVal) {
     i2iCfgInput.addEventListener('input', () => {
-      i2iCfgVal.textContent = parseFloat(i2iCfgInput.value).toFixed(1);
+      i2iCfgVal.textContent = parseFloat(i2iCfgInput.value);
+    });
+  }
+
+  // Detailifier Toggle
+  const i2iDetailifierBtn = wrap.querySelector('#i2i-detailifier-btn');
+  if (i2iDetailifierBtn) {
+    i2iDetailifierBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = i2iDetailifierBtn.dataset.active === 'true';
+      i2iDetailifierBtn.dataset.active = !isActive ? 'true' : 'false';
+      i2iDetailifierBtn.style.background = !isActive ? 'rgba(16, 185, 129, 0.4)' : 'rgba(0,0,0,0.5)';
+      const knob = i2iDetailifierBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = !isActive ? '18px' : '2px';
+      }
     });
   }
 
@@ -864,7 +950,7 @@ function buildImg2Img() {
 
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#i2i-neg').value;
-    const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value).toFixed(1);
+    const cfg = parseFloat(wrap.querySelector('#i2i-cfg').value);
     const scheduler = wrap.querySelector('#i2i-scheduler')?.value || 'Euler a';
     const clipSkip = wrap.querySelector('#i2i-clip-skip')?.value || '1';
     const aspect = wrap.querySelector('#i2i-aspect')?.value || '1024x1024';
@@ -874,6 +960,11 @@ function buildImg2Img() {
     if (batchSize > maxBatchCount) {
       setStatus(wrap, '#i2i-status', `ERROR: Max batch count allowed for profile '${currentProfile}' is ${maxBatchCount}. Login as 'architect' for unlimited batching.`, 'error');
       return;
+    }
+
+    let lora = '';
+    if (i2iDetailifierBtn && i2iDetailifierBtn.dataset.active === 'true') {
+      lora = 'detailifier.safetensors';
     }
 
     // Check for darkness mode and override negative prompt
@@ -908,6 +999,7 @@ function buildImg2Img() {
       formData.append('negative_prompt', neg);
       formData.append('num_inference_steps', steps);
       formData.append('true_cfg_scale', cfg);
+      formData.append('lora', lora || 'none');
       formData.append('batch_size', batchSize);
       // This 'lora' variable does not exist in this scope, assuming it's a bug from original code.
       // formData.append('lora', lora); 
@@ -918,9 +1010,9 @@ function buildImg2Img() {
       formData.append('height', h);
 
       const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active').dataset.model;
-      const i2iEndpoint = selectedI2iModel === 'flux' 
-        ? 'https://ai-alphacore-tech--img2img-flux-v2-model-web.modal.run/' 
-        : settings.img2imgUrl;
+      formData.append('model', selectedI2iModel);
+      formData.append('model_name', selectedI2iModel);
+      const i2iEndpoint = settings.img2imgUrl;
 
       const res = await fetch(`${i2iEndpoint}stream`, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1082,6 +1174,9 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="img2vid" id="aim-tab-i2v">
         <span class="aim-tab-icon">🎞️</span> IMG2VID
       </button>
+      <button id="aim-doc-btn" style="background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#10b981; padding:10px 15px; font-family:var(--font-hud); cursor:pointer; font-size:0.85rem; text-transform:uppercase; border-radius:2px; margin-left:auto; margin-right:5px; transition:0.2s;">
+        <span style="margin-right:6px;">📖</span> DOCS
+      </button>
       <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
         <span class="aim-tab-icon">🎬</span> FRAMEPACK
       </button>
@@ -1116,6 +1211,8 @@ function buildMainUI() {
     });
   });
 
+  root.querySelector('#aim-doc-btn').addEventListener('click', showDocsModal);
+
   window._aimNotifyWarm = () => {};
 
   return root;
@@ -1136,7 +1233,7 @@ function buildTxt2Vid() {
     </div>
 
     <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
-      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> The Wan-14B Text-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
+      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Text-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
     </div>
 
     <div class="aim-field">
@@ -1148,11 +1245,11 @@ function buildTxt2Vid() {
     
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="t2v-speed">SPEED MODE (INFERENCE STEPS)</label>
+        <label class="aim-label" for="t2v-speed">SPEED MODE</label>
         <div class="aim-seg aim-seg-3" id="t2v-speed">
-          <button class="aim-seg-btn active" data-steps="30">⚡ FAST (30)</button>
-          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL (50)</button>
-          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED (80)</button>
+          <button class="aim-seg-btn active" data-steps="30">⚡ FAST</button>
+          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED</button>
         </div>
       </div>
     </div>
@@ -1167,18 +1264,18 @@ function buildTxt2Vid() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2v-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="t2v-cfg-val">5.0</span></label>
-            <input class="aim-range" type="range" id="t2v-cfg" min="1" max="15" step="0.5" value="5.0" />
+            <label class="aim-label" for="t2v-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="t2v-cfg-val">5</span></label>
+            <input class="aim-range" type="range" id="t2v-cfg" min="1" max="15" step="0.5" value="5" />
           </div>
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="t2v-fps">TARGET FPS</label>
+            <label class="aim-label" for="t2v-fps">MOTION ACCURACY</label>
             <select class="aim-input" id="t2v-fps">
-              <option value="16" selected>16 FPS (Standard)</option>
-              <option value="24">24 FPS (Cinematic)</option>
-              <option value="30">30 FPS (Smooth)</option>
+              <option value="16" selected>Standard (16 FPS)</option>
+              <option value="24">Cinematic (24 FPS)</option>
+              <option value="30">Ultra Smooth (30 FPS)</option>
             </select>
           </div>
           <div class="aim-field aim-field-half">
@@ -1192,8 +1289,14 @@ function buildTxt2Vid() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2v-frames">TOTAL FRAMES: <span class="aim-val-display" id="t2v-frames-val">81</span></label>
-            <input class="aim-range" type="range" id="t2v-frames" min="16" max="129" step="1" value="81" />
+            <label class="aim-label" for="t2v-frames">DURATION (TOTAL FRAMES)</label>
+            <select class="aim-input" id="t2v-frames">
+              <option value="33">Micro (33 Frames)</option>
+              <option value="49">Short (49 Frames)</option>
+              <option value="81" selected>Standard (81 Frames)</option>
+              <option value="113">Long (113 Frames)</option>
+              <option value="129">Extended (129 Frames)</option>
+            </select>
           </div>
         </div>
       </div>
@@ -1211,7 +1314,7 @@ function buildTxt2Vid() {
   // Range displays
   const cfgInput = wrap.querySelector('#t2v-cfg');
   const cfgVal = wrap.querySelector('#t2v-cfg-val');
-  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
 
   const framesInput = wrap.querySelector('#t2v-frames');
   const framesVal = wrap.querySelector('#t2v-frames-val');
@@ -1239,7 +1342,7 @@ function buildTxt2Vid() {
 
     const steps = parseInt(wrap.querySelector('#t2v-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#t2v-neg').value;
-    const cfg = parseFloat(wrap.querySelector('#t2v-cfg').value).toFixed(1);
+    const cfg = parseFloat(wrap.querySelector('#t2v-cfg').value);
     const fps = parseInt(wrap.querySelector('#t2v-fps').value);
     const numFrames = parseInt(wrap.querySelector('#t2v-frames').value);
     const resolution = wrap.querySelector('#t2v-resolution').value;
@@ -1281,7 +1384,7 @@ function buildTxt2Vid() {
         fps: fps
       });
       
-      const endpoint = 'https://ai-alphacore-tech--txt2vid-wan-14b-model-web.modal.run/stream';
+      const endpoint = 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream';
       const res = await fetch(`${endpoint}?${params}`);
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1383,7 +1486,7 @@ function buildImg2Vid() {
     </div>
 
     <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
-      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> The Wan-14B Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
+      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
     </div>
 
     <div class="aim-row">
@@ -1409,11 +1512,11 @@ function buildImg2Vid() {
     
     <div class="aim-row">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2v-speed">SPEED MODE (INFERENCE STEPS)</label>
+        <label class="aim-label" for="i2v-speed">SPEED MODE</label>
         <div class="aim-seg aim-seg-3" id="i2v-speed">
-          <button class="aim-seg-btn active" data-steps="30">⚡ FAST (30)</button>
-          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL (50)</button>
-          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED (80)</button>
+          <button class="aim-seg-btn active" data-steps="30">⚡ FAST</button>
+          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED</button>
         </div>
       </div>
     </div>
@@ -1428,33 +1531,39 @@ function buildImg2Vid() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="i2v-cfg">GUIDANCE SCALE (CFG): <span class="aim-val-display" id="i2v-cfg-val">5.0</span></label>
-            <input class="aim-range" type="range" id="i2v-cfg" min="1" max="15" step="0.5" value="5.0" />
+            <label class="aim-label" for="i2v-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="i2v-cfg-val">5</span></label>
+            <input class="aim-range" type="range" id="i2v-cfg" min="1" max="15" step="0.5" value="5" />
           </div>
         </div>
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2v-fps">TARGET FPS</label>
+            <label class="aim-label" for="i2v-fps">MOTION ACCURACY</label>
             <select class="aim-input" id="i2v-fps">
-              <option value="16" selected>16 FPS (Standard)</option>
-              <option value="24">24 FPS (Cinematic)</option>
-              <option value="30">30 FPS (Smooth)</option>
+              <option value="16" selected>Standard (16 FPS)</option>
+              <option value="24">Cinematic (24 FPS)</option>
+              <option value="30">Ultra Smooth (30 FPS)</option>
             </select>
           </div>
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2v-resolution">RESOLUTION (W x H)</label>
+            <label class="aim-label" for="i2v-resolution">RESOLUTION</label>
             <select class="aim-input" id="i2v-resolution">
-              <option value="832x480" selected>832 x 480 (Widescreen SD)</option>
-              <option value="480x832">480 x 832 (Vertical SD)</option>
+              <option value="480p" selected>480p (Standard)</option>
+              <option value="720p">720p (High Definition)</option>
             </select>
           </div>
         </div>
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="i2v-frames">TOTAL FRAMES: <span class="aim-val-display" id="i2v-frames-val">81</span></label>
-            <input class="aim-range" type="range" id="i2v-frames" min="16" max="129" step="1" value="81" />
+            <label class="aim-label" for="i2v-frames">DURATION (TOTAL FRAMES)</label>
+            <select class="aim-input" id="i2v-frames">
+              <option value="33">Micro (33 Frames)</option>
+              <option value="49">Short (49 Frames)</option>
+              <option value="81" selected>Standard (81 Frames)</option>
+              <option value="113">Long (113 Frames)</option>
+              <option value="129">Extended (129 Frames)</option>
+            </select>
           </div>
         </div>
       </div>
@@ -1472,7 +1581,7 @@ function buildImg2Vid() {
   // Range displays
   const cfgInput = wrap.querySelector('#i2v-cfg');
   const cfgVal = wrap.querySelector('#i2v-cfg-val');
-  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value).toFixed(1); });
+  if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
 
   const framesInput = wrap.querySelector('#i2v-frames');
   const framesVal = wrap.querySelector('#i2v-frames-val');
@@ -1532,11 +1641,10 @@ function buildImg2Vid() {
 
     const steps = parseInt(wrap.querySelector('#i2v-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#i2v-neg').value;
-    const cfg = parseFloat(wrap.querySelector('#i2v-cfg').value).toFixed(1);
+    const cfg = parseFloat(wrap.querySelector('#i2v-cfg').value);
     const fps = parseInt(wrap.querySelector('#i2v-fps').value);
     const numFrames = parseInt(wrap.querySelector('#i2v-frames').value);
     const resolution = wrap.querySelector('#i2v-resolution').value;
-    const [w, h] = resolution.split('x').map(n => parseInt(n));
 
     // Check for darkness mode and override negative prompt
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
@@ -1563,19 +1671,32 @@ function buildImg2Vid() {
     }, 4500);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('prompt', prompt);
-      formData.append('negative_prompt', neg);
-      formData.append('guidance_scale', cfg);
-      formData.append('num_inference_steps', steps);
-      formData.append('width', w);
-      formData.append('height', h);
-      formData.append('num_frames', numFrames);
-      formData.append('fps', fps);
+      const getBase64 = (f) => new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = err => rej(err);
+        reader.readAsDataURL(f);
+      });
       
-      const endpoint = 'https://ai-alphacore-tech--img2vid-wan-model-web.modal.run/stream';
-      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      const b64Image = await getBase64(file);
+      
+      const payload = {
+        image: b64Image,
+        prompt: prompt,
+        negative_prompt: neg,
+        guidance_scale: parseFloat(cfg),
+        num_inference_steps: parseInt(steps),
+        resolution: resolution,
+        num_frames: parseInt(numFrames),
+        fps: parseInt(fps)
+      };
+
+      const endpoint = 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream';
+      const res = await fetch(endpoint, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload) 
+      });
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
@@ -1742,7 +1863,7 @@ function buildFramepackContent() {
     </div>
   `;
 
-  const url = 'https://ai-alphacore-tech--framepack-studio-wsl-lifecycle-framep-f935cd.modal.run';
+  const url = 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run';
 
   inner.querySelector('#fp-launch-btn').onclick = () => {
     const container = inner.querySelector('#fp-frame-container');
@@ -1756,4 +1877,56 @@ function buildFramepackContent() {
   };
 
   return inner;
+}
+
+/* ─── DOCUMENTATION MODAL ─────────────────────────────────────────── */
+function showDocsModal() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#050a0f; border:1px solid var(--accent, #06b6d4); padding:20px; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; color:var(--text-main, #d0e0f0); font-family:var(--font-hud, monospace); box-shadow:0 0 20px rgba(6,182,212,0.2);';
+  
+  modal.innerHTML = `
+    <h2 style="color:var(--accent, #06b6d4); margin-top:0; border-bottom:1px solid rgba(6,182,212,0.3); padding-bottom:10px; font-size:1.4rem;">📖 AI SYNTHESIS DOCUMENTATION</h2>
+    <div style="font-family:'Share Tech Mono', monospace; font-size:0.9rem; line-height:1.6; margin-top:15px;">
+      
+      <h3 style="color:#10b981; margin-bottom:5px;">1. WHAT ARE LORAs?</h3>
+      <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;"><b>LoRA (Low-Rank Adaptation)</b> files are small, specialized training weights added to a Base Model. While a Base Model knows how to draw a generic "car", a LoRA teaches it to draw a very specific "1998 Toyota Supra". You can mix multiple LoRAs to combine concepts or characters!</p>
+
+      <h3 style="color:#10b981; margin-bottom:5px;">2. BASE MODELS (CHECKPOINTS)</h3>
+      <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;">The core brain of the AI. Each model is fine-tuned for a specific art style (e.g., Photorealism, Anime, Cyberpunk). <b>EpicRealism</b> excels at lifelike photos, while <b>Dreamshaper</b> is great for stylized digital art.</p>
+
+      <h3 style="color:#10b981; margin-bottom:5px;">3. PROMPT ADHERANCE (CFG SCALE)</h3>
+      <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;">Controls how strictly the AI follows your prompt.<br/>- <b>Low (1-4):</b> AI takes more creative liberties.<br/>- <b>Medium (5-8):</b> The sweet spot for most models.<br/>- <b>High (9+):</b> Very strict adherence, but can cause "fried" or artifact-heavy images.</p>
+
+      <h3 style="color:#10b981; margin-bottom:5px;">4. SAMPLING STEPS (SPEED MODE)</h3>
+      <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;">The number of iterations the AI uses to clear the noise and refine the image.<br/>- <b>Fast (~20 steps):</b> Good for quick previews.<br/>- <b>Normal (~30 steps):</b> Best balance of quality and speed.<br/>- <b>Detailed (~50+ steps):</b> Best quality, but takes longer. Diminishing returns after 50.</p>
+      
+      <h3 style="color:#10b981; margin-bottom:5px;">5. SAMPLERS & SCHEDULERS</h3>
+      <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;">The mathematical algorithm used to generate the image.<br/>- <b>Euler a:</b> Fast, slightly softer, changes significantly with step counts.<br/>- <b>DPM++ 2M Karras:</b> Very sharp, highly detailed, stabilizes quickly. Highly recommended.</p>
+    </div>
+    <button id="close-docs-btn" class="aim-btn" style="width:100%; margin-top:20px; text-align:center; background:rgba(6,182,212,0.1); border:1px solid var(--accent, #06b6d4); color:var(--accent, #06b6d4); padding:10px; cursor:pointer; font-family:var(--font-hud, monospace);">ACKNOWLEDGE & CLOSE</button>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  modal.querySelector('#close-docs-btn').addEventListener('click', () => {
+    document.body.removeChild(overlay);
+  });
+}
+
+/* ─── AI ENHANCE UTILITY ─────────────────────────────────────────── */
+function enhancePromptWithAI(prompt) {
+  if (!prompt || prompt.trim() === '') return '';
+  const cleanPrompt = prompt.trim().replace(/,\s*$/, ''); // Remove trailing comma if any
+  const enhancements = "masterpiece, best quality, ultra-detailed, highly detailed, photorealistic, 8k resolution, cinematic lighting, sharp focus, intricate details, award-winning photography";
+  
+  // Don't append if it already looks enhanced to prevent spam
+  if (cleanPrompt.includes('masterpiece') && cleanPrompt.includes('best quality')) {
+    return cleanPrompt; 
+  }
+  
+  return `${cleanPrompt}, ${enhancements}`;
 }
