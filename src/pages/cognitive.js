@@ -1,221 +1,435 @@
-/**
- * Cognitive Uplink Page — LIVE CHAT INTERFACE & MEMORY MATRIX
- * Connected to Modal DeepSeek backend
- */
-import { createElement } from '../components/utils.js';
-import { saveImageToGallery } from '../components/vision_db.js';
-import { buildNeuralTopologyCanvas } from '../components/neural-canvas.js';
-
-const MODAL_API = "https://ai-alphacore-tech--cognitive-core-web.modal.run/chat"; // Cognitive-Core endpoint
+﻿import { createElement } from '../components/utils.js';
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
+  
   container.innerHTML = `
     <div class="section-header">
-      <h1 class="glitch" data-text="// COGNITIVE_CORE">// COGNITIVE_CORE</h1>
+      <h1 class="glitch" data-text="// COGNITIVE_CORE_GEMINI">// COGNITIVE_CORE_GEMINI</h1>
       <div class="header-line"></div>
     </div>
 
     <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
       <div class="aim-seg aim-seg-3" id="cog-tabs">
-        <button class="aim-seg-btn active" data-target="cog-chat-view">NEURAL CHAT</button>
-        <button class="aim-seg-btn" data-target="cog-memory-view">MEMORY MATRIX</button>
-        <button class="aim-seg-btn" data-target="cog-gallery-view">GALLERY</button>
+        <button class="aim-seg-btn active" data-target="cog-chat-private">PRIVATE UPLINK</button>
+        <button class="aim-seg-btn" data-target="cog-chat-shared">GLOBAL COMM LINK</button>
+        <button class="aim-seg-btn" data-target="cog-api-config">API CONFIG</button>
       </div>
     </div>
 
-    <!-- CHAT VIEW -->
-    <div class="uplink-grid cog-view active" id="cog-chat-view" style="position: relative;">
-
-      <div class="panel chat-panel">
-        <div class="panel-title">// NEURAL_BRIDGE — LIVE</div>
-        <div class="chat-status-bar">
-          <div class="chat-status-dot online" id="chat-status-dot"></div>
-          <span class="chat-status-text" id="chat-status-text">BRIDGE ACTIVE — AWAITING INPUT</span>
+    <!-- API CONFIG VIEW -->
+    <div class="panel cog-view" id="cog-api-config" style="display: none;">
+      <div class="panel-title">// GEMINI API KEY AUTHORIZATION</div>
+      <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
+        <label class="aim-label">YOUR GEMINI API KEY</label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input type="password" id="gemini-api-key-input" class="aim-input" placeholder="AIzaSy..." style="flex: 1; min-width: 250px;">
+          <button id="save-api-key-btn" class="aim-btn aim-btn-accept" style="min-width: 150px;">&#x1F4BE; SAVE KEY</button>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" class="aim-btn" style="min-width: 150px; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">&#x1F511; GET KEY</a>
         </div>
-        <div class="chat-messages" id="chat-messages">
-          <div class="chat-msg system-msg">
-            <span class="chat-prefix">[SYSTEM]</span>
-            <span class="chat-text">Cognitive Core uplink established. Active profile injected.</span>
-          </div>
-        </div>
-        <div class="chat-input-wrap" style="position: relative;">
-          <button class="chat-input-prefix" id="cmd-menu-btn" title="Command Menu" style="background:transparent; border:none; cursor:pointer; color:var(--text); font-family:inherit; outline:none; font-size:1.5rem; padding: 15px; margin-right: 5px;">&gt;_</button>
-          
-          <div id="cmd-menu-popup" style="display: none; position: absolute; bottom: 110%; left: 0; background: rgba(5,5,10,0.95); border: 1px solid var(--border); padding: 10px; flex-direction: column; gap: 10px; z-index: 100; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(0, 184, 255, 0.2); min-width: 150px;">
-            <button class="aim-btn" id="cmd-clear-chat" style="padding: 12px; font-size: 1rem; width: 100%;">// CLEAR CHAT</button>
-            <button class="aim-btn" id="cmd-reload-history" style="padding: 12px; font-size: 1rem; width: 100%;">// RELOAD HISTORY</button>
-            <button class="aim-btn" id="cmd-imagine" style="padding: 12px; font-size: 1rem; width: 100%;">// IMAGINE</button>
-            <button class="aim-btn" id="cmd-animate" style="padding: 12px; font-size: 1rem; width: 100%;">// ANIMATE</button>
-          </div>
-          
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message or /imagine, /animate" maxlength="4000" style="padding: 15px; font-size: 1.1rem;"></textarea>
-          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem;">
-            <span class="chat-send-icon">⟩</span>
-          </button>
-        </div>
+        <div id="api-key-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim);"></div>
       </div>
-
-      <div class="panel uplink-info-panel" style="display: flex; flex-direction: column;">
-        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>// LIVE_MODAL_LOGS</span>
-          <a href="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-unfiltered" target="_blank" class="aim-btn aim-btn-sm" style="font-size: 0.6rem; padding: 4px 8px; text-decoration: none;">EXTERNAL &nearr;</a>
-        </div>
-        <div style="flex-grow: 1; min-height: 300px; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; position: relative;">
-          <iframe src="https://modal.com/apps/ai-alphacore-tech/main/deployed/alpha-unfiltered" style="width: 100%; height: 100%; border: none; background: #000;"></iframe>
-        </div>
-
-        <div style="margin-top: 15px;">
-          <div style="font-family:'Orbitron',sans-serif; font-size:0.75rem; color:#888; margin-bottom:8px;">// SYNAPSE_TOPOLOGY</div>
-          <div id="neural-canvas-mount"></div>
-        </div>
-      </div>
+      <div class="panel-title" style="margin-top:30px;">// API KEY DOCUMENTATION</div>
+      <details style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-dim); padding: 10px; margin-bottom: 10px; cursor: pointer;">
+        <summary style="color: var(--accent); font-family: var(--font-hud); font-size: 0.9rem; outline: none; padding: 5px;">WHAT IS AN API KEY?</summary>
+        <div style="padding: 10px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">An API key grants access to Google's Gemini AI directly from your browser. Keep it secret.</div>
+      </details>
+      <details style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-dim); padding: 10px; margin-bottom: 10px; cursor: pointer;">
+        <summary style="color: var(--accent); font-family: var(--font-hud); font-size: 0.9rem; outline: none; padding: 5px;">WHY DO I NEED ONE?</summary>
+        <div style="padding: 10px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">Direct client-to-model topology ensures privacy, bypasses shared rate limits, and uses your own quota.</div>
+      </details>
     </div>
 
-    <!-- MEMORY VIEW -->
-    <div class="panel cog-view" id="cog-memory-view" style="display: none;">
-      <div class="panel-title">// MEMORY_INJECTION</div>
-      <div class="aim-row" style="margin-bottom:20px;">
-        <div class="aim-field aim-field-half">
-          <label class="aim-label">MEMORY KEY</label>
-          <input type="text" class="aim-input" id="mem-key-input" placeholder="e.g. Username, Preference" />
-        </div>
-        <div class="aim-field aim-field-half">
-          <label class="aim-label">VALUE</label>
-          <input type="text" class="aim-input" id="mem-val-input" placeholder="Data payload..." />
-        </div>
-      </div>
-      <button class="aim-btn aim-btn-accept" id="mem-save-btn">INJECT MEMORY</button>
+    <!-- CHAT VIEW FRAME -->
+    <div class="uplink-grid cog-view active" id="cog-chat-view" style="display: flex; gap: 15px; height: 65vh; min-height: 500px;">
       
-      <div class="panel-title" style="margin-top:40px;">// ACTIVE_MEMORIES</div>
-      <div id="memory-list" style="color:var(--text); font-family:monospace; margin-top:10px;"></div>
-    </div>
+      <!-- Threads Sidebar -->
+      <div class="panel" id="threads-sidebar" style="width: 250px; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;">
+        <div class="panel-title" style="margin-bottom: 10px;">// SESSIONS</div>
+        <button id="new-thread-btn" class="aim-btn aim-btn-accept" style="margin-bottom: 15px; font-size: 0.8rem; padding: 10px;">+ NEW SESSION</button>
+        <div id="threads-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px;">
+          <!-- Threads populate here -->
+        </div>
+      </div>
 
-    <!-- GALLERY VIEW -->
-    <div class="panel cog-view" id="cog-gallery-view" style="display: none;">
-      <div class="panel-title">// GENERATED_ASSETS</div>
-      <div id="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top:20px;"></div>
+      <!-- Main Chat Area -->
+      <div class="panel chat-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid rgba(6,182,212,0.2);">
+          <span id="chat-channel-title">// PRIVATE_UPLINK</span>
+          <div style="display: flex; gap: 10px;">
+            <button id="toggle-rag-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; border-color: rgba(6,182,212,0.3);" title="Inject Vault text files as context">VAULT RAG: OFF</button>
+            <button id="toggle-tts-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; border-color: rgba(6,182,212,0.3);" title="Text-to-Speech Output">TTS: OFF</button>
+            <button id="cmd-clear-chat" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; color: #ff003c; border-color: rgba(255,0,60,0.3);" title="Delete current session">DELETE SESSION</button>
+          </div>
+        </div>
+        
+        <div class="chat-status-bar" style="margin-top: 10px;">
+          <div class="chat-status-dot online" id="chat-status-dot"></div>
+          <span class="chat-status-text" id="chat-status-text">SYSTEM READY</span>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 10px;"></div>
+        
+        <!-- Attachment Previews -->
+        <div id="attachment-previews" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 5px; min-height: 0;"></div>
+
+        <div class="chat-input-wrap" style="position: relative; display: flex; align-items: flex-end; gap: 8px;">
+          <button id="attach-file-btn" class="aim-btn" title="Attach Image/Video/File" style="padding: 15px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; height: 50px;">&#x1F4CE;</button>
+          <input type="file" id="file-upload-input" style="display: none;" multiple accept="image/*,video/*,audio/*,text/plain,application/pdf">
+          
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Initialize transmission..." maxlength="10000" style="flex: 1; padding: 15px; font-size: 1.1rem; resize: none; overflow-y: auto; max-height: 150px; height: 50px; border-radius: 4px;"></textarea>
+          
+          <button id="mic-btn" class="aim-btn" title="Voice Input" style="padding: 15px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; height: 50px;">&#x1F3A4;</button>
+          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem; height: 50px;">&#x27E9;</button>
+        </div>
+      </div>
     </div>
   `;
 
   setTimeout(() => {
-    // Mount Neural Topology Canvas
-    const canvasMount = container.querySelector('#neural-canvas-mount');
-    if (canvasMount) {
-      canvasMount.appendChild(buildNeuralTopologyCanvas(280, 160));
-    }
-
     const profile = sessionStorage.getItem('current_profile') || 'Guest';
-    const profileLabel = container.querySelector('#active-profile-label');
-    if (profileLabel) profileLabel.textContent = profile.toUpperCase();
-
-    // TABS
-    container.querySelectorAll('.aim-seg-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        container.querySelectorAll('.aim-seg-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        container.querySelectorAll('.cog-view').forEach(v => v.style.display = 'none');
-        container.querySelector('#' + btn.dataset.target).style.display = 
-          btn.dataset.target === 'cog-chat-view' ? 'grid' : 'block';
-          
-        if(btn.dataset.target === 'cog-memory-view') loadMemory();
-        if(btn.dataset.target === 'cog-gallery-view') loadGallery();
-      });
-    });
-
-    // CHAT
+    let currentChannel = 'private'; // 'private' or 'shared'
+    let currentThreadId = null;
+    let pendingAttachments = []; // { dataUrl, mimeType, name, b64 }
+    let useVaultRAG = false;
+    let useTTS = false;
+    
+    // UI Elements
+    const tabs = container.querySelectorAll('.aim-seg-btn');
+    const apiConfigView = container.querySelector('#cog-api-config');
+    const chatView = container.querySelector('#cog-chat-view');
+    const channelTitle = container.querySelector('#chat-channel-title');
+    const threadsSidebar = container.querySelector('#threads-sidebar');
+    
+    const apiKeyInput = container.querySelector('#gemini-api-key-input');
+    const saveKeyBtn = container.querySelector('#save-api-key-btn');
+    const apiKeyStatus = container.querySelector('#api-key-status');
+    
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('chat-send-btn');
     const statusDot = document.getElementById('chat-status-dot');
     const statusText = document.getElementById('chat-status-text');
-    let isStreaming = false;
-    let history = [];
+    const clearChatBtn = document.getElementById('cmd-clear-chat');
+    
+    const attachFileBtn = document.getElementById('attach-file-btn');
+    const fileUploadInput = document.getElementById('file-upload-input');
+    const attachmentPreviews = document.getElementById('attachment-previews');
+    const micBtn = document.getElementById('mic-btn');
+    const toggleRAGBtn = document.getElementById('toggle-rag-btn');
+    const toggleTTSBtn = document.getElementById('toggle-tts-btn');
+    const newThreadBtn = document.getElementById('new-thread-btn');
+    const threadsList = document.getElementById('threads-list');
 
-    async function loadHistory() {
-      try {
-        const res = await fetch(`${MODAL_API}/api/history?profile=${encodeURIComponent(profile)}`);
-        if (res.ok) {
-          const pastHistory = await res.json();
-          if (pastHistory && pastHistory.length > 0) {
-             pastHistory.forEach(msg => {
-                if(msg.role === 'user') {
-                    appendMessage('USER', msg.content, 'user-msg');
-                } else {
-                    if (msg.content.startsWith("Generated video:")) {
-                       const url = MODAL_API + msg.content.replace("Generated video: ", "");
-                       appendVideo('ALPHA_VISION', url, 'Restored video');
-                    } else if (msg.content.startsWith("Generated image:")) {
-                       const url = MODAL_API + msg.content.replace("Generated image: ", "");
-                       appendImage('ALPHA_VISION', url, 'Restored image');
-                    } else if (msg.content.startsWith("Generated image for prompt:")) {
-                       const urlMatch = msg.content.match(/at (\/files\/.*)/);
-                       const url = urlMatch ? MODAL_API + urlMatch[1] : '';
-                       if(url) appendImage('ALPHA_VISION', url, 'Restored image');
-                    } else {
-                       appendMessage('ALPHA', msg.content, 'alpha-msg');
-                    }
-                }
-             });
-             history = pastHistory;
+    let isStreaming = false;
+
+    // Load API Key
+    const savedKey = localStorage.getItem(`gemini_api_key_${profile}`);
+    if (savedKey) {
+      apiKeyInput.value = savedKey;
+      apiKeyStatus.textContent = '✓ Key loaded from local storage.';
+      apiKeyStatus.style.color = 'var(--accent)';
+    }
+
+    saveKeyBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem(`gemini_api_key_${profile}`, key);
+        apiKeyStatus.textContent = '✓ Key successfully saved securely in browser storage.';
+        apiKeyStatus.style.color = '#00ff8c';
+      } else {
+        localStorage.removeItem(`gemini_api_key_${profile}`);
+        apiKeyStatus.textContent = 'Key removed.';
+        apiKeyStatus.style.color = 'var(--text-muted)';
+      }
+    });
+
+    // Vault RAG Toggle
+    toggleRAGBtn.addEventListener('click', () => {
+      useVaultRAG = !useVaultRAG;
+      toggleRAGBtn.textContent = useVaultRAG ? 'VAULT RAG: ON' : 'VAULT RAG: OFF';
+      toggleRAGBtn.style.background = useVaultRAG ? 'rgba(0,184,255,0.2)' : '';
+      toggleRAGBtn.style.color = useVaultRAG ? '#00b8ff' : '';
+    });
+
+    // TTS Toggle
+    toggleTTSBtn.addEventListener('click', () => {
+      useTTS = !useTTS;
+      toggleTTSBtn.textContent = useTTS ? 'TTS: ON' : 'TTS: OFF';
+      toggleTTSBtn.style.background = useTTS ? 'rgba(0,184,255,0.2)' : '';
+      toggleTTSBtn.style.color = useTTS ? '#00b8ff' : '';
+      if (!useTTS && window.speechSynthesis) window.speechSynthesis.cancel();
+    });
+
+    // Speech Recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      
+      recognition.onstart = () => {
+        micBtn.style.color = '#ff003c';
+        micBtn.style.borderColor = '#ff003c';
+        chatInput.placeholder = 'Listening...';
+      };
+      
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
           }
         }
-      } catch (e) {
-        console.error("Failed to load history", e);
+        if (finalTranscript) {
+          chatInput.value = (chatInput.value + ' ' + finalTranscript).trim();
+          adjustInputHeight();
+        }
+      };
+      
+      recognition.onend = () => {
+        micBtn.style.color = '';
+        micBtn.style.borderColor = '';
+        chatInput.placeholder = 'Initialize transmission...';
+      };
+    } else {
+      micBtn.style.display = 'none';
+    }
+
+    micBtn.addEventListener('click', () => {
+      if (recognition) {
+        try { recognition.start(); } catch(e) { recognition.stop(); }
+      }
+    });
+
+    // File Attachments
+    attachFileBtn.addEventListener('click', () => fileUploadInput.click());
+    
+    fileUploadInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target.result;
+          const [mimeHeader, b64] = dataUrl.split(',');
+          const mimeType = file.type || 'application/octet-stream';
+          
+          pendingAttachments.push({ mimeType, b64, name: file.name, dataUrl });
+          renderAttachmentPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+      fileUploadInput.value = '';
+    });
+
+    function renderAttachmentPreviews() {
+      attachmentPreviews.innerHTML = '';
+      pendingAttachments.forEach((att, idx) => {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position: relative; width: 60px; height: 60px; border-radius: 4px; border: 1px solid var(--border); overflow: hidden; background: #000; flex-shrink: 0;';
+        
+        if (att.mimeType.startsWith('image/')) {
+          wrap.innerHTML = `<img src="${att.dataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else if (att.mimeType.startsWith('video/')) {
+          wrap.innerHTML = `<video src="${att.dataUrl}" style="width:100%; height:100%; object-fit:cover;"></video>`;
+        } else {
+          wrap.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:var(--text-muted); word-break:break-all; text-align:center; padding:2px;">${att.name.substring(0,8)}</div>`;
+        }
+        
+        const closeBtn = document.createElement('div');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = 'position:absolute; top:2px; right:2px; background:rgba(255,0,0,0.8); color:white; width:16px; height:16px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-family:sans-serif; line-height:1; padding-bottom:1px; z-index:10;';
+        closeBtn.onclick = () => {
+          pendingAttachments.splice(idx, 1);
+          renderAttachmentPreviews();
+        };
+        
+        wrap.appendChild(closeBtn);
+        attachmentPreviews.appendChild(wrap);
+      });
+    }
+
+    // Thread Management
+    function getThreadsKey() {
+      return currentChannel === 'private' ? `gemini_chat_threads_${profile}` : `gemini_chat_threads_shared`;
+    }
+
+    function getMessagesKey(threadId) {
+      return `gemini_chat_thread_${threadId}`;
+    }
+
+    function generateId() {
+      return Math.random().toString(36).substring(2, 10);
+    }
+
+    function loadThreads() {
+      if (currentChannel === 'shared') {
+        threadsSidebar.style.display = 'none';
+        currentThreadId = 'shared_main'; // Only one thread for global channel
+        loadMessages();
+        return;
+      }
+      
+      threadsSidebar.style.display = 'flex';
+      threadsList.innerHTML = '';
+      
+      let threads = [];
+      try {
+        threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+      } catch(e) {}
+      
+      if (threads.length === 0) {
+        // Create initial thread
+        const newId = generateId();
+        threads = [{ id: newId, title: 'Session 01', updatedAt: Date.now() }];
+        localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+      }
+      
+      // Sort by updated descending
+      threads.sort((a,b) => b.updatedAt - a.updatedAt);
+      
+      if (!currentThreadId || !threads.find(t => t.id === currentThreadId)) {
+        currentThreadId = threads[0].id;
+      }
+
+      threads.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'aim-btn' + (t.id === currentThreadId ? ' active' : '');
+        btn.style.cssText = 'text-align: left; padding: 10px; font-size: 0.85rem; border: none; border-left: 2px solid transparent; background: transparent; color: var(--text); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:block; width:100%;';
+        if (t.id === currentThreadId) {
+          btn.style.borderLeftColor = 'var(--accent)';
+          btn.style.background = 'rgba(0,184,255,0.05)';
+        }
+        btn.textContent = t.title || 'Untitled Session';
+        
+        btn.onclick = () => {
+          currentThreadId = t.id;
+          loadThreads(); // re-render list
+          loadMessages();
+        };
+        threadsList.appendChild(btn);
+      });
+      
+      loadMessages();
+    }
+
+    newThreadBtn.addEventListener('click', () => {
+      let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+      const newId = generateId();
+      threads.unshift({ id: newId, title: 'New Session ' + (threads.length + 1), updatedAt: Date.now() });
+      localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+      currentThreadId = newId;
+      loadThreads();
+    });
+
+    clearChatBtn.addEventListener('click', () => {
+      if (confirm('Delete this session permanently?')) {
+        localStorage.removeItem(getMessagesKey(currentThreadId));
+        if (currentChannel === 'private') {
+          let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+          threads = threads.filter(t => t.id !== currentThreadId);
+          localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+          currentThreadId = null;
+          loadThreads();
+        } else {
+          loadMessages();
+        }
+      }
+    });
+
+    // Tab Switching
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const target = btn.dataset.target;
+        
+        if (target === 'cog-api-config') {
+          chatView.style.display = 'none';
+          apiConfigView.style.display = 'block';
+        } else {
+          apiConfigView.style.display = 'none';
+          chatView.style.display = 'flex';
+          
+          if (target === 'cog-chat-private') {
+            currentChannel = 'private';
+            channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}]`;
+            loadThreads();
+          } else if (target === 'cog-chat-shared') {
+            currentChannel = 'shared';
+            channelTitle.textContent = '// GLOBAL_COMM_LINK [SHARED MATRIX]';
+            loadThreads();
+          }
+        }
+      });
+    });
+
+    function loadMessages() {
+      chatMessages.innerHTML = '';
+      const historyStr = localStorage.getItem(getMessagesKey(currentThreadId));
+      
+      let history = [];
+      if (historyStr) {
+        try { history = JSON.parse(historyStr); } catch(e) {}
+      }
+
+      if (history.length === 0) {
+        appendMessage('SYSTEM', 'Neural bridge active. Ready for transmission.', 'system-msg');
+      } else {
+        history.forEach(msg => {
+          if (msg.role === 'user') {
+            appendMessage(msg.author || 'USER', msg.displayHtml || msg.parts[0].text, 'user-msg', true);
+          } else {
+            appendMessage('GEMINI', msg.parts[0].text, 'alpha-msg');
+          }
+        });
       }
     }
-    loadHistory();
 
-    chatInput.addEventListener('input', () => {
+    function saveMessageToHistory(role, displayHtml, parts, author = null) {
+      const storageKey = getMessagesKey(currentThreadId);
+      let history = [];
+      const historyStr = localStorage.getItem(storageKey);
+      if (historyStr) {
+        try { history = JSON.parse(historyStr); } catch(e) {}
+      }
+      
+      const msgObj = { role, parts, displayHtml };
+      if (author) msgObj.author = author;
+      
+      history.push(msgObj);
+      localStorage.setItem(storageKey, JSON.stringify(history));
+      
+      // Update thread title and timestamp
+      if (currentChannel === 'private' && role === 'user' && history.length <= 2) {
+        let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+        const t = threads.find(x => x.id === currentThreadId);
+        if (t) {
+          const firstTextPart = parts.find(p => p.text)?.text || 'Attachment Session';
+          t.title = firstTextPart.substring(0, 25) + (firstTextPart.length > 25 ? '...' : '');
+          t.updatedAt = Date.now();
+          localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+          loadThreads(); // Soft refresh to update sidebar title
+        }
+      } else if (currentChannel === 'private') {
+        let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+        const t = threads.find(x => x.id === currentThreadId);
+        if (t) {
+          t.updatedAt = Date.now();
+          localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+        }
+      }
+    }
+
+    function adjustInputHeight() {
       chatInput.style.height = 'auto';
-      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-    });
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px';
+      if (chatInput.scrollHeight <= 50) chatInput.style.height = '50px';
+    }
 
-    // Command Menu Logic
-    const cmdMenuBtn = document.getElementById('cmd-menu-btn');
-    const cmdMenuPopup = document.getElementById('cmd-menu-popup');
-    const cmdClearChat = document.getElementById('cmd-clear-chat');
-    const cmdReloadHistory = document.getElementById('cmd-reload-history');
-    
-    cmdMenuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      cmdMenuPopup.style.display = cmdMenuPopup.style.display === 'flex' ? 'none' : 'flex';
-    });
-    
-    document.addEventListener('click', () => {
-      if (cmdMenuPopup) cmdMenuPopup.style.display = 'none';
-    });
-    cmdMenuPopup.addEventListener('click', (e) => e.stopPropagation());
-    
-    cmdClearChat.addEventListener('click', () => {
-      chatMessages.innerHTML = '';
-      history = [];
-      appendMessage('SYSTEM', 'Chat history cleared. Active profile maintained.', 'system-msg');
-      cmdMenuPopup.style.display = 'none';
-    });
-    
-    cmdReloadHistory.addEventListener('click', () => {
-      chatMessages.innerHTML = '';
-      history = [];
-      appendMessage('SYSTEM', 'Reloading history from endpoint...', 'system-msg');
-      loadHistory();
-      cmdMenuPopup.style.display = 'none';
-    });
-
-    const cmdImagine = document.getElementById('cmd-imagine');
-    const cmdAnimate = document.getElementById('cmd-animate');
-    
-    cmdImagine.addEventListener('click', () => {
-      chatInput.value = '/imagine ';
-      chatInput.focus();
-      cmdMenuPopup.style.display = 'none';
-    });
-    
-    cmdAnimate.addEventListener('click', () => {
-      chatInput.value = '/animate ';
-      chatInput.focus();
-      cmdMenuPopup.style.display = 'none';
-    });
+    chatInput.addEventListener('input', adjustInputHeight);
 
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -226,117 +440,188 @@ export default function CognitiveUplink() {
 
     sendBtn.addEventListener('click', sendMessage);
 
+    function getVaultContext() {
+      if (!useVaultRAG) return null;
+      let vaultFiles = [];
+      try {
+        vaultFiles = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+      } catch(e) {}
+      
+      const textFiles = vaultFiles.filter(f => 
+        (f.type && (f.type.startsWith('text/') || f.type.startsWith('application/json') || f.type.startsWith('application/xml'))) ||
+        (!f.type && typeof f.content === 'string' && f.content.length > 0 && f.content.length < 50000 && !f.content.startsWith('data:'))
+      );
+      
+      if (textFiles.length === 0) return null;
+      
+      let context = 'USER VAULT FILES CONTEXT:\n\n';
+      textFiles.forEach(f => {
+        context += `--- FILE: ${f.filename} ---\n${f.content}\n\n`;
+      });
+      return context;
+    }
+
     async function sendMessage() {
       const text = chatInput.value.trim();
-      if (!text || isStreaming) return;
+      if ((!text && pendingAttachments.length === 0) || isStreaming) return;
 
-      appendMessage('USER', text, 'user-msg');
+      const apiKey = localStorage.getItem(`gemini_api_key_${profile}`);
+      if (!apiKey) {
+        appendMessage('SYSTEM', 'ERROR: Gemini API Key missing. Configure it in the API CONFIG tab.', 'system-msg');
+        return;
+      }
+
+      // Build Parts for Gemini API
+      const parts = [];
+      if (text) parts.push({ text });
+      
+      let displayHtml = formatOutput(text);
+      if (pendingAttachments.length > 0) {
+        displayHtml += '<div style="display:flex; gap:5px; margin-top:8px; flex-wrap:wrap;">';
+        pendingAttachments.forEach(att => {
+          parts.push({
+            inlineData: {
+              mimeType: att.mimeType,
+              data: att.b64
+            }
+          });
+          if (att.mimeType.startsWith('image/')) {
+            displayHtml += `<img src="${att.dataUrl}" style="height:60px; border-radius:4px; border:1px solid var(--border);">`;
+          } else if (att.mimeType.startsWith('video/')) {
+            displayHtml += `<video src="${att.dataUrl}" style="height:60px; border-radius:4px; border:1px solid var(--border);"></video>`;
+          } else {
+            displayHtml += `<div style="height:60px; padding:5px; border-radius:4px; border:1px solid var(--border); background:rgba(255,255,255,0.05); font-size:0.7rem; display:flex; align-items:center;">${att.name}</div>`;
+          }
+        });
+        displayHtml += '</div>';
+      }
+
+      const displayAuthor = currentChannel === 'shared' ? profile.toUpperCase() : 'USER';
+      appendMessage(displayAuthor, displayHtml, 'user-msg', true);
+      saveMessageToHistory('user', displayHtml, parts, displayAuthor);
+      
       chatInput.value = '';
-      chatInput.style.height = 'auto';
+      adjustInputHeight();
+      pendingAttachments = [];
+      renderAttachmentPreviews();
       
       isStreaming = true;
       statusDot.classList.remove('online'); statusDot.classList.add('streaming');
-      
-      let processingText = 'PROCESSING NEURAL RESPONSE...';
-      let typingHTML = '...';
-      const isMedia = text.startsWith('/imagine') || text.startsWith('/animate');
-      if (isMedia) {
-         processingText = 'RENDERING MEDIA ASSET...';
-         typingHTML = '<div class="media-loader"><div class="media-loader-bar"></div></div><span style="font-size:0.8rem; color:var(--accent);">ALLOCATING GPU COMPUTE...</span>';
-      }
-      
-      statusText.textContent = processingText;
+      statusText.textContent = 'CONNECTING TO GEMINI CLUSTER...';
       sendBtn.disabled = true;
 
-      const typingEl = appendMessage('ALPHA', typingHTML, 'alpha-msg typing');
+      const typingEl = appendMessage('GEMINI', '...', 'alpha-msg typing');
 
       try {
-        if (isMedia) {
-          const res = await fetch(`${MODAL_API}/api/chat`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({text, history, profile})
-          });
-          const data = await res.json();
-          typingEl.remove();
-          if (window._cogNotifyWarm) window._cogNotifyWarm();
-
-          if(data.type === 'video') {
-             appendVideo('ALPHA_VISION', MODAL_API + data.url, data.content);
-             history.push({role: 'user', content: text});
-             history.push({role: 'assistant', content: "Generated video: " + data.url});
-          } else if(data.type === 'image') {
-             appendImage('ALPHA_VISION', MODAL_API + data.url, data.content);
-             saveImageToGallery(profile, data.content, 'Cognitive Core', MODAL_API + data.url);
-             history.push({role: 'user', content: text});
-             history.push({role: 'assistant', content: "Generated image: " + data.url});
-          } else {
-             const reply = data.content || '[EMPTY RESPONSE]';
-             appendMessage('ALPHA', reply, 'alpha-msg');
-             history.push({role: 'user', content: text});
-             history.push({role: 'assistant', content: reply});
-          }
-        } else {
-          // Streaming text response
-          const res = await fetch(`${MODAL_API}/api/chat/stream`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({text, history, profile})
-          });
-          typingEl.remove();
-          if (window._cogNotifyWarm) window._cogNotifyWarm();
-          
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder("utf-8");
-          let fullReply = "";
-          
-          // Create an empty message element to update
-          const streamEl = appendMessage('ALPHA', '', 'alpha-msg');
-          
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            fullReply += chunk;
-            
-            // Format chunks dynamically
-            let htmlContent = formatThinkBlock(fullReply, true);
-            streamEl.querySelector('.chat-text').innerHTML = htmlContent;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-          }
-          
-          history.push({role: 'user', content: text});
-          history.push({role: 'assistant', content: fullReply});
-          
-          // Collapse thoughts when done generating
-          const details = streamEl.querySelectorAll('details');
-          details.forEach(d => d.removeAttribute('open'));
+        let geminiHistory = [];
+        const historyStr = localStorage.getItem(getMessagesKey(currentThreadId));
+        if (historyStr) {
+          try {
+            const fullHistory = JSON.parse(historyStr);
+            geminiHistory = fullHistory.map(h => ({
+              role: h.role === 'user' ? 'user' : 'model',
+              parts: h.parts
+            }));
+            geminiHistory.pop(); // Remove the one we just added to build payload manually
+          } catch(e) {}
         }
+
+        // Vault RAG Injection
+        const vaultContext = getVaultContext();
+        let finalParts = [...parts];
+        if (vaultContext) {
+          // Prepend context instructions to the user's text
+          const combinedText = `[SYSTEM CONTEXT INJECTED FROM USER VAULT RAG]\n\n${vaultContext}\n\n[END CONTEXT]\n\nUSER QUERY: ${text}`;
+          
+          const textPartIdx = finalParts.findIndex(p => p.text);
+          if (textPartIdx !== -1) {
+            finalParts[textPartIdx].text = combinedText;
+          } else {
+            finalParts.unshift({ text: combinedText });
+          }
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${apiKey}`;
         
-        // Play success/return audio
+        const payload = {
+          contents: [
+            ...geminiHistory,
+            { role: "user", parts: finalParts }
+          ],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
+        };
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error?.message || 'API Request Failed');
+        }
+
+        typingEl.remove();
+        
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let fullReply = "";
+        
+        const streamEl = appendMessage('GEMINI', '', 'alpha-msg');
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          
+          let parsedText = '';
+          const allTexts = buffer.match(/"text":\s*"((?:[^"\\]|\\.)*)"/g) || [];
+          allTexts.forEach(match => {
+              let str = match.substring(9, match.length - 1);
+              str = str.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+              parsedText += str;
+          });
+          if (parsedText) fullReply = parsedText;
+          
+          streamEl.querySelector('.chat-text').innerHTML = formatOutput(fullReply);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        saveMessageToHistory('model', formatOutput(fullReply), [{ text: fullReply }]);
+        
+        // TTS Output
+        if (useTTS && window.speechSynthesis) {
+          const cleanText = fullReply.replace(/[*#_`]/g, '');
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.rate = 1.1;
+          window.speechSynthesis.speak(utterance);
+        }
+
         try {
           const returnAudio = new Audio('/digital-ui.mp3');
           returnAudio.volume = 0.4;
-          returnAudio.play().catch(e => console.log('Audio playback prevented:', e));
+          returnAudio.play().catch(() => {});
         } catch (e) {}
 
       } catch (err) {
-        typingEl.remove();
+        if (typingEl) typingEl.remove();
         appendMessage('ERROR', err.message, 'system-msg');
       } finally {
         isStreaming = false;
         statusDot.classList.remove('streaming'); statusDot.classList.add('online');
-        statusText.textContent = 'BRIDGE ACTIVE — AWAITING INPUT';
+        statusText.textContent = 'SYSTEM READY — AWAITING INPUT';
         sendBtn.disabled = false;
       }
     }
 
-    function appendMessage(prefix, text, className) {
+    function appendMessage(prefix, text, className, isRawHtml = false) {
       const msg = document.createElement('div');
       msg.className = `chat-msg ${className}`;
       
-      let htmlContent = formatThinkBlock(text, false);
+      let htmlContent = isRawHtml ? text : formatOutput(text);
 
       msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text" style="white-space:pre-wrap;">${htmlContent}</span>`;
       chatMessages.appendChild(msg);
@@ -344,32 +629,6 @@ export default function CognitiveUplink() {
       return msg;
     }
     
-    function appendVideo(prefix, url, prompt) {
-      const msg = document.createElement('div');
-      msg.className = `chat-msg alpha-msg`;
-      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Video asset rendered.</span><br/>
-      <div style="position:relative; display:inline-block; max-width:100%; margin-top:10px;">
-        <video src="${url}" autoplay loop muted controls style="max-width:100%; border-radius:4px; border:1px solid var(--border);"></video>
-        <a href="${url}" download="alpha_render.mp4" target="_blank" class="aim-btn" style="display:block; text-align:center; margin-top:5px; text-decoration:none; padding:10px;">// DOWNLOAD VIDEO</a>
-      </div>`;
-      chatMessages.appendChild(msg);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return msg;
-    }
-
-    function appendImage(prefix, url, prompt) {
-      const msg = document.createElement('div');
-      msg.className = `chat-msg alpha-msg`;
-      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text">Image asset rendered.</span><br/>
-      <div style="position:relative; display:inline-block; max-width:100%; margin-top:10px;">
-        <img src="${url}" style="max-width:100%; border-radius:4px; border:1px solid var(--border);">
-        <a href="${url}" download="alpha_render.png" target="_blank" class="aim-btn" style="display:block; text-align:center; margin-top:5px; text-decoration:none; padding:10px;">// DOWNLOAD IMAGE</a>
-      </div>`;
-      chatMessages.appendChild(msg);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return msg;
-    }
-
     function escapeHtml(str) {
       if (typeof str !== 'string') return '';
       const div = document.createElement('div');
@@ -377,79 +636,16 @@ export default function CognitiveUplink() {
       return div.innerHTML;
     }
 
-    function formatThinkBlock(text, isOpen = false) {
+    function formatOutput(text) {
       if (typeof text !== 'string') return '';
-      // If there's a </think> but no <think> (model skipped opening tag), prepend it
-      if (text.includes('</think>') && !text.includes('<think>')) {
-        text = '<think>\n' + text;
-      }
-      
-      if (!text.includes('<think>')) return escapeHtml(text);
-
-      const parts = text.split(/<think>|<\/think>/);
-      let html = '';
-      for (let i = 0; i < parts.length; i++) {
-        if (i % 2 === 1) { // Inside think block
-          html += `<details class="alpha-thought-block" style="margin: 8px 0; padding: 8px; background: rgba(0,255,255,0.03); border-left: 2px solid var(--text-muted);" ${isOpen ? 'open' : ''}>
-            <summary style="cursor: pointer; color: var(--text-muted); font-size: 0.75rem; user-select: none;">// NEURAL_CHAIN_OF_THOUGHT</summary>
-            <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(parts[i].trim())}</div>
-          </details>`;
-        } else if (parts[i].trim() !== '') {
-          html += `<span>${escapeHtml(parts[i].trim())}</span>`;
-        }
-      }
+      let html = escapeHtml(text);
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      html = html.replace(/\n/g, '<br/>');
       return html;
     }
 
-    // MEMORY
-    const memSaveBtn = container.querySelector('#mem-save-btn');
-    memSaveBtn.addEventListener('click', async () => {
-       const key = container.querySelector('#mem-key-input').value;
-       const val = container.querySelector('#mem-val-input').value;
-       if(!key || !val) return;
-       memSaveBtn.textContent = "INJECTING...";
-       try {
-           await fetch(`${MODAL_API}/api/memory`, {
-               method: 'POST',
-               headers: {'Content-Type': 'application/json'},
-               body: JSON.stringify({profile, key, value: val})
-           });
-           container.querySelector('#mem-key-input').value = '';
-           container.querySelector('#mem-val-input').value = '';
-           loadMemory();
-       } catch(e) { console.error(e); }
-       memSaveBtn.textContent = "INJECT MEMORY";
-    });
-
-    async function loadMemory() {
-       try {
-           const res = await fetch(`${MODAL_API}/api/memory?profile=${encodeURIComponent(profile)}`);
-           const mems = await res.json();
-           const list = container.querySelector('#memory-list');
-           list.innerHTML = mems.map(m => `<div style="padding:10px; border-bottom:1px solid var(--border);"><strong>${escapeHtml(m.key)}</strong>: ${escapeHtml(m.value)}</div>`).join('');
-           if(mems.length === 0) list.innerHTML = '<div style="color:var(--text-muted)">No active memories.</div>';
-       } catch(e) { console.error(e); }
-    }
-
-    // GALLERY
-    async function loadGallery() {
-       try {
-           const res = await fetch(`${MODAL_API}/api/gallery?profile=${encodeURIComponent(profile)}`);
-           const imgs = await res.json();
-           const grid = container.querySelector('#gallery-grid');
-           grid.innerHTML = imgs.map(img => {
-               const fullUrl = MODAL_API + img.url;
-               if (fullUrl.endsWith('.mp4')) {
-                   return `<div style="display:flex; flex-direction:column; gap:5px;"><video src="${fullUrl}" title="${escapeHtml(img.prompt)}" autoplay loop muted style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);"></video><a href="${fullUrl}" download target="_blank" class="aim-btn" style="text-align:center; text-decoration:none; font-size:0.8rem;">// SAVE</a></div>`;
-               } else {
-                   return `<div style="display:flex; flex-direction:column; gap:5px;"><img src="${fullUrl}" title="${escapeHtml(img.prompt)}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border);"><a href="${fullUrl}" download target="_blank" class="aim-btn" style="text-align:center; text-decoration:none; font-size:0.8rem;">// SAVE</a></div>`;
-               }
-           }).join('');
-           if(imgs.length === 0) grid.innerHTML = '<div style="color:var(--text-muted)">No generated assets found.</div>';
-       } catch(e) { console.error(e); }
-    }
-
-    window._cogNotifyWarm = () => {};
+    loadThreads();
 
   }, 50);
 

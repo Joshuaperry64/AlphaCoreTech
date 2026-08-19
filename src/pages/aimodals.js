@@ -1550,7 +1550,7 @@ function buildTxt2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" src="${url}" controls autoplay loop playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
         <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
           <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
@@ -1857,7 +1857,7 @@ function buildImg2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" src="${url}" controls autoplay loop playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
         <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
           <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>

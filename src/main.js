@@ -32,6 +32,7 @@ import ReconPage from './pages/recon.js';
 import VoiceClonerPage from './pages/voicecloner.js';
 import ChangelogPage from './pages/changelog.js';
 import NetworkMatrixPage from './pages/network.js';
+import MugshotsPage from './pages/mugshots.js';
 
 const routes = {
   '/': Overview,
@@ -51,6 +52,7 @@ const routes = {
   '/voice': VoiceClonerPage,
   '/changelog': ChangelogPage,
   '/network': NetworkMatrixPage,
+  '/mugshots': MugshotsPage,
 };
 
 function updateActiveNav(hash) {

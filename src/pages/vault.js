@@ -724,9 +724,13 @@ function buildStoragePanel() {
       html += '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">';
       list.forEach(f => {
         const isImage = f.type && f.type.startsWith('image/');
-        const previewBlock = isImage 
-          ? `<img src="${f.content}" style="width:100%; height:100%; object-fit:cover;" />` 
-          : `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:3rem; color:var(--blue-dim);">📄</div>`;
+        const isVideo = f.type && f.type.startsWith('video/');
+        let previewBlock = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:3rem; color:var(--blue-dim);">📄</div>`;
+        if (isImage) {
+          previewBlock = `<img src="${f.content}" style="width:100%; height:100%; object-fit:cover;" />`;
+        } else if (isVideo) {
+          previewBlock = `<video src="${f.content}" style="width:100%; height:100%; object-fit:cover;" controls loop playsinline></video>`;
+        }
 
         html += `
           <div style="border: 1px solid var(--border-dim); background: rgba(0,184,255,0.02); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden;">
@@ -842,6 +846,8 @@ function buildStoragePanel() {
         let contentHtml = '';
         if (file.type && file.type.startsWith('image/')) {
           contentHtml = `<img src="${file.content}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" />`;
+        } else if (file.type && file.type.startsWith('video/')) {
+          contentHtml = `<video src="${file.content}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" controls autoplay loop playsinline></video>`;
         } else {
           contentHtml = `<pre style="white-space: pre-wrap; word-break: break-all; font-family: var(--font-mono, monospace); color: var(--blue-dim, #a0b0c0); font-size: 0.85rem; overflow-y:auto; max-height:60vh; margin:0; padding:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border-dim);">${file.content}</pre>`;
         }

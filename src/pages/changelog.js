@@ -9,6 +9,40 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.6.0 BUILD 124',
+    date: '2026.08.18',
+    badge: 'CRIME INTEL & GRAPH API',
+    badgeColor: '#ef4444',
+    title: 'FANNIN COUNTY CRIME FEED & MUGSHOT DOSSIERS',
+    summary: 'Built and integrated a live Facebook Graph API Crime & Arrest Feed (`#/mugshots`) specifically tailored for FanninCountyCrime with rate-limit compliance, intelligent offender parsing, and local vault exports.',
+    changes: [
+      'Implemented Meta Graph API client querying `FanninCountyCrime` posts, photos, narratives, and booking timestamps.',
+      'Built intelligent regex parser extracting offender full names (displayed prominently under photos), booking dates, offense category badges (Felony, Misdemeanor, DUI, Warrant), and bond amounts.',
+      'Enforced Meta API Rate Limit budget compliance (200 calls/hr max) with persistent `localStorage` caching and configurable background auto-sync timers (15m/30m/1h).',
+      'Added interactive Search, Category Filter, and Sorting controls for quick dossier lookups.',
+      'Built Dossier Detail Modal featuring high-res mugshot photos, complete police blotter narratives, direct Facebook post links, and a `SAVE TO VAULT` button (enabling instant Vault RAG querying in Cognitive Core).',
+      'Added Demo Intel offline fallback records for instant UI preview prior to Graph API token configuration.',
+      'Registered `🚨 Fannin Crime Feed` route (`#/mugshots`) in `src/main.js` and sidebar navigation in `index.html`.'
+    ]
+  },
+  {
+    version: 'v4.5.0 BUILD 118',
+    date: '2026.08.18',
+    badge: 'GEMINI API REWIRE',
+    badgeColor: '#a855f7',
+    title: 'COGNITIVE ENGINE & MOBILE VIDEO',
+    summary: 'Completely overhauled the Cognitive Engine to stream natively from the Gemini 2.5 API using local API keys, and patched global video playback for iOS/Mobile devices.',
+    changes: [
+      'Rewired `cognitive.js` from Modal cloud to a direct client-to-model Gemini API architecture.',
+      'Added per-profile, secure `localStorage` API Key injection and management.',
+      'Implemented Multimodal Image and File attachments directly into the Cognitive Chat.',
+      'Built Vault RAG connection: Injects your Vault text files directly into the Gemini context.',
+      'Added local Voice IO: Speech Recognition (Microphone) and Text-To-Speech (TTS) response generation.',
+      'Added Thread Management: Users can spawn multiple discrete chat sessions that save locally.',
+      'Patched all video previews across the Vault and Image/Video Synthesis pages to include `playsinline`, fixing an issue where they would not auto-play on iOS Safari.'
+    ]
+  },
+  {
     version: 'v4.4.1 BUILD 112',
     date: '2026.08.17',
     badge: 'HOTFIX & UI POLISH',
