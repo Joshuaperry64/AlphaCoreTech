@@ -12,7 +12,7 @@ export default function createIntro(container) {
     const intro = createElement('div', { class: 'intro-boot', id: 'intro-overlay' });
     Object.assign(intro.style, {
       position: 'fixed', inset: '0', zIndex: '99999',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
       backgroundColor: 'rgba(3, 4, 8, 0.4)',
       backdropFilter: 'blur(2px)',
       color: '#e2e8f0', fontFamily: "'Share Tech Mono', monospace",
@@ -104,7 +104,7 @@ export default function createIntro(container) {
     const mainWrap = createElement('div', {});
     Object.assign(mainWrap.style, {
       position: 'relative', zIndex: '60', display: 'none', flexDirection: 'column',
-      alignItems: 'center', maxWidth: '540px', width: '100%'
+      alignItems: 'center', maxWidth: '540px', width: '100%', margin: 'auto 0'
     });
 
     // Top Header Badge

@@ -561,7 +561,7 @@ function buildVaultUI() {
         audioAnalyser = audioContext.createAnalyser();
         audioAnalyser.fftSize = 64;
         audioGain = audioContext.createGain();
-        audioGain.gain.value = 0.05; // Low volume synth signal
+        audioGain.gain.value = 0.025; // Low volume synth signal
         audioGain.connect(audioContext.destination);
       }
     }

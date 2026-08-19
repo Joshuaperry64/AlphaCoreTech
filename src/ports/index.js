@@ -9,10 +9,13 @@ import { validatePortContract } from './port-contract.js';
 let candidatePorts = [];
 
 try {
-  if (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function') {
+  try {
     // Vite Eager Glob Import (discovers all src/ports/*/index.js automatically)
+    // We must use it directly so Vite's static analyzer catches it.
     const portModules = import.meta.glob('./*/index.js', { eager: true });
     candidatePorts = Object.values(portModules).map(mod => mod.default || mod);
+  } catch(e) {
+    // ignore
   }
 } catch (e) {
   console.warn('[Port Registry] Vite glob scan notice:', e.message);

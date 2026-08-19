@@ -1,4 +1,5 @@
-﻿import { createElement } from '../components/utils.js';
+import { createElement } from '../components/utils.js';
+import { playSFX } from '../components/audio.js';
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
@@ -597,13 +598,12 @@ export default function CognitiveUplink() {
           const cleanText = fullReply.replace(/[*#_`]/g, '');
           const utterance = new SpeechSynthesisUtterance(cleanText);
           utterance.rate = 1.1;
+          utterance.volume = 0.5;
           window.speechSynthesis.speak(utterance);
         }
 
         try {
-          const returnAudio = new Audio('/digital-ui.mp3');
-          returnAudio.volume = 0.4;
-          returnAudio.play().catch(() => {});
+          playSFX('response', 0.4);
         } catch (e) {}
 
       } catch (err) {

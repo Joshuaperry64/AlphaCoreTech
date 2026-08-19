@@ -21,12 +21,6 @@ export function buildTelemetryHUD() {
       </div>
 
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <button id="btn-telem-oc" style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#ef4444; padding:3px 8px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:0.75rem; cursor:pointer;" title="Toggle High Priority Threads">
-          ⚡ OVERCLOCK
-        </button>
-        <button id="btn-telem-calibrate" style="background:rgba(6,182,212,0.15); border:1px solid var(--accent, #06b6d4); color:var(--accent, #06b6d4); padding:3px 8px; border-radius:3px; font-family:'Share Tech Mono',monospace; font-size:0.75rem; cursor:pointer;" title="Re-calibrate Pings">
-          🔄 CALIBRATE
-        </button>
         <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent, #06b6d4); background:rgba(6,182,212,0.1); padding:3px 8px; border-radius:3px;">
           LATENCY: <span id="telem-ping">12 ms</span>
         </div>
@@ -79,28 +73,6 @@ export function buildTelemetryHUD() {
       </div>
     </div>
   `;
-
-  const btnOc = container.querySelector('#btn-telem-oc');
-  const btnCalibrate = container.querySelector('#btn-telem-calibrate');
-
-  btnOc.onclick = () => {
-    isOverclocked = !isOverclocked;
-    if (isOverclocked) {
-      btnOc.textContent = '⚡ OVERCLOCK [ON]';
-      btnOc.style.background = 'rgba(239,68,68,0.4)';
-      showToast('WARN', 'Heuristic Overdrive engaged! Max thread priority.');
-    } else {
-      btnOc.textContent = '⚡ OVERCLOCK';
-      btnOc.style.background = 'rgba(239,68,68,0.15)';
-      showToast('INFO', 'Overclock disengaged. Returning to normal telemetry.');
-    }
-  };
-
-  btnCalibrate.onclick = () => {
-    const pingVal = container.querySelector('#telem-ping');
-    if (pingVal) pingVal.textContent = '4 ms';
-    showToast('SUCCESS', 'Network telemetry re-calibrated. Ping optimized.');
-  };
 
   // Start periodic telemetry updates
   const timer = setInterval(() => {

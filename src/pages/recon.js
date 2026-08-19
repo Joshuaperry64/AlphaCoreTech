@@ -1,11 +1,13 @@
+import MugshotsPage from './mugshots.js';
+
 export default function ReconPage() {
     const container = document.createElement('div');
     container.className = 'page-content slide-up';
 
     container.innerHTML = `
     <div class="page-header">
-      <h1 class="page-title">RECON & DOSSIER</h1>
-      <p class="page-subtitle">ADVANCED OSINT GATHERING AND PROFILING ENGINE</p>
+      <h1 class="page-title">RECON & CUSTODY</h1>
+      <p class="page-subtitle">ADVANCED OSINT GATHERING AND ARREST INTEL MATRIX</p>
     </div>
     <div class="aim-row" style="margin-bottom: 24px;">
       <div class="aim-field" style="width: 100%;">
@@ -129,5 +131,18 @@ export default function ReconPage() {
     }
 
     btn.addEventListener('click', handleScan);
+    btn.addEventListener('click', handleScan);
+    
+    // Append Local Custody / Mugshots below
+    const mugshots = MugshotsPage();
+    // Remove the mugshots header since we have a combined one
+    const mugHeader = mugshots.querySelector('.page-header');
+    if (mugHeader) mugHeader.remove();
+    
+    container.appendChild(document.createElement('br'));
+    container.appendChild(document.createElement('hr'));
+    container.appendChild(document.createElement('br'));
+    container.appendChild(mugshots);
+
     return container;
 }

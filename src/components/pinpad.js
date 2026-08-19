@@ -151,12 +151,15 @@ export function buildPinPad({
         <button class="aim-pad-btn" data-val="9">9</button>
         <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
         <button class="aim-pad-btn" data-val="0">0</button>
-        <button class="aim-pad-btn aim-pad-btn-enter" id="aim-pad-enter">ENT</button>
+        <button class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back">⌫</button>
       </div>
 
-      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-        <button class="aim-btn" id="aim-pin-bypass-btn" style="width: 100%; padding: 10px; background: ${isLoginScreen ? 'rgba(0,255,100,0.1)' : 'rgba(255,0,60,0.1)'}; border: 1px solid ${isLoginScreen ? 'rgba(0,255,100,0.4)' : 'rgba(255,0,60,0.4)'}; color: ${isLoginScreen ? '#00ff64' : '#ff003c'}; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;">
-          ⚡ [SYSTEM BYPASS]
+      <div style="margin-top: 12px; display: flex; flex-direction: row; gap: 8px;">
+        <button class="aim-btn" id="aim-pad-enter" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          ENTER
+        </button>
+        <button class="aim-btn" id="aim-pin-bypass-btn" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          ⚡ BYPASS
         </button>
       </div>
     </div>
@@ -221,6 +224,7 @@ export function buildPinPad({
     const result = await validatePin(currentPin, requiredRole);
 
     if (result.valid) {
+      playSFX('login', 0.8); // Add success sound effect
       setFeedback('ACCESS GRANTED. DECRYPTING...', 'ok');
       pinBox.classList.add('aim-access-granted');
       window.removeEventListener('keydown', keyHandler);
@@ -256,6 +260,7 @@ export function buildPinPad({
   });
   wrap.querySelector('#aim-pad-clear').onclick = e => { e.stopPropagation(); handleClear(); };
   wrap.querySelector('#aim-pad-enter').onclick = e => { e.stopPropagation(); handleEnter(); };
+  wrap.querySelector('#aim-pad-back').onclick = e => { e.stopPropagation(); handleBackspace(); };
 
   // Guest button listener
   // Bypass Easter Egg button listener
@@ -270,6 +275,7 @@ export function buildPinPad({
         bypassBtn.style.boxShadow = '0 0 20px rgba(0,255,100,0.8)';
         bypassBtn.style.borderColor = '#00ff64';
         bypassBtn.style.color = '#fff';
+        playSFX('login', 0.8);
         setFeedback('SYSTEM BYPASSED. GUEST ACCESS GRANTED.', 'ok');
         
         sessionStorage.clear();

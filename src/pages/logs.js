@@ -71,6 +71,13 @@ export default function LogsPage() {
               <option value="WARN">WARN</option>
               <option value="ERROR">ERROR</option>
             </select>
+            <select id="log-profile-filter" style="background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 10px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">
+              <option value="ALL">ALL PROFILES</option>
+              <option value="JOSH">JOSH</option>
+              <option value="GUEST">GUEST</option>
+              <option value="ARCHITECT">ARCHITECT</option>
+              <option value="SYSTEM">SYSTEM</option>
+            </select>
           </div>
 
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -90,7 +97,7 @@ export default function LogsPage() {
         </div>
       </div>
 
-      <div class="panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.08); padding:0; overflow:hidden;">
+      <div class="panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.08); padding:0; overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-family:'Share Tech Mono',monospace; font-size:0.85rem; text-align:left;">
           <thead>
             <tr style="background:rgba(255,255,255,0.03); color:var(--accent, #06b6d4); border-bottom:1px solid rgba(255,255,255,0.1);">
@@ -110,6 +117,7 @@ export default function LogsPage() {
     const searchInput = container.querySelector('#log-search');
     const typeFilter = container.querySelector('#log-type-filter');
     const levelFilter = container.querySelector('#log-level-filter');
+    const profileFilter = container.querySelector('#log-profile-filter');
     const tbody = container.querySelector('#logs-tbody');
     const emitBtn = container.querySelector('#add-mock-log-btn');
     const toggleLiveBtn = container.querySelector('#btn-toggle-live');
@@ -120,6 +128,7 @@ export default function LogsPage() {
       const q = searchInput.value.toLowerCase();
       const cat = typeFilter.value;
       const lvl = levelFilter.value;
+      const prof = profileFilter.value;
       const rawLogs = getLogs();
 
       const mappedLogs = rawLogs.map((log, index) => {
@@ -136,8 +145,9 @@ export default function LogsPage() {
       const filtered = mappedLogs.filter(l => {
         const matchesCat = cat === 'ALL' || l.type === cat;
         const matchesLvl = lvl === 'ALL' || l.level === lvl;
+        const matchesProf = prof === 'ALL' || l.source.toUpperCase() === prof;
         const matchesQ = l.message.toLowerCase().includes(q) || l.source.toLowerCase().includes(q) || l.id.toLowerCase().includes(q);
-        return matchesCat && matchesLvl && matchesQ;
+        return matchesCat && matchesLvl && matchesProf && matchesQ;
       });
 
       if (filtered.length === 0) {
@@ -167,6 +177,7 @@ export default function LogsPage() {
     searchInput.addEventListener('input', updateTable);
     typeFilter.addEventListener('change', updateTable);
     levelFilter.addEventListener('change', updateTable);
+    profileFilter.addEventListener('change', updateTable);
 
     function emitLog() {
       logAction('SYSTEM_DIAGNOSTIC', { details: 'Event emitted' });

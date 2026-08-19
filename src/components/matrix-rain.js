@@ -100,12 +100,8 @@ export function initMatrixRain() {
         // Occasional color shift (Dimmer Cyan / Magenta)
         const colors = ['rgba(180,0,50,0.9)', 'rgba(0,140,160,0.9)'];
         ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 4;
       } else {
         ctx.fillStyle = audioEnergy > 0.4 ? 'rgba(0, 160, 180, 0.9)' : 'rgba(0, 90, 110, 0.9)';
-        ctx.shadowColor = audioEnergy > 0.4 ? 'rgba(0,180,200,0.5)' : 'rgba(0,100,120,0.5)';
-        ctx.shadowBlur = Math.floor(audioEnergy * 5);
       }
 
       ctx.fillText(char, x, y);

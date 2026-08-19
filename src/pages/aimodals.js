@@ -6,6 +6,7 @@ import { createElement } from '../components/utils.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { saveImageToGallery } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
+import { playSFX } from '../components/audio.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
@@ -793,6 +794,7 @@ function buildTxt2Img() {
       resultEl.classList.remove('hidden');
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      playSFX('pop', 0.8);
       setStatus(wrap, '#t2i-status', 'ARTIFACT RENDERED SUCCESSFULLY.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'T2I', prompt, batchSize });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
@@ -974,9 +976,21 @@ function buildImg2Img() {
 
   wrap.querySelectorAll('.i2i-quick-action').forEach(btn => {
     btn.addEventListener('click', () => {
+      const fileInput = wrap.querySelector('#i2i-file');
+      const fileInput2 = wrap.querySelector('#i2i-file2');
+      const file = fileInput._droppedFile || fileInput.files[0] || fileInput2._droppedFile || fileInput2.files[0];
+      
+      if (!file) {
+        setStatus(wrap, '#i2i-status', 'ERROR: Action requires an image to be loaded first.', 'error');
+        return;
+      }
+      
       const promptInput = wrap.querySelector('#i2i-prompt');
       const userText = promptInput.value.trim();
-      promptInput.value = userText ? `${userText}, ${btn.dataset.prompt}` : btn.dataset.prompt;
+      const runPrompt = userText ? `${userText}, ${btn.dataset.prompt}` : btn.dataset.prompt;
+      
+      // We set a hidden attribute so the genBtn handler can use it
+      promptInput.dataset.bgPrompt = runPrompt;
       const genBtn = wrap.querySelector('#i2i-gen-btn');
       if (genBtn) genBtn.click();
     });
@@ -1067,7 +1081,13 @@ function buildImg2Img() {
     const file = fileInput._droppedFile || fileInput.files[0];
     const file2 = fileInput2._droppedFile || fileInput2.files[0];
     if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No primary image loaded.', 'error'); return; }
-    const prompt = wrap.querySelector('#i2i-prompt').value.trim();
+    let prompt = wrap.querySelector('#i2i-prompt').dataset.bgPrompt;
+    if (prompt) {
+      delete wrap.querySelector('#i2i-prompt').dataset.bgPrompt;
+    } else {
+      prompt = wrap.querySelector('#i2i-prompt').value.trim();
+    }
+    
     if (!prompt) { setStatus(wrap, '#i2i-status', 'ERROR: Edit instruction is empty.', 'error'); return; }
 
     const steps = parseInt(wrap.querySelector('#i2i-speed .aim-seg-btn.active').dataset.steps);
@@ -1209,6 +1229,7 @@ function buildImg2Img() {
       resultEl.classList.remove('hidden');
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      playSFX('pop', 0.8);
       setStatus(wrap, '#i2i-status', 'EDIT APPLIED SUCCESSFULLY.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'I2I', prompt, batchSize });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
@@ -1403,8 +1424,8 @@ function buildTxt2Vid() {
             <label class="aim-label" for="t2v-frames">DURATION (TOTAL FRAMES)</label>
             <select class="aim-input" id="t2v-frames">
               <option value="33">Micro (33 Frames)</option>
-              <option value="49">Short (49 Frames)</option>
-              <option value="81" selected>Standard (81 Frames)</option>
+              <option value="49" selected>Short (49 Frames)</option>
+              <option value="81">Standard (81 Frames)</option>
               <option value="113">Long (113 Frames)</option>
               <option value="129">Extended (129 Frames)</option>
             </select>
@@ -1550,7 +1571,7 @@ function buildTxt2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
         <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
           <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
@@ -1566,6 +1587,7 @@ function buildTxt2Vid() {
 
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      playSFX('pop', 0.8);
       setStatus(wrap, '#t2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
@@ -1667,8 +1689,8 @@ function buildImg2Vid() {
             <label class="aim-label" for="i2v-frames">DURATION (TOTAL FRAMES)</label>
             <select class="aim-input" id="i2v-frames">
               <option value="33">Micro (33 Frames)</option>
-              <option value="49">Short (49 Frames)</option>
-              <option value="81" selected>Standard (81 Frames)</option>
+              <option value="49" selected>Short (49 Frames)</option>
+              <option value="81">Standard (81 Frames)</option>
               <option value="113">Long (113 Frames)</option>
               <option value="129">Extended (129 Frames)</option>
             </select>
@@ -1857,7 +1879,7 @@ function buildImg2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
         <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
           <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
@@ -1873,6 +1895,7 @@ function buildImg2Vid() {
 
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      playSFX('pop', 0.8);
       setStatus(wrap, '#i2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
@@ -1985,10 +2008,11 @@ function showDocsModal() {
   overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
   
   const modal = document.createElement('div');
-  modal.style.cssText = 'background:#050a0f; border:1px solid var(--accent, #06b6d4); padding:20px; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; color:var(--text-main, #d0e0f0); font-family:var(--font-hud, monospace); box-shadow:0 0 20px rgba(6,182,212,0.2);';
+  modal.style.cssText = 'position:relative; background:#050a0f; border:1px solid var(--accent, #06b6d4); padding:20px; max-width:650px; width:90%; max-height:85vh; overflow-y:auto; color:var(--text-main, #d0e0f0); font-family:var(--font-hud, monospace); box-shadow:0 0 20px rgba(6,182,212,0.2);';
   
   modal.innerHTML = `
-    <h2 style="color:var(--accent, #06b6d4); margin-top:0; border-bottom:1px solid rgba(6,182,212,0.3); padding-bottom:10px; font-size:1.4rem;">📖 AI SYNTHESIS DOCUMENTATION</h2>
+    <button id="close-docs-btn" style="position:absolute; top:10px; right:10px; background:rgba(255,0,0,0.8); border:none; color:white; width:24px; height:24px; border-radius:50%; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-family:sans-serif; line-height:1; z-index:10;">×</button>
+    <h2 style="color:var(--accent, #06b6d4); margin-top:0; border-bottom:1px solid rgba(6,182,212,0.3); padding-bottom:10px; font-size:1.4rem; padding-right:30px;">📖 AI SYNTHESIS DOCUMENTATION</h2>
     <div style="font-family:'Share Tech Mono', monospace; font-size:0.9rem; line-height:1.6; margin-top:15px;">
       
       <h3 style="color:#10b981; margin-bottom:5px;">1. WHAT ARE LORAs?</h3>
@@ -2006,7 +2030,6 @@ function showDocsModal() {
       <h3 style="color:#10b981; margin-bottom:5px;">5. SAMPLERS & SCHEDULERS</h3>
       <p style="margin-top:0; margin-bottom:15px; color:#a0b0c0;">The mathematical algorithm used to generate the image.<br/>- <b>Euler a:</b> Fast, slightly softer, changes significantly with step counts.<br/>- <b>DPM++ 2M Karras:</b> Very sharp, highly detailed, stabilizes quickly. Highly recommended.</p>
     </div>
-    <button id="close-docs-btn" class="aim-btn" style="width:100%; margin-top:20px; text-align:center; background:rgba(6,182,212,0.1); border:1px solid var(--accent, #06b6d4); color:var(--accent, #06b6d4); padding:10px; cursor:pointer; font-family:var(--font-hud, monospace);">ACKNOWLEDGE & CLOSE</button>
   `;
 
   overlay.appendChild(modal);

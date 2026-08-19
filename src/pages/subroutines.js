@@ -130,16 +130,15 @@ export default function SubroutinesPage() {
 
       <!-- Execution Console Output & Manual Trigger -->
       <div style="display:flex; flex-direction:column; gap:20px;">
-        <div class="panel cyber-panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.1); padding:18px; display:flex; flex-direction:column; flex:1; border-radius:6px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">
-            <span style="font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; color:var(--accent, #06b6d4);">// EXECUTION_LOG</span>
+        <details class="panel cyber-panel" style="background:rgba(5,10,18,0.9); border:1px solid rgba(255,255,255,0.1); padding:18px; border-radius:6px;" open>
+          <summary style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; cursor:pointer; list-style:none;">
+            <span style="font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; color:var(--accent, #06b6d4);">▶ // EXECUTION_LOG</span>
             <span id="sub-active-status" style="font-size:0.75rem; color:#888;">IDLE</span>
-          </div>
-
-          <div id="sub-console-output" style="flex:1; min-height:300px; max-height:480px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:4px; font-size:0.82rem; color:#aaa; overflow-y:auto; line-height:1.5; font-family:'Share Tech Mono',monospace;">
+          </summary>
+          <div id="sub-console-output" style="min-height:200px; max-height:400px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:4px; font-size:0.82rem; color:#aaa; overflow-y:auto; line-height:1.5; font-family:'Share Tech Mono',monospace;">
             <div style="color:#666;">> System idle. Select a subroutine or click batch actions to execute...</div>
           </div>
-        </div>
+        </details>
 
 
       </div>

@@ -16,11 +16,15 @@ export default function VoiceClonerPage() {
       <div class="aim-panel-header" style="background: rgba(0,184,255,0.05); padding: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
         <span class="aim-panel-icon">🎙️</span>
         <span class="aim-panel-title" style="flex: 1; min-width: 150px;">RVC INFERENCE ENGINE</span>
-        <span class="aim-panel-badge" style="background: rgba(0,255,100,0.1); color: #00ff64; border-color: #00ff64; white-space: nowrap;">H100 ONLINE</span>
+        <span class="aim-panel-badge" style="background: rgba(255,0,60,0.1); color: #ff003c; border-color: #ff003c; white-space: nowrap;">OFFLINE</span>
       </div>
       <div style="flex: 1; background: #000; position: relative;" id="vc-iframe-container">
-        <!-- V2 Modal Deployment URL -->
-        <iframe src="https://ai-alphacore-tech--voice-cloning-ui-web-ui.modal.run" style="width: 100%; height: 100%; border: none;"></iframe>
+        <!-- V2 Modal Deployment URL - Currently Offline -->
+        <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #050a0f;">
+          <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+          <h2 style="color: #ff003c; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;">NODE OFFLINE</h2>
+          <p style="color: #a0b0c0; text-align: center; max-width: 400px; font-family: 'Share Tech Mono', monospace;">The Voice Synthesis H100 node is currently offline for calibration and maintenance. Please try again later.</p>
+        </div>
         
         ${isGuest ? `
         <!-- Guest Preview Blocker Overlay -->

@@ -18,7 +18,9 @@ const sfxFiles = {
   modal: '/modals.mp3',
   response: '/response.mp3',
   bypass: '/bypass.mp3',
-  incorrect: '/incorrect.mp3'
+  incorrect: '/incorrect.mp3',
+  login: '/login.mp3',
+  pop: '/pop.mp3'
 };
 
 const sfxAudioCache = {};
@@ -34,7 +36,7 @@ function getSfxAudio(type) {
 /**
  * Plays a UI sound effect with optional volume scaling.
  * 
- * @param {'click'|'navigate'|'transition'|'modal'|'response'|'bypass'} type 
+ * @param {'click'|'navigate'|'transition'|'modal'|'response'|'bypass'|'incorrect'|'login'|'pop'} type 
  * @param {number} [volume=0.5] 
  */
 export function playSFX(type, volume = 0.5) {
@@ -42,7 +44,7 @@ export function playSFX(type, volume = 0.5) {
     const baseAudio = getSfxAudio(type);
     if (!baseAudio) return;
     const sound = baseAudio.cloneNode();
-    sound.volume = Math.max(0, Math.min(1, volume));
+    sound.volume = Math.max(0, Math.min(1, volume * 0.5));
     sound.play().catch(() => {});
   } catch (e) {
     // Non-critical audio failure
@@ -56,7 +58,7 @@ export function initGlobalAudio() {
 
   globalAudio = new Audio('/skybeat.mp3');
   globalAudio.loop = true;
-  globalAudio.volume = 0.5;
+  globalAudio.volume = 0.25;
 
   // Seamless MP3 Loop Hack - clips encoder padding gap
   globalAudio.addEventListener('timeupdate', () => {
@@ -213,13 +215,7 @@ export function initAudioVisualizer() {
         x += barWidth + 1;
       }
     } else {
-      const bars = 64;
-      const barWidth = visCanvas.width / bars;
-      for (let i = 0; i < bars; i++) {
-        const h = Math.abs(Math.sin(tick + i * 0.15)) * 25 + 5;
-        canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.15 + (h / 30) * 0.3})`;
-        canvasCtx.fillRect(i * barWidth, visCanvas.height - h, barWidth - 1, h);
-      }
+      // Audio is off, leave background pure black (cleared)
     }
     
     const logoImg = document.querySelector('.intro-logo-img');
