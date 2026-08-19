@@ -13,6 +13,11 @@ const LORA_OPTIONS = `
   <option value="epiCRealismHelper.safetensors">EPICREALISM HELPER</option>
   <option value="custom_training.safetensors">CUSTOM TRAINING</option>
   <option value="cunny.safetensors">CUNNY</option>
+  <option value="FlatTop.safetensors">FLAT TOP</option>
+  <option value="BJ.safetensors">BJ</option>
+  <option value="Cowgirl.safetensors">COWGIRL</option>
+  <option value="Missionary.safetensors">MISSIONARY</option>
+  <option value="SpyCam.safetensors">SPYCAM</option>
 `;
 
 function getModalSettings() {
