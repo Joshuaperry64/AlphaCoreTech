@@ -37,6 +37,7 @@ export default function MugshotsPage() {
           <div style="flex: 1; min-width: 160px;">
             <select id="mug-filter-charge" class="aim-input" style="background: #030712; color: #fff;">
               <option value="ALL">All Offense Types</option>
+              <option value="BOOKMARKED">⭐ Bookmarked</option>
               <option value="FELONY">Felonies</option>
               <option value="MISDEMEANOR">Misdemeanors</option>
               <option value="DUI">DUI / Narcotics</option>
@@ -67,6 +68,9 @@ export default function MugshotsPage() {
       <div id="mugshot-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px;">
         <!-- Mugshots will render here -->
       </div>
+      
+      <!-- Pagination Controls -->
+      <div id="mugshot-pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 25px; padding-bottom: 20px;"></div>
     </div>
   `;
 
@@ -201,11 +205,17 @@ export default function MugshotsPage() {
       };
     }
 
+    let currentPage = 1;
+    const itemsPerPage = 20;
+
     // Render Cards
     function renderCards() {
       const search = (searchInput.value || '').trim().toLowerCase();
       const chargeFilter = filterChargeSelect.value;
       const sortOrder = sortOrderSelect.value;
+      
+      const bookmarksKey = `alphacore_bookmarks_${profile}`;
+      let bookmarks = JSON.parse(localStorage.getItem(bookmarksKey)) || [];
 
       let filtered = [...allMugshots];
 
@@ -222,6 +232,8 @@ export default function MugshotsPage() {
         if (chargeFilter === 'RECENT') {
           const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
           filtered = filtered.filter(m => new Date(m.createdTime).getTime() >= sevenDaysAgo);
+        } else if (chargeFilter === 'BOOKMARKED') {
+          filtered = filtered.filter(m => bookmarks.includes(m.id));
         } else {
           filtered = filtered.filter(m => m.category === chargeFilter);
         }
@@ -242,6 +254,8 @@ export default function MugshotsPage() {
       statLastSync.textContent = lastSyncTime ? new Date(parseInt(lastSyncTime, 10)).toLocaleTimeString() : 'CACHED';
 
       mugshotGrid.innerHTML = '';
+      const paginationContainer = container.querySelector('#mugshot-pagination');
+      if (paginationContainer) paginationContainer.innerHTML = '';
 
       if (filtered.length === 0) {
         mugshotGrid.innerHTML = `
@@ -253,10 +267,29 @@ export default function MugshotsPage() {
         `;
         return;
       }
+      
+      const totalPages = Math.ceil(filtered.length / itemsPerPage);
+      if (currentPage > totalPages) currentPage = totalPages;
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const pageItems = filtered.slice(startIdx, startIdx + itemsPerPage);
 
-      filtered.forEach(m => {
+      pageItems.forEach(m => {
+        const isBookmarked = bookmarks.includes(m.id);
         const card = document.createElement('div');
-        card.style.cssText = 'background: rgba(10,15,25,0.9); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, border-color 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.4);';
+        
+        let catColor = '#06b6d4';
+        let cardBg = 'rgba(10,15,25,0.9)';
+        
+        if (m.category === 'FELONY') {
+          catColor = '#ff003c';
+          cardBg = 'rgba(255, 0, 60, 0.15)';
+        } else if (m.category === 'WARRANT') {
+          catColor = '#a855f7';
+        } else if (m.category === 'DUI') {
+          catColor = '#eab308';
+        }
+
+        card.style.cssText = `background: ${cardBg}; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, border-color 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.4); position: relative;`;
         card.onmouseover = () => {
           card.style.borderColor = 'var(--accent)';
           card.style.transform = 'translateY(-3px)';
@@ -265,11 +298,26 @@ export default function MugshotsPage() {
           card.style.borderColor = 'var(--border)';
           card.style.transform = 'translateY(0)';
         };
-
-        let catColor = '#06b6d4';
-        if (m.category === 'FELONY') catColor = '#ff003c';
-        else if (m.category === 'WARRANT') catColor = '#a855f7';
-        else if (m.category === 'DUI') catColor = '#eab308';
+        
+        const bookmarkBtn = document.createElement('div');
+        bookmarkBtn.innerHTML = isBookmarked ? '⭐' : '☆';
+        bookmarkBtn.style.cssText = `position: absolute; top: 10px; left: 10px; z-index: 10; font-size: 1.2rem; cursor: pointer; text-shadow: 0 0 5px rgba(0,0,0,0.8); color: ${isBookmarked ? '#fbbf24' : '#fff'};`;
+        bookmarkBtn.onclick = (e) => {
+          e.stopPropagation();
+          let bm = JSON.parse(localStorage.getItem(bookmarksKey)) || [];
+          if (bm.includes(m.id)) {
+            bm = bm.filter(id => id !== m.id);
+            bookmarkBtn.innerHTML = '☆';
+            bookmarkBtn.style.color = '#fff';
+          } else {
+            bm.push(m.id);
+            bookmarkBtn.innerHTML = '⭐';
+            bookmarkBtn.style.color = '#fbbf24';
+          }
+          localStorage.setItem(bookmarksKey, JSON.stringify(bm));
+          if (filterChargeSelect.value === 'BOOKMARKED') renderCards(); // Refresh if in bookmark view
+        };
+        card.appendChild(bookmarkBtn);
 
         const photoFrame = document.createElement('div');
         photoFrame.style.cssText = 'width: 100%; aspect-ratio: 4/5; background: #030712; position: relative; overflow: hidden; border-bottom: 1px solid var(--border);';
@@ -339,6 +387,29 @@ export default function MugshotsPage() {
 
         mugshotGrid.appendChild(card);
       });
+
+      // Render Pagination Buttons
+      if (totalPages > 1 && paginationContainer) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'aim-btn aim-btn-sm';
+        prevBtn.textContent = '◀ PREV';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { currentPage--; renderCards(); };
+
+        const pageInfo = document.createElement('div');
+        pageInfo.style.cssText = 'color: var(--blue); font-family: "Orbitron", sans-serif; font-size: 0.9rem; display: flex; align-items: center; padding: 0 10px;';
+        pageInfo.textContent = `PAGE ${currentPage} // ${totalPages}`;
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'aim-btn aim-btn-sm';
+        nextBtn.textContent = 'NEXT ▶';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { currentPage++; renderCards(); };
+
+        paginationContainer.appendChild(prevBtn);
+        paginationContainer.appendChild(pageInfo);
+        paginationContainer.appendChild(nextBtn);
+      }
     }
 
     function openDossierModal(m) {
@@ -467,7 +538,30 @@ export default function MugshotsPage() {
           return;
         }
 
-        const parsed = rawPosts.map(parseArrestPost);
+        let parsed = rawPosts.map(parseArrestPost);
+
+        // --- GAZETTE AUGMENTATION PROTOCOL ---
+        syncStatus.textContent = 'CROSS-REFERENCING THE GEORGIA GAZETTE...';
+        for (let i = 0; i < parsed.length; i++) {
+          if (parsed[i].charges.includes('PENDING REVIEW')) {
+            try {
+              const fName = parsed[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+              const res = await fetch(`/api/gazette/${fName}`);
+              if (res.ok) {
+                const html = await res.text();
+                const match = html.match(/Reason\(s\)\s*For\s*Booking:.*?<\/strong>\s*(?:<br>)?\s*(.*?)\s*(?:<\/p>|<br>|<h)/si);
+                if (match && match[1]) {
+                  const scrapedCharge = match[1].replace(/<[^>]+>/g, '').trim();
+                  parsed[i].charges = [scrapedCharge];
+                  parsed[i].category = determineSeverity(scrapedCharge);
+                }
+              }
+            } catch (e) {
+              console.warn("Gazette augmentation failed for", parsed[i].name, e);
+            }
+          }
+        }
+
         const existingIds = new Set(allMugshots.map(m => m.id));
         const newRecords = parsed.filter(p => !existingIds.has(p.id));
         
@@ -504,10 +598,10 @@ export default function MugshotsPage() {
       URL.revokeObjectURL(a.href);
     });
 
-    syncBtn.addEventListener('click', syncFromFacebook);
-    searchInput.addEventListener('input', renderCards);
-    filterChargeSelect.addEventListener('change', renderCards);
-    sortOrderSelect.addEventListener('change', renderCards);
+    syncBtn.addEventListener('click', () => { currentPage = 1; syncFromFacebook(); });
+    searchInput.addEventListener('input', () => { currentPage = 1; renderCards(); });
+    filterChargeSelect.addEventListener('change', () => { currentPage = 1; renderCards(); });
+    sortOrderSelect.addEventListener('change', () => { currentPage = 1; renderCards(); });
 
     try {
       const cached = JSON.parse(localStorage.getItem('fannin_mugshots_cache')) || [];

@@ -168,6 +168,24 @@ app.post('/api/recon/scan', authenticate, async (req, res) => {
 });
 
 
+// ==========================================================
+// GAZETTE PROXY ENDPOINT
+// ==========================================================
+app.get('/api/gazette/:name', async (req, res) => {
+    try {
+        const name = req.params.name;
+        // Node 18+ has global fetch
+        const response = await fetch(`https://thegeorgiagazette.com/fannin/${name}/`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        if (!response.ok) return res.status(response.status).send('Not found');
+        const html = await response.text();
+        res.send(html);
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
 // ... (All your other existing API routes: /api/pins, /api/logs, /api/vault, etc.)
 app.get('/api/pins', async (req, res) => {
   const db = await readDB();

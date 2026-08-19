@@ -149,6 +149,18 @@ async function renderRoute() {
   const isGuest = currentProfile === 'Guest';
 
   const routeFn = routes[hash] || routes['/overview'] || routes['/'];
+  
+  if (isGuest && (hash === '/recon' || hash === '/mugshots')) {
+      app.innerHTML = `
+        <div style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; color:#ff003c;">
+          <h1 style="font-family:'Orbitron',sans-serif; margin-bottom:10px;">// ACCESS DENIED</h1>
+          <p style="font-family:'Share Tech Mono',monospace;">RECON & CUSTODY MODULES ARE CLASSIFIED. PLEASE AUTHENTICATE.</p>
+        </div>
+      `;
+      updateActiveNav(hash);
+      return;
+  }
+
   const pageElement = routeFn();
 
   if (isGuest) {
