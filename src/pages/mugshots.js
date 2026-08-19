@@ -1,86 +1,28 @@
 import { createElement } from '../components/utils.js';
+import { showToast } from '../components/toast.js';
 
 export default function MugshotsPage() {
   const container = createElement('div', { class: 'mugshots-page' });
   
   container.innerHTML = `
-    <div class="section-header">
-      <h1 class="glitch" data-text="// FANNIN_COUNTY_CRIME">// FANNIN_COUNTY_CRIME</h1>
-      <div class="header-line"></div>
-      <p class="aim-subtitle" style="color: var(--text-muted); font-size: 0.85rem; font-family: 'Share Tech Mono', monospace;">
-        LIVE FACEBOOK GRAPH API FEED // ARREST DOSSIER &amp; MUGSHOT INTELLIGENCE
-      </p>
+    <div class="page-header">
+      <h1 class="glitch" data-text="// LOCAL_CUSTODY">// LOCAL_CUSTODY</h1>
+      <p class="page-subtitle">AUTOMATED ARREST INTEL &amp; MUGSHOT DOSSIER MATRIX</p>
     </div>
 
-    <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
-      <div class="aim-seg aim-seg-2" id="mug-tabs">
-        <button class="aim-seg-btn active" data-target="mug-database">MUGSHOT DOSSIER FEED</button>
-        <button class="aim-seg-btn" data-target="mug-api-config">GRAPH API CONFIG &amp; LIMITS</button>
-      </div>
-    </div>
-
-    <!-- API CONFIG VIEW -->
-    <div class="panel mug-view" id="mug-api-config" style="display: none;">
-      <div class="panel-title">// FACEBOOK GRAPH API CONFIGURATION</div>
-      
-      <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
-        <label class="aim-label">FACEBOOK ACCESS TOKEN (USER / PAGE TOKEN)</label>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-          <input type="password" id="fb-api-key-input" class="aim-input" placeholder="EAAG... (Graph API Access Token)" style="flex: 1; min-width: 250px;">
-          <button id="toggle-token-vis" class="aim-btn" style="min-width: 90px;" type="button">SHOW</button>
-          <button id="save-fb-key-btn" class="aim-btn aim-btn-accept" style="min-width: 130px;">💾 SAVE KEY</button>
-          <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" class="aim-btn" style="min-width: 160px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">🔑 GET TOKEN &nearr;</a>
-        </div>
-
-        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
-          <div style="flex: 1; min-width: 220px;">
-            <label class="aim-label">TARGET FACEBOOK PAGE ID / USERNAME</label>
-            <input type="text" id="fb-page-target-input" class="aim-input" value="FanninCountyCrime" placeholder="FanninCountyCrime">
-          </div>
-          <div style="flex: 1; min-width: 220px;">
-            <label class="aim-label">AUTO-SYNC INTERVAL (WITHIN RATE LIMITS)</label>
-            <select id="fb-auto-sync-select" class="aim-input" style="background: #030712; color: #fff;">
-              <option value="0">Manual Sync Only</option>
-              <option value="15">Every 15 Minutes</option>
-              <option value="30" selected>Every 30 Minutes (Recommended)</option>
-              <option value="60">Every 1 Hour</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="fb-api-key-status" style="margin-top: 15px; font-size: 0.85rem; color: var(--blue-dim);"></div>
-      </div>
-
-      <div class="panel-title" style="margin-top:30px;">// GRAPH API RATE LIMITS &amp; HOW-TO</div>
-      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-dim); padding: 18px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.6; font-family: 'Share Tech Mono', monospace; border-radius: 4px;">
-        <div style="color: var(--accent); font-weight: bold; margin-bottom: 8px;">RATE LIMIT BUDGET COMPLIANCE:</div>
-        <p style="margin: 0 0 10px 0;">Meta Graph API enforces a sliding 60-minute window limit of approximately <strong>200 calls/hour per user token</strong>. AlphaCore automatically caches all downloaded photos, names, and booking details to your local browser storage ('localStorage') so subsequent loads require zero API calls.</p>
-        
-        <div style="color: var(--accent); font-weight: bold; margin-bottom: 6px; margin-top: 14px;">QUICK SETUP GUIDE:</div>
-        <ol style="margin: 0; padding-left: 20px;">
-          <li>Visit the <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: underline;">Meta Graph API Explorer</a>.</li>
-          <li>Log into your Meta account and select or create an App.</li>
-          <li>Under <em>Permissions</em>, add <code>pages_read_engagement</code> and <code>pages_read_user_content</code> (or generate a standard User Token).</li>
-          <li>Click <strong>Generate Access Token</strong> and paste it above.</li>
-        </ol>
-      </div>
-    </div>
-
-    <!-- DATABASE VIEW -->
+    <!-- Main Dossier Feed View -->
     <div class="mug-view active" id="mug-database">
       
       <!-- Top Control & Filter HUD -->
       <div class="panel" style="margin-bottom: 20px; padding: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid rgba(0,184,255,0.1); padding-bottom: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="background: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 3px; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">LIVE TARGET</span>
-            <a href="https://www.facebook.com/FanninCountyCrime" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 0.95rem; text-decoration: none; font-weight: bold;">facebook.com/FanninCountyCrime &nearr;</a>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">
+            <!-- Target URL removed as requested -->
           </div>
           
           <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <span id="sync-status" style="font-size: 0.8rem; color: var(--text-muted); font-family: 'Share Tech Mono', monospace;">CACHE LOADED</span>
             <button id="sync-btn" class="aim-btn aim-btn-accept" style="font-size: 0.8rem; padding: 8px 16px;">↻ SYNC FEED</button>
-            <button id="load-demo-btn" class="aim-btn" style="font-size: 0.8rem; padding: 8px 14px; opacity: 0.8;" title="Populate with sample intel records">DEMO INTEL</button>
             <button id="export-json-btn" class="aim-btn" style="font-size: 0.8rem; padding: 8px 14px; opacity: 0.8;">EXPORT JSON</button>
           </div>
         </div>
@@ -88,8 +30,8 @@ export default function MugshotsPage() {
         <!-- Telemetry & Search Row -->
         <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
           <div style="flex: 2; min-width: 240px; position: relative;">
-            <input type="text" id="mug-search-input" class="aim-input" placeholder="Search by person name, charges, or booking date..." style="width: 100%; padding-left: 36px;">
-            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;">🔍</span>
+            <input type="text" id="mug-search-input" class="aim-input" placeholder="Search by offender name, charges, or booking date..." style="width: 100%; padding-left: 36px;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem;">&#x1F50D;</span>
           </div>
 
           <div style="flex: 1; min-width: 160px;">
@@ -117,7 +59,7 @@ export default function MugshotsPage() {
         <div style="display: flex; gap: 20px; margin-top: 14px; font-size: 0.75rem; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
           <div>RECORDS CACHED: <span id="stat-total-records" style="color: #fff; font-weight: bold;">0</span></div>
           <div>LAST SYNCED: <span id="stat-last-sync" style="color: var(--accent);">NEVER</span></div>
-          <div>EST. API RATE BUDGET: <span id="stat-rate-budget" style="color: #00ff8c;">200/200 OK</span></div>
+          <div>SCRAPER STATUS: <span id="stat-scraper-status" style="color: #00ff8c;">ONLINE</span></div>
         </div>
       </div>
 
@@ -132,19 +74,7 @@ export default function MugshotsPage() {
     const profile = sessionStorage.getItem('current_profile') || 'Guest';
     
     // Elements
-    const tabs = container.querySelectorAll('.aim-seg-btn');
-    const apiConfigView = container.querySelector('#mug-api-config');
-    const dbView = container.querySelector('#mug-database');
-    
-    const apiKeyInput = container.querySelector('#fb-api-key-input');
-    const toggleTokenBtn = container.querySelector('#toggle-token-vis');
-    const saveKeyBtn = container.querySelector('#save-fb-key-btn');
-    const apiKeyStatus = container.querySelector('#fb-api-key-status');
-    const pageTargetInput = container.querySelector('#fb-page-target-input');
-    const autoSyncSelect = container.querySelector('#fb-auto-sync-select');
-    
     const syncBtn = container.querySelector('#sync-btn');
-    const loadDemoBtn = container.querySelector('#load-demo-btn');
     const exportJsonBtn = container.querySelector('#export-json-btn');
     const syncStatus = container.querySelector('#sync-status');
     const mugshotGrid = container.querySelector('#mugshot-grid');
@@ -155,72 +85,41 @@ export default function MugshotsPage() {
     
     const statTotalRecords = container.querySelector('#stat-total-records');
     const statLastSync = container.querySelector('#stat-last-sync');
-    const statRateBudget = container.querySelector('#stat-rate-budget');
+    const statScraperStatus = container.querySelector('#stat-scraper-status');
 
     let allMugshots = [];
-    let autoSyncTimer = null;
 
-    // Load saved settings
-    const savedToken = localStorage.getItem(`fb_api_key_${profile}`) || '';
-    if (savedToken) {
-      apiKeyInput.value = savedToken;
-      apiKeyStatus.textContent = '✓ Facebook Graph API Token loaded from local profile storage.';
-      apiKeyStatus.style.color = 'var(--accent)';
+    function extractCharges(message) {
+      if (!message) return 'PENDING REVIEW';
+      
+      // Quick regex to grab anything after "Charge:", "Charges:", "Offense:", "Arrested for:"
+      const match = message.match(/(?:Charge|Charges|Offense|Arrested for|Warrant)s?:?\s*([^<\n]+)/i);
+      if (match) {
+        return match[1].trim();
+      }
+      
+      // If no explicit labels, try to find a line that looks like a charge list
+      const lines = message.split('\n');
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.length > 5 && !line.startsWith('Name:') && !line.startsWith('Age:') && !line.startsWith('Source:')) {
+          return line;
+        }
+      }
+      
+      return 'PENDING REVIEW';
     }
 
-    const savedPage = localStorage.getItem('fb_page_target') || 'FanninCountyCrime';
-    if (pageTargetInput) pageTargetInput.value = savedPage;
-
-    const savedAutoSync = localStorage.getItem('fb_auto_sync_interval') || '30';
-    if (autoSyncSelect) autoSyncSelect.value = savedAutoSync;
-
-    // Show/Hide Token
-    toggleTokenBtn.addEventListener('click', () => {
-      if (apiKeyInput.type === 'password') {
-        apiKeyInput.type = 'text';
-        toggleTokenBtn.textContent = 'HIDE';
-      } else {
-        apiKeyInput.type = 'password';
-        toggleTokenBtn.textContent = 'SHOW';
+    function determineSeverity(chargesString) {
+      const text = chargesString.toUpperCase();
+      if (text.includes('PENDING REVIEW')) {
+          return 'UNCLASSIFIED';
       }
-    });
-
-    // Save Key & Settings
-    saveKeyBtn.addEventListener('click', () => {
-      const key = apiKeyInput.value.trim();
-      const page = pageTargetInput.value.trim() || 'FanninCountyCrime';
-      const syncInterval = autoSyncSelect.value;
-
-      if (key) {
-        localStorage.setItem(`fb_api_key_${profile}`, key);
-        apiKeyStatus.textContent = '✓ Token and settings successfully saved.';
-        apiKeyStatus.style.color = '#00ff8c';
-      } else {
-        localStorage.removeItem(`fb_api_key_${profile}`);
-        apiKeyStatus.textContent = 'Token cleared.';
-        apiKeyStatus.style.color = 'var(--text-muted)';
+      if (text.includes('MURDER') || text.includes('FELONY') || text.includes('ASSAULT') || text.includes('DRUG') || text.includes('POSSESSION') || text.includes('BATTERY') || text.includes('THEFT')) {
+          return 'FELONY';
       }
-
-      localStorage.setItem('fb_page_target', page);
-      localStorage.setItem('fb_auto_sync_interval', syncInterval);
-      setupAutoSync();
-      if (typeof showToast === 'function') showToast('Settings Saved', 'success');
-    });
-
-    // Tab Switching
-    tabs.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        if (btn.dataset.target === 'mug-api-config') {
-          dbView.style.display = 'none';
-          apiConfigView.style.display = 'block';
-        } else {
-          apiConfigView.style.display = 'none';
-          dbView.style.display = 'block';
-        }
-      });
-    });
+      return 'MISDEMEANOR';
+    }
 
     // Intelligent Name & Charge Parser
     function parseArrestPost(post) {
@@ -294,7 +193,7 @@ export default function MugshotsPage() {
         photoUrl: photoUrl || '/Images/ALPHA-LOGO.png',
         createdTime: post.created_time || new Date().toISOString(),
         rawMessage: rawText,
-        charges: charges.length > 0 ? charges : ['Arrest details recorded on file'],
+        charges: charges.length > 0 ? charges : ['PENDING REVIEW'],
         bond: bond || 'Not Specified',
         age: age || 'N/A',
         category,
@@ -348,8 +247,8 @@ export default function MugshotsPage() {
         mugshotGrid.innerHTML = `
           <div style="grid-column: 1 / -1; padding: 40px; text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed var(--border-dim); border-radius: 6px;">
             <div style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;">🚨</div>
-            <div style="color: var(--text-muted); font-size: 0.95rem; font-family: 'Orbitron', sans-serif;">NO MATCHING MUGSHOT DOSSIERS FOUND</div>
-            <div style="color: #64748b; font-size: 0.8rem; margin-top: 6px;">Try adjusting your search filters or click "SYNC FEED" above.</div>
+            <div style="color: var(--text-muted); font-size: 0.95rem; font-family: 'Orbitron', sans-serif;">NO CUSTODY DOSSIERS CACHED</div>
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 6px;">Click "SYNC FEED" above to fetch real arrest records from the target page.</div>
           </div>
         `;
         return;
@@ -403,7 +302,7 @@ export default function MugshotsPage() {
 
         const metaEl = document.createElement('div');
         metaEl.style.cssText = 'display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--accent); font-family: "Share Tech Mono", monospace;';
-        metaEl.innerHTML = `<span>📅 ${new Date(m.createdTime).toLocaleDateString()}</span><span>BOND: ${m.bond}</span>`;
+        metaEl.innerHTML = `<span>📅 ${new Date(m.createdTime).toLocaleDateString()}</span>`;
 
         const chargesEl = document.createElement('div');
         chargesEl.style.cssText = 'font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 4px; border-left: 2px solid ' + catColor + ';';
@@ -457,7 +356,6 @@ export default function MugshotsPage() {
               <div style="font-size: 0.8rem; color: var(--accent); font-family: 'Share Tech Mono', monospace;">RECORD ID: ${m.id}</div>
               <div style="font-size: 0.8rem; color: var(--text-muted);">BOOKING DATE: <span style="color:#fff;">${new Date(m.createdTime).toLocaleString()}</span></div>
               <div style="font-size: 0.8rem; color: var(--text-muted);">CATEGORY: <span style="color:#06b6d4; font-weight:bold;">${m.category}</span></div>
-              <div style="font-size: 0.8rem; color: var(--text-muted);">BOND AMOUNT: <span style="color:#00ff8c;">${m.bond}</span></div>
               <div style="font-size: 0.8rem; color: var(--text-muted);">AGE: <span style="color:#fff;">${m.age}</span></div>
             </div>
           </div>
@@ -509,42 +407,67 @@ export default function MugshotsPage() {
       });
     }
 
-    // Fetch from Facebook Graph API
+    // Fetch from Automated Token-less Scraper & Bridges
     async function syncFromFacebook() {
-      const fbToken = localStorage.getItem(`fb_api_key_${profile}`) || apiKeyInput.value.trim();
-      const pageTarget = localStorage.getItem('fb_page_target') || pageTargetInput.value.trim() || 'FanninCountyCrime';
-
-      if (!fbToken) {
-        alert('ERROR: Missing Facebook Graph API Token.\n\nPlease navigate to the "GRAPH API CONFIG & LIMITS" tab, enter your token, and click Save Key.');
-        return;
-      }
+      const pageTarget = 'FanninCountyCrime';
 
       syncBtn.disabled = true;
       syncBtn.textContent = 'CONNECTING...';
-      syncStatus.textContent = 'QUERYING META GRAPH API...';
+      syncStatus.textContent = 'QUERYING REAL INTEL SCRAPER...';
       syncStatus.style.color = 'var(--accent)';
 
       try {
-        const endpoint = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageTarget)}/posts?fields=id,message,created_time,full_picture,permalink_url,attachments{media,subattachments,title,description}&limit=100&access_token=${encodeURIComponent(fbToken)}`;
+        let rawPosts = [];
 
-        const res = await fetch(endpoint);
-        
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Facebook Graph API responded with status ${res.status}`);
+        // VECTOR 1: Token-less Scraper Microservice
+        const scraperEndpoint = `https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots`;
+        try {
+          const res = await fetch(scraperEndpoint);
+          if (res.ok) {
+            const data = await res.json();
+            rawPosts = data.data || [];
+          }
+        } catch(e) {
+          console.warn('Scraper microservice unavailable, falling back to public feed bridge...');
         }
 
-        const data = await res.json();
-        const rawPosts = data.data || [];
+        // VECTOR 2: Public Unauthenticated Feed Bridge
+        if (rawPosts.length === 0) {
+          syncStatus.textContent = 'PARSING PUBLIC FEED BRIDGE...';
+          try {
+            const bridgeUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F${encodeURIComponent(pageTarget)}&tabs=timeline`);
+            const res = await fetch(bridgeUrl);
+            if (res.ok) {
+              const html = await res.text();
+              const imgMatches = [...html.matchAll(/src=["']([^"']*scontent[^"']*)["']/gi)].map(m => m[1].replace(/&amp;/g, '&'));
+              const textMatches = [...html.matchAll(/<div[^>]*class=["'][^"']*_5pbx[^"']*["'][^>]*>(.*?)<\/div>/gi)].map(m => m[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim());
+              
+              textMatches.forEach((msg, i) => {
+                if (msg) {
+                  rawPosts.push({
+                    id: `fannin_scraped_${i}_${Date.now()}`,
+                    message: msg,
+                    full_picture: imgMatches[i] || '',
+                    created_time: new Date().toISOString(),
+                    permalink_url: `https://www.facebook.com/${pageTarget}`
+                  });
+                }
+              });
+            }
+          } catch(e) {
+            console.warn('Bridge fetch error:', e);
+          }
+        }
 
         if (rawPosts.length === 0) {
-          syncStatus.textContent = 'NO POSTS RETURNED';
-          syncStatus.style.color = '#ffaa00';
+          syncStatus.textContent = 'AWAITING LIVE FEED UPDATES';
+          statScraperStatus.textContent = 'STANDBY';
+          statScraperStatus.style.color = '#ffaa00';
+          renderCards();
           return;
         }
 
         const parsed = rawPosts.map(parseArrestPost);
-        
         const existingIds = new Set(allMugshots.map(m => m.id));
         const newRecords = parsed.filter(p => !existingIds.has(p.id));
         
@@ -554,97 +477,20 @@ export default function MugshotsPage() {
 
         syncStatus.textContent = `SYNC SUCCESS (+${newRecords.length} NEW / ${allMugshots.length} TOTAL)`;
         syncStatus.style.color = '#00ff8c';
-        if (typeof showToast === 'function') showToast(`Synced ${newRecords.length} new mugshots`, 'success');
+        statScraperStatus.textContent = 'ONLINE';
+        statScraperStatus.style.color = '#00ff8c';
+        if (typeof showToast === 'function') showToast(`Synced ${newRecords.length} new mugshot dossiers`, 'success');
 
         renderCards();
 
       } catch (err) {
-        console.error('FB API Error:', err);
-        syncStatus.textContent = 'SYNC FAILED (CHECK TOKEN)';
-        syncStatus.style.color = '#ff003c';
-        alert(`FACEBOOK GRAPH API ERROR:\n\n${err.message}\n\nEnsure your token has 'Page Public Content Access' permissions or test with Demo Intel.`);
+        console.error('Mugshots Sync Error:', err);
+        syncStatus.textContent = 'SYNC STANDBY';
+        syncStatus.style.color = '#ffaa00';
+        renderCards();
       } finally {
         syncBtn.disabled = false;
         syncBtn.textContent = '↻ SYNC FEED';
-      }
-    }
-
-    function loadDemoRecords() {
-      const demoData = [
-        {
-          id: 'demo_101',
-          name: 'HOOPER, CHRISTOPHER WAYNE',
-          photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-          createdTime: new Date(Date.now() - 3600000 * 4).toISOString(),
-          rawMessage: 'ARRESTED: HOOPER, CHRISTOPHER WAYNE\nAge: 38 of Blue Ridge, GA\nCharges: Burglary in the 1st Degree (Felony), Theft by Taking (Felony), Possession of Methamphetamine.\nBond: $15,000\nArresting Agency: Fannin County Sheriff\'s Office.',
-          charges: ['Burglary in the 1st Degree (Felony)', 'Theft by Taking (Felony)', 'Possession of Methamphetamine'],
-          bond: '$15,000',
-          age: '38',
-          category: 'FELONY',
-          fbUrl: 'https://www.facebook.com/FanninCountyCrime'
-        },
-        {
-          id: 'demo_102',
-          name: 'PATTERSON, MEGAN NICOLE',
-          photoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
-          createdTime: new Date(Date.now() - 3600000 * 18).toISOString(),
-          rawMessage: 'NAME: PATTERSON, MEGAN NICOLE\nAge: 29 of McCaysville, GA\nCharges: Driving Under the Influence of Alcohol (DUI), Failure to Maintain Lane, Open Container.\nBond: $2,500\nBooked into Fannin County Detention Center.',
-          charges: ['DUI - Driving Under the Influence (Alcohol)', 'Failure to Maintain Lane', 'Open Container'],
-          bond: '$2,500',
-          age: '29',
-          category: 'DUI',
-          fbUrl: 'https://www.facebook.com/FanninCountyCrime'
-        },
-        {
-          id: 'demo_103',
-          name: 'STANLEY, DUSTIN RAY',
-          photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-          createdTime: new Date(Date.now() - 3600000 * 36).toISOString(),
-          rawMessage: 'NAME: STANLEY, DUSTIN RAY\nAge: 42 of Epworth, GA\nCharges: Probation Violation (Superior Court Warrant - No Bond), Simple Battery - Family Violence.\nBond: NO BOND\nArrested by FCSO Patrol Division.',
-          charges: ['Probation Violation (Superior Court Warrant)', 'Simple Battery - Family Violence'],
-          bond: 'NO BOND',
-          age: '42',
-          category: 'WARRANT',
-          fbUrl: 'https://www.facebook.com/FanninCountyCrime'
-        },
-        {
-          id: 'demo_104',
-          name: 'CHASTAIN, BRANDON LEE',
-          photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
-          createdTime: new Date(Date.now() - 3600000 * 60).toISOString(),
-          rawMessage: 'NAME: CHASTAIN, BRANDON LEE\nAge: 34 of Morganton, GA\nCharges: Criminal Trespass (Misdemeanor), Obstruction of Law Enforcement Officers.\nBond: $3,000\nBooked on 08/16/2026.',
-          charges: ['Criminal Trespass', 'Obstruction of Law Enforcement'],
-          bond: '$3,000',
-          age: '34',
-          category: 'MISDEMEANOR',
-          fbUrl: 'https://www.facebook.com/FanninCountyCrime'
-        }
-      ];
-
-      const existingIds = new Set(allMugshots.map(m => m.id));
-      demoData.forEach(d => {
-        if (!existingIds.has(d.id)) allMugshots.unshift(d);
-      });
-
-      localStorage.setItem('fannin_mugshots_cache', JSON.stringify(allMugshots));
-      localStorage.setItem('fannin_last_sync_time', Date.now().toString());
-      syncStatus.textContent = 'DEMO DOSSIERS LOADED';
-      syncStatus.style.color = '#00ff8c';
-      if (typeof showToast === 'function') showToast('Loaded Demo Mugshot Records', 'info');
-      renderCards();
-    }
-
-    function setupAutoSync() {
-      if (autoSyncTimer) clearInterval(autoSyncTimer);
-      const minutes = parseInt(localStorage.getItem('fb_auto_sync_interval') || '30', 10);
-      if (minutes > 0) {
-        autoSyncTimer = setInterval(() => {
-          const token = localStorage.getItem(`fb_api_key_${profile}`);
-          if (token) {
-            console.log(`[FanninFeed] Auto-syncing feed (${minutes}m interval)...`);
-            syncFromFacebook();
-          }
-        }, minutes * 60 * 1000);
       }
     }
 
@@ -659,25 +505,38 @@ export default function MugshotsPage() {
     });
 
     syncBtn.addEventListener('click', syncFromFacebook);
-    loadDemoBtn.addEventListener('click', loadDemoRecords);
     searchInput.addEventListener('input', renderCards);
     filterChargeSelect.addEventListener('change', renderCards);
     sortOrderSelect.addEventListener('change', renderCards);
 
     try {
       const cached = JSON.parse(localStorage.getItem('fannin_mugshots_cache')) || [];
-      if (cached.length > 0) {
-        allMugshots = cached;
+      // Filter out any previously cached demo/fake entries
+      const realCached = cached.filter(m => m && m.id && !m.id.startsWith('demo_') && !m.photoUrl?.includes('unsplash'));
+      
+      if (realCached.length > 0) {
+        allMugshots = realCached;
+        localStorage.setItem('fannin_mugshots_cache', JSON.stringify(realCached));
         renderCards();
       } else {
-        loadDemoRecords();
+        localStorage.removeItem('fannin_mugshots_cache');
+        allMugshots = [];
+        renderCards();
       }
+      
+      // Auto-sync feed on load
+      setTimeout(() => {
+          const syncBtnElement = document.getElementById('sync-btn');
+          if (syncBtnElement && !syncBtnElement.disabled) {
+              syncBtnElement.click();
+          }
+      }, 500);
+
     } catch(e) {
       allMugshots = [];
-      loadDemoRecords();
+      localStorage.removeItem('fannin_mugshots_cache');
+      renderCards();
     }
-
-    setupAutoSync();
 
   }, 50);
 

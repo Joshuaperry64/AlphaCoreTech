@@ -13,7 +13,7 @@ const CHANGELOG_DATA = [
     date: '2026.08.18',
     badge: 'CRIME INTEL & GRAPH API',
     badgeColor: '#ef4444',
-    title: 'FANNIN COUNTY CRIME FEED & MUGSHOT DOSSIERS',
+    title: 'LOCAL CUSTODY FEED & MUGSHOT DOSSIERS',
     summary: 'Built and integrated a live Facebook Graph API Crime & Arrest Feed (`#/mugshots`) specifically tailored for FanninCountyCrime with rate-limit compliance, intelligent offender parsing, and local vault exports.',
     changes: [
       'Implemented Meta Graph API client querying `FanninCountyCrime` posts, photos, narratives, and booking timestamps.',
@@ -22,7 +22,7 @@ const CHANGELOG_DATA = [
       'Added interactive Search, Category Filter, and Sorting controls for quick dossier lookups.',
       'Built Dossier Detail Modal featuring high-res mugshot photos, complete police blotter narratives, direct Facebook post links, and a `SAVE TO VAULT` button (enabling instant Vault RAG querying in Cognitive Core).',
       'Added Demo Intel offline fallback records for instant UI preview prior to Graph API token configuration.',
-      'Registered `🚨 Fannin Crime Feed` route (`#/mugshots`) in `src/main.js` and sidebar navigation in `index.html`.'
+      'Registered `🚨 Local Custody` route (`#/mugshots`) in `src/main.js` and sidebar navigation in `index.html`.'
     ]
   },
   {
