@@ -67,6 +67,11 @@ async function renderRoute() {
   const sidebar = document.getElementById('sidebar');
   const mobileTopbar = document.getElementById('mobile-topbar');
 
+  // Trigger background sync to pull global settings from backend
+  if (currentProfile) {
+    syncFromServer();
+  }
+
   // UNAUTHENTICATED: Intro & PIN Pad attached straight to root
   if (!currentProfile) {
     if (location.hash && location.hash !== '#') {

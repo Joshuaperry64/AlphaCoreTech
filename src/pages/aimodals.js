@@ -24,6 +24,10 @@ function getModalSettings() {
   const defaults = {
     txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
+    txt2vidUrl: 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream',
+    img2vidUrl: 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream',
+    framepackUrl: 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run',
+    fanninCrimeUrl: 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
@@ -1516,7 +1520,8 @@ function buildTxt2Vid() {
         fps: fps
       });
       
-      const endpoint = 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream';
+      const settings = getModalSettings();
+      const endpoint = settings.txt2vidUrl;
       const res = await fetch(`${endpoint}?${params}`);
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1820,7 +1825,8 @@ function buildImg2Vid() {
         fps: parseInt(fps)
       };
 
-      const endpoint = 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream';
+      const settings = getModalSettings();
+      const endpoint = settings.img2vidUrl;
       const res = await fetch(endpoint, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
@@ -1991,7 +1997,8 @@ function buildFramepackContent() {
     </div>
   `;
 
-  const url = 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run';
+  const settings = getModalSettings();
+  const url = settings.framepackUrl;
 
   inner.querySelector('#fp-launch-btn').onclick = () => {
     const container = inner.querySelector('#fp-frame-container');

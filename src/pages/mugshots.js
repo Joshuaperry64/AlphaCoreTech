@@ -491,7 +491,14 @@ export default function MugshotsPage() {
         let rawPosts = [];
 
         // VECTOR 1: Token-less Scraper Microservice
-        const scraperEndpoint = `https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots`;
+        let scraperEndpoint = 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots';
+        try {
+          const customStr = localStorage.getItem('alphacore_modal_settings');
+          if (customStr) {
+            const custom = JSON.parse(customStr);
+            if (custom.fanninCrimeUrl) scraperEndpoint = custom.fanninCrimeUrl;
+          }
+        } catch(e) {}
         try {
           const res = await fetch(scraperEndpoint);
           if (res.ok) {

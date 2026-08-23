@@ -32,6 +32,10 @@ function buildAdminUI() {
   const defaultSettings = {
     txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
     img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
+    txt2vidUrl: 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream',
+    img2vidUrl: 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream',
+    framepackUrl: 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run',
+    fanninCrimeUrl: 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 20,
     stepsNormalTxt: 30,
@@ -181,6 +185,26 @@ function buildAdminUI() {
             <input class="aim-input" type="text" id="cfg-i2i-url" value="${settings.img2imgUrl}" />
           </div>
         </div>
+        <div class="aim-row" style="margin-top: 12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-t2v-url">TXT2VID ROUTING ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-t2v-url" value="${settings.txt2vidUrl}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-i2v-url">IMG2VID ROUTING ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-i2v-url" value="${settings.img2vidUrl}" />
+          </div>
+        </div>
+        <div class="aim-row" style="margin-top: 12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-framepack-url">FRAMEPACK STUDIO ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-framepack-url" value="${settings.framepackUrl}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-fannin-url">MUGSHOT SCRAPER ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-fannin-url" value="${settings.fanninCrimeUrl}" />
+          </div>
+        </div>
         <div class="aim-field" style="margin-top: 12px;">
           <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
           <textarea class="aim-textarea" id="cfg-neg" rows="2">${settings.negativePrompt}</textarea>
@@ -249,6 +273,10 @@ function buildAdminUI() {
   
   const cfgT2iUrl = root.querySelector('#cfg-t2i-url');
   const cfgI2iUrl = root.querySelector('#cfg-i2i-url');
+  const cfgT2vUrl = root.querySelector('#cfg-t2v-url');
+  const cfgI2vUrl = root.querySelector('#cfg-i2v-url');
+  const cfgFramepackUrl = root.querySelector('#cfg-framepack-url');
+  const cfgFanninUrl = root.querySelector('#cfg-fannin-url');
   const cfgNeg = root.querySelector('#cfg-neg');
   const cfgT2iFast = root.querySelector('#cfg-t2i-fast');
   const cfgT2iFocused = root.querySelector('#cfg-t2i-focused');
@@ -411,6 +439,10 @@ function buildAdminUI() {
     e.preventDefault();
     const t2i = cfgT2iUrl.value.trim();
     const i2i = cfgI2iUrl.value.trim();
+    const t2v = cfgT2vUrl.value.trim();
+    const i2v = cfgI2vUrl.value.trim();
+    const fp = cfgFramepackUrl.value.trim();
+    const fannin = cfgFanninUrl.value.trim();
     const neg = cfgNeg.value.trim();
 
     if (!t2i || !i2i) {
@@ -421,6 +453,10 @@ function buildAdminUI() {
     const newSettings = {
       txt2imgUrl: t2i,
       img2imgUrl: i2i,
+      txt2vidUrl: t2v,
+      img2vidUrl: i2v,
+      framepackUrl: fp,
+      fanninCrimeUrl: fannin,
       negativePrompt: neg,
       guidanceScale: settings.guidanceScale || '7.0',
       stepsFastTxt: parseInt(cfgT2iFast.value) || 2,
