@@ -22,12 +22,12 @@ const LORA_OPTIONS = `
 
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
-    txt2vidUrl: 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream',
-    img2vidUrl: 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream',
-    framepackUrl: 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run',
-    fanninCrimeUrl: 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--txt2img-inference-web.modal.run/',
+    img2imgUrl: 'https://alphacoreprogramming-ai--img2img-unifiedmodel-web.modal.run/',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--txt2vid-model-web.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--img2vid-model-web.modal.run/stream',
+    framepackUrl: 'https://alphacoreprogramming-ai--framepack-studio-framepackcontainer-ui.modal.run',
+    fanninCrimeUrl: 'https://alphacoreprogramming-ai--fannin-crime-fastapi-app.modal.run/api/mugshots',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
