@@ -491,7 +491,7 @@ export default function MugshotsPage() {
         let rawPosts = [];
 
         // VECTOR 1: Token-less Scraper Microservice
-        let scraperEndpoint = 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots';
+        let scraperEndpoint = 'https://alphacoreprogramming-ai--fannin-crime-fastapi-app.modal.run/api/mugshots';
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');
           if (customStr) {
@@ -500,52 +500,81 @@ export default function MugshotsPage() {
           }
         } catch(e) {}
         try {
-          const res = await fetch(scraperEndpoint);
+          syncStatus.textContent = 'QUERYING ENDPOINT...';
+          const res = await fetch(scraperEndpoint, { signal: AbortSignal.timeout(60000) });
           if (res.ok) {
             const data = await res.json();
-            rawPosts = data.data || [];
+            rawPosts = Array.isArray(data) ? data : (data.data || []);
+            const src = data.source || 'endpoint';
+            syncStatus.textContent = `FEED RECEIVED [${src.toUpperCase()}] — ${rawPosts.length} RECORDS`;
+          } else {
+            syncStatus.textContent = `ENDPOINT ERROR: HTTP ${res.status}`;
+            statScraperStatus.textContent = 'DEGRADED';
+            statScraperStatus.style.color = '#ff003c';
           }
         } catch(e) {
-          console.warn('Scraper microservice unavailable, falling back to public feed bridge...');
-        }
-
-        // VECTOR 2: Public Unauthenticated Feed Bridge
-        if (rawPosts.length === 0) {
-          syncStatus.textContent = 'PARSING PUBLIC FEED BRIDGE...';
-          try {
-            const bridgeUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(`https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F${encodeURIComponent(pageTarget)}&tabs=timeline`);
-            const res = await fetch(bridgeUrl);
-            if (res.ok) {
-              const html = await res.text();
-              const imgMatches = [...html.matchAll(/src=["']([^"']*scontent[^"']*)["']/gi)].map(m => m[1].replace(/&amp;/g, '&'));
-              const textMatches = [...html.matchAll(/<div[^>]*class=["'][^"']*_5pbx[^"']*["'][^>]*>(.*?)<\/div>/gi)].map(m => m[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim());
-              
-              textMatches.forEach((msg, i) => {
-                if (msg) {
-                  rawPosts.push({
-                    id: `fannin_scraped_${i}_${Date.now()}`,
-                    message: msg,
-                    full_picture: imgMatches[i] || '',
-                    created_time: new Date().toISOString(),
-                    permalink_url: `https://www.facebook.com/${pageTarget}`
-                  });
-                }
-              });
-            }
-          } catch(e) {
-            console.warn('Bridge fetch error:', e);
-          }
-        }
-
-        if (rawPosts.length === 0) {
-          syncStatus.textContent = 'AWAITING LIVE FEED UPDATES';
-          statScraperStatus.textContent = 'STANDBY';
+          console.warn('Scraper microservice unavailable:', e.message);
+          syncStatus.textContent = 'SCRAPER UNREACHABLE — FALLBACK MODE';
+          statScraperStatus.textContent = 'DEGRADED';
           statScraperStatus.style.color = '#ffaa00';
-          renderCards();
-          return;
         }
 
-        let parsed = rawPosts.map(parseArrestPost);
+        // ── GAZETTE PROFILE AUGMENTATION ──
+        // For each post that came back with a gazette permalink but no charges,
+        // follow the individual profile link to extract structured charge data.
+        if (rawPosts.length > 0) {
+          syncStatus.textContent = `PARSING ${rawPosts.length} PROFILES...`;
+          const CONCURRENCY = 5;
+          const augmented = [...rawPosts];
+
+          for (let batch = 0; batch < augmented.length; batch += CONCURRENCY) {
+            const chunk = augmented.slice(batch, batch + CONCURRENCY);
+            await Promise.all(chunk.map(async (post, offset) => {
+              // Only hit gazette profile links, skip FB posts that already have charges
+              const link = post.permalink_url || '';
+              const hasCharges = post.charges && post.charges.length > 0 && !post.charges.includes('PENDING REVIEW');
+              if (!hasCharges && link.includes('thegeorgiagazette.com')) {
+                try {
+                  const profileRes = await fetch(`/api/gazette-profile?url=${encodeURIComponent(link)}`, { signal: AbortSignal.timeout(12000) });
+                  if (profileRes.ok) {
+                    const pd = await profileRes.json();
+                    if (pd.charges && pd.charges.length > 0) {
+                      augmented[batch + offset].charges = pd.charges;
+                      augmented[batch + offset].name = pd.name || augmented[batch + offset].name;
+                      augmented[batch + offset].age = pd.age || augmented[batch + offset].age;
+                      augmented[batch + offset].bond = pd.bond || augmented[batch + offset].bond;
+                      augmented[batch + offset].createdTime = pd.booking_date || augmented[batch + offset].createdTime;
+                    }
+                  }
+                } catch(e) {
+                  // profile fetch failed, move on silently
+                }
+              }
+            }));
+            syncStatus.textContent = `PROFILING... ${Math.min(batch + CONCURRENCY, augmented.length)} / ${augmented.length}`;
+          }
+          rawPosts = augmented;
+        }
+
+        let parsed = rawPosts.map(post => {
+          // If the backend already returned structured fields, use them directly
+          if (post.charges && Array.isArray(post.charges) && post.charges.length > 0) {
+            return {
+              id: post.id || `rec_${Date.now()}_${Math.random().toString(36).substr(2,6)}`,
+              name: (post.name || 'UNKNOWN SUBJECT').toUpperCase(),
+              photoUrl: post.full_picture || post.photoUrl || '/Images/ALPHA-LOGO.png',
+              createdTime: post.created_time || post.createdTime || new Date().toISOString(),
+              rawMessage: post.message || post.rawMessage || '',
+              charges: post.charges,
+              bond: post.bond || 'Not Specified',
+              age: post.age || 'N/A',
+              category: determineSeverity(post.charges.join(' ')),
+              fbUrl: post.permalink_url || 'https://www.facebook.com/FanninCountyCrime'
+            };
+          }
+          // Fall back to intelligent parser for raw FB-style posts
+          return parseArrestPost(post);
+        });
 
         // --- GAZETTE AUGMENTATION PROTOCOL ---
         syncStatus.textContent = 'CROSS-REFERENCING THE GEORGIA GAZETTE...';

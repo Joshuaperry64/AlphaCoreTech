@@ -296,6 +296,76 @@ app.post('/api/vault', authenticate, async (req, res) => {
   }
 });
 
+// Gazette Profile Proxy — fetches a Georgia Gazette inmate page server-side to bypass CORS
+app.get('/api/gazette-profile', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('thegeorgiagazette.com')) {
+    return res.status(400).json({ error: 'Invalid url parameter' });
+  }
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 12000
+    });
+    if (!r.ok) return res.status(r.status).json({ error: `Upstream ${r.status}` });
+    const html = await r.text();
+
+    // Basic HTML → text strip
+    const stripTags = s => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const clean = stripTags(html);
+
+    const charges = [];
+    const name_match = clean.match(/Name[:\s]+([A-Z][a-zA-Z\s,]+?)(?=\s+Age|\s+Booking|\s+Arrest|$)/);
+    const age_match = clean.match(/Age[:\s]+(\d+)/i);
+    const bond_match = clean.match(/Bond[:\s]+([\$0-9,\.]+(?:\s+[a-zA-Z]+)*)/i);
+    const date_match = clean.match(/(?:Booking|Arrest)\s+Date[:\s]+([A-Za-z0-9\s\/\-,]+?)(?=\s+[A-Z][a-z])/i);
+
+    // Extract "Reason(s) For Booking" block
+    const booking_match = html.match(/Reason(?:s)?\s*For\s*Booking[^<]*<\/[^>]+>\s*(.*?)(?=<\/(?:div|section|article)|<h\d)/is);
+    if (booking_match) {
+      const raw = stripTags(booking_match[1]);
+      raw.split(/[\n;,]+/).forEach(c => {
+        const t = c.trim();
+        if (t.length > 4) charges.push(t);
+      });
+    }
+
+    // Fallback: keyword scan
+    if (charges.length === 0) {
+      const chargeRx = /(felony|misdemeanor|assault|battery|theft|dui|drug|possession|warrant|burglary|trafficking|probation|murder|robbery|fraud|trespass|disorderly|resist|flee)/gi;
+      const lines = clean.split(/[.!?]/);
+      lines.forEach(line => {
+        if (chargeRx.test(line) && line.length < 200) charges.push(line.trim());
+      });
+    }
+
+    res.json({
+      name: name_match ? name_match[1].trim() : '',
+      age: age_match ? age_match[1] : '',
+      bond: bond_match ? bond_match[1].trim() : '',
+      booking_date: date_match ? date_match[1].trim() : '',
+      charges: [...new Set(charges)].slice(0, 10)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Gazette listing proxy (legacy route)
+app.get('/api/gazette/:name', async (req, res) => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const searchUrl = `https://thegeorgiagazette.com/?s=${encodeURIComponent(req.params.name)}`;
+    const r = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const html = await r.text();
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve frontend build if exists
 app.use(express.static(path.join(_dirname, 'dist')));
 
