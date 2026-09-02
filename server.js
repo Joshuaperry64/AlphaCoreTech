@@ -296,6 +296,9 @@ app.post('/api/vault', authenticate, async (req, res) => {
   }
 });
 
+// Health check for Render uptime monitoring
+app.get('/api/ping', (req, res) => res.json({ status: 'ONLINE', ts: Date.now() }));
+
 // Gazette Profile Proxy — fetches a Georgia Gazette inmate page server-side to bypass CORS
 app.get('/api/gazette-profile', async (req, res) => {
   const { url } = req.query;
@@ -370,8 +373,9 @@ app.get('/api/gazette/:name', async (req, res) => {
 app.use(express.static(path.join(_dirname, 'dist')));
 
 if (!process.env.NETLIFY) {
-  app.listen(3000, () => {
-    console.log('[SYS] AlphaCore Database Server running on port 3000');
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`[SYS] AlphaCore Database Server running on port ${PORT}`);
   });
 }
 
