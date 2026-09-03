@@ -97,6 +97,7 @@ web_image = modal.Image.debian_slim(python_version="3.12").uv_pip_install(
 from shared_app import app
 
 
+image = image.add_local_python_source("shared_app")
 @app.cls(gpu="l40s", image=image, volumes={checkpoints_dir: model_cache})
 class MusicGenerator:
     @modal.enter()

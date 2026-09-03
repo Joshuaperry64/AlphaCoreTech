@@ -56,6 +56,7 @@ outputs_volume = modal.Volume.from_name("outputs", create_if_missing=True)
 
 MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"
 
+image = image.add_local_python_source("shared_app")
 @app.cls(
     gpu="L40S",
     timeout=60 * MINUTES,

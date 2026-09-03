@@ -122,6 +122,7 @@ class CleanGradioPathMiddleware:
 
 
 # --- Container Class Lifecycle Layout ---
+image = image.add_local_python_source("shared_app")
 @app.cls(
     image=image,
     gpu="H100",

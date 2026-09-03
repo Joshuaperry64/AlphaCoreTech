@@ -77,7 +77,7 @@ async def api_list_assets(subfolder: str = "checkpoints"):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 4. Expose the FastAPI app to Modal
-router_image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pydantic", "requests")
+router_image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pydantic", "requests").add_local_python_source("shared_app")
 
 @app.function(image=router_image)
 @modal.asgi_app()

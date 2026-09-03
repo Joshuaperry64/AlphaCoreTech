@@ -54,6 +54,7 @@ MODEL_480P = "fdk6566/wan2.2_14b_i2v_480p_lightning_nsfw_diffusers"
 # Assuming standard HuggingFace naming convention for 720p if requested
 MODEL_720P = "fdk6566/wan2.2_14b_i2v_720p_lightning_nsfw_diffusers"
 
+image = image.add_local_python_source("shared_app")
 @app.cls(
     gpu="H100",  # 14B model requires H100
     timeout=60 * MINUTES,

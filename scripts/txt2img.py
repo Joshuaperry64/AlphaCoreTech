@@ -49,6 +49,7 @@ with image.imports():
 cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 
 
+image = image.add_local_python_source("shared_app")
 @app.cls(
     image=image,
     gpu="H100",
