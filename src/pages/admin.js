@@ -30,12 +30,13 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
-    txt2vidUrl: 'https://ai-alphacore-tech--txt2vid-model-web.modal.run/stream',
-    img2vidUrl: 'https://ai-alphacore-tech--img2vid-model-web.modal.run/stream',
-    framepackUrl: 'https://ai-alphacore-tech--framepack-studio-framepackcontainer-ui.modal.run',
-    fanninCrimeUrl: 'https://ai-alphacore-tech--fannin-crime-fastapi-app.modal.run/api/mugshots',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-inference-b0c6aa.modal.run/',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-unifiedmo-930940.modal.run/',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vidmo-f29425.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vidmo-a76a19.modal.run/stream',
+    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-288c1b.modal.run',
+    fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots',
+    music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-app.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 20,
     stepsNormalTxt: 30,

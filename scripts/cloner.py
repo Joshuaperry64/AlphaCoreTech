@@ -21,10 +21,11 @@ image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git", "ffmpeg", "wget", "build-essential")
     .run_commands("git clone https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI.git /rvc")
+    .run_commands("cd /rvc && git checkout 9f2f0559e6932c10c48642d404e7d2e771d9db43")
     .workdir("/rvc")
     .run_commands("python -m pip install 'pip<24.1'")
     .pip_install("torch==2.1.2", "torchaudio==2.1.2", "torchvision==0.16.2", index_url="https://download.pytorch.org/whl/cu121")
-    .run_commands("pip install -r requirements.txt")
+    .run_commands("cd /rvc && pip install -r requirements.txt")
     .pip_install("gitpython")
     .run_commands(
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt -P /rvc/assets/hubert/",

@@ -492,14 +492,23 @@ export default function MugshotsPage() {
         let rawPosts = [];
 
         // VECTOR 1: Token-less Scraper Microservice
-        let scraperEndpoint = 'https://alphacoreprogramming-ai--fannin-crime-fastapi-app.modal.run/api/mugshots';
+        let scraperEndpoint;
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');
           if (customStr) {
             const custom = JSON.parse(customStr);
-            if (custom.fanninCrimeUrl) scraperEndpoint = custom.fanninCrimeUrl;
+            if (custom.fanninCrimeUrl) {
+                scraperEndpoint = custom.fanninCrimeUrl;
+            } else {
+                scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
+            }
+          } else {
+            scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
           }
-        } catch(e) {}
+        } catch(e) {
+          scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
+        }
+
         try {
           syncStatus.textContent = 'QUERYING ENDPOINT...';
           const res = await fetch(scraperEndpoint, { signal: AbortSignal.timeout(60000) });
