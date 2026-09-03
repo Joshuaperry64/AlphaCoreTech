@@ -1,5 +1,11 @@
 /**
- * AI Modals Page — txt2img & img2img via Modal.run endpoints
+ * AI Modals Page — t
+  if (window._cn_global_img && window._cn_global_type && document.querySelector('#t2i-cn-container').style.display !== 'none') {
+    payload.control_image_b64 = window._cn_global_img;
+    payload.control_type = window._cn_global_type;
+    payload.controlnet_conditioning_scale = 1.0;
+  }
+xt2img & img2img via Modal.run endpoints
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
@@ -24,6 +30,7 @@ function getModalSettings() {
   const defaults = {
     txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run/',
     img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run/',
+    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run/',
     txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.modal.run/stream',
     img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.modal.run/stream',
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.modal.run',
@@ -348,6 +355,15 @@ function buildTxt2Img() {
       return '';
     })()}
 
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">SPEED MODE</label>
@@ -379,6 +395,15 @@ function buildTxt2Img() {
         </div>
       </label>
     </div>
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2i-batch">IMAGE COUNT ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 5]</span>'}</label>
@@ -880,6 +905,15 @@ function buildImg2Img() {
       </div>
     </div>
 
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">PROCESSING MODE</label>
@@ -905,6 +939,15 @@ function buildImg2Img() {
           <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
         </div>
       </label>
+    </div>
+
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
     </div>
 
     <div class="aim-row">
@@ -1320,7 +1363,10 @@ function buildMainUI() {
       <button id="aim-doc-btn" style="background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#10b981; padding:10px 15px; font-family:var(--font-hud); cursor:pointer; font-size:0.85rem; text-transform:uppercase; border-radius:2px; margin-left:auto; margin-right:5px; transition:0.2s;">
         <span style="margin-right:6px;">📖</span> DOCS
       </button>
-      <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
+              <button class="aim-tab" data-tab="controlnet" id="aim-tab-cnet" style="color: #60a5fa; border-color: #60a5fa;">
+          <span class="aim-tab-icon">?</span> CN FORGE
+        </button>
+        <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
         <span class="aim-tab-icon">🎬</span> FRAMEPACK
       </button>
     </div>
@@ -1345,6 +1391,8 @@ function buildMainUI() {
         currentPanel = buildImg2Img();
       } else if (tab.dataset.tab === 'txt2vid') {
         currentPanel = buildTxt2Vid();
+      } else if (tab.dataset.tab === 'controlnet') {
+        currentPanel = buildControlNetForge();
       } else if (tab.dataset.tab === 'img2vid') {
         currentPanel = buildImg2Vid();
       } else {
@@ -1386,6 +1434,15 @@ function buildTxt2Vid() {
       <textarea class="aim-textarea" id="t2v-prompt" rows="3" placeholder="Describe the video you want to generate (e.g., A cinematic video of a serene waterfall...)"></textarea>
     </div>
     
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2v-speed">SPEED MODE</label>
@@ -1631,6 +1688,15 @@ function buildImg2Vid() {
       <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
     </div>
 
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field" style="width: 100%;">
         <label class="aim-label">PRIMARY STARTING IMAGE</label>
@@ -1652,6 +1718,15 @@ function buildImg2Vid() {
       <textarea class="aim-textarea" id="i2v-prompt" rows="3" placeholder="Describe the motion/video you want to generate from the image..."></textarea>
     </div>
     
+
+    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
+        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
+      </div>
+      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
+    </div>
+
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="i2v-speed">SPEED MODE</label>

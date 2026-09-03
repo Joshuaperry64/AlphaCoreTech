@@ -18,6 +18,7 @@ import img2vid
 import framepack
 import music
 import web_loader
+import preprocessors
 
 # 3. Create the Monolithic API Router
 web_app = FastAPI(title="AlphaCore AIO Backend")

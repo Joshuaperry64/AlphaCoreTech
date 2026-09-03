@@ -119,6 +119,9 @@ class Txt2Img:
     def run(
         self, 
         prompt: str, 
+        control_image_b64: str = "", 
+        control_type: str = "none", 
+        controlnet_conditioning_scale: float = 1.0, 
         JuggernautXL: int = 0,          
         CyberRealisticXL: int = 0,      
         EpicRealismXL: int = 0,
@@ -156,6 +159,46 @@ class Txt2Img:
             
         self._load_model(model_file)
 
+        run_pipe = self.pipe
+        controlnet_image_obj = None
+        if control_type and control_type.lower() != "none" and control_image_b64:
+            if not hasattr(self, "controlnets"):
+                self.controlnets = {}
+            ctype = control_type.lower()
+            if ctype not in self.controlnets:
+                from diffusers import ControlNetModel
+                import torch
+                print(f"Loading ControlNet: {ctype}...")
+                if ctype == "canny":
+                    model_id = "diffusers/controlnet-canny-sdxl-1.0"
+                elif ctype == "depth":
+                    model_id = "diffusers/controlnet-depth-sdxl-1.0"
+                elif ctype == "openpose":
+                    model_id = "thibaud/controlnet-openpose-sdxl-1.0"
+                else:
+                    raise ValueError(f"Unknown controlnet type {ctype}")
+                
+                self.controlnets[ctype] = ControlNetModel.from_pretrained(
+                    model_id, 
+                    torch_dtype=torch.bfloat16,
+                    cache_dir="/hf-hub-cache"
+                ).to("cuda")
+                
+            cnet = self.controlnets[ctype]
+            
+            import base64
+            from PIL import Image
+            import io
+            
+            bdata = control_image_b64.split(",")[1] if "," in control_image_b64 else control_image_b64
+            controlnet_image_obj = Image.open(io.BytesIO(base64.b64decode(bdata))).convert("RGB")
+            
+            from diffusers import StableDiffusionXLControlNetPipeline
+            components = {k: v for k, v in self.pipe.components.items() if k != "controlnet"}
+            components["controlnet"] = cnet
+            run_pipe = StableDiffusionXLControlNetPipeline(**components)
+
+
         if not guidance_scale:
             guidance_scale = "7.0"
         g_scale_float = float(guidance_scale)
@@ -170,35 +213,35 @@ class Txt2Img:
         chosen_sampler = f"{sampler} {scheduler}".lower()
 
         if "euler a" in chosen_sampler:
-            self.pipe.scheduler = diffusers.EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.EulerAncestralDiscreteScheduler.from_config(run_pipe.scheduler.config)
         # Note: diffusers has a known bug with solver_order=3 and sde-dpmsolver++ (UnboundLocalError on x_t).
         # We catch 3M requests and safely route them through the stable 2nd-order SDE mathematics instead.
         elif "3m" in chosen_sampler and "sde" in chosen_sampler and "karras" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
         elif "3m" in chosen_sampler and "sde" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, algorithm_type="sde-dpmsolver++")
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, algorithm_type="sde-dpmsolver++")
         elif "2m" in chosen_sampler and "sde" in chosen_sampler and "karras" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
         elif "dpm++ 2m karras" in chosen_sampler or "dpm++_2m_karras" in chosen_sampler or ("2m" in chosen_sampler and "karras" in chosen_sampler):
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, use_karras_sigmas=True)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, use_karras_sigmas=True)
         elif "dpm++ sde karras" in chosen_sampler or "dpm++_sde_karras" in chosen_sampler or ("sde" in chosen_sampler and "karras" in chosen_sampler):
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, algorithm_type="sde-dpmsolver++", use_karras_sigmas=True)
         elif "dpm++ 2m" in chosen_sampler or "dpm++_2m" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config)
         elif "dpm++ sde" in chosen_sampler or "dpm++_sde" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config, algorithm_type="sde-dpmsolver++")
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config, algorithm_type="sde-dpmsolver++")
         elif "ddim" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DDIMScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.DDIMScheduler.from_config(run_pipe.scheduler.config)
         elif "lms" in chosen_sampler:
-            self.pipe.scheduler = diffusers.LMSDiscreteScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.LMSDiscreteScheduler.from_config(run_pipe.scheduler.config)
         elif "heun" in chosen_sampler:
-            self.pipe.scheduler = diffusers.HeunDiscreteScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.HeunDiscreteScheduler.from_config(run_pipe.scheduler.config)
         elif "unipc" in chosen_sampler:
-            self.pipe.scheduler = diffusers.UniPCMultistepScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.UniPCMultistepScheduler.from_config(run_pipe.scheduler.config)
         elif "dpm" in chosen_sampler:
-            self.pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(run_pipe.scheduler.config)
         else:
-            self.pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(self.pipe.scheduler.config)
+            run_pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(run_pipe.scheduler.config)
 
         # Handle Amateur UI toggle
         if amateur == 1:
@@ -223,7 +266,7 @@ class Txt2Img:
                     print(f"Loading LoRA: {lora_path}")
                     
                     # 3. Properly indented loading function
-                    self.pipe.load_lora_weights(
+                    run_pipe.load_lora_weights(
                         str(lora_path.parent), 
                         weight_name=lora_path.name, 
                         adapter_name=clean_name
@@ -233,7 +276,7 @@ class Txt2Img:
                     print(f"LoRA {lora_path} not found!")
                     
             if loaded_adapters:
-                self.pipe.set_adapters(loaded_adapters)
+                run_pipe.set_adapters(loaded_adapters)
 
 
         import queue
@@ -257,13 +300,19 @@ class Txt2Img:
                         q.put({"step": step_index, "max_steps": num_inference_steps, "images_completed": images_completed, "total_images": batch_size})
                         return callback_kwargs
 
-                    chunk_images = self.pipe(
+                    kwargs = {}
+                    if controlnet_image_obj:
+                        kwargs["image"] = controlnet_image_obj
+                        kwargs["controlnet_conditioning_scale"] = float(controlnet_conditioning_scale)
+                        
+                    chunk_images = run_pipe(
                         prompt=prompt,
                         negative_prompt=negative_prompt if negative_prompt else None,
                         num_images_per_prompt=current_batch_size,
                         num_inference_steps=num_inference_steps,
                         guidance_scale=g_scale_float,
-                        callback_on_step_end=chunk_callback
+                        callback_on_step_end=chunk_callback,
+                        **kwargs
                     ).images
                     
                     chunk_b64 = []
@@ -279,13 +328,13 @@ class Txt2Img:
 
                 torch.cuda.empty_cache()
                 if lora and lora.lower() != "none":
-                    try: self.pipe.unload_lora_weights()
+                    try: run_pipe.unload_lora_weights()
                     except: pass
                 
                 q.put({"image_b64": all_images_b64})
             except Exception as e:
                 if lora and lora.lower() != "none":
-                    try: self.pipe.unload_lora_weights()
+                    try: run_pipe.unload_lora_weights()
                     except: pass
                 q.put({"error": str(e)})
 
