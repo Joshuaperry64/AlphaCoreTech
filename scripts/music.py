@@ -99,7 +99,7 @@ from shared_app import app
 
 image = image.add_local_python_source("shared_app")
 @app.cls(gpu="l40s", image=image, volumes={checkpoints_dir: model_cache})
-class MusicGenerator:
+class MusicGeneratorBackend:
     @modal.enter()
     def init(self):
         from acestep.handler import AceStepHandler

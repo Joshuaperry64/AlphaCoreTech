@@ -56,7 +56,7 @@ image = image.add_local_python_source("shared_app")
     timeout=10 * MINUTES,
     volumes={CACHE_DIR: cache_volume},
 )
-class Inference:
+class Txt2ImgBackend:
     @modal.enter()
     def setup(self):
         self.current_model = None

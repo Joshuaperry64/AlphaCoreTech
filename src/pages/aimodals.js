@@ -22,10 +22,10 @@ const LORA_OPTIONS = `
 
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-inference-b0c6aa.modal.run/',
-    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-unifiedmo-930940.modal.run/',
-    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vidmo-f29425.modal.run/stream',
-    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vidmo-a76a19.modal.run/stream',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2imgba-a5af68.modal.run/',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2imgba-d83565.modal.run/',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vidba-13e3ce.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vidba-9e3d2d.modal.run/stream',
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-288c1b.modal.run',
     fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots',
     music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-app.modal.run',
