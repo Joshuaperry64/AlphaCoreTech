@@ -1360,14 +1360,14 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="img2vid" id="aim-tab-i2v">
         <span class="aim-tab-icon">🎞️</span> IMG2VID
       </button>
+      <button class="aim-tab" data-tab="controlnet" id="aim-tab-cnet">
+        <span class="aim-tab-icon">⚙</span> CN FORGE
+      </button>
+      <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
+        <span class="aim-tab-icon">🎬</span> FRAMEPACK
+      </button>
       <button id="aim-doc-btn" style="background:rgba(16, 185, 129, 0.1); border:1px solid #10b981; color:#10b981; padding:10px 15px; font-family:var(--font-hud); cursor:pointer; font-size:0.85rem; text-transform:uppercase; border-radius:2px; margin-left:auto; margin-right:5px; transition:0.2s;">
         <span style="margin-right:6px;">📖</span> DOCS
-      </button>
-              <button class="aim-tab" data-tab="controlnet" id="aim-tab-cnet" style="color: #60a5fa; border-color: #60a5fa;">
-          <span class="aim-tab-icon">?</span> CN FORGE
-        </button>
-        <button class="aim-tab" data-tab="framepack" id="aim-tab-fp">
-        <span class="aim-tab-icon">🎬</span> FRAMEPACK
       </button>
     </div>
 
