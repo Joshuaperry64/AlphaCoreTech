@@ -61,7 +61,7 @@ export default function MusicPage() {
       
       status.textContent = 'SYNTHESIZING AUDIO...';
       
-      const res = await fetch(\`\${endpoint}/api/music/generate\`, {
+      const res = await fetch(`${endpoint}/api/music/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,18 +74,18 @@ export default function MusicPage() {
       const data = await res.json();
       
       if (data.audio_b64) {
-        result.innerHTML = \`
+        result.innerHTML = `
           <div style="background: rgba(0,255,100,0.05); padding: 20px; border: 1px solid rgba(0,255,100,0.2); border-radius: 8px;">
             <p style="color: #fff; margin-bottom: 15px; font-size: 14px;">GENERATION COMPLETE</p>
             <audio controls style="width: 100%; outline: none;">
-              <source src="data:audio/wav;base64,\${data.audio_b64}" type="audio/wav">
+              <source src="data:audio/wav;base64,${data.audio_b64}" type="audio/wav">
               Your browser does not support the audio element.
             </audio>
-            <a href="data:audio/wav;base64,\${data.audio_b64}" download="alphacore_track_\${Date.now()}.wav" style="display: inline-block; margin-top: 15px; color: #4ade80; text-decoration: none; border: 1px solid #4ade80; padding: 5px 15px; border-radius: 4px; font-size: 12px; transition: all 0.2s;">
+            <a href="data:audio/wav;base64,${data.audio_b64}" download="alphacore_track_${Date.now()}.wav" style="display: inline-block; margin-top: 15px; color: #4ade80; text-decoration: none; border: 1px solid #4ade80; padding: 5px 15px; border-radius: 4px; font-size: 12px; transition: all 0.2s;">
               DOWNLOAD TRACK
             </a>
           </div>
-        \`;
+        `;
       } else {
         throw new Error(data.error || 'No audio returned');
       }

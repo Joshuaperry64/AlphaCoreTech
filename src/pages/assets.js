@@ -5,7 +5,7 @@ import { apiUrl } from '../components/api.js';
 export default function AssetManagerPage() {
   const container = createElement('div', { class: 'asset-manager-page slide-up' });
 
-  container.innerHTML = \`
+  container.innerHTML = `
     <div class="page-header">
       <h1 class="page-title">MODAL ASSET MANAGER</h1>
       <p class="page-subtitle">CIVITAI / HUGGINGFACE VOLUME DOWNLOADER</p>
@@ -103,7 +103,7 @@ export default function AssetManagerPage() {
         </div>
       </div>
     </div>
-  \`;
+  `;
 
   // UI Logic
   const sourceSel = container.querySelector('#am-source');
@@ -146,7 +146,7 @@ export default function AssetManagerPage() {
     statusEl.textContent = 'DOWNLOADING TO MODAL VOLUME (THIS MAY TAKE A WHILE)...';
 
     try {
-      const res = await fetch(\`\${getEndpoint()}/api/assets/download\`, {
+      const res = await fetch(`${getEndpoint()}/api/assets/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source, params })
@@ -155,13 +155,13 @@ export default function AssetManagerPage() {
       if (!res.ok) throw new Error(data.detail || 'Download failed');
       
       statusEl.style.color = '#4ade80';
-      statusEl.textContent = \`SUCCESS: SAVED \${data.filename}\`;
+      statusEl.textContent = `SUCCESS: SAVED ${data.filename}`;
       showToast('ASSET DOWNLOADED SUCCESSFULLY', 'success');
       loadFiles(); // refresh list
     } catch (err) {
       console.error(err);
       statusEl.style.color = '#ef4444';
-      statusEl.textContent = \`ERROR: \${err.message}\`;
+      statusEl.textContent = `ERROR: ${err.message}`;
       showToast('DOWNLOAD FAILED', 'error');
     } finally {
       dlBtn.disabled = false;
@@ -176,7 +176,7 @@ export default function AssetManagerPage() {
   const loadFiles = async () => {
     fileListEl.innerHTML = '<div style="color: #eab308; font-size: 12px; text-align: center; padding: 20px;">FETCHING...</div>';
     try {
-      const res = await fetch(\`\${getEndpoint()}/api/assets/list?subfolder=\${viewFolderSel.value}\`);
+      const res = await fetch(`${getEndpoint()}/api/assets/list?subfolder=${viewFolderSel.value}`);
       if (!res.ok) throw new Error('Failed to list files');
       const data = await res.json();
       
@@ -185,12 +185,12 @@ export default function AssetManagerPage() {
         return;
       }
 
-      fileListEl.innerHTML = data.files.map(f => \`
+      fileListEl.innerHTML = data.files.map(f => `
         <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
-          <span style="color: #cbd5e1; word-break: break-all;">\${f.name}</span>
-          <span style="color: #64748b; margin-left: 10px; white-space: nowrap;">\${f.size_mb} MB</span>
+          <span style="color: #cbd5e1; word-break: break-all;">${f.name}</span>
+          <span style="color: #64748b; margin-left: 10px; white-space: nowrap;">${f.size_mb} MB</span>
         </div>
-      \`).join('');
+      `).join('');
     } catch (err) {
       console.error(err);
       fileListEl.innerHTML = '<div style="color: #ef4444; font-size: 12px; text-align: center; padding: 20px;">FAILED TO LOAD FILES</div>';
