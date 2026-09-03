@@ -19,7 +19,7 @@ image = (
         "torch==2.5.1",
         "torchvision==0.20.1"
     )
-    
+    .add_local_python_source("shared_app")
 )
 
 class PreprocessRequest(BaseModel):
