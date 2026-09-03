@@ -63,7 +63,7 @@ image = image.add_local_python_source("shared_app")
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
-class Img2VidBackend:
+class Img2Vid:
     @modal.enter()
     def setup(self):
         self.current_res = None

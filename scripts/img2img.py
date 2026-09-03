@@ -53,7 +53,7 @@ LORA_ADAPTER = "mcnl-nsfw-v1"
 
 image = image.add_local_python_source("shared_app")
 @app.cls(image=image, gpu="A100-80GB", volumes=volumes, secrets=secrets)
-class Img2ImgBackend:
+class Img2Img:
     @modal.enter()
     def enter(self):
         self.current_model = None

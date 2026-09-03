@@ -43,7 +43,7 @@ class MusicRequest(BaseModel):
 async def api_generate_music(req: MusicRequest):
     try:
         # Call the remote worker
-        audio_bytes = await music.MusicGeneratorBackend().run.remote.aio(
+        audio_bytes = await music.MusicGenerator().run.remote.aio(
             prompt=req.prompt,
             length_in_seconds=req.length_seconds
         )
@@ -61,7 +61,7 @@ class DownloadRequest(BaseModel):
 @web_app.post("/api/assets/download")
 async def api_download_asset(req: DownloadRequest):
     try:
-        result = await web_loader.AssetManagerBackend().download_asset.remote.aio(req.source, req.params)
+        result = await web_loader.AssetManager().download_asset.remote.aio(req.source, req.params)
         if result.get("error"):
             raise HTTPException(status_code=400, detail=result["error"])
         return result
@@ -71,7 +71,7 @@ async def api_download_asset(req: DownloadRequest):
 @web_app.get("/api/assets/list")
 async def api_list_assets(subfolder: str = "checkpoints"):
     try:
-        files = await web_loader.AssetManagerBackend().list_assets.remote.aio(subfolder)
+        files = await web_loader.AssetManager().list_assets.remote.aio(subfolder)
         return {"files": files}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

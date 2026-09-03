@@ -30,11 +30,11 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2imgba-a5af68.modal.run/',
-    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2imgba-d83565.modal.run/',
-    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vidba-13e3ce.modal.run/stream',
-    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vidba-9e3d2d.modal.run/stream',
-    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-df8d2d.modal.run',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run/',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run/',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.modal.run/stream',
+    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.modal.run',
     fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fannin-sc-92fe44.modal.run/api/mugshots',
     music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',

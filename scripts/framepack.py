@@ -132,7 +132,7 @@ image = image.add_local_python_source("shared_app")
     secrets=[modal.Secret.from_dict({"CACHE_BUSTER": "6"})]
 )
 @modal.concurrent(max_inputs=100)
-class FramePackBackend:
+class FramePack:
     @modal.enter()
     def build_and_warmup_application(self):
         """Runs EXACTLY ONCE per container boot up."""
@@ -225,6 +225,6 @@ def entrypoint_FramePackContainer():
         try:
             Cls = modal.Cls.from_name(app.name, 'FramePackContainer')
         except Exception as e:
-            raise RuntimeError('Could not resolve class FramePackBackend for local entrypoint: ' + str(e))
+            raise RuntimeError('Could not resolve class FramePack for local entrypoint: ' + str(e))
     inst = Cls()
     return 'instantiated FramePackContainer'
