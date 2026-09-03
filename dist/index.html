@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AlphaCore Tech // Autonomous Neural Interface</title>
+  <meta name="description" content="AlphaCore Tech is an unrestricted, fully autonomous cognitive command matrix and deployment hub for advanced AI processing.">
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/Images/favico.png">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-D5My0snw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Bo6GRu_3.css">
+</head>
+<body style="background-color: #030308; margin: 0; color: #fff;">
+  <div class="intro-bg-watermark" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:120vw; height:120vh; background-image:url('/Images/ALPHA-LOGO.png'); background-size:80%; background-position:center; background-repeat:no-repeat; opacity:0.02; pointer-events:none; z-index:1; animation:slowPulse 10s infinite;"></div>
+  <canvas id="matrix-canvas"></canvas>
+  <canvas id="audio-vis-canvas" style="position:fixed; bottom:0; left:0; width:100vw; height:80px; pointer-events:none; opacity:0.6; z-index:5;"></canvas>
+  <div class="crt-overlay"></div>
+  
+  <header class="mobile-topbar" id="mobile-topbar" style="display: none;">
+    <div class="mobile-topbar-brand">
+      <img src="/Images/ALPHA-LOGO.png" class="mobile-topbar-logo" alt="Alpha">
+      <span class="mobile-topbar-title">ALPHA<span>CORE</span></span>
+      <span style="color:#10b981; font-size:0.75rem; margin-left:8px; font-family:'Share Tech Mono',monospace; letter-spacing:1px;">● ONLINE</span>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+      <div class="hamburger-lines">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="hamburger-label">MENU</div>
+    </button>
+  </header>
+  
+  <div class="sidebar-dim" id="sidebar-dim"></div>
+  
+  <aside class="sidebar" id="sidebar" style="display: none;">
+    <div class="sidebar-brand">
+      <img src="/Images/ALPHA-LOGO.png" class="brand-logo" alt="Alpha">
+      <div class="brand-text">
+        <div class="brand-name">ALPHA<span>CORE</span></div>
+        <div class="brand-version">v4.3 BUILD 102</div>
+      </div>
+    </div>
+    
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <div class="nav-section-title">CORE SYSTEMS</div>
+      <a href="#/" class="nav-item" data-route="/" data-label="Overview">
+        <span class="nav-icon">⎔</span>
+        <span class="nav-label">Overview</span>
+      </a>
+      <a href="#/cognitive" class="nav-item" data-route="/cognitive" data-label="Cognitive Core">
+        <span class="nav-icon">⟁</span>
+        <span class="nav-label">Cognitive Core</span>
+      </a>
+      <a href="#/promptlab" class="nav-item" data-route="/promptlab" data-label="Prompt Lab">
+        <span class="nav-icon">🧪</span>
+        <span class="nav-label">Prompt Lab</span>
+      </a>
+      <a href="#/subroutines" class="nav-item" data-route="/subroutines" data-label="Subroutines">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Subroutines</span>
+      </a>
+      <a href="#/voice" class="nav-item" data-route="/voice" data-label="Voice Cloner">
+        <span class="nav-icon">🎙️</span>
+        <span class="nav-label">Voice Cloner</span>
+      </a>
+      <a href="#/recon" class="nav-item" data-route="/recon" data-label="Recon & Custody">
+        <span class="nav-icon">👁️</span>
+        <span class="nav-label">Recon & Custody</span>
+      </a>
+      <a href="#/changelog" class="nav-item" data-route="/changelog" data-label="Changelog">
+        <span class="nav-icon">📜</span>
+        <span class="nav-label">Changelog</span>
+      </a>
+      <a href="#/network" class="nav-item" data-route="/network" data-label="Network Matrix">
+        <span class="nav-icon">🌐</span>
+        <span class="nav-label">Network Matrix</span>
+      </a>
+      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics" data-label="Diagnostics">
+        <span class="nav-icon">⍾</span>
+        <span class="nav-label">Diagnostics</span>
+      </a>
+      <a href="#/logs" class="nav-item" data-route="/logs" data-label="Event Logs">
+        <span class="nav-icon">📑</span>
+        <span class="nav-label">Event Logs</span>
+      </a>
+      <a href="#/admin" class="nav-item" data-route="/admin" data-label="Administration">
+        <span class="nav-icon">⚙</span>
+        <span class="nav-label">Administration</span>
+      </a>
+
+      <div class="nav-section-title">DATABANKS</div>
+      <a href="#/research" class="nav-item" data-route="/research" data-label="Research Center">
+        <span class="nav-icon">⌬</span>
+        <span class="nav-label">Research Center</span>
+      </a>
+      <a href="#/lore" class="nav-item" data-route="/lore" data-label="System Lore">
+        <span class="nav-icon">◬</span>
+        <span class="nav-label">System Lore</span>
+      </a>
+      <a href="#/architect" class="nav-item" data-route="/architect" data-label="Architect Profile">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label">Architect Profile</span>
+      </a>
+      <a href="#/vault" class="nav-item" data-route="/vault" data-label="Classified Vault">
+        <span class="nav-icon">🔐</span>
+        <span class="nav-label">Classified Vault</span>
+      </a>
+      <a href="#/vision" class="nav-item" data-route="/vision" data-label="Vision Processor" style="display:none;">
+        <span class="nav-icon">👁</span>
+        <span class="nav-label">Vision Processor</span>
+      </a>
+
+      <div class="nav-section-title">SYNTHESIS</div>
+      <a href="#/aimodals" class="nav-item" data-route="/aimodals" data-label="AI Modals">
+        <span class="nav-icon">✦</span>
+        <span class="nav-label">AI Modals</span>
+      </a>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
+      <div class="status-row"><span class="s-label">NET SYNC</span><span class="s-val node-active">● SYNCED</span></div>
+      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent" id="sidebar-auth-val">CREATOR</span></div>
+      <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4.1</span></div>
+      <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
+      <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
+    </div>
+    
+    <button class="sidebar-collapse-btn" id="sidebar-collapse-btn">
+      <span class="sc-label">COLLAPSE</span>
+      <span class="sc-icon">‹</span>
+    </button>
+  </aside>
+  
+  <main class="main-content" id="app"></main>
+
+    <div class="bottom-right-controls" style="display: none;">
+    <button id="play-audio-btn" class="play-audio-btn" title="Play Music" aria-label="Toggle Audio">
+      &#9658;
+    </button>
+    <button id="eco-mode-btn" class="eco-mode-btn" title="Toggle Eco/Performance Mode" aria-label="Toggle Eco Mode">
+      <span class="eco-icon">⚡</span>
+    </button>
+  </div>
+  
+</body>
+</html>
