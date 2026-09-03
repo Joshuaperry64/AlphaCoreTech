@@ -19,6 +19,7 @@ image = (
         "torch==2.5.1",
         "torchvision==0.20.1"
     )
+    
 )
 
 class PreprocessRequest(BaseModel):
