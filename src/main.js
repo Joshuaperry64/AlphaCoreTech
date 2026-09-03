@@ -28,6 +28,8 @@ import VisionProcessor from './pages/vision.js';
 import LogsPage from './pages/logs.js';
 import SubroutinesPage from './pages/subroutines.js';
 import PromptLabPage from './pages/promptlab.js';
+import MusicPage from './pages/music.js';
+import AssetManagerPage from './pages/assets.js';
 import ReconPage from './pages/recon.js';
 import VoiceClonerPage from './pages/voicecloner.js';
 import ChangelogPage from './pages/changelog.js';
@@ -50,6 +52,8 @@ const routes = {
   '/promptlab': PromptLabPage,
   '/recon': ReconPage,
   '/voice': VoiceClonerPage,
+  '/music': MusicPage,
+  '/assets': AssetManagerPage,
   '/changelog': ChangelogPage,
   '/network': NetworkMatrixPage,
   '/mugshots': MugshotsPage,
