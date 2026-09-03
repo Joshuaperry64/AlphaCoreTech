@@ -11,6 +11,7 @@ export const description = 'Remote uplink to the bR0k3nC0Re desktop AI suite. [R
 export const pythonSourcePath = 'bR0k3nC0Re/main.py';
 
 import { triggerBypassOverloadSequence } from '../../components/pinpad.js';
+import { apiUrl } from '../../components/api.js';
 
 let activeInstance = null;
 
@@ -123,7 +124,7 @@ export function render(container, options = {}) {
     btnAuth.disabled = true;
     
     try {
-      const res = await fetch('/api/auth', {
+      const res = await fetch(apiUrl('/api/auth'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Enforce the 'admin' role which is tied to the Architect profile

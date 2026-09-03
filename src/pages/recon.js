@@ -1,4 +1,5 @@
 import MugshotsPage from './mugshots.js';
+import { apiUrl } from '../components/api.js';
 
 export default function ReconPage() {
     const container = document.createElement('div');
@@ -66,7 +67,7 @@ export default function ReconPage() {
         dossier.innerHTML = `<div id="dossier-placeholder" style="text-align: center; margin: auto;"><div style="font-size: 18px; letter-spacing: 2px; color: #fff;">COMPILING...</div></div>`;
 
         try {
-            const response = await fetch('/api/recon/scan', { method: 'POST', headers, body: JSON.stringify({ target }) });
+            const response = await fetch(apiUrl('/api/recon/scan'), { method: 'POST', headers, body: JSON.stringify({ target }) });
             const result = await response.json();
 
             if (response.ok && result.status === 'SUCCESS') {

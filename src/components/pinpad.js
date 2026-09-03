@@ -3,6 +3,7 @@
  * Supports Netlify/Express Serverless /api/auth with client-side localStorage fallback.
  */
 
+import { apiUrl } from './api.js';
 import { logAction } from './logger.js';
 import { pushToServer } from './db_sync.js';
 import { playSFX } from './audio.js';
@@ -66,7 +67,7 @@ export function revokePin(pinVal) {
 
 export async function validatePin(pinVal, requiredRole = null) {
   try {
-    const res = await fetch('/api/auth', {
+    const res = await fetch(apiUrl('/api/auth'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: pinVal, requiredRole })

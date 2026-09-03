@@ -1,5 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
+import { apiUrl } from '../components/api.js';
 
 export default function MugshotsPage() {
   const container = createElement('div', { class: 'mugshots-page' });
@@ -535,7 +536,7 @@ export default function MugshotsPage() {
               const hasCharges = post.charges && post.charges.length > 0 && !post.charges.includes('PENDING REVIEW');
               if (!hasCharges && link.includes('thegeorgiagazette.com')) {
                 try {
-                  const profileRes = await fetch(`/api/gazette-profile?url=${encodeURIComponent(link)}`, { signal: AbortSignal.timeout(12000) });
+                  const profileRes = await fetch(apiUrl(`/api/gazette-profile?url=${encodeURIComponent(link)}`), { signal: AbortSignal.timeout(12000) });
                   if (profileRes.ok) {
                     const pd = await profileRes.json();
                     if (pd.charges && pd.charges.length > 0) {
@@ -582,7 +583,7 @@ export default function MugshotsPage() {
           if (parsed[i].charges.includes('PENDING REVIEW')) {
             try {
               const fName = parsed[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-              const res = await fetch(`/api/gazette/${fName}`);
+              const res = await fetch(apiUrl(`/api/gazette/${fName}`));
               if (res.ok) {
                 const html = await res.text();
                 const match = html.match(/Reason\(s\)\s*For\s*Booking:.*?<\/strong>\s*(?:<br>)?\s*(.*?)\s*(?:<\/p>|<br>|<h)/si);

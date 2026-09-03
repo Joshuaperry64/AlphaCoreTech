@@ -1,6 +1,7 @@
 /**
- * AlphaCore State Sync Component — Client-Side Local Mode
+ * AlphaCore State Sync Component — Server-backed via Render API
  */
+import { apiUrl } from './api.js';
 
 export async function syncFromServer() {
   const pin = sessionStorage.getItem('current_pin');
@@ -8,8 +9,8 @@ export async function syncFromServer() {
   
   try {
     const [setRes, pinRes] = await Promise.all([
-      fetch('/api/settings', { headers: { 'x-user-pin': pin } }),
-      fetch('/api/pins', { headers: { 'x-user-pin': pin } })
+      fetch(apiUrl('/api/settings'), { headers: { 'x-user-pin': pin } }),
+      fetch(apiUrl('/api/pins'), { headers: { 'x-user-pin': pin } })
     ]);
     
     if (setRes.ok) {
@@ -30,14 +31,14 @@ export function pushToServer(endpoint, data, authPinOverride = null) {
   const pin = authPinOverride || sessionStorage.getItem('current_pin');
   if (!pin) return;
   
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/api/${endpoint}`;
+  const cleanPath = endpoint.startsWith('/') ? endpoint : `/api/${endpoint}`;
 
-  fetch(cleanEndpoint, {
+  fetch(apiUrl(cleanPath), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-user-pin': pin
     },
     body: JSON.stringify(data)
-  }).catch(err => console.error(`Failed to push ${cleanEndpoint} to server:`, err));
+  }).catch(err => console.error(`Failed to push ${cleanPath} to server:`, err));
 }
