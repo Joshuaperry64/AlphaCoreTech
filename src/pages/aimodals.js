@@ -568,7 +568,8 @@ function buildTxt2Img() {
             width: w, height: h, seed: randomSeed
           });
 
-          const res = await fetch(`${settings.txt2imgUrl}stream?${params}`);
+          const txt2imgEndpoint = settings.txt2imgUrl.endsWith('/') ? `${settings.txt2imgUrl}stream` : `${settings.txt2imgUrl}/stream`;
+          const res = await fetch(`${txt2imgEndpoint}?${params}`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
           const reader = res.body.getReader();

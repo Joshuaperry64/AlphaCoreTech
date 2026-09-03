@@ -33,7 +33,7 @@ image = (
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -P /rvc/assets/pretrained_v2/",
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -P /rvc/assets/pretrained_v2/"
     )
-).add_local_python_source("shared_app")
+)
 
 from shared_app import app
 

@@ -22,7 +22,7 @@ image = (
     modal.Image.debian_slim()
     .pip_install('requests', 'beautifulsoup4', 'fastapi', 'playwright')
     .run_commands('playwright install-deps', 'playwright install chromium')
-).add_local_python_source("shared_app")
+)
 
 FB_APP_ID = '1342941991353756'
 FB_APP_SECRET = 'a6ca1b29c5b8cff96e725df2564e807f'
