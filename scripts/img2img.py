@@ -11,7 +11,7 @@ from io import BytesIO
 
 import modal
 
-from core import app
+from shared_app import app
 
 # --- CACHE & VOLUME SETUP ---
 CACHE_DIR = "/hf-hub-cache"

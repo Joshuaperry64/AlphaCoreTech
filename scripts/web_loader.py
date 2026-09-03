@@ -1,4 +1,4 @@
-from core import app, CACHE_DIR, cache_volume
+from shared_app import app, CACHE_DIR, cache_volume
 import modal
 
 image = (

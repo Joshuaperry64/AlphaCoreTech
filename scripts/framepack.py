@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 import modal
 
-from core import app
+from shared_app import app
 
 # --- Persistent Storage Layout ---
 model_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)

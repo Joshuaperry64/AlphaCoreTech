@@ -35,7 +35,7 @@ image = (
     )
 )
 
-from core import app
+from shared_app import app
 
 # ─────────────────────────────────────────────
 # Local Profile Management

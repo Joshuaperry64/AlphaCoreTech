@@ -6,7 +6,7 @@ import re
 import json
 import time
 
-from core import app
+from shared_app import app
 web_app = FastAPI()
 
 web_app.add_middleware(

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # 1. Import the central app instance
-from core import app
+from shared_app import app
 
 # 2. Import all worker scripts so their decorators attach to the app
 import scraper
@@ -77,7 +77,9 @@ async def api_list_assets(subfolder: str = "checkpoints"):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 4. Expose the FastAPI app to Modal
-@app.function()
+router_image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pydantic", "requests")
+
+@app.function(image=router_image)
 @modal.asgi_app()
 def fastapi_app():
     return web_app

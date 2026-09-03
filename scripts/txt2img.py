@@ -12,7 +12,7 @@ import modal
 
 MINUTES = 60
 
-from core import app
+from shared_app import app
 
 CACHE_DIR = "/hf-hub-cache"
 

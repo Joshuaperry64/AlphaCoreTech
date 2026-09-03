@@ -39,7 +39,7 @@ image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1", "HF_HUB_CACHE": CACHE_DIR, "HF_HOME": CACHE_DIR})
 )
 
-from core import app
+from shared_app import app
 
 with image.imports():
     import torch

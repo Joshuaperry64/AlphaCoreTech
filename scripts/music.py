@@ -94,7 +94,7 @@ web_image = modal.Image.debian_slim(python_version="3.12").uv_pip_install(
 # - In the `app.cls` decorator, we specify the Image we built and attach the Volume.
 # We also pick a GPU to run on -- here, an NVIDIA L40S.
 
-from core import app
+from shared_app import app
 
 
 @app.cls(gpu="l40s", image=image, volumes={checkpoints_dir: model_cache})
