@@ -26,11 +26,18 @@ const LORA_OPTIONS = `
   <option value="SpyCam.safetensors">SPYCAM</option>
 `;
 
+function resolveEndpoint(baseUrl, subPath = '') {
+  if (!baseUrl) return '';
+  const cleanBase = baseUrl.trim().replace(/\/+$/, '');
+  const cleanSub = subPath.trim().replace(/^\/+/, '');
+  return cleanSub ? `${cleanBase}/${cleanSub}` : cleanBase;
+}
+
 function getModalSettings() {
   const defaults = {
-    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run/',
-    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run/',
-    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run/',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run',
+    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run',
     txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.modal.run/stream',
     img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.modal.run/stream',
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.modal.run',
@@ -50,6 +57,22 @@ function getModalSettings() {
     const customStr = localStorage.getItem('alphacore_modal_settings');
     if (customStr) {
       const custom = JSON.parse(customStr);
+      // Strip trailing slashes from any cached custom endpoints
+      ['txt2imgUrl', 'img2imgUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url'].forEach(k => {
+        if (custom[k] && typeof custom[k] === 'string') {
+          custom[k] = custom[k].trim().replace(/\/+$/, '');
+        }
+      });
+      // Auto-heal outdated endpoints in user's localStorage
+      if (custom.txt2imgUrl && (!custom.txt2imgUrl.includes('txt2img-w-235075') || custom.txt2imgUrl.endsWith('/stream'))) custom.txt2imgUrl = defaults.txt2imgUrl;
+      if (custom.img2imgUrl && (!custom.img2imgUrl.includes('img2img-w-0e3ec9') || custom.img2imgUrl.endsWith('/stream'))) custom.img2imgUrl = defaults.img2imgUrl;
+      if (custom.preprocessorUrl && !custom.preprocessorUrl.includes('preproces-d30863')) custom.preprocessorUrl = defaults.preprocessorUrl;
+      if (custom.txt2vidUrl && !custom.txt2vidUrl.includes('txt2vid-w-2cf2c7')) custom.txt2vidUrl = defaults.txt2vidUrl;
+      if (custom.img2vidUrl && !custom.img2vidUrl.includes('img2vid-w-784511')) custom.img2vidUrl = defaults.img2vidUrl;
+      if (custom.framepackUrl && !custom.framepackUrl.includes('framepack-e7f107')) custom.framepackUrl = defaults.framepackUrl;
+      if (custom.music_url && !custom.music_url.includes('alphacore-f5c3d8')) custom.music_url = defaults.music_url;
+      if (custom.fanninCrimeUrl && !custom.fanninCrimeUrl.includes('fannin-sc-92fe44')) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
+
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;
         custom.stepsNormalTxt = 30;
@@ -57,8 +80,8 @@ function getModalSettings() {
         custom.stepsFastImg = 15;
         custom.stepsNormalImg = 25;
         custom.stepsFocusedImg = 40;
-        localStorage.setItem('alphacore_modal_settings', JSON.stringify(custom));
       }
+      localStorage.setItem('alphacore_modal_settings', JSON.stringify(custom));
       return { ...defaults, ...custom };
     }
   } catch (e) {
@@ -593,7 +616,7 @@ function buildTxt2Img() {
             width: w, height: h, seed: randomSeed
           });
 
-          const txt2imgEndpoint = settings.txt2imgUrl.endsWith('/') ? `${settings.txt2imgUrl}stream` : `${settings.txt2imgUrl}/stream`;
+          const txt2imgEndpoint = resolveEndpoint(settings.txt2imgUrl, 'stream');
           const res = await fetch(`${txt2imgEndpoint}?${params}`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
@@ -753,7 +776,8 @@ function buildTxt2Img() {
         width: w,
         height: h,
       });
-      const res = await fetch(`${settings.txt2imgUrl}stream?${params}`);
+      const txt2imgEndpoint = resolveEndpoint(settings.txt2imgUrl, 'stream');
+      const res = await fetch(`${txt2imgEndpoint}?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const reader = res.body.getReader();
@@ -1204,9 +1228,9 @@ function buildImg2Img() {
       const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active').dataset.model;
       formData.append('model', selectedI2iModel);
       formData.append('model_name', selectedI2iModel);
-      const i2iEndpoint = settings.img2imgUrl;
+      const i2iEndpoint = resolveEndpoint(settings.img2imgUrl, 'stream');
 
-      const res = await fetch(`${i2iEndpoint}stream`, { method: 'POST', body: formData });
+      const res = await fetch(i2iEndpoint, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const reader = res.body.getReader();
@@ -2211,7 +2235,8 @@ function buildControlNetForge() {
     wrap.querySelector('#cn-result-container').style.display = 'none';
 
     try {
-      const res = await fetch(settings.preprocessorUrl, {
+      const preprocessorEndpoint = resolveEndpoint(settings.preprocessorUrl, '');
+    const res = await fetch(preprocessorEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_b64: base64Image, processor_type: type })

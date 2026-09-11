@@ -30,8 +30,9 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run/',
-    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run/',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run',
+    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run',
     txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.modal.run/stream',
     img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.modal.run/stream',
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.modal.run',
@@ -251,7 +252,10 @@ function buildAdminUI() {
               <label class="aim-label" for="cfg-i2i-guidance">IMG2IMG DEFAULT GUIDANCE</label>
               <input class="aim-input" type="number" step="0.1" id="cfg-i2i-guidance" value="${settings.guidanceImg}" style="max-width:200px;" />
            </div>
-           <div class="aim-field aim-field-half" style="display: flex; align-items: flex-end; justify-content: flex-end;">
+           <div class="aim-field aim-field-half" style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px;">
+              <button class="aim-btn" id="btn-reset-cfg" style="width: auto; padding-left: 20px; padding-right: 20px; background: rgba(255, 0, 60, 0.1); border-color: var(--accent, #ff003c); color: var(--accent, #ff003c);">
+                RESET TO DEFAULTS
+              </button>
               <button class="aim-btn aim-btn-generate" id="btn-save-cfg" style="width: auto; padding-left: 30px; padding-right: 30px;">
                 SAVE PIPELINES
               </button>
@@ -435,6 +439,17 @@ function buildAdminUI() {
     updatePinList();
   }, 1000);
 
+  // Reset generative defaults button
+  const resetCfgBtn = root.querySelector('#btn-reset-cfg');
+  if (resetCfgBtn) {
+    resetCfgBtn.onclick = (e) => {
+      e.preventDefault();
+      localStorage.removeItem('alphacore_modal_settings');
+      showFeedback(cfgFeedback, 'Pipeline settings purged from localStorage. Restoring active cloud defaults...', 'ok');
+      setTimeout(() => window.location.reload(), 800);
+    };
+  }
+
   // Save generative defaults
   saveCfgBtn.onclick = (e) => {
     e.preventDefault();
@@ -452,8 +467,9 @@ function buildAdminUI() {
     }
 
     const newSettings = {
-      txt2imgUrl: t2i,
-      img2imgUrl: i2i,
+      txt2imgUrl: t2i.replace(/\/+$/, ''),
+      img2imgUrl: i2i.replace(/\/+$/, ''),
+      preprocessorUrl: (settings.preprocessorUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run').replace(/\/+$/, ''),
       txt2vidUrl: t2v,
       img2vidUrl: i2v,
       framepackUrl: fp,
