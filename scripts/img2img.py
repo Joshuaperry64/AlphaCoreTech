@@ -69,7 +69,12 @@ class Img2Img:
             import torch
             torch.cuda.empty_cache()
             
+        import os
         import torch
+        
+        token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
+        if token:
+            os.environ["HF_TOKEN"] = token
         
         if model_choice == "flux":
             print(f"Loading base model {FLUX_BASE}...")
@@ -77,7 +82,8 @@ class Img2Img:
             self.pipe = AutoPipelineForImage2Image.from_pretrained(
                 FLUX_BASE, 
                 torch_dtype=torch.float16,
-                cache_dir=CACHE_DIR
+                cache_dir=CACHE_DIR,
+                token=token
             )
             self.pipe.to("cuda")
             
@@ -89,6 +95,7 @@ class Img2Img:
                 torch_dtype=torch.bfloat16,
                 cache_dir=CACHE_DIR,
                 trust_remote_code=True,
+                token=token
             ).to("cuda")
 
             print(f"Loading and setting LoRA adapter from {LORA_REPO}...")
@@ -97,6 +104,7 @@ class Img2Img:
                 weight_name=LORA_WEIGHT,
                 adapter_name=LORA_ADAPTER,
                 cache_dir=CACHE_DIR,
+                token=token
             )
             self.pipe.set_adapters([LORA_ADAPTER])
 

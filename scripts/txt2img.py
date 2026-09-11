@@ -55,6 +55,7 @@ image = image.add_local_python_source("shared_app")
     gpu="H100",
     timeout=10 * MINUTES,
     volumes={CACHE_DIR: cache_volume},
+    secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class Txt2Img:
     @modal.enter()
