@@ -52,7 +52,7 @@ LORA_WEIGHT = "qwen-image-edit-plus-nsfw-lora.safetensors"
 LORA_ADAPTER = "mcnl-nsfw-v1"
 
 image = image.add_local_python_source("shared_app")
-@app.cls(image=image, gpu="A100-80GB", volumes=volumes, secrets=secrets)
+@app.cls(image=image, gpu="H100", volumes=volumes, secrets=secrets, scaledown_window=600)
 class Img2Img:
     @modal.enter()
     def enter(self):

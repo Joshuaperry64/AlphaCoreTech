@@ -54,6 +54,7 @@ image = image.add_local_python_source("shared_app")
     image=image,
     gpu="H100",
     timeout=10 * MINUTES,
+    scaledown_window=10 * MINUTES,
     volumes={CACHE_DIR: cache_volume},
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
