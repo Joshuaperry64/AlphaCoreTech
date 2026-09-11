@@ -140,6 +140,9 @@ class Txt2Img:
         lora: str = "none"
     ) -> list[bytes]:
         import torch
+        import io
+        import base64
+        from PIL import Image
         
         if model_name.endswith(".safetensors"):
             model_file = model_name
@@ -290,6 +293,8 @@ class Txt2Img:
             return callback_kwargs
 
         def generate_task():
+            import io
+            import base64
             all_images_b64 = []
             try:
                 images_completed = 0

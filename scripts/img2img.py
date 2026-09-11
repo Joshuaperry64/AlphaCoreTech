@@ -151,6 +151,9 @@ class Img2Img:
         q = queue.Queue()
 
         def generate_task():
+            import io
+            from io import BytesIO
+            import base64
             all_images_b64 = []
             try:
                 images_completed = 0
