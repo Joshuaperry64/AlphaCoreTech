@@ -139,6 +139,7 @@ class Txt2Img:
         seed: int = -1,
         lora: str = "none"
     ) -> list[bytes]:
+        import torch
         
         if model_name.endswith(".safetensors"):
             model_file = model_name
@@ -167,7 +168,6 @@ class Txt2Img:
             ctype = control_type.lower()
             if ctype not in self.controlnets:
                 from diffusers import ControlNetModel
-                import torch
                 print(f"Loading ControlNet: {ctype}...")
                 if ctype == "canny":
                     model_id = "diffusers/controlnet-canny-sdxl-1.0"
