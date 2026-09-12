@@ -56,6 +56,7 @@ export default function Overview() {
       <!-- Quick Operational Action Bar -->
       <div class="panel" style="margin-bottom:20px; padding:12px 18px; background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <span style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent,#06b6d4); font-weight:bold;">QUICK NAV:</span>
+        <a href="#/thelab" class="aim-btn aim-btn-sm" style="text-decoration:none; border-color:var(--accent,#06b6d4); color:var(--accent,#06b6d4);">🔬 THE LAB</a>
         <a href="#/cognitive" class="aim-btn aim-btn-sm" style="text-decoration:none;">⟁ COGNITIVE CORE</a>
         <a href="#/aimodals" class="aim-btn aim-btn-sm" style="text-decoration:none;">✦ AI MODALS</a>
         <a href="#/subroutines" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚡ SUBROUTINES</a>

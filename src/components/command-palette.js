@@ -9,6 +9,7 @@ let modalOverlay = null;
 
 const COMMANDS = [
   { icon: '⎔', title: 'Go to Overview', path: '#/' },
+  { icon: '🔬', title: 'Go to The Lab', path: '#/thelab' },
   { icon: '⟁', title: 'Go to Cognitive Core', path: '#/cognitive' },
   { icon: '🧪', title: 'Go to Prompt Lab', path: '#/promptlab' },
   { icon: '⚡', title: 'Go to Subroutines Console', path: '#/subroutines' },
