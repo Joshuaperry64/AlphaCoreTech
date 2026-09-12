@@ -60,8 +60,8 @@ def _get_secrets():
 
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("requests", "tqdm")
-    .add_local_python_source("shared_app")
+    .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic")
+    .add_local_python_source("shared_app", "music", "web_loader")
 )
 
 @app.function(
