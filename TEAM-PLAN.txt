@@ -1,0 +1,42 @@
+OBJECTIVE 1 -\\
+implement OmniGen (BAAI): Unified Multimodal Transformer
+The Capability: OmniGen operates similarly to a multimodal Large Language Model, but for pixels. Instead of requiring external plugins like ControlNet or IP-Adapter, it natively accepts arbitrarily interleaved text and image inputs to guide generation.
+
+The Advantage: You can pass multiple images and use general language to execute complex tasks. For example, you can extract objects from one image to integrate into another, or generate redraws based on human poses from a reference image, entirely through text instructions.
+
+OBJECTIVE 2 -\\
+implement a new option or tab in modals for SDXL Native Img2Img (The Stylistic Engine)
+already have a highly curated catalog of specialized SDXL safetensors configured for text-to-image. Wiring StableDiffusionXLImg2ImgPipeline into the img2img.py endpoint allows you to utilize those exact stylistic weights for image transformations.
+
+Neither Qwen nor FLUX base models can easily replicate the highly tuned aesthetics of custom checkpoints. This allows users to take a generic photo and filter it through a specific stylistic lens, maintaining the exact prompt adherence they expect from those models.
+
+Implementation: It simply requires importing your existing _load_model logic from txt2img.py to cache and load the safetensors, utilizing the diffusers SDXL Img2Img pipeline.
+
+OBJECTIVE 3 -\\
+implement FLUX.1-Fill (The Precision Inpainter)
+While FLUX.1-schnell is fantastic for rapid, global image-to-image transformations, it lacks native awareness for localized editing.
+
+Integrating black-forest-labs/FLUX.1-Fill-dev introduces the ability to pass an alpha-channel mask alongside the image. This allows for flawless object addition, removal, or background replacement without altering the unmasked pixels.
+
+Implementation: You would update the frontend UI to include a simple canvas masking tool, passing a base64 mask alongside the base64 image, and route it to FluxInpaintPipeline on the backend.
+
+OBJECTIVE 4 -\\
+add ControlNet Tile Upscaling (The Detail Injector)
+Taking inspiration from advanced ComfyUI workflows, standard image-to-image pipelines often destroy micro-details when passing an image through the VAE.
+
+Adding a dedicated SDXL ControlNet Tile pathway allows the engine to function as a creative upscaler. By passing the image through the pipeline in overlapping chunks guided by the Tile ControlNet, it hallucinates incredible new details (fabric textures, pores, foliage) while strictly maintaining the original composition.
+
+Implementation: This requires modifying the chunking logic and adding thibaud/controlnet-sd21-tile-sdxl to your cached weights, utilizing it to guide the diffusion process over large resolutions.
+
+OBJECTIVE 5 -\\
+implement CosXL Edit (Stability AI): Instruction-Tuned SDXL
+The Capability: This is an upgraded SDXL model specifically tuned to perform instructed image editing. Instead of prompting the model with a description of the final image, it interprets the text prompt as a direct command (e.g., "make it look like a painting") for how to alter the source image.
+
+The Advantage: It utilizes a unique Cosine-Continuous EDM VPred schedule. This structural change allows the model to produce the full spectrum of color, from pitch black to pure white, yielding highly detailed, tonally rich images while maintaining excellent composition consistency.
+
+OBJECTIVE 6 -\\
+implement Stable Diffusion 3.5 Large (Img2Img): MMDiT Prompt Adherence
+The Capability: Built on a Multimodal Diffusion Transformer (MMDiT) architecture, the SD3 family utilizes three separate text encoders simultaneously, including the massive T5-XXL model.
+
+The Advantage: SD3.5 is renowned for its ability to interpret highly complex prompts and produce outputs that strictly match the user's description. If an edit requires extreme prompt adherence or the injection of highly specific elements into an existing image at 1-megapixel resolutions, this architecture is highly effective.
+

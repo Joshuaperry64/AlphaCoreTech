@@ -6,3 +6,8 @@ data.json
 .env.*
 *.local
 server_mipsle
+
+__pycache__/
+*.pyc
+.agents/
+

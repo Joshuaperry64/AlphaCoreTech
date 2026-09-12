@@ -9,6 +9,24 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.0.0 BUILD 175',
+    date: '2026.09.12',
+    badge: 'ADVANCED AI SYNTHESIS // 6-ARCHITECTURE SUITE',
+    badgeColor: '#a855f7',
+    title: 'ADVANCED AI SYNTHESIS SUITE, MULTIMODAL MATRIX & INPAINTING CANVAS',
+    summary: 'Major architectural expansion integrating 6 advanced generative AI pipelines into AlphaCore Tech: OmniGen unified multimodal engine with multi-image conditioning, SDXL Native Img2Img with curated 7-checkpoint catalog, FLUX.1-Fill inpainting with an interactive HTML5 canvas masking tool, SDXL ControlNet Tile creative upscaling with seamless cosine feathering, CosXL natural language instruction editing with EDM VPred, and Stable Diffusion 3.5 Large MMDiT with triple text encoders. Backed by dual-tier (Architect vs Economy) serverless infrastructure and universal 1-click Save to Vault.',
+    changes: [
+      'OmniGen (BAAI) Unified Multimodal Engine: Dedicated multimodal synthesis panel with 3 reference image dropzones, status badges, token pills (<img><|image_X|></img>), real-time SSE streaming, and natural language multi-image editing.',
+      'SDXL Native Img2Img (The Stylistic Engine): Integrated Native SDXL pipeline with a 7-checkpoint dropdown catalog (EpicRealism PureFix, Realistic Freedom, Juggernaut XL Ragnarok, CyberRealistic Desire, Unholy Desire Sinister, Lustify NSFW Zenith, DreamShaper Alpha), custom denoising slider (0.05-1.0), and guidance controls.',
+      'FLUX.1-Fill Inpainting HTML5 Canvas: Interactive, responsive canvas masking tool directly overlaid on source images with variable brush sizes, precision eraser, invert mask, clear canvas, live coverage calculator, and native-resolution base64 PNG export.',
+      'ControlNet Tile Creative Upscaling: Added SDXL ControlNet Tile mode with uniform tile chunking (512, 768, 1024 px), seam overlap ratios (12.5%, 25%, 50%), creative diffusion slider (0.05-0.95), and micro-detail conditioning prompts with cosine-feathered seamless blending.',
+      'CosXL Edit (Instruction-Tuned SDXL): Stability AI cosxl_edit integration featuring natural language commands ("Turn into cyberpunk", "Make it rainy night", "Pencil sketch", "Neon vaporwave", "Oil painting") with EDM VPred scheduling and image guidance scaling.',
+      'Stable Diffusion 3.5 Large (Img2Img MMDiT): Integrated SD 3.5 Large multimodal diffusion transformer architecture with triple text encoders (including T5-XXL) for extreme prompt adherence in image-to-image synthesis.',
+      'Dual-Tier Infrastructure & Economy Enforcement: Strict profile-aware routing across Architect Priority (H100 / L40S) and Public Economy (60s scaledown, 1 max container) for all new synthesis endpoints.',
+      'Universal Vault & Gallery Integration: 1-click Save to Vault and gallery persistence for all synthesized outputs across all 6 architectures.'
+    ]
+  },
+  {
     version: 'v4.9.2 BUILD 160',
     date: '2026.09.12',
     badge: 'CONTROLNET FORGE // MULTI-MODAL MATRIX & REPOSITORY',

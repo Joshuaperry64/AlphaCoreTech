@@ -34,13 +34,14 @@ function getModalSettings() {
   const architectEndpoints = {
     txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
     img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    omnigenUrl: 'https://josh64perry--alphacore-aio-backend-omnigen-web-omnigen.modal.run',
     preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run',
     txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
     img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
     framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-ui-framepack.modal.run',
     fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
     music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run',
-    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run/api/upscale',
+    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-upscaler-web-upscale.modal.run',
     tierName: 'ARCHITECT PRIORITY',
     tierHardware: 'H100 / L40S High-Performance Nodes',
   };
@@ -48,13 +49,14 @@ function getModalSettings() {
   const economyEndpoints = {
     txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-eco-web-txt2img.modal.run',
     img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-eco-web-img2img.modal.run',
+    omnigenUrl: 'https://josh64perry--alphacore-aio-backend-omnigen-eco-web-omnigen.modal.run',
     preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preproc-eco-web-process.modal.run',
     txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-eco-web-txt2vid.modal.run/stream',
     img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-eco-web-img2vid.modal.run/stream',
     framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-eco-ui-framepack.modal.run',
     fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
     music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run',
-    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run/api/upscale',
+    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run',
     tierName: 'PUBLIC ECONOMY',
     tierHardware: 'Cost-Optimized Nodes (60s Auto-Scale, Max 1)',
   };
@@ -85,7 +87,7 @@ function getModalSettings() {
     if (customStr) {
       const custom = JSON.parse(customStr);
       // Strip trailing slashes from any cached custom endpoints
-      ['txt2imgUrl', 'img2imgUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url', 'upscalerUrl'].forEach(k => {
+      ['txt2imgUrl', 'img2imgUrl', 'omnigenUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url', 'upscalerUrl'].forEach(k => {
         if (custom[k] && typeof custom[k] === 'string') {
           custom[k] = custom[k].trim().replace(/\/+$/, '');
         }
@@ -93,12 +95,13 @@ function getModalSettings() {
       // Auto-heal outdated endpoints in user's localStorage
       if (custom.txt2imgUrl && (!custom.txt2imgUrl.includes('josh64perry') || custom.txt2imgUrl.endsWith('/stream'))) custom.txt2imgUrl = defaults.txt2imgUrl;
       if (custom.img2imgUrl && (!custom.img2imgUrl.includes('josh64perry') || custom.img2imgUrl.endsWith('/stream'))) custom.img2imgUrl = defaults.img2imgUrl;
+      if (custom.omnigenUrl && !custom.omnigenUrl.includes('josh64perry')) custom.omnigenUrl = defaults.omnigenUrl;
       if (custom.preprocessorUrl && !custom.preprocessorUrl.includes('josh64perry')) custom.preprocessorUrl = defaults.preprocessorUrl;
       if (custom.txt2vidUrl && !custom.txt2vidUrl.includes('josh64perry')) custom.txt2vidUrl = defaults.txt2vidUrl;
       if (custom.img2vidUrl && !custom.img2vidUrl.includes('josh64perry')) custom.img2vidUrl = defaults.img2vidUrl;
       if (custom.framepackUrl && !custom.framepackUrl.includes('josh64perry')) custom.framepackUrl = defaults.framepackUrl;
       if (custom.music_url && !custom.music_url.includes('josh64perry')) custom.music_url = defaults.music_url;
-      if (custom.upscalerUrl && !custom.upscalerUrl.includes('josh64perry')) custom.upscalerUrl = defaults.upscalerUrl;
+      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('josh64perry') || custom.upscalerUrl.includes('alphacore-main-api'))) custom.upscalerUrl = defaults.upscalerUrl;
       if (custom.fanninCrimeUrl && !custom.fanninCrimeUrl.includes('josh64perry')) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
 
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
@@ -1350,6 +1353,41 @@ function buildImg2Img() {
       </div>
     </div>
 
+    <!-- FLUX.1-FILL INPAINTING CANVAS CONTAINER (OBJECTIVE 3) -->
+    <div id="i2i-inpaint-panel" class="inpaint-wrapper" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <label class="aim-label" style="margin:0; font-weight:bold; color:var(--blue); font-size:0.75rem;">
+          <span>🖌️</span> FLUX.1-FILL INPAINTING MASK CANVAS
+        </label>
+        <span class="inpaint-status-badge" id="inpaint-status" style="background:rgba(0,184,255,0.1); border:1px solid var(--border); color:var(--blue);">
+          NO MASK (FULL INPAINT)
+        </span>
+      </div>
+      <div class="inpaint-toolbar">
+        <button type="button" class="aim-btn aim-btn-sm active" id="inpaint-tool-brush" style="padding:4px 10px;">🖌️ BRUSH</button>
+        <button type="button" class="aim-btn aim-btn-sm" id="inpaint-tool-eraser" style="padding:4px 10px;">🧹 ERASER</button>
+        
+        <div style="display:flex; align-items:center; gap:8px; margin-left:6px;">
+          <span style="font-size:0.7rem; color:var(--blue-dim); letter-spacing:1px;">SIZE:</span>
+          <input type="range" id="inpaint-brush-size" min="5" max="100" value="30" style="width:90px; accent-color:var(--blue);" />
+          <span id="inpaint-brush-size-val" style="font-size:0.75rem; color:var(--blue); font-family:var(--font-mono); min-width:32px;">30px</span>
+        </div>
+
+        <div style="margin-left:auto; display:flex; gap:6px;">
+          <button type="button" class="aim-btn aim-btn-sm" id="inpaint-invert-btn" style="padding:4px 10px; border-color:#8b5cf6; color:#a78bfa;">🔄 INVERT</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="inpaint-clear-btn" style="padding:4px 10px; border-color:#ef4444; color:#ef4444;">🗑️ CLEAR MASK</button>
+        </div>
+      </div>
+
+      <div class="inpaint-canvas-container" id="inpaint-canvas-wrap">
+        <img id="inpaint-bg-img" class="inpaint-bg-img" alt="Inpaint source background" />
+        <canvas id="i2i-inpaint-canvas" class="inpaint-canvas-layer"></canvas>
+      </div>
+      <div style="font-size:0.7rem; color:#888; font-family:var(--font-mono);">
+        Draw over areas you want FLUX.1-Fill to regenerate. Mask is exported as high-res PNG matching exact input image resolution.
+      </div>
+    </div>
+
     <div class="aim-field">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <label class="aim-label" for="i2i-prompt" style="margin:0;">EDIT INSTRUCTION</label>
@@ -1366,6 +1404,23 @@ function buildImg2Img() {
           <button class="aim-btn aim-btn-sm i2i-quick-action" style="padding: 4px 8px; font-size: 0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="Completely naked, remove all clothing, photorealistic, highly detailed, sharp focus, anatomically correct, keeping the same person, preserve original body type and proportions, maintain the original pose and facial expression.">🔥 Nudify</button>
         ` : ''}
       </div>
+
+      <!-- COSXL DIRECT COMMANDS PANEL (OBJECTIVE 5) -->
+      <div id="i2i-cosxl-panel" style="display:none; margin-top:10px; background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.3); padding:10px 12px; border-radius:var(--radius);">
+        <div style="font-family:var(--font-hud); font-size:0.72rem; color:#c084fc; letter-spacing:1px; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+          <span>🪄</span> COSXL NATURAL LANGUAGE DIRECT COMMANDS
+        </div>
+        <div style="font-size:0.72rem; color:#aaa; margin-bottom:8px;">
+          State direct transformation commands guided by EDM VPred schedule:
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="aim-btn aim-btn-sm cosxl-chip" style="padding:3px 8px; font-size:0.72rem;" data-cmd="make it rainy with puddles and wet reflections">🌧️ Make it rainy</button>
+          <button type="button" class="aim-btn aim-btn-sm cosxl-chip" style="padding:3px 8px; font-size:0.72rem;" data-cmd="turn into a classical textured oil painting">🎨 Oil painting</button>
+          <button type="button" class="aim-btn aim-btn-sm cosxl-chip" style="padding:3px 8px; font-size:0.72rem;" data-cmd="change environment to a blizzard with snow and frost">❄️ Snow & blizzard</button>
+          <button type="button" class="aim-btn aim-btn-sm cosxl-chip" style="padding:3px 8px; font-size:0.72rem;" data-cmd="change lighting to golden hour sunset with warm glows">🌅 Golden hour</button>
+          <button type="button" class="aim-btn aim-btn-sm cosxl-chip" style="padding:3px 8px; font-size:0.72rem;" data-cmd="give subject glowing cybernetic implants and tech cyberware">🤖 Add cyberware</button>
+        </div>
+      </div>
     </div>
 
     <div class="aim-row">
@@ -1377,22 +1432,64 @@ function buildImg2Img() {
           <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 DETAILED</button>
         </div>
       </div>
-      <div class="aim-field aim-field-half">
-        <label class="aim-label">IMAGE TO IMAGE MODEL</label>
-        <div class="aim-seg aim-seg-2" id="i2i-model-select">
-          <button class="aim-seg-btn active" data-model="qwen">🧠 QWEN</button>
-          <button class="aim-seg-btn" data-model="flux">🌀 FLUX</button>
-        </div>
+      <div class="aim-field aim-field-half" style="display:flex; justify-content:flex-end; align-items:flex-end;">
+        <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin-bottom:6px; user-select:none;">
+          <span style="margin-right:8px;">DETAILIFIER:</span>
+          <div id="i2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
+            <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
+          </div>
+        </label>
       </div>
     </div>
-    
-    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; width:100%;">
-      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
-        <span style="margin-right:8px;">DETAILIFIER:</span>
-        <div id="i2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
-          <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
-        </div>
+
+    <!-- 6 SYNTHESIS ARCHITECTURES SELECTOR -->
+    <div class="aim-field" style="margin-top:10px;">
+      <label class="aim-label">IMAGE TO IMAGE SYNTHESIS ARCHITECTURE</label>
+      <div class="aim-seg aim-seg-6" id="i2i-model-select">
+        <button type="button" class="aim-seg-btn active" data-model="qwen">🧠 QWEN</button>
+        <button type="button" class="aim-seg-btn" data-model="flux">🌀 FLUX.1</button>
+        <button type="button" class="aim-seg-btn" data-model="sdxl">⚡ SDXL NATIVE</button>
+        <button type="button" class="aim-seg-btn" data-model="flux_fill">🖌️ FLUX.1-FILL</button>
+        <button type="button" class="aim-seg-btn" data-model="cosxl">🪄 COSXL EDIT</button>
+        <button type="button" class="aim-seg-btn" data-model="sd35">🌌 SD 3.5 LARGE</button>
+      </div>
+    </div>
+
+    <!-- SDXL CUSTOM CHECKPOINT CATALOG (OBJECTIVE 2) -->
+    <div id="i2i-sdxl-panel" style="display:none; margin-top:10px;">
+      <label class="aim-label" for="i2i-checkpoint">SDXL CUSTOM CHECKPOINT CATALOG</label>
+      <select class="aim-input" id="i2i-checkpoint">
+        <option value="epicrealismXL_pureFix" selected>epicrealismXL_pureFix (Photorealism & Human Anatomy)</option>
+        <option value="0x7RealisticFreedom_omegaSDXL">0x7RealisticFreedom_omegaSDXL (Hyper-Realistic Freedom)</option>
+        <option value="juggernautXL_ragnarok">juggernautXL_ragnarok (Cinematic Lighting & Micro-Details)</option>
+        <option value="cyberrealisticXL_desireV30">cyberrealisticXL_desireV30 (Cyberpunk High Dynamic Range)</option>
+        <option value="unholyDesireMixSinister_v80">unholyDesireMixSinister_v80 (Sinister Dark Stylization)</option>
+        <option value="lustifyNSFWCheckpoint_zenithV9">lustifyNSFWCheckpoint_zenithV9 (Unfiltered High-Aesthetic)</option>
+        <option value="dreamshaperXL_alpha2Xl10">dreamshaperXL_alpha2Xl10 (Creative Concept & Digital Art)</option>
+      </select>
+    </div>
+
+    <!-- TRANSFORMATION / DENOISING STRENGTH SLIDER (OBJECTIVES 2, 6) -->
+    <div id="i2i-strength-panel" style="display:none; margin-top:10px;">
+      <label class="aim-label" for="i2i-strength" id="i2i-strength-label" style="display:flex; justify-content:space-between;">
+        <span>TRANSFORMATION / DENOISING STRENGTH</span>
+        <span class="aim-val-display" id="i2i-strength-val">0.75 (75%)</span>
       </label>
+      <input class="aim-range" type="range" id="i2i-strength" min="0.05" max="1.0" step="0.05" value="0.75" />
+      <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
+        <span>0.05 (Subtle Refinement)</span>
+        <span>0.50 (Balanced Alteration)</span>
+        <span>1.00 (Complete Resynthesis)</span>
+      </div>
+    </div>
+
+    <!-- COSXL IMAGE GUIDANCE SCALE (OBJECTIVE 5) -->
+    <div id="i2i-cosxl-guidance-panel" style="display:none; margin-top:10px;">
+      <label class="aim-label" for="i2i-img-guidance" style="display:flex; justify-content:space-between;">
+        <span>IMAGE GUIDANCE SCALE (INPUT PRESERVATION)</span>
+        <span class="aim-val-display" id="i2i-img-guidance-val">1.5</span>
+      </label>
+      <input class="aim-range" type="range" id="i2i-img-guidance" min="1.0" max="3.0" step="0.1" value="1.5" />
     </div>
 
     <div class="aim-row">
@@ -1509,66 +1606,338 @@ function buildImg2Img() {
   const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
   const i2iCfgLabel = wrap.querySelector('#i2i-cfg-label');
 
+  const sdxlPanel = wrap.querySelector('#i2i-sdxl-panel');
+  const strengthPanel = wrap.querySelector('#i2i-strength-panel');
+  const strengthInput = wrap.querySelector('#i2i-strength');
+  const strengthVal = wrap.querySelector('#i2i-strength-val');
+  const cosxlPanel = wrap.querySelector('#i2i-cosxl-panel');
+  const cosxlGuidancePanel = wrap.querySelector('#i2i-cosxl-guidance-panel');
+  const cosxlImgGuidance = wrap.querySelector('#i2i-img-guidance');
+  const cosxlImgGuidanceVal = wrap.querySelector('#i2i-img-guidance-val');
+  const inpaintPanel = wrap.querySelector('#i2i-inpaint-panel');
+  const inpaintCanvas = wrap.querySelector('#i2i-inpaint-canvas');
+  const inpaintBgImg = wrap.querySelector('#i2i-inpaint-bg-img');
+  const inpaintStatus = wrap.querySelector('#inpaint-status');
+
+  /* ── FLUX.1-Fill Inpainting Canvas Engine ── */
+  let inpaintCtx = inpaintCanvas ? inpaintCanvas.getContext('2d') : null;
+  let isDrawing = false;
+  let currentTool = 'brush';
+  let brushSize = 30;
+  let hasDrawnMask = false;
+  let lastCoord = null;
+
+  function syncInpaintImage(srcUrl) {
+    if (!inpaintBgImg || !srcUrl) return;
+    inpaintBgImg.src = srcUrl;
+    inpaintBgImg.onload = () => {
+      initInpaintCanvas();
+    };
+  }
+
+  function initInpaintCanvas() {
+    if (!inpaintBgImg || !inpaintCanvas) return;
+    const w = inpaintBgImg.clientWidth || inpaintBgImg.offsetWidth || 300;
+    const h = inpaintBgImg.clientHeight || inpaintBgImg.offsetHeight || 300;
+    if (w <= 0 || h <= 0) return;
+    inpaintCanvas.width = w;
+    inpaintCanvas.height = h;
+    inpaintCanvas.style.width = w + 'px';
+    inpaintCanvas.style.height = h + 'px';
+    inpaintCtx = inpaintCanvas.getContext('2d');
+    inpaintCtx.lineCap = 'round';
+    inpaintCtx.lineJoin = 'round';
+    updateMaskStatus();
+  }
+
+  function updateMaskStatus() {
+    if (!inpaintCanvas || !inpaintCtx) return;
+    try {
+      const imgData = inpaintCtx.getImageData(0, 0, inpaintCanvas.width, inpaintCanvas.height);
+      let markedCount = 0;
+      const totalPixels = imgData.data.length / 4;
+      for (let i = 3; i < imgData.data.length; i += 16) {
+        if (imgData.data[i] > 20) markedCount += 4;
+      }
+      const pct = Math.min(100, Math.round((markedCount / totalPixels) * 100));
+      if (pct > 0) {
+        hasDrawnMask = true;
+        inpaintStatus.textContent = `MASK: ACTIVE (${pct}% DRAWN)`;
+        inpaintStatus.style.color = '#10b981';
+        inpaintStatus.style.borderColor = '#10b981';
+        inpaintStatus.style.background = 'rgba(16, 185, 129, 0.15)';
+      } else {
+        hasDrawnMask = false;
+        inpaintStatus.textContent = 'NO MASK (FULL INPAINT)';
+        inpaintStatus.style.color = 'var(--blue)';
+        inpaintStatus.style.borderColor = 'var(--border)';
+        inpaintStatus.style.background = 'rgba(0, 184, 255, 0.1)';
+      }
+    } catch (e) {}
+  }
+
+  function getInpaintCoords(e) {
+    const rect = inpaintCanvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    const sx = inpaintCanvas.width / (rect.width || 1);
+    const sy = inpaintCanvas.height / (rect.height || 1);
+    return {
+      x: (cx - rect.left) * sx,
+      y: (cy - rect.top) * sy
+    };
+  }
+
+  function drawStroke(x1, y1, x2, y2) {
+    if (!inpaintCtx) return;
+    inpaintCtx.beginPath();
+    if (currentTool === 'eraser') {
+      inpaintCtx.globalCompositeOperation = 'destination-out';
+      inpaintCtx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      inpaintCtx.globalCompositeOperation = 'source-over';
+      inpaintCtx.strokeStyle = 'rgba(0, 184, 255, 0.7)';
+    }
+    inpaintCtx.lineWidth = brushSize;
+    inpaintCtx.moveTo(x1, y1);
+    inpaintCtx.lineTo(x2, y2);
+    inpaintCtx.stroke();
+  }
+
+  function startDraw(e) {
+    if (e.cancelable) e.preventDefault();
+    isDrawing = true;
+    lastCoord = getInpaintCoords(e);
+    drawStroke(lastCoord.x, lastCoord.y, lastCoord.x, lastCoord.y);
+  }
+  function moveDraw(e) {
+    if (!isDrawing) return;
+    if (e.cancelable) e.preventDefault();
+    const newCoord = getInpaintCoords(e);
+    drawStroke(lastCoord.x, lastCoord.y, newCoord.x, newCoord.y);
+    lastCoord = newCoord;
+  }
+  function endDraw() {
+    if (isDrawing) {
+      isDrawing = false;
+      lastCoord = null;
+      updateMaskStatus();
+    }
+  }
+
+  if (inpaintCanvas) {
+    inpaintCanvas.addEventListener('mousedown', startDraw);
+    window.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+    inpaintCanvas.addEventListener('touchstart', startDraw, { passive: false });
+    inpaintCanvas.addEventListener('touchmove', moveDraw, { passive: false });
+    inpaintCanvas.addEventListener('touchend', endDraw);
+  }
+
+  // Brush / Eraser tool buttons
+  const toolBrushBtn = wrap.querySelector('#inpaint-tool-brush');
+  const toolEraserBtn = wrap.querySelector('#inpaint-tool-eraser');
+  if (toolBrushBtn) {
+    toolBrushBtn.addEventListener('click', () => {
+      currentTool = 'brush';
+      toolBrushBtn.classList.add('active');
+      toolEraserBtn?.classList.remove('active');
+    });
+  }
+  if (toolEraserBtn) {
+    toolEraserBtn.addEventListener('click', () => {
+      currentTool = 'eraser';
+      toolEraserBtn.classList.add('active');
+      toolBrushBtn?.classList.remove('active');
+    });
+  }
+
+  // Brush size slider
+  const brushSizeSlider = wrap.querySelector('#inpaint-brush-size');
+  const brushSizeVal = wrap.querySelector('#inpaint-brush-size-val');
+  if (brushSizeSlider) {
+    brushSizeSlider.addEventListener('input', () => {
+      brushSize = parseInt(brushSizeSlider.value);
+      if (brushSizeVal) brushSizeVal.textContent = `${brushSize}px`;
+    });
+  }
+
+  // Clear mask
+  wrap.querySelector('#inpaint-clear-btn')?.addEventListener('click', () => {
+    if (!inpaintCtx || !inpaintCanvas) return;
+    inpaintCtx.clearRect(0, 0, inpaintCanvas.width, inpaintCanvas.height);
+    updateMaskStatus();
+  });
+
+  // Invert mask
+  wrap.querySelector('#inpaint-invert-btn')?.addEventListener('click', () => {
+    if (!inpaintCtx || !inpaintCanvas) return;
+    const w = inpaintCanvas.width;
+    const h = inpaintCanvas.height;
+    const imgData = inpaintCtx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] > 20) {
+        d[i + 3] = 0;
+      } else {
+        d[i] = 0;
+        d[i + 1] = 184;
+        d[i + 2] = 255;
+        d[i + 3] = 180;
+      }
+    }
+    inpaintCtx.putImageData(imgData, 0, 0);
+    updateMaskStatus();
+  });
+
+  // Export base64 mask matching source image resolution
+  function getInpaintMaskDataUrl() {
+    if (!hasDrawnMask || !inpaintCanvas || !inpaintBgImg) return null;
+    const origW = inpaintBgImg.naturalWidth || inpaintCanvas.width;
+    const origH = inpaintBgImg.naturalHeight || inpaintCanvas.height;
+
+    const off = document.createElement('canvas');
+    off.width = origW;
+    off.height = origH;
+    const offCtx = off.getContext('2d');
+
+    // Fill offscreen background solid black
+    offCtx.fillStyle = '#000000';
+    offCtx.fillRect(0, 0, origW, origH);
+
+    // Create white-only representation of drawn strokes
+    const tmp = document.createElement('canvas');
+    tmp.width = inpaintCanvas.width;
+    tmp.height = inpaintCanvas.height;
+    const tmpCtx = tmp.getContext('2d');
+    tmpCtx.drawImage(inpaintCanvas, 0, 0);
+    tmpCtx.globalCompositeOperation = 'source-in';
+    tmpCtx.fillStyle = '#FFFFFF';
+    tmpCtx.fillRect(0, 0, tmp.width, tmp.height);
+
+    // Render scaled white mask on black canvas
+    offCtx.drawImage(tmp, 0, 0, origW, origH);
+    return off.toDataURL('image/png');
+  }
+
+  // CosXL Quick Command Chips
+  wrap.querySelectorAll('.cosxl-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const promptInput = wrap.querySelector('#i2i-prompt');
+      if (promptInput) {
+        promptInput.value = chip.dataset.cmd;
+        playSFX('pop', 0.8);
+      }
+    });
+  });
+
+  // Strength Slider Handler
+  if (strengthInput) {
+    strengthInput.addEventListener('input', () => {
+      const val = parseFloat(strengthInput.value);
+      if (strengthVal) strengthVal.textContent = `${val.toFixed(2)} (${Math.round(val * 100)}%)`;
+    });
+  }
+
+  // CosXL Image Guidance Handler
+  if (cosxlImgGuidance) {
+    cosxlImgGuidance.addEventListener('input', () => {
+      if (cosxlImgGuidanceVal) cosxlImgGuidanceVal.textContent = parseFloat(cosxlImgGuidance.value).toFixed(1);
+    });
+  }
+
+  /* ── Model Switching Logic (Objectives 1-6) ── */
+  function updateModelUI(model) {
+    if (sdxlPanel) sdxlPanel.style.display = (model === 'sdxl') ? 'block' : 'none';
+    if (strengthPanel) strengthPanel.style.display = (model === 'sdxl' || model === 'sd35' || model === 'flux') ? 'block' : 'none';
+    if (cosxlPanel) cosxlPanel.style.display = (model === 'cosxl') ? 'block' : 'none';
+    if (cosxlGuidancePanel) cosxlGuidancePanel.style.display = (model === 'cosxl') ? 'block' : 'none';
+    if (inpaintPanel) {
+      inpaintPanel.style.display = (model === 'flux_fill') ? 'block' : 'none';
+      if (model === 'flux_fill') setTimeout(initInpaintCanvas, 60);
+    }
+
+    if (model === 'flux') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (4)';
+        speedBtns[0].dataset.steps = '4';
+        speedBtns[1].textContent = '⚖ NORMAL (6)';
+        speedBtns[1].dataset.steps = '6';
+        speedBtns[2].textContent = '🎯 HIGH (8)';
+        speedBtns[2].dataset.steps = '8';
+      }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg || 4.0)}</span>`;
+    } else if (model === 'sdxl') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (20)';
+        speedBtns[0].dataset.steps = '20';
+        speedBtns[1].textContent = '⚖ NORMAL (30)';
+        speedBtns[1].dataset.steps = '30';
+        speedBtns[2].textContent = '🎯 HIGH (45)';
+        speedBtns[2].dataset.steps = '45';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '20'; i2iCfgInput.value = '7.0'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `CFG GUIDANCE SCALE: <span class="aim-val-display" id="i2i-cfg-val">7.0</span>`;
+    } else if (model === 'flux_fill') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (15)';
+        speedBtns[0].dataset.steps = '15';
+        speedBtns[1].textContent = '⚖ NORMAL (25)';
+        speedBtns[1].dataset.steps = '25';
+        speedBtns[2].textContent = '🎯 HIGH (35)';
+        speedBtns[2].dataset.steps = '35';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '40'; i2iCfgInput.value = '30.0'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `INPAINT GUIDANCE: <span class="aim-val-display" id="i2i-cfg-val">30.0</span>`;
+    } else if (model === 'cosxl') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (20)';
+        speedBtns[0].dataset.steps = '20';
+        speedBtns[1].textContent = '⚖ NORMAL (30)';
+        speedBtns[1].dataset.steps = '30';
+        speedBtns[2].textContent = '🎯 HIGH (40)';
+        speedBtns[2].dataset.steps = '40';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '15'; i2iCfgInput.value = '7.0'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `TEXT GUIDANCE (CFG): <span class="aim-val-display" id="i2i-cfg-val">7.0</span>`;
+    } else if (model === 'sd35') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (15)';
+        speedBtns[0].dataset.steps = '15';
+        speedBtns[1].textContent = '⚖ NORMAL (25)';
+        speedBtns[1].dataset.steps = '25';
+        speedBtns[2].textContent = '🎯 HIGH (40)';
+        speedBtns[2].dataset.steps = '40';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '15'; i2iCfgInput.value = '4.5'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `MMDiT GUIDANCE SCALE: <span class="aim-val-display" id="i2i-cfg-val">4.5</span>`;
+    } else {
+      // Default: qwen
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST';
+        speedBtns[0].dataset.steps = settings.stepsFastImg || '15';
+        speedBtns[1].textContent = '⚖ NORMAL';
+        speedBtns[1].dataset.steps = settings.stepsNormalImg || '25';
+        speedBtns[2].textContent = '🎯 DETAILED';
+        speedBtns[2].dataset.steps = settings.stepsFocusedImg || '40';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '20'; i2iCfgInput.value = settings.guidanceImg || '4.0'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg || 4.0)}</span>`;
+    }
+  }
+
   wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      const model = btn.dataset.model;
-      if (model === 'flux') {
-        if (speedBtns.length >= 3) {
-          speedBtns[0].textContent = '⚡ FAST (4)';
-          speedBtns[0].dataset.steps = '4';
-          speedBtns[1].textContent = '⚖ NORMAL (6)';
-          speedBtns[1].dataset.steps = '6';
-          speedBtns[2].textContent = '🎯 HIGH (8)';
-          speedBtns[2].dataset.steps = '8';
-        }
-        if (i2iCfgInput) {
-          i2iCfgInput.min = '1';
-          i2iCfgInput.max = '10';
-          i2iCfgInput.step = '0.5';
-          i2iCfgInput.value = '7.5';
-        }
-        if (i2iCfgLabel) {
-          i2iCfgLabel.innerHTML = `TRANSFORMATION STRENGTH (0.1 - 1.0): <span class="aim-val-display" id="i2i-cfg-val">7.5</span> (75%)`;
-        }
-      } else {
-        if (speedBtns.length >= 3) {
-          speedBtns[0].textContent = '⚡ FAST';
-          speedBtns[0].dataset.steps = settings.stepsFastImg || '15';
-          speedBtns[1].textContent = '⚖ NORMAL';
-          speedBtns[1].dataset.steps = settings.stepsNormalImg || '25';
-          speedBtns[2].textContent = '🎯 DETAILED';
-          speedBtns[2].dataset.steps = settings.stepsFocusedImg || '40';
-        }
-        if (i2iCfgInput) {
-          i2iCfgInput.min = '1';
-          i2iCfgInput.max = '20';
-          i2iCfgInput.step = '0.5';
-          i2iCfgInput.value = settings.guidanceImg || '4.0';
-        }
-        if (i2iCfgLabel) {
-          i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg || 4.0)}</span>`;
-        }
-      }
+      updateModelUI(btn.dataset.model);
     });
   });
 
   if (i2iCfgInput) {
     i2iCfgInput.addEventListener('input', () => {
-      const activeModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model;
       const val = parseFloat(i2iCfgInput.value);
-      if (activeModel === 'flux') {
-        const pct = Math.round((val / 10.0) * 100);
-        if (i2iCfgLabel) {
-          i2iCfgLabel.innerHTML = `TRANSFORMATION STRENGTH (0.1 - 1.0): <span class="aim-val-display" id="i2i-cfg-val">${val}</span> (${pct}%)`;
-        }
-      } else {
-        if (i2iCfgLabel) {
-          i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${val}</span>`;
-        }
-      }
+      if (i2iCfgVal) i2iCfgVal.textContent = val.toFixed(1);
     });
   }
 
@@ -1603,6 +1972,9 @@ function buildImg2Img() {
     prv.classList.remove('hidden');
     dzI.classList.add('hidden');
     dz.classList.add('has-preview');
+    if (prv === preview) {
+      syncInpaintImage(url);
+    }
   }
 
   function bindDropzone(fInput, dz, dzI, prv) {
@@ -1717,9 +2089,34 @@ function buildImg2Img() {
       formData.append('width', w);
       formData.append('height', h);
 
-      const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active').dataset.model;
+      const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model || 'qwen';
       formData.append('model', selectedI2iModel);
       formData.append('model_name', selectedI2iModel);
+
+      // Objective 2: SDXL Native Checkpoint Catalog
+      if (selectedI2iModel === 'sdxl') {
+        const ckpt = wrap.querySelector('#i2i-checkpoint')?.value || 'epicrealismXL_pureFix';
+        formData.append('checkpoint', ckpt);
+      }
+
+      // Objectives 2, 6 & Flux: Denoising Strength
+      const denoiseVal = parseFloat(wrap.querySelector('#i2i-strength')?.value || 0.75);
+      formData.append('strength', denoiseVal);
+
+      // Objective 5: CosXL Edit Direct Natural Language Instruction
+      if (selectedI2iModel === 'cosxl') {
+        formData.append('instruction', prompt);
+        const imgG = parseFloat(wrap.querySelector('#i2i-img-guidance')?.value || 1.5);
+        formData.append('image_guidance_scale', imgG);
+      }
+
+      // Objective 3: FLUX.1-Fill Inpainting Canvas Mask Export
+      if (selectedI2iModel === 'flux_fill') {
+        const maskDataUrl = getInpaintMaskDataUrl();
+        if (maskDataUrl) {
+          formData.append('mask_b64', maskDataUrl);
+        }
+      }
       const i2iEndpoint = resolveEndpoint(settings.img2imgUrl, 'stream');
 
       const res = await fetch(i2iEndpoint, { method: 'POST', body: formData });
@@ -1807,6 +2204,427 @@ function buildImg2Img() {
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
       setStatus(wrap, '#i2i-status', `FAILURE: ${err.message}`, 'error');
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+
+  return wrap;
+}
+
+/* ─── OMNIGEN MULTIMODAL SYNTHESIS PANEL (OBJECTIVE 1) ──────── */
+function buildOmniGen() {
+  const settings = getModalSettings();
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const maxBatchCount = isArchitect ? Infinity : 4;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'aim-panel';
+  wrap.innerHTML = `
+    <div class="aim-panel-header">
+      <span class="aim-panel-icon">🧬</span>
+      <span class="aim-panel-title">OMNIGEN // UNIFIED MULTIMODAL ENGINE</span>
+      <span class="aim-panel-badge">BAAI OMNIGEN-V1</span>
+    </div>
+
+    <p style="font-size:0.8rem; color:#88c0d0; line-height:1.5; margin-bottom:12px; font-family:var(--font-mono);">
+      Arbitrary multi-image conditioning & instruction editing via BAAI/OmniGen-v1. Drop up to 3 conditioning images and reference them in prompt using <span class="omnigen-token-pill" data-token="<img><|image_1|></img>">&lt;img&gt;&lt;|image_1|&gt;&lt;/img&gt;</span>, <span class="omnigen-token-pill" data-token="<img><|image_2|></img>">&lt;img&gt;&lt;|image_2|&gt;&lt;/img&gt;</span>, <span class="omnigen-token-pill" data-token="<img><|image_3|></img>">&lt;img&gt;&lt;|image_3|&gt;&lt;/img&gt;</span> or leave prompt freeform for automatic slot binding.
+    </p>
+
+    <!-- 3 REFERENCE IMAGE SLOTS GRID -->
+    <div class="aim-field">
+      <label class="aim-label">CONDITIONING REFERENCE IMAGES (UP TO 3 SLOTS)</label>
+      <div class="omnigen-slots-grid" id="omnigen-slots">
+        <!-- SLOT 1 -->
+        <div class="omnigen-slot-card" id="omni-slot-0" data-slot="0">
+          <span class="omnigen-slot-badge">REF #1: &lt;|image_1|&gt;</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="omni-remove-0" title="Remove image">✕</button>
+          <input type="file" class="aim-file-input" id="omni-file-0" accept="image/*" />
+          <div class="aim-dropzone-inner" id="omni-dz-0">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP REF #1</div>
+            <div class="aim-dz-sub">Subject / Identity</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="omni-preview-0" alt="Ref 1 preview" />
+        </div>
+
+        <!-- SLOT 2 -->
+        <div class="omnigen-slot-card" id="omni-slot-1" data-slot="1">
+          <span class="omnigen-slot-badge">REF #2: &lt;|image_2|&gt;</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="omni-remove-1" title="Remove image">✕</button>
+          <input type="file" class="aim-file-input" id="omni-file-1" accept="image/*" />
+          <div class="aim-dropzone-inner" id="omni-dz-1">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP REF #2</div>
+            <div class="aim-dz-sub">Style / Outfit / Pose</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="omni-preview-1" alt="Ref 2 preview" />
+        </div>
+
+        <!-- SLOT 3 -->
+        <div class="omnigen-slot-card" id="omni-slot-2" data-slot="2">
+          <span class="omnigen-slot-badge">REF #3: &lt;|image_3|&gt;</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="omni-remove-2" title="Remove image">✕</button>
+          <input type="file" class="aim-file-input" id="omni-file-2" accept="image/*" />
+          <div class="aim-dropzone-inner" id="omni-dz-2">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text">DROP REF #3</div>
+            <div class="aim-dz-sub">Background / Scene</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="omni-preview-2" alt="Ref 3 preview" />
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPT / TRANSFORMATION INSTRUCTION -->
+    <div class="aim-field">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" for="omni-prompt" style="margin:0;">MULTIMODAL SYNTHESIS PROMPT & INSTRUCTION</label>
+        <button type="button" class="aim-btn aim-btn-sm" id="omni-enhance-btn" style="padding:2px 10px; font-size:0.75rem; background:rgba(6,182,212,0.15); border-color:var(--accent); color:var(--accent);" title="Auto-enhance instruction with AI matrix descriptors">✨ AI ENHANCE</button>
+      </div>
+      <textarea class="aim-textarea" id="omni-prompt" rows="3" placeholder="e.g. <img><|image_1|></img> wears the outfit from <img><|image_2|></img> in a futuristic cyberpunk city at night..."></textarea>
+      
+      <div class="aim-quick-actions" style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="aim-btn aim-btn-sm omni-quick-action" style="padding:4px 8px; font-size:0.75rem;" data-prompt="<img><|image_1|></img> in the artistic visual style and aesthetic lighting of <img><|image_2|></img>, masterpiece, highly detailed">🧬 Style Fusion</button>
+        <button type="button" class="aim-btn aim-btn-sm omni-quick-action" style="padding:4px 8px; font-size:0.75rem;" data-prompt="A fashion model wearing the clothing and garment from <img><|image_1|></img> in a professional studio setting, high resolution, 8k">👗 Virtual Try-On</button>
+        <button type="button" class="aim-btn aim-btn-sm omni-quick-action" style="padding:4px 8px; font-size:0.75rem;" data-prompt="The character in <img><|image_1|></img> in the exact bodily pose and camera angle of <img><|image_2|></img>, photorealistic">🤸 Pose Transfer</button>
+        <button type="button" class="aim-btn aim-btn-sm omni-quick-action" style="padding:4px 8px; font-size:0.75rem;" data-prompt="Place the object from <img><|image_2|></img> naturally onto the scene in <img><|image_1|></img> with matching shadow and realistic lighting">✂️ Object Placement</button>
+        <button type="button" class="aim-btn aim-btn-sm omni-quick-action" style="padding:4px 8px; font-size:0.75rem;" data-prompt="<img><|image_1|></img> re-imagined as a high-tier cyberpunk runner with neon cyberware, rain reflections, volumetric lighting">🌃 Cyberpunk Re-imagining</button>
+      </div>
+    </div>
+
+    <!-- INFERENCE PARAMETERS -->
+    <div class="aim-row">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label">INFERENCE STEPS</label>
+        <div class="aim-seg aim-seg-3" id="omni-speed">
+          <button type="button" class="aim-seg-btn" data-steps="25">⚡ FAST (25)</button>
+          <button type="button" class="aim-seg-btn active" data-steps="35">⚖ NORMAL (35)</button>
+          <button type="button" class="aim-seg-btn" data-steps="50">🎯 DETAILED (50)</button>
+        </div>
+      </div>
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="omni-aspect">ASPECT RATIO / CANVAS</label>
+        <select class="aim-input" id="omni-aspect">
+          <option value="1024x1024" selected>1:1 Square (1024x1024)</option>
+          <option value="832x1216">2:3 Portrait (832x1216)</option>
+          <option value="1216x832">3:2 Landscape (1216x832)</option>
+          <option value="768x1344">9:16 Mobile Tall (768x1344)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GUIDANCE CONTROLS -->
+    <div class="aim-row" style="margin-top:10px;">
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="omni-cfg" style="display:flex; justify-content:space-between;">
+          <span>TEXT GUIDANCE SCALE (CFG)</span>
+          <span class="aim-val-display" id="omni-cfg-val">2.5</span>
+        </label>
+        <input class="aim-range" type="range" id="omni-cfg" min="1.0" max="7.0" step="0.5" value="2.5" />
+      </div>
+
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="omni-img-cfg" style="display:flex; justify-content:space-between;">
+          <span>IMAGE GUIDANCE SCALE (INPUT FIDELITY)</span>
+          <span class="aim-val-display" id="omni-img-cfg-val">1.6</span>
+        </label>
+        <input class="aim-range" type="range" id="omni-img-cfg" min="1.0" max="4.0" step="0.1" value="1.6" />
+      </div>
+    </div>
+
+    <div class="aim-row" style="margin-top:10px;">
+      <div class="aim-field" style="width:100%;">
+        <label class="aim-label" for="omni-batch">BATCH COUNT ${isArchitect ? '<span style="color:#10b981; margin-left:4px;">[UNLIMITED]</span>' : '<span style="color:#f59e0b; margin-left:4px;">[MAX 4]</span>'}</label>
+        <input class="aim-input" type="number" id="omni-batch" min="1" max="${maxBatchCount}" value="1" />
+      </div>
+    </div>
+
+    <details class="aim-advanced" style="margin-top:10px;">
+      <summary class="aim-advanced-toggle">▶ ADVANCED MULTIMODAL PARAMETERS</summary>
+      <div class="aim-advanced-body">
+        <div class="aim-field">
+          <label class="aim-label" for="omni-neg">NEGATIVE PROMPT</label>
+          <textarea class="aim-textarea aim-textarea-sm" id="omni-neg" rows="2">${settings.negativePrompt}</textarea>
+        </div>
+        <div class="aim-field">
+          <label class="aim-label" for="omni-seed">SEED (-1 FOR RANDOM)</label>
+          <input class="aim-input" type="number" id="omni-seed" value="-1" />
+        </div>
+      </div>
+    </details>
+
+    <button class="aim-btn aim-btn-generate" id="omni-gen-btn" style="${!sessionStorage.getItem('generate_authenticated') ? 'background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;' : ''}; margin-top:16px;">
+      <span class="aim-btn-icon">${sessionStorage.getItem('generate_authenticated') ? '⚡' : '🔒'}</span> ${sessionStorage.getItem('generate_authenticated') ? 'INITIATE OMNIGEN SYNTHESIS' : 'GUEST PREVIEW MODE — CLICK TO LOGIN'}
+    </button>
+
+    <div class="aim-status-bar" id="omni-status"></div>
+    <div id="omni-loader-slot"></div>
+    <div id="omni-result-slot"></div>
+  `;
+
+  // Slot Image Management
+  const slotFiles = [null, null, null];
+
+  for (let i = 0; i < 3; i++) {
+    const slotCard = wrap.querySelector(`#omni-slot-${i}`);
+    const fileInput = wrap.querySelector(`#omni-file-${i}`);
+    const dzInner = wrap.querySelector(`#omni-dz-${i}`);
+    const preview = wrap.querySelector(`#omni-preview-${i}`);
+    const removeBtn = wrap.querySelector(`#omni-remove-${i}`);
+
+    function setSlotImage(file) {
+      if (!file) return;
+      slotFiles[i] = file;
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      preview.classList.remove('hidden');
+      dzInner.classList.add('hidden');
+      removeBtn.classList.remove('hidden');
+      slotCard.classList.add('has-image');
+      setStatus(wrap, '#omni-status', `Reference Image #${i + 1} loaded [${file.name}].`, 'info');
+    }
+
+    function clearSlot() {
+      slotFiles[i] = null;
+      preview.src = '';
+      preview.classList.add('hidden');
+      dzInner.classList.remove('hidden');
+      removeBtn.classList.add('hidden');
+      slotCard.classList.remove('has-image');
+      fileInput.value = '';
+    }
+
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearSlot();
+      setStatus(wrap, '#omni-status', `Reference Image #${i + 1} removed.`);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) setSlotImage(fileInput.files[0]);
+    });
+
+    slotCard.addEventListener('click', (e) => {
+      if (e.target === removeBtn || e.target === fileInput) return;
+      fileInput.click();
+    });
+
+    slotCard.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      slotCard.classList.add('drag-over');
+    });
+    slotCard.addEventListener('dragleave', () => slotCard.classList.remove('drag-over'));
+    slotCard.addEventListener('drop', (e) => {
+      e.preventDefault();
+      slotCard.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) {
+        setSlotImage(f);
+      }
+    });
+  }
+
+  // Token Insert Pills
+  const promptInput = wrap.querySelector('#omni-prompt');
+  wrap.querySelectorAll('.omnigen-token-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const token = pill.dataset.token || pill.textContent.trim();
+      const pos = promptInput.selectionStart || promptInput.value.length;
+      const val = promptInput.value;
+      promptInput.value = val.slice(0, pos) + token + val.slice(pos);
+      promptInput.focus();
+      playSFX('pop', 0.8);
+    });
+  });
+
+  // Prompt enhancement
+  wrap.querySelector('#omni-enhance-btn')?.addEventListener('click', () => {
+    const enhanced = enhancePromptWithAI(promptInput.value);
+    if (enhanced) {
+      promptInput.value = enhanced;
+      setStatus(wrap, '#omni-status', 'OMNIGEN PROMPT ENHANCED WITH AI DESCRIPTORS.', 'ok');
+    }
+  });
+
+  // Quick action presets
+  wrap.querySelectorAll('.omni-quick-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      promptInput.value = btn.dataset.prompt;
+      playSFX('pop', 0.8);
+    });
+  });
+
+  // Range and Segments
+  const cfgRange = wrap.querySelector('#omni-cfg');
+  const cfgVal = wrap.querySelector('#omni-cfg-val');
+  cfgRange.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgRange.value).toFixed(1); });
+
+  const imgCfgRange = wrap.querySelector('#omni-img-cfg');
+  const imgCfgVal = wrap.querySelector('#omni-img-cfg-val');
+  imgCfgRange.addEventListener('input', () => { imgCfgVal.textContent = parseFloat(imgCfgRange.value).toFixed(1); });
+
+  wrap.querySelectorAll('#omni-speed .aim-seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('#omni-speed .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Execution Handler
+  wrap.querySelector('#omni-gen-btn').addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#omni-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute multimodal synthesis.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR OMNIGEN SYNTHESIS' });
+      });
+      return;
+    }
+
+    const promptText = promptInput.value.trim();
+    const hasAnyImage = slotFiles.some(f => f !== null);
+    if (!promptText && !hasAnyImage) {
+      setStatus(wrap, '#omni-status', 'ERROR: Please provide a prompt or at least one reference image.', 'error');
+      return;
+    }
+
+    const steps = parseInt(wrap.querySelector('#omni-speed .aim-seg-btn.active')?.dataset?.steps || '35');
+    const aspect = wrap.querySelector('#omni-aspect').value;
+    const [w, h] = aspect.split('x').map(Number);
+    const cfg = parseFloat(cfgRange.value);
+    const imgCfg = parseFloat(imgCfgRange.value);
+    const batchSize = parseInt(wrap.querySelector('#omni-batch').value) || 1;
+    const negPrompt = wrap.querySelector('#omni-neg').value.trim();
+    const seedVal = parseInt(wrap.querySelector('#omni-seed').value) || -1;
+
+    const loaderSlot = wrap.querySelector('#omni-loader-slot');
+    const resultSlot = wrap.querySelector('#omni-result-slot');
+    const genBtn = wrap.querySelector('#omni-gen-btn');
+
+    genBtn.disabled = true;
+    setStatus(wrap, '#omni-status', 'ROUTING TO OMNIGEN GPU CLUSTER...', 'info');
+    const loader = buildLoader('CONDITIONING MULTIMODAL TENSORS...');
+    loaderSlot.innerHTML = '';
+    loaderSlot.appendChild(loader);
+
+    const loaderMessages = [
+      'CONDITIONING MULTIMODAL TENSORS...',
+      'ENCODING REFERENCE IMAGES & PROMPT TOKENS...',
+      'DIFFUSING UNIFIED MULTIMODAL LATENTS...',
+      'ALIGNING CROSS-ATTENTION MATRICES...',
+      'RENDERING FINAL ARTIFACT...'
+    ];
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loaderMessages.length;
+      const ltEl = loaderSlot.querySelector('#aim-loader-text');
+      if (ltEl) ltEl.textContent = loaderMessages[msgIdx];
+    }, 2500);
+
+    try {
+      const formData = new FormData();
+      formData.append('prompt', promptText || 'A detailed realistic rendering');
+      formData.append('negative_prompt', negPrompt);
+      formData.append('num_inference_steps', steps);
+      formData.append('guidance_scale', cfg);
+      formData.append('img_guidance_scale', imgCfg);
+      formData.append('width', w);
+      formData.append('height', h);
+      formData.append('batch_size', batchSize);
+      formData.append('seed', seedVal);
+
+      // Append available reference image files
+      slotFiles.forEach((file, idx) => {
+        if (file) {
+          formData.append(`image${idx + 1}`, file);
+          formData.append('images', file);
+        }
+      });
+
+      const endpoint = resolveEndpoint(settings.omnigenUrl, 'stream');
+      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let url = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.substring(6);
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                let progressText = data.total_images ? ` | BATCH STATUS: ${data.images_completed}/${data.total_images} COMPLETE` : '';
+                updateProgress(loader, data.step, data.max_steps, progressText);
+              } else if (data.image_b64_partial) {
+                const b64s = Array.isArray(data.image_b64_partial) ? data.image_b64_partial : [data.image_b64_partial];
+                const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                const partialUrls = await Promise.all(b64s.map(async (b64) => {
+                  const dataUrl = 'data:image/png;base64,' + b64;
+                  saveImageToGallery(profile, promptText || 'OmniGen Multimodal Synthesis', 'OmniGen Multimodal', dataUrl);
+                  const response = await fetch(dataUrl);
+                  const blob = await response.blob();
+                  return URL.createObjectURL(blob);
+                }));
+                if (!url) url = [];
+                url.push(...partialUrls);
+                resultSlot.innerHTML = '';
+                const resultEl = buildResult(url);
+                resultEl.classList.remove('hidden');
+                resultSlot.appendChild(resultEl);
+              } else if (data.image_b64) {
+                if (!url) url = [];
+                if (url.length === 0) {
+                  const b64s = Array.isArray(data.image_b64) ? data.image_b64 : [data.image_b64];
+                  const profile = sessionStorage.getItem('current_profile') || 'UNKNOWN';
+                  url = await Promise.all(b64s.map(async (b64) => {
+                    const dataUrl = 'data:image/png;base64,' + b64;
+                    saveImageToGallery(profile, promptText || 'OmniGen Multimodal Synthesis', 'OmniGen Multimodal', dataUrl);
+                    const response = await fetch(dataUrl);
+                    const blob = await response.blob();
+                    return URL.createObjectURL(blob);
+                  }));
+                }
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              if (e.message !== "Unexpected end of JSON input" && !e.message.includes('JSON')) {
+                throw e;
+              }
+            }
+          }
+        }
+      }
+
+      if (!url || url.length === 0) throw new Error("Stream finished but no image received");
+
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+
+      const resultEl = buildResult(url);
+      resultEl.classList.remove('hidden');
+      resultSlot.innerHTML = '';
+      resultSlot.appendChild(resultEl);
+      playSFX('pop', 0.8);
+      setStatus(wrap, '#omni-status', 'OMNIGEN SYNTHESIS COMPLETE.', 'ok');
+      logAction('IMAGE_GENERATED', { type: 'OMNIGEN', prompt: promptText, batchSize });
+      if (window._aimNotifyWarm) window._aimNotifyWarm();
+    } catch (err) {
+      clearInterval(msgInterval);
+      loaderSlot.innerHTML = '';
+      setStatus(wrap, '#omni-status', `FAILURE: ${err.message}`, 'error');
     } finally {
       genBtn.disabled = false;
     }
@@ -1955,8 +2773,64 @@ function buildUpscaler() {
           <option value="realesrgan-x4plus" selected>RealESRGAN x4plus (Photorealism & Details)</option>
           <option value="realesrgan-anime">RealESRGAN Anime 6B (Digital Art & Lineart)</option>
           <option value="ultrasharp-4x">4x UltraSharp (Extreme Crispness & Contrast)</option>
+          <option value="tile-creative">SDXL ControlNet Tile (Creative Diffusion & Micro-Textures)</option>
           <option value="dsp-fast">Fast Adaptive DSP (Real-time Lanczos Resampling)</option>
         </select>
+      </div>
+    </div>
+
+    <!-- CONTROLNET TILE CREATIVE DIFFUSION PANEL -->
+    <div id="upscale-tile-panel" class="tile-creative-panel" style="display:none; margin-bottom:15px; border:1px solid rgba(168,85,247,0.35); background:rgba(168,85,247,0.04); border-radius:4px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-family:var(--font-hud); font-size:0.8rem; color:#c084fc; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:6px;">
+          <span>🧩</span> SDXL CONTROLNET TILE DIFFUSION ENGINE
+        </span>
+        <span style="font-size:0.72rem; color:var(--text-muted); font-family:'Share Tech Mono', monospace;">COSINE SEAMLESS BLEND</span>
+      </div>
+
+      <div class="aim-row">
+        <!-- TILE SIZE -->
+        <div class="aim-field aim-field-half">
+          <label class="aim-label" style="color:#d8b4fe;">TILE CHUNK SIZE</label>
+          <div class="aim-seg aim-seg-3" id="upscale-tile-size-seg">
+            <button class="aim-seg-btn" data-size="512">512 px</button>
+            <button class="aim-seg-btn" data-size="768">768 px</button>
+            <button class="aim-seg-btn active" data-size="1024">1024 px</button>
+          </div>
+        </div>
+
+        <!-- TILE OVERLAP -->
+        <div class="aim-field aim-field-half">
+          <label class="aim-label" style="color:#d8b4fe;">SEAM OVERLAP RATIO</label>
+          <div class="aim-seg aim-seg-3" id="upscale-tile-overlap-seg">
+            <button class="aim-seg-btn" data-overlap="0.125">12.5%</button>
+            <button class="aim-seg-btn active" data-overlap="0.25">25.0%</button>
+            <button class="aim-seg-btn" data-overlap="0.50">50.0%</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="aim-field" style="margin-top:8px;">
+        <label class="aim-label" style="display:flex; justify-content:space-between; color:#d8b4fe;">
+          <span>DIFFUSION CREATIVITY / DENOISE STRENGTH</span>
+          <span id="upscale-creativity-val" style="color:#c084fc; font-weight:bold;">0.35 (35%)</span>
+        </label>
+        <input type="range" class="aim-slider" id="upscale-creativity" min="5" max="95" value="35" step="5" />
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); font-family:'Share Tech Mono', monospace; margin-top:2px;">
+          <span>0.05 (Subtle Micro-Textures)</span>
+          <span>0.35 (Balanced Detail Injection)</span>
+          <span>0.95 (High Hallucination)</span>
+        </div>
+      </div>
+
+      <div class="aim-field" style="margin-top:8px;">
+        <label class="aim-label" for="upscale-tile-prompt" style="color:#d8b4fe;">CONDITIONING PROMPT (MICRO-DETAIL GUIDANCE)</label>
+        <input type="text" class="aim-input" id="upscale-tile-prompt" placeholder="e.g., ultra-sharp 8k micro textures, pores, fine fabric weave, photorealistic cinematic lighting" value="ultra-detailed, 8k resolution, crisp textures, highly detailed, photorealistic micro-details" />
+      </div>
+
+      <div class="aim-field" style="margin-top:8px;">
+        <label class="aim-label" for="upscale-tile-neg" style="color:#a855f7;">NEGATIVE PROMPT</label>
+        <input type="text" class="aim-input" id="upscale-tile-neg" placeholder="blurry, low quality, distortion, seam lines, visible tiles, artifacts" value="blurry, low quality, artifacts, distorted, noisy, bad anatomy, seam lines, grid artifacts" />
       </div>
     </div>
 
@@ -2162,6 +3036,45 @@ function buildUpscaler() {
   const sharpenVal = wrap.querySelector('#upscale-sharpen-val');
   sharpenSlider.oninput = () => { sharpenVal.textContent = `${sharpenSlider.value}%`; };
 
+  // Tile Creative controls wiring
+  const modelSelect = wrap.querySelector('#upscale-model-select');
+  const tilePanel = wrap.querySelector('#upscale-tile-panel');
+  let activeTileSize = 1024;
+  let activeTileOverlap = 0.25;
+
+  modelSelect.onchange = () => {
+    if (modelSelect.value === 'tile-creative') {
+      tilePanel.style.display = 'block';
+    } else {
+      tilePanel.style.display = 'none';
+    }
+  };
+
+  wrap.querySelectorAll('#upscale-tile-size-seg .aim-seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      wrap.querySelectorAll('#upscale-tile-size-seg .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTileSize = parseInt(btn.dataset.size);
+    };
+  });
+
+  wrap.querySelectorAll('#upscale-tile-overlap-seg .aim-seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      wrap.querySelectorAll('#upscale-tile-overlap-seg .aim-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTileOverlap = parseFloat(btn.dataset.overlap);
+    };
+  });
+
+  const creativitySlider = wrap.querySelector('#upscale-creativity');
+  const creativityVal = wrap.querySelector('#upscale-creativity-val');
+  if (creativitySlider && creativityVal) {
+    creativitySlider.oninput = () => {
+      const val = (parseFloat(creativitySlider.value) / 100.0).toFixed(2);
+      creativityVal.textContent = `${val} (${creativitySlider.value}%)`;
+    };
+  }
+
   // Helper: Build comparison slider view
   function renderUpscaleComparison(origB64, upscaledB64, stats) {
     resultSlot.innerHTML = '';
@@ -2286,6 +3199,10 @@ function buildUpscaler() {
     }
 
     const modelName = wrap.querySelector('#upscale-model-select').value;
+    const isTileCreative = modelName === 'tile-creative';
+    const tilePrompt = wrap.querySelector('#upscale-tile-prompt')?.value.trim() || '';
+    const tileNegPrompt = wrap.querySelector('#upscale-tile-neg')?.value.trim() || '';
+    const creativityNumber = parseFloat(wrap.querySelector('#upscale-creativity')?.value || 35) / 100.0;
     const denoise = parseFloat(denoiseSlider.value) / 100.0;
     const sharpen = parseFloat(sharpenSlider.value) / 100.0;
     const faceEnhance = wrap.querySelector('#upscale-face-enhance').checked;
@@ -2294,12 +3211,18 @@ function buildUpscaler() {
     execBtn.disabled = true;
     resultSlot.innerHTML = '';
 
-    const loader = buildLoader('ANALYZING SPATIAL FREQUENCIES...');
+    const loader = buildLoader(isTileCreative ? 'PARTITIONING TILES & COSINE MATRICES...' : 'ANALYZING SPATIAL FREQUENCIES...');
     loaderSlot.appendChild(loader);
 
-    const loaderMessages = [
+    const loaderMessages = isTileCreative ? [
+      'PARTITIONING TILES & COSINE MATRICES...',
+      'DISPATCHING TENSORS TO MODAL SDXL CLUSTER...',
+      'DIFFUSING MICRO-TEXTURES & HIGH FREQUENCIES...',
+      'APPLYING SEAMLESS COSINE PARTITION OF UNITY...',
+      'RECONSTRUCTING SUPER-RESOLUTION CANVAS...'
+    ] : [
       'ANALYZING SPATIAL FREQUENCIES...',
-      'DISPATCHING TENSOR TO MODAL A10G CLUSTER...',
+      'DISPATCHING TENSOR TO MODAL GPU CLUSTER...',
       'RUNNING NEURAL SUPER-RESOLUTION PASSES...',
       'SUPPRESSING ARTIFACTS & ANTI-ALIASING...',
       'ASSEMBLING HIGH-RESOLUTION ARTIFACT...'
@@ -2311,7 +3234,7 @@ function buildUpscaler() {
       if (ltEl) ltEl.textContent = loaderMessages[msgIdx];
     }, 2500);
 
-    setStatus(wrap, '#upscale-status', `PROCESSING: Super-resolution ${activeScale}x via ${modelName}...`, 'info');
+    setStatus(wrap, '#upscale-status', `PROCESSING: Super-resolution ${activeScale}x via ${modelName}${isTileCreative ? ' [Tile Creative Diffusion]' : ''}...`, 'info');
 
     try {
       let resultData = null;
@@ -2319,7 +3242,7 @@ function buildUpscaler() {
       if (modelName === 'dsp-fast') {
         resultData = await clientSideUpscale(currentSourceB64, activeScale, sharpen, denoise);
       } else {
-        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run/api/upscale');
+        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://josh64perry--alphacore-aio-backend-upscaler-web-upscale.modal.run' : 'https://josh64perry--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run'));
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -2334,7 +3257,14 @@ function buildUpscaler() {
               denoise: denoise,
               sharpen: sharpen,
               face_enhance: faceEnhance,
-              output_format: outFormat
+              output_format: outFormat,
+              mode: isTileCreative ? 'tile_creative' : 'standard',
+              tile_size: activeTileSize,
+              tile_overlap: activeTileOverlap,
+              creativity: creativityNumber,
+              denoise_strength: creativityNumber,
+              prompt: tilePrompt,
+              negative_prompt: tileNegPrompt
             }),
             signal: controller.signal
           });
@@ -2457,6 +3387,9 @@ function buildMainUI() {
       <button class="aim-tab" data-tab="img2img" id="aim-tab-i2i">
         <span class="aim-tab-icon">⟁</span> IMG2IMG
       </button>
+      <button class="aim-tab" data-tab="omnigen" id="aim-tab-omnigen">
+        <span class="aim-tab-icon">🧬</span> OMNIGEN
+      </button>
       <button class="aim-tab" data-tab="upscaler" id="aim-tab-upscale">
         <span class="aim-tab-icon">🔍</span> UPSCALER
       </button>
@@ -2495,6 +3428,8 @@ function buildMainUI() {
         currentPanel = buildTxt2Img();
       } else if (tab.dataset.tab === 'img2img') {
         currentPanel = buildImg2Img();
+      } else if (tab.dataset.tab === 'omnigen') {
+        currentPanel = buildOmniGen();
       } else if (tab.dataset.tab === 'upscaler') {
         currentPanel = buildUpscaler();
       } else if (tab.dataset.tab === 'txt2vid') {
@@ -2515,6 +3450,11 @@ function buildMainUI() {
     const upTab = root.querySelector('#aim-tab-upscale');
     if (upTab) {
       setTimeout(() => upTab.click(), 50);
+    }
+  } else if (hash.includes('omnigen')) {
+    const omniTab = root.querySelector('#aim-tab-omnigen');
+    if (omniTab) {
+      setTimeout(() => omniTab.click(), 50);
     }
   }
 

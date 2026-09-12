@@ -2050,6 +2050,190 @@ input:focus, textarea:focus {
 }
 .aim-dz-preview.hidden, .aim-dropzone-inner.hidden { display: none; }
 
+/* ── Model Selector Segments ── */
+.aim-seg-6 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+@media (min-width: 600px) {
+  .aim-seg-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .aim-seg-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ── FLUX.1-Fill Inpainting Canvas Tool ── */
+.inpaint-wrapper {
+  margin-top: 10px;
+  background: rgba(4, 6, 14, 0.95);
+  border: 1px solid rgba(0, 184, 255, 0.3);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 0 15px rgba(0, 184, 255, 0.05);
+}
+.inpaint-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(0, 184, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+}
+.inpaint-canvas-container {
+  position: relative;
+  width: 100%;
+  max-height: 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  border: 1px solid rgba(0, 184, 255, 0.4);
+  border-radius: var(--radius);
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+.inpaint-bg-img {
+  max-width: 100%;
+  max-height: 480px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+.inpaint-canvas-layer {
+  position: absolute;
+  cursor: crosshair;
+  touch-action: none;
+}
+.inpaint-status-badge {
+  font-family: var(--font-hud);
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  margin-left: auto;
+}
+
+/* ── OmniGen Multimodal Engine Slots ── */
+.omnigen-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 768px) {
+  .omnigen-slots-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.omnigen-slot-card {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px dashed rgba(0, 184, 255, 0.3);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-height: 160px;
+  justify-content: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.omnigen-slot-card:hover {
+  border-color: var(--blue);
+  background: rgba(0, 184, 255, 0.05);
+}
+.omnigen-slot-card.has-image {
+  border-style: solid;
+  border-color: rgba(0, 184, 255, 0.6);
+  background: rgba(0, 184, 255, 0.03);
+}
+.omnigen-slot-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-family: var(--font-hud);
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  background: rgba(0, 184, 255, 0.15);
+  border: 1px solid var(--border);
+  color: var(--blue);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.omnigen-slot-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  z-index: 5;
+}
+.omnigen-slot-remove:hover {
+  background: #ef4444;
+  color: #000;
+}
+.omnigen-slot-preview {
+  max-width: 100%;
+  max-height: 130px;
+  object-fit: contain;
+  border-radius: 2px;
+  margin-top: 14px;
+}
+.omnigen-token-pill {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background: rgba(0, 184, 255, 0.1);
+  border: 1px solid rgba(0, 184, 255, 0.3);
+  color: var(--blue);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+.omnigen-token-pill:hover {
+  background: rgba(0, 184, 255, 0.25);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+/* ── ControlNet Tile Creative Upscaling ── */
+.tile-creative-panel {
+  background: rgba(6, 182, 212, 0.04);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ── Generate button ── */
 .aim-btn-generate {
   background: linear-gradient(135deg, rgba(0,184,255,0.15), rgba(0,184,255,0.05));
