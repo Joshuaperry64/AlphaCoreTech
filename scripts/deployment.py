@@ -13,10 +13,10 @@ from shared_app import app, CACHE_DIR, cache_volume
 # 2. Import worker scripts
 import music
 import web_loader
+import cloner
 
 if modal.is_local():
     import scraper
-    import cloner
     import txt2img
     import img2img
     import txt2vid
@@ -61,7 +61,7 @@ def _get_secrets():
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic")
-    .add_local_python_source("shared_app", "music", "web_loader")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner")
 )
 
 @app.function(
@@ -279,11 +279,112 @@ async def api_sync_website_models(force: bool = False):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- VOICE CLONER ENDPOINTS ---
+class VoiceConvertRequest(BaseModel):
+    profile_name: str
+    audio_b64: str
+    pitch_shift: int = 0
+
+@web_app.get("/api/voice/status")
+def api_voice_status():
+    return {
+        "status": "online",
+        "engine": "RVC v2 Neural Pipeline",
+        "hardware": "Modal Cloud A10G",
+        "models_volume": "rvc-models-volume",
+        "timestamp": time.time()
+    }
+
+@web_app.get("/api/voice/profiles")
+async def api_voice_profiles():
+    try:
+        import asyncio
+        contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=3.0)
+        volume_profiles = []
+        if isinstance(contents, dict) and "error" not in contents:
+            for path_str in contents.keys():
+                if path_str.startswith("models/"):
+                    parts = path_str.split("/")
+                    if len(parts) >= 2 and parts[1] not in volume_profiles:
+                        volume_profiles.append(parts[1])
+        presets = [
+            {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
+            {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
+            {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
+            {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
+        ]
+        return {
+            "presets": presets,
+            "custom_profiles": volume_profiles,
+            "total": len(presets) + len(volume_profiles)
+        }
+    except Exception as e:
+        return {
+            "presets": [
+                {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
+                {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
+                {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
+                {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
+            ],
+            "custom_profiles": [],
+            "error": str(e)
+        }
+
+@web_app.post("/api/voice/convert")
+async def api_voice_convert(req: VoiceConvertRequest):
+    try:
+        audio_bytes = base64.b64decode(req.audio_b64)
+        result = await cloner.infer_audio_modal.remote.aio(
+            profile_name=req.profile_name,
+            audio_bytes=audio_bytes,
+            pitch_shift=req.pitch_shift
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Voice conversion failed"))
+        out_b64 = base64.b64encode(result["audio_bytes"]).decode("utf-8")
+        return {
+            "status": "success",
+            "audio_b64": out_b64,
+            "sample_rate": result.get("sample_rate", 48000),
+            "profile": req.profile_name
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class VoiceSampleUpload(BaseModel):
+    profile_name: str
+    filename: str
+    audio_b64: str
+
+@web_app.post("/api/voice/upload-sample")
+async def api_voice_upload_sample(req: VoiceSampleUpload):
+    try:
+        file_bytes = base64.b64decode(req.audio_b64)
+        await cloner.upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
+        return {"status": "success", "message": f"Sample {req.filename} saved for {req.profile_name}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@web_app.post("/api/voice/train")
+async def api_voice_train(profile_name: str):
+    try:
+        call = cloner.process_audio_samples.spawn(profile_name)
+        return {
+            "status": "training_started",
+            "call_id": call.object_id,
+            "profile_name": profile_name,
+            "message": f"A10G GPU training initiated for profile '{profile_name}'"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 4. Expose the FastAPI app to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi[standard]", "pydantic", "requests")
-    .add_local_python_source("shared_app", "music", "web_loader")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner")
 )
 
 @app.function(image=router_image)
