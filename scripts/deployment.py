@@ -198,6 +198,13 @@ def sync_website_models(force: bool = False):
     for fn, vid in WEBSITE_LORAS.items():
         process_item(fn, vid, lora_dir, "loras")
 
+    for tmp_file in list(ckpt_dir.glob("*.tmp")) + list(lora_dir.glob("*.tmp")):
+        try:
+            tmp_file.unlink()
+            print(f"[CLEANUP] Removed orphan temp file: {tmp_file.name}")
+        except Exception:
+            pass
+
     cache_volume.commit()
     print("\n" + "=" * 60)
     print("SYNC OPERATION COMPLETED")
