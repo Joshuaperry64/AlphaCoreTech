@@ -9,6 +9,24 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.9.2 BUILD 160',
+    date: '2026.09.12',
+    badge: 'CONTROLNET FORGE // MULTI-MODAL MATRIX & REPOSITORY',
+    badgeColor: '#06b6d4',
+    title: 'UNIVERSAL CONTROLNET DISPATCH & ADVANCED REPOSITORY MANAGEMENT',
+    summary: 'Completely overhauled ControlNet Preprocessor Forge and engine-wide conditioning: Expanded CN Forge to dispatch vision maps to all generative modals (Txt2Img, Img2Img, Upscaler, Txt2Vid, Img2Vid, Framepack), integrated optional 1-click Vault & Vision DB map persistence, and added unified ControlNet management sections inside Advanced Parameters with interactive repository pickers.',
+    changes: [
+      'Engineered multi-modal dispatch matrix in CN Forge: Generative maps can be routed with a single click to Txt2Img, Img2Img, Upscaler, Txt2Vid, Img2Vid, and Framepack.',
+      'Added optional `SAVE TO VAULT` and `DOWNLOAD MAP` capabilities in CN Forge to persist generated edge/skeleton/depth maps to encrypted localStorage Vault and IndexedDB AlphaCoreVisionDB.',
+      'Added `LOAD FROM VAULT` base image loader in CN Forge, allowing users to select any existing artifact from storage to pre-process into a ControlNet map.',
+      'Added dedicated ControlNet Management sections in Advanced Parameters across Txt2Img, Img2Img, Txt2Vid, and Img2Vid modals with live status indicators, thumbnail previews, and conditioning scale/strength sliders.',
+      'Built interactive `openControlNetVaultPicker` modal featuring real-time filtering between all stored artifacts and tagged ControlNet maps from Vault and Gallery.',
+      'Added custom map file upload and 1-click `CLEAR` controls to quickly reset active conditioning across the entire engine.',
+      'Added `CONTROLNET` quick-action button on generated image result cards to immediately route newly synthesized images into ControlNet Forge.',
+      'Cleaned up obsolete and duplicate ControlNet containers across `aimodals.js`.'
+    ]
+  },
+  {
     version: 'v4.9.1 BUILD 155',
     date: '2026.09.12',
     badge: 'COGNITIVE CORE // ALPHACORE PROTOCOL',

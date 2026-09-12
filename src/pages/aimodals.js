@@ -4,7 +4,7 @@
  */
 import { createElement } from '../components/utils.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
-import { saveImageToGallery } from '../components/vision_db.js';
+import { saveImageToGallery, getAllGalleryImages } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
 
@@ -214,6 +214,7 @@ function buildResult(urls = []) {
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
           <button class="aim-btn aim-btn-dl" id="aim-upscale-btn" style="border-color:#38bdf8; color:#38bdf8;">🔍 UPSCALE</button>
+          <button class="aim-btn aim-btn-dl" id="aim-cnet-btn" style="border-color:#06b6d4; color:#06b6d4;">⚙ CONTROLNET</button>
           <button class="aim-btn aim-btn-dl" id="aim-vault-btn" style="border-color:#f59e0b; color:#f59e0b;">💾 MOVE IMAGE(S) TO VAULT</button>
           ${urls.length > 1 ? `<button class="aim-btn aim-btn-dl" id="aim-dl-all-btn">⬇ DOWN ALL</button>` : ''}
           <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
@@ -353,6 +354,16 @@ function buildResult(urls = []) {
     };
   }
 
+  const cnetBtn = el.querySelector('#aim-cnet-btn');
+  if (cnetBtn) {
+    cnetBtn.onclick = () => {
+      setGlobalControlNet(urls[currentIdx], 'canny');
+      const cnTab = document.querySelector('#aim-tab-cnet');
+      if (cnTab) cnTab.click();
+      playSFX('pop', 0.8);
+    };
+  }
+
   el.querySelector('#aim-vault-btn').onclick = () => {
     try {
       let files = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
@@ -382,6 +393,405 @@ function buildResult(urls = []) {
   };
 
   return el;
+}
+
+/* ─── GLOBAL CONTROLNET CONDITIONING & REPOSITORY SYSTEM ───────── */
+window._cn_global_img = window._cn_global_img || null;
+window._cn_global_type = window._cn_global_type || 'canny';
+window._cn_global_scale = typeof window._cn_global_scale === 'number' ? window._cn_global_scale : 1.0;
+
+function setGlobalControlNet(imgDataUrl, type = 'canny', scale = null) {
+  window._cn_global_img = imgDataUrl;
+  if (type) window._cn_global_type = type.toLowerCase();
+  if (scale !== null && scale !== undefined) window._cn_global_scale = parseFloat(scale);
+  syncAllControlNetSections();
+}
+
+function clearGlobalControlNet() {
+  window._cn_global_img = null;
+  syncAllControlNetSections();
+}
+
+function syncAllControlNetSections() {
+  document.querySelectorAll('.aim-cn-mgmt-section').forEach(sec => {
+    const prefix = sec.dataset.prefix;
+    if (!prefix) return;
+
+    const activeView = sec.querySelector(`#${prefix}-cn-active-view`);
+    const emptyHint = sec.querySelector(`#${prefix}-cn-empty-hint`);
+    const statusBadge = sec.querySelector(`#${prefix}-cn-status`);
+    const clearBtn = sec.querySelector(`#${prefix}-cn-clear-btn`);
+    const thumb = sec.querySelector(`#${prefix}-cn-preview-thumb`);
+    const typeBadge = sec.querySelector(`#${prefix}-cn-type-badge`);
+    const typeSelect = sec.querySelector(`#${prefix}-cn-type-select`);
+    const scaleSlider = sec.querySelector(`#${prefix}-cn-scale-slider`);
+    const scaleVal = sec.querySelector(`#${prefix}-cn-scale-val`);
+
+    if (window._cn_global_img) {
+      if (activeView) activeView.style.display = 'block';
+      if (emptyHint) emptyHint.style.display = 'none';
+      if (clearBtn) clearBtn.style.display = 'inline-block';
+      if (thumb) thumb.src = window._cn_global_img;
+      const t = (window._cn_global_type || 'canny').toLowerCase();
+      if (typeBadge) typeBadge.textContent = t.toUpperCase();
+      if (typeSelect) typeSelect.value = t;
+      const s = typeof window._cn_global_scale === 'number' ? window._cn_global_scale : 1.0;
+      if (scaleSlider) scaleSlider.value = s;
+      if (scaleVal) scaleVal.textContent = s.toFixed(2);
+      if (statusBadge) {
+        statusBadge.textContent = 'ACTIVE';
+        statusBadge.style.background = 'rgba(16,185,129,0.2)';
+        statusBadge.style.color = '#10b981';
+        statusBadge.style.borderColor = '#10b981';
+      }
+    } else {
+      if (activeView) activeView.style.display = 'none';
+      if (emptyHint) emptyHint.style.display = 'block';
+      if (clearBtn) clearBtn.style.display = 'none';
+      if (thumb) thumb.src = '';
+      if (statusBadge) {
+        statusBadge.textContent = 'INACTIVE';
+        statusBadge.style.background = 'rgba(100,100,100,0.2)';
+        statusBadge.style.color = '#888';
+        statusBadge.style.borderColor = '#555';
+      }
+    }
+  });
+}
+
+async function openControlNetVaultPicker(onSelect) {
+  let vaultFiles = [];
+  try {
+    vaultFiles = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+  } catch (e) {
+    vaultFiles = [];
+  }
+
+  const imageVault = vaultFiles.filter(f => f.content && (f.content.startsWith('data:image') || (f.type && f.type.startsWith('image'))));
+
+  let galleryImages = [];
+  try {
+    galleryImages = await getAllGalleryImages();
+  } catch (e) {
+    galleryImages = [];
+  }
+
+  const items = [];
+
+  imageVault.forEach((f, idx) => {
+    const isCn = f.tag === 'controlnet' || !!f.controlnet_type || (f.filename && /controlnet|canny|openpose|depth/i.test(f.filename));
+    let detectedType = f.controlnet_type || 'canny';
+    if (!f.controlnet_type && f.filename) {
+      if (/openpose/i.test(f.filename)) detectedType = 'openpose';
+      else if (/depth/i.test(f.filename)) detectedType = 'depth';
+      else if (/canny/i.test(f.filename)) detectedType = 'canny';
+    }
+    items.push({
+      id: f.id || `v_${idx}`,
+      title: f.filename || `Vault Item #${idx + 1}`,
+      dataUrl: f.content,
+      source: 'VAULT',
+      isControlNet: isCn,
+      cnType: detectedType,
+      timestamp: f.createdAt || Date.now()
+    });
+  });
+
+  galleryImages.forEach((g, idx) => {
+    if (!g.data) return;
+    const isCn = (g.source && /controlnet/i.test(g.source)) || (g.prompt && /controlnet|canny|openpose|depth/i.test(g.prompt));
+    let detectedType = 'canny';
+    const text = `${g.source || ''} ${g.prompt || ''}`;
+    if (/openpose/i.test(text)) detectedType = 'openpose';
+    else if (/depth/i.test(text)) detectedType = 'depth';
+
+    items.push({
+      id: `g_${g.id || idx}`,
+      title: g.prompt ? (g.prompt.length > 25 ? g.prompt.substring(0, 25) + '...' : g.prompt) : `Gallery #${idx + 1}`,
+      dataUrl: g.data,
+      source: 'GALLERY',
+      isControlNet: isCn,
+      cnType: detectedType,
+      timestamp: g.timestamp || Date.now()
+    });
+  });
+
+  items.sort((a, b) => b.timestamp - a.timestamp);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'aim-docs-modal-overlay';
+  overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); z-index:99999; display:flex; justify-content:center; align-items:center; padding:15px; box-sizing:border-box;';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#080d1a; border:1px solid var(--accent); border-radius:8px; width:100%; max-width:760px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 0 35px rgba(6,182,212,0.3); overflow:hidden; font-family:var(--font-hud);';
+
+  let currentTab = 'all';
+
+  function renderGrid() {
+    const list = currentTab === 'cn' ? items.filter(it => it.isControlNet) : items;
+    const gridEl = modal.querySelector('#vault-picker-grid');
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+
+    if (list.length === 0) {
+      gridEl.innerHTML = `
+        <div style="grid-column:1/-1; text-align:center; padding:40px 15px; color:#777; font-family:'Share Tech Mono', monospace;">
+          <div style="font-size:2rem; margin-bottom:8px; opacity:0.5;">📂</div>
+          ${currentTab === 'cn' ? 'No tagged ControlNet maps found in Vault or Gallery.<br>Switch to ALL ARTIFACTS or generate a map in CN Forge.' : 'No images found in Vault or Gallery.'}
+        </div>
+      `;
+      return;
+    }
+
+    list.forEach(item => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid rgba(6,182,212,0.25); border-radius:4px; padding:6px; cursor:pointer; display:flex; flex-direction:column; gap:6px; transition:0.2s; position:relative; overflow:hidden;';
+      
+      const cnTagHTML = item.isControlNet ? `<span style="position:absolute; top:8px; right:8px; background:rgba(6,182,212,0.9); color:#000; font-size:0.6rem; font-weight:bold; padding:1px 5px; border-radius:2px; text-transform:uppercase;">${item.cnType}</span>` : '';
+
+      card.innerHTML = `
+        <div style="width:100%; height:110px; background:#000; border-radius:3px; overflow:hidden; position:relative;">
+          <img src="${item.dataUrl}" style="width:100%; height:100%; object-fit:cover; display:block;" alt="${item.title}" />
+          ${cnTagHTML}
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem;">
+          <span style="color:#888; font-family:'Share Tech Mono', monospace;">[${item.source}]</span>
+          <span style="color:#aaa; max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.title}</span>
+        </div>
+      `;
+
+      card.onmouseenter = () => {
+        card.style.borderColor = 'var(--accent)';
+        card.style.background = 'rgba(6,182,212,0.1)';
+        card.style.transform = 'translateY(-2px)';
+      };
+      card.onmouseleave = () => {
+        card.style.borderColor = 'rgba(6,182,212,0.25)';
+        card.style.background = 'rgba(255,255,255,0.03)';
+        card.style.transform = 'translateY(0)';
+      };
+      card.onclick = () => {
+        onSelect(item.dataUrl, item.cnType);
+        if (overlay.parentElement) document.body.removeChild(overlay);
+      };
+
+      gridEl.appendChild(card);
+    });
+  }
+
+  const cnCount = items.filter(it => it.isControlNet).length;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid rgba(6,182,212,0.3); background:rgba(6,182,212,0.05);">
+      <div>
+        <div style="color:var(--accent); font-size:0.95rem; font-weight:bold; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+          <span>📂</span> CONTROLNET MAP REPOSITORY
+        </div>
+        <div style="color:#777; font-size:0.75rem; font-family:'Share Tech Mono', monospace; margin-top:2px;">Select image from Vault storage or Vision DB</div>
+      </div>
+      <button id="close-vp-modal" style="background:transparent; border:1px solid rgba(255,100,100,0.5); color:#ff6b6b; padding:4px 10px; border-radius:3px; cursor:pointer; font-size:0.8rem;">✕ CLOSE</button>
+    </div>
+
+    <div style="display:flex; gap:8px; padding:12px 18px; border-bottom:1px solid rgba(255,255,255,0.07); background:rgba(0,0,0,0.3);">
+      <button id="vp-tab-all" class="aim-btn aim-btn-sm" style="padding:4px 12px; font-size:0.75rem; background:rgba(6,182,212,0.2); border-color:var(--accent); color:var(--accent);">ALL IMAGES (${items.length})</button>
+      <button id="vp-tab-cn" class="aim-btn aim-btn-sm" style="padding:4px 12px; font-size:0.75rem; background:transparent; border-color:#555; color:#888;">CONTROLNET MAPS (${cnCount})</button>
+    </div>
+
+    <div id="vault-picker-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; padding:15px; overflow-y:auto; max-height:55vh;">
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  renderGrid();
+
+  modal.querySelector('#vp-tab-all').onclick = () => {
+    currentTab = 'all';
+    modal.querySelector('#vp-tab-all').style.background = 'rgba(6,182,212,0.2)';
+    modal.querySelector('#vp-tab-all').style.borderColor = 'var(--accent)';
+    modal.querySelector('#vp-tab-all').style.color = 'var(--accent)';
+    modal.querySelector('#vp-tab-cn').style.background = 'transparent';
+    modal.querySelector('#vp-tab-cn').style.borderColor = '#555';
+    modal.querySelector('#vp-tab-cn').style.color = '#888';
+    renderGrid();
+  };
+
+  modal.querySelector('#vp-tab-cn').onclick = () => {
+    currentTab = 'cn';
+    modal.querySelector('#vp-tab-cn').style.background = 'rgba(6,182,212,0.2)';
+    modal.querySelector('#vp-tab-cn').style.borderColor = 'var(--accent)';
+    modal.querySelector('#vp-tab-cn').style.color = 'var(--accent)';
+    modal.querySelector('#vp-tab-all').style.background = 'transparent';
+    modal.querySelector('#vp-tab-all').style.borderColor = '#555';
+    modal.querySelector('#vp-tab-all').style.color = '#888';
+    renderGrid();
+  };
+
+  modal.querySelector('#close-vp-modal').onclick = () => {
+    if (overlay.parentElement) document.body.removeChild(overlay);
+  };
+
+  overlay.onclick = (e) => {
+    if (e.target === overlay && overlay.parentElement) {
+      document.body.removeChild(overlay);
+    }
+  };
+}
+
+function getControlNetSectionHTML(prefix) {
+  return `
+    <div class="aim-cn-mgmt-section" id="${prefix}-cn-mgmt" data-prefix="${prefix}" style="margin-top:14px; padding:12px; background:rgba(6,182,212,0.03); border:1px solid rgba(6,182,212,0.3); border-radius:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:var(--accent); font-family:var(--font-hud); font-size:0.85rem; font-weight:bold; letter-spacing:1px;">⚙ CONTROLNET CONDITIONING</span>
+          <span class="cn-status-badge" id="${prefix}-cn-status" style="font-size:0.7rem; padding:2px 6px; border-radius:3px; background:rgba(100,100,100,0.2); color:#888; border:1px solid #555;">INACTIVE</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="aim-btn aim-btn-sm" id="${prefix}-cn-load-vault" style="padding:3px 8px; font-size:0.75rem; border-color:#f59e0b; color:#f59e0b;" title="Load ControlNet map from Vault or Vision Gallery">📂 VAULT</button>
+          <label class="aim-btn aim-btn-sm" style="padding:3px 8px; font-size:0.75rem; border-color:var(--accent); color:var(--accent); cursor:pointer; margin:0; display:inline-flex; align-items:center;" title="Upload custom map from device">
+            📤 UPLOAD
+            <input type="file" id="${prefix}-cn-upload-input" accept="image/*" style="display:none;" />
+          </label>
+          <button type="button" class="aim-btn aim-btn-sm" id="${prefix}-cn-forge-btn" style="padding:3px 8px; font-size:0.75rem; border-color:#8b5cf6; color:#a78bfa;" title="Open Preprocessor Forge">⚙ FORGE</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="${prefix}-cn-clear-btn" style="padding:3px 8px; font-size:0.75rem; border-color:#ff4444; color:#ff4444; display:none;" title="Clear active ControlNet map">✕ CLEAR</button>
+        </div>
+      </div>
+
+      <div id="${prefix}-cn-active-view" style="display:none; margin-top:10px;">
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="position:relative; flex-shrink:0;">
+            <img id="${prefix}-cn-preview-thumb" src="" style="width:90px; height:90px; object-fit:contain; background:#000; border:1px solid var(--accent); border-radius:4px; display:block;" alt="ControlNet Map" />
+            <span id="${prefix}-cn-type-badge" style="position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.85); color:var(--accent); font-size:0.6rem; padding:1px 4px; border-radius:2px; border:1px solid var(--accent); text-transform:uppercase;">CANNY</span>
+          </div>
+          
+          <div style="flex:1; min-width:170px;">
+            <div class="aim-row" style="margin-bottom:8px;">
+              <label class="aim-label" style="font-size:0.75rem; margin-bottom:4px;">CONDITIONING TYPE</label>
+              <select class="aim-input" id="${prefix}-cn-type-select" style="font-size:0.8rem; padding:4px 8px;">
+                <option value="canny">Canny Edge</option>
+                <option value="openpose">OpenPose Skeleton</option>
+                <option value="depth">Depth (MiDaS)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="aim-label" style="font-size:0.75rem; margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span>STRENGTH / SCALE</span>
+                <span class="aim-val-display" id="${prefix}-cn-scale-val">1.0</span>
+              </label>
+              <input class="aim-range" type="range" id="${prefix}-cn-scale-slider" min="0.1" max="2.0" step="0.05" value="1.0" style="margin:0;" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="${prefix}-cn-empty-hint" style="font-size:0.75rem; color:#666; font-family:'Share Tech Mono', monospace; margin-top:4px;">
+        No ControlNet guide map loaded. Load from Vault, upload an edge/pose/depth map, or forge one in CN Forge.
+      </div>
+    </div>
+  `;
+}
+
+function bindControlNetSection(wrap, prefix) {
+  const sec = wrap.querySelector(`#${prefix}-cn-mgmt`);
+  if (!sec) return;
+  sec.dataset.prefix = prefix;
+
+  const vaultBtn = sec.querySelector(`#${prefix}-cn-load-vault`);
+  if (vaultBtn) {
+    vaultBtn.onclick = () => {
+      openControlNetVaultPicker((selectedData, detectedType) => {
+        setGlobalControlNet(selectedData, detectedType || 'canny');
+        playSFX('pop', 0.8);
+      });
+    };
+  }
+
+  const uploadInput = sec.querySelector(`#${prefix}-cn-upload-input`);
+  if (uploadInput) {
+    uploadInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setGlobalControlNet(ev.target.result, 'canny');
+        playSFX('pop', 0.8);
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  const forgeBtn = sec.querySelector(`#${prefix}-cn-forge-btn`);
+  if (forgeBtn) {
+    forgeBtn.onclick = () => {
+      document.querySelector('#aim-tab-cnet')?.click();
+    };
+  }
+
+  const clearBtn = sec.querySelector(`#${prefix}-cn-clear-btn`);
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      clearGlobalControlNet();
+      playSFX('pop', 0.6);
+    };
+  }
+
+  const typeSelect = sec.querySelector(`#${prefix}-cn-type-select`);
+  if (typeSelect) {
+    typeSelect.onchange = (e) => {
+      window._cn_global_type = e.target.value;
+      syncAllControlNetSections();
+    };
+  }
+
+  const scaleSlider = sec.querySelector(`#${prefix}-cn-scale-slider`);
+  const scaleVal = sec.querySelector(`#${prefix}-cn-scale-val`);
+  if (scaleSlider) {
+    scaleSlider.oninput = (e) => {
+      const val = parseFloat(e.target.value);
+      window._cn_global_scale = val;
+      if (scaleVal) scaleVal.textContent = val.toFixed(2);
+      document.querySelectorAll('.aim-cn-mgmt-section').forEach(otherSec => {
+        if (otherSec !== sec) {
+          const oP = otherSec.dataset.prefix;
+          const oSl = otherSec.querySelector(`#${oP}-cn-scale-slider`);
+          const oVal = otherSec.querySelector(`#${oP}-cn-scale-val`);
+          if (oSl) oSl.value = val;
+          if (oVal) oVal.textContent = val.toFixed(2);
+        }
+      });
+    };
+  }
+
+  setTimeout(syncAllControlNetSections, 20);
+}
+
+function dispatchControlNetToModal(tabSelector, options = {}) {
+  if (options.setImg2Img && window._cn_global_img) {
+    window._i2i_injected_image = window._cn_global_img;
+    window._pending_img2img_image = window._cn_global_img;
+  }
+  if (options.setUpscale && window._cn_global_img) {
+    window._pending_upscale_image = window._cn_global_img;
+  }
+  if (options.setImg2Vid && window._cn_global_img) {
+    window._pending_img2vid_image = window._cn_global_img;
+  }
+
+  const tabBtn = document.querySelector(tabSelector);
+  if (tabBtn) {
+    tabBtn.click();
+    if (options.expandAdvanced) {
+      setTimeout(() => {
+        const adv = document.querySelector('#aim-content details.aim-advanced');
+        if (adv) {
+          adv.open = true;
+          adv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 120);
+    }
+  }
 }
 
 /* ─── TXT2IMG PANEL ─────────────────────────────────────────── */
@@ -420,15 +830,6 @@ function buildTxt2Img() {
       return '';
     })()}
 
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
-    </div>
-
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">SPEED MODE</label>
@@ -459,14 +860,6 @@ function buildTxt2Img() {
           <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
         </div>
       </label>
-    </div>
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
     </div>
 
     <div class="aim-row">
@@ -532,6 +925,8 @@ function buildTxt2Img() {
             </select>
           </div>
         </div>
+
+        ${getControlNetSectionHTML('t2i')}
       </div>
     </details>
 
@@ -586,6 +981,8 @@ function buildTxt2Img() {
       }
     });
   }
+
+  bindControlNetSection(wrap, 't2i');
 
   // --- STREAM GENERATOR LOGIC ---
   let isStreaming = false;
@@ -971,15 +1368,6 @@ function buildImg2Img() {
       </div>
     </div>
 
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
-    </div>
-
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label">PROCESSING MODE</label>
@@ -1005,15 +1393,6 @@ function buildImg2Img() {
           <div class="toggle-knob" style="width:14px; height:14px; background:#10b981; border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
         </div>
       </label>
-    </div>
-
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
     </div>
 
     <div class="aim-row">
@@ -1073,6 +1452,8 @@ function buildImg2Img() {
             </select>
           </div>
         </div>
+
+        ${getControlNetSectionHTML('i2i')}
       </div>
     </details>
 
@@ -1242,6 +1623,22 @@ function buildImg2Img() {
 
   bindDropzone(fileInput, dropzone, dzInner, preview);
   bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
+
+  bindControlNetSection(wrap, 'i2i');
+
+  if (window._i2i_injected_image || window._pending_img2img_image) {
+    const injected = window._i2i_injected_image || window._pending_img2img_image;
+    window._i2i_injected_image = null;
+    window._pending_img2img_image = null;
+    fetch(injected)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'injected_artifact.png', { type: blob.type || 'image/png' });
+        fileInput._droppedFile = file;
+        showPreview(file, preview, dzInner, dropzone);
+      })
+      .catch(() => {});
+  }
 
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
@@ -2152,15 +2549,6 @@ function buildTxt2Vid() {
       </div>
       <textarea class="aim-textarea" id="t2v-prompt" rows="3" placeholder="Describe the video you want to generate (e.g., A cinematic video of a serene waterfall...)"></textarea>
     </div>
-    
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
-    </div>
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
@@ -2218,6 +2606,8 @@ function buildTxt2Vid() {
             </select>
           </div>
         </div>
+
+        ${getControlNetSectionHTML('t2v')}
       </div>
     </details>
 
@@ -2244,6 +2634,8 @@ function buildTxt2Vid() {
       btn.classList.add('active');
     });
   });
+
+  bindControlNetSection(wrap, 't2v');
 
   wrap.querySelector('#t2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
@@ -2407,15 +2799,6 @@ function buildImg2Vid() {
       <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
     </div>
 
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
-    </div>
-
     <div class="aim-row">
       <div class="aim-field" style="width: 100%;">
         <label class="aim-label">PRIMARY STARTING IMAGE</label>
@@ -2435,15 +2818,6 @@ function buildImg2Vid() {
         <label class="aim-label" for="i2v-prompt" style="margin:0;">CINEMATIC PROMPT</label>
       </div>
       <textarea class="aim-textarea" id="i2v-prompt" rows="3" placeholder="Describe the motion/video you want to generate from the image..."></textarea>
-    </div>
-    
-
-    <div class="aim-field" id="t2i-cn-container" style="display:none; padding:10px; border:1px solid var(--accent); border-radius:4px; margin-bottom:15px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <label class="aim-label" style="margin:0;">ACTIVE CONTROLNET: <span id="t2i-cn-label" style="color:var(--accent);"></span></label>
-        <button class="aim-btn aim-btn-sm" id="t2i-cn-clear" style="padding:2px 8px; font-size:0.75rem; background:rgba(255,50,50,0.1); border-color:#ff4444; color:#ff4444;">X CLEAR</button>
-      </div>
-      <img id="t2i-cn-preview" style="max-width:150px; border-radius:4px; margin-top:10px;" />
     </div>
 
     <div class="aim-row">
@@ -2502,6 +2876,8 @@ function buildImg2Vid() {
             </select>
           </div>
         </div>
+
+        ${getControlNetSectionHTML('i2v')}
       </div>
     </details>
 
@@ -2556,6 +2932,21 @@ function buildImg2Vid() {
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) { fileInput._droppedFile = file; showPreview(file); }
   });
+
+  bindControlNetSection(wrap, 'i2v');
+
+  if (window._pending_img2vid_image) {
+    const pending = window._pending_img2vid_image;
+    window._pending_img2vid_image = null;
+    fetch(pending)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'injected_video_seed.png', { type: blob.type || 'image/png' });
+        fileInput._droppedFile = file;
+        showPreview(file);
+      })
+      .catch(() => {});
+  }
 
   wrap.querySelector('#i2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
@@ -2866,72 +3257,135 @@ function buildControlNetForge() {
   const settings = getModalSettings();
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
-  wrap.innerHTML = 
-    '<div class="aim-panel-header">' +
-      '<span class="aim-panel-icon">?</span>' +
-      '<span class="aim-panel-title">CONTROLNET</span>' +
-      '<span class="aim-panel-badge">PRE-PROCESSOR</span>' +
-    '</div>' +
-    '<div class="aim-field">' +
-      '<label class="aim-label">UPLOAD BASE IMAGE</label>' +
-      '<input type="file" id="cn-file-input" accept="image/png, image/jpeg" style="display:none;" />' +
-      '<div class="aim-dropzone" id="cn-dropzone" style="cursor:pointer; text-align:center; padding:40px; border:1px dashed var(--accent); border-radius:4px;">' +
-        'Click to Upload Base Image' +
-      '</div>' +
-      '<img id="cn-preview" style="display:none; max-width:100%; max-height:400px; margin-top:10px; border-radius:4px; margin-left:auto; margin-right:auto;" />' +
-    '</div>' +
-    '<div class="aim-field">' +
-      '<label class="aim-label">CONTROLNET TYPE</label>' +
-      '<select class="aim-input" id="cn-type">' +
-        '<option value="openpose">OpenPose (Human Pose Skeletons)</option>' +
-        '<option value="canny">Canny (Crisp Edge Outlines)</option>' +
-        '<option value="depth">MiDaS (3D Depth Maps)</option>' +
-      '</select>' +
-    '</div>' +
-    '<button class="aim-btn aim-btn-generate" id="cn-generate-btn" style="width:100%;">? GENERATE VISION MAP</button>' +
-    '<div id="cn-loader" style="display:none; text-align:center; margin-top:10px; color:var(--accent);">Processing vision map via A10G... This can take up to 20 seconds on cold start.</div>' +
-    '<div id="cn-result-container" style="display:none; margin-top:20px; border-top:1px solid #334; padding-top:20px;">' +
-      '<label class="aim-label">GENERATED CONTROLNET MAP</label>' +
-      '<img id="cn-result-img" style="max-width:100%; max-height:400px; display:block; border-radius:4px; margin: 0 auto 15px auto;" />' +
-      '<div style="display:flex; gap:10px;">' +
-        '<button class="aim-btn" id="cn-send-txt2img" style="flex:1; background:rgba(6,182,212,0.1); color:var(--accent); border-color:var(--accent);">SEND TO TXT2IMG</button>' +
-      '</div>' +
-    '</div>';
+  wrap.innerHTML = `
+    <div class="aim-panel-header">
+      <span class="aim-panel-icon">⚙</span>
+      <span class="aim-panel-title">CONTROLNET FORGE</span>
+      <span class="aim-panel-badge">PRE-PROCESSOR</span>
+    </div>
+
+    <div class="aim-field">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label class="aim-label" style="margin:0;">BASE INPUT IMAGE</label>
+        <button type="button" class="aim-btn aim-btn-sm" id="cn-load-vault-base-btn" style="padding:2px 10px; font-size:0.75rem; border-color:#f59e0b; color:#f59e0b;">
+          📂 LOAD FROM VAULT
+        </button>
+      </div>
+      <input type="file" id="cn-file-input" accept="image/png, image/jpeg, image/webp" style="display:none;" />
+      <div class="aim-dropzone" id="cn-dropzone" style="cursor:pointer; text-align:center; padding:35px 20px; border:1px dashed var(--accent); border-radius:6px; background:rgba(6,182,212,0.03); transition:0.2s;">
+        <div style="font-size:1.8rem; margin-bottom:6px;">📁</div>
+        <div style="color:var(--accent); font-family:var(--font-hud); font-size:0.9rem; letter-spacing:1px;">CLICK OR DRAG & DROP BASE IMAGE</div>
+        <div style="color:#666; font-size:0.75rem; margin-top:4px;">Supports PNG, JPEG, WEBP</div>
+      </div>
+      <img id="cn-preview" style="display:none; max-width:100%; max-height:400px; margin-top:10px; border-radius:4px; margin-left:auto; margin-right:auto; border:1px solid rgba(6,182,212,0.4); cursor:pointer;" title="Click to replace image" />
+    </div>
+
+    <div class="aim-field">
+      <label class="aim-label">PRE-PROCESSOR TYPE</label>
+      <select class="aim-input" id="cn-type">
+        <option value="openpose">OpenPose (Human Pose Skeletons)</option>
+        <option value="canny" selected>Canny (Crisp Edge Outlines)</option>
+        <option value="depth">MiDaS (3D Depth Maps)</option>
+      </select>
+    </div>
+
+    <button class="aim-btn aim-btn-generate" id="cn-generate-btn" style="width:100%;">⚙ GENERATE VISION MAP</button>
+    <div id="cn-loader" style="display:none; text-align:center; margin-top:12px; color:var(--accent); font-family:'Share Tech Mono', monospace; font-size:0.85rem;">
+      <span class="aim-spin" style="display:inline-block; margin-right:6px;">⚙</span> Processing vision map via Modal GPU node...
+    </div>
+
+    <div id="cn-result-container" style="display:none; margin-top:20px; border-top:1px solid rgba(6,182,212,0.3); padding-top:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+        <label class="aim-label" style="margin:0; display:flex; align-items:center; gap:8px;">
+          <span>GENERATED CONTROLNET MAP:</span>
+          <span id="cn-result-type-badge" style="color:var(--accent); font-weight:bold; background:rgba(6,182,212,0.15); border:1px solid var(--accent); padding:1px 6px; border-radius:3px; font-size:0.75rem;">CANNY</span>
+        </label>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-save-vault-btn" style="border-color:#f59e0b; color:#f59e0b;">💾 SAVE TO VAULT</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-download-btn" style="border-color:var(--accent); color:var(--accent);">⬇ DOWNLOAD MAP</button>
+        </div>
+      </div>
+
+      <img id="cn-result-img" style="max-width:100%; max-height:420px; display:block; border-radius:6px; margin: 0 auto 15px auto; border:1px solid var(--accent); background:#000;" />
+
+      <!-- MULTI-MODAL DISPATCH MATRIX -->
+      <div style="background:rgba(6,182,212,0.05); border:1px solid rgba(6,182,212,0.25); border-radius:6px; padding:12px; margin-top:15px;">
+        <div style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+          <label class="aim-label" style="margin:0; color:var(--accent); font-weight:bold;">⚡ DISPATCH TO GENERATIVE MODALS</label>
+          <span style="color:#888; font-size:0.75rem; font-family:'Share Tech Mono', monospace;">Sets active ControlNet conditioning across engine</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-txt2img" style="background:rgba(6,182,212,0.12); color:var(--accent); border-color:var(--accent); padding:8px 6px; font-size:0.8rem; font-weight:bold;">✦ TXT2IMG</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-img2img" style="background:rgba(168,85,247,0.12); color:#c084fc; border-color:#a855f7; padding:8px 6px; font-size:0.8rem; font-weight:bold;">⟁ IMG2IMG</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-upscaler" style="background:rgba(16,185,129,0.12); color:#34d399; border-color:#10b981; padding:8px 6px; font-size:0.8rem; font-weight:bold;">🔍 UPSCALER</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-txt2vid" style="background:rgba(239,68,68,0.12); color:#f87171; border-color:#ef4444; padding:8px 6px; font-size:0.8rem; font-weight:bold;">🎥 TXT2VID</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-img2vid" style="background:rgba(245,158,11,0.12); color:#fbbf24; border-color:#f59e0b; padding:8px 6px; font-size:0.8rem; font-weight:bold;">🎞️ IMG2VID</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="cn-send-framepack" style="background:rgba(99,102,241,0.12); color:#818cf8; border-color:#6366f1; padding:8px 6px; font-size:0.8rem; font-weight:bold;">🎬 FRAMEPACK</button>
+        </div>
+      </div>
+    </div>
+  `;
 
   let base64Image = null;
   const fileInput = wrap.querySelector('#cn-file-input');
   const dropzone = wrap.querySelector('#cn-dropzone');
   const preview = wrap.querySelector('#cn-preview');
   const resultImg = wrap.querySelector('#cn-result-img');
+  const resultTypeBadge = wrap.querySelector('#cn-result-type-badge');
+
+  function setBaseImage(dataUrl) {
+    base64Image = dataUrl;
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    dropzone.style.display = 'none';
+    wrap.querySelector('#cn-result-container').style.display = 'none';
+  }
 
   dropzone.onclick = () => fileInput.click();
   preview.onclick = () => fileInput.click();
-  
+
+  // Drag and drop for base image
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#10b981'; });
+  dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--accent)'; });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--accent)';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => setBaseImage(event.target.result);
+      reader.readAsDataURL(file);
+    }
+  });
+
   fileInput.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      base64Image = event.target.result;
-      preview.src = base64Image;
-      preview.style.display = 'block';
-      dropzone.style.display = 'none';
-      wrap.querySelector('#cn-result-container').style.display = 'none';
-    };
+    reader.onload = (event) => setBaseImage(event.target.result);
     reader.readAsDataURL(file);
   };
 
+  // Load Base Image from Vault
+  wrap.querySelector('#cn-load-vault-base-btn').onclick = () => {
+    openControlNetVaultPicker((dataUrl) => {
+      setBaseImage(dataUrl);
+      playSFX('pop', 0.8);
+    });
+  };
+
+  // Generate Map
   wrap.querySelector('#cn-generate-btn').onclick = async () => {
-    if (!base64Image) { alert("Please upload an image first."); return; }
+    if (!base64Image) { alert("Please upload or load a base image first."); return; }
     const type = wrap.querySelector('#cn-type').value;
-    
+
     wrap.querySelector('#cn-loader').style.display = 'block';
     wrap.querySelector('#cn-generate-btn').disabled = true;
     wrap.querySelector('#cn-result-container').style.display = 'none';
 
     try {
       const preprocessorEndpoint = resolveEndpoint(settings.preprocessorUrl, '');
-    const res = await fetch(preprocessorEndpoint, {
+      const res = await fetch(preprocessorEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image_b64: base64Image, processor_type: type })
@@ -2939,10 +3393,11 @@ function buildControlNetForge() {
       const data = await res.json();
       if (data.image_b64) {
         resultImg.src = data.image_b64;
+        resultTypeBadge.textContent = type.toUpperCase();
         wrap.querySelector('#cn-result-container').style.display = 'block';
-        
-        window._cn_global_img = data.image_b64;
-        window._cn_global_type = type;
+
+        setGlobalControlNet(data.image_b64, type);
+        playSFX('pop', 0.8);
       } else {
         alert("Error generating map: " + JSON.stringify(data));
       }
@@ -2954,15 +3409,90 @@ function buildControlNetForge() {
     }
   };
 
-  wrap.querySelector('#cn-send-txt2img').onclick = () => {
-    document.querySelector('#aim-tab-t2i').click();
-    const cnPreviewContainer = document.querySelector('#t2i-cn-container');
-    if (cnPreviewContainer) {
-       cnPreviewContainer.style.display = 'block';
-       document.querySelector('#t2i-cn-preview').src = window._cn_global_img;
-       document.querySelector('#t2i-cn-label').textContent = window._cn_global_type.toUpperCase();
+  // Save Map to Vault
+  wrap.querySelector('#cn-save-vault-btn').onclick = async () => {
+    if (!window._cn_global_img) return;
+    const vBtn = wrap.querySelector('#cn-save-vault-btn');
+    const profile = sessionStorage.getItem('current_profile') || 'ARCHITECT';
+    const type = (window._cn_global_type || 'canny').toUpperCase();
+
+    try {
+      let files = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+      files.push({
+        id: Date.now().toString() + '_cn',
+        owner: profile,
+        filename: `CONTROLNET_${type}_${Date.now()}.png`,
+        content: window._cn_global_img,
+        type: 'image/png',
+        tag: 'controlnet',
+        controlnet_type: window._cn_global_type || 'canny',
+        shared: false,
+        createdAt: Date.now()
+      });
+      localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
+    } catch (e) {
+      console.warn("Vault quota reached:", e);
     }
+
+    try {
+      await saveImageToGallery(profile, `ControlNet ${type} Map`, 'ControlNet Forge', window._cn_global_img);
+    } catch (e) {
+      console.warn("Gallery save failed:", e);
+    }
+
+    vBtn.textContent = '✔️ SAVED TO VAULT';
+    vBtn.style.borderColor = '#10b981';
+    vBtn.style.color = '#10b981';
+    playSFX('pop', 0.8);
   };
+
+  // Download Map
+  wrap.querySelector('#cn-download-btn').onclick = () => {
+    if (!window._cn_global_img) return;
+    const a = document.createElement('a');
+    a.href = window._cn_global_img;
+    const type = window._cn_global_type || 'canny';
+    a.download = `alphacore_controlnet_${type}_${Date.now()}.png`;
+    a.click();
+  };
+
+  // Multi-Modal Dispatch Matrix Routing
+  wrap.querySelector('#cn-send-txt2img').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-t2i', { expandAdvanced: true });
+    playSFX('pop', 0.8);
+  };
+
+  wrap.querySelector('#cn-send-img2img').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-i2i', { setImg2Img: true, expandAdvanced: true });
+    playSFX('pop', 0.8);
+  };
+
+  wrap.querySelector('#cn-send-upscaler').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-upscale', { setUpscale: true });
+    playSFX('pop', 0.8);
+  };
+
+  wrap.querySelector('#cn-send-txt2vid').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-t2v', { expandAdvanced: true });
+    playSFX('pop', 0.8);
+  };
+
+  wrap.querySelector('#cn-send-img2vid').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-i2v', { setImg2Vid: true, expandAdvanced: true });
+    playSFX('pop', 0.8);
+  };
+
+  wrap.querySelector('#cn-send-framepack').onclick = () => {
+    dispatchControlNetToModal('#aim-tab-fp');
+    playSFX('pop', 0.8);
+  };
+
+  // If a global ControlNet map is already active, show it
+  if (window._cn_global_img) {
+    resultImg.src = window._cn_global_img;
+    resultTypeBadge.textContent = (window._cn_global_type || 'canny').toUpperCase();
+    wrap.querySelector('#cn-result-container').style.display = 'block';
+  }
 
   return wrap;
 }
