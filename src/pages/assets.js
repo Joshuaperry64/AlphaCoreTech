@@ -119,7 +119,7 @@ export default function AssetManagerPage() {
 
   const getEndpoint = () => {
     const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
-    return settings.music_url || 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-app.modal.run';
+    return settings.music_url || 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run';
   };
 
   // Download Logic

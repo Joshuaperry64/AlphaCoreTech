@@ -57,7 +57,7 @@ export default function MusicPage() {
 
     try {
       const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
-      const endpoint = settings.music_url || 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-app.modal.run';
+      const endpoint = settings.music_url || 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run';
       
       status.textContent = 'SYNTHESIZING AUDIO...';
       

@@ -30,14 +30,14 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.modal.run',
-    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.modal.run',
-    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run',
-    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.modal.run/stream',
-    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.modal.run/stream',
-    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.modal.run',
-    fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-fannin-sc-92fe44.modal.run/api/mugshots',
-    music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.modal.run',
+    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run',
+    txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
+    img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
+    framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-ui-framepack.modal.run',
+    fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
+    music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 20,
     stepsNormalTxt: 30,
@@ -469,7 +469,7 @@ function buildAdminUI() {
     const newSettings = {
       txt2imgUrl: t2i.replace(/\/+$/, ''),
       img2imgUrl: i2i.replace(/\/+$/, ''),
-      preprocessorUrl: (settings.preprocessorUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-preproces-d30863.modal.run').replace(/\/+$/, ''),
+      preprocessorUrl: (settings.preprocessorUrl || 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run').replace(/\/+$/, ''),
       txt2vidUrl: t2v,
       img2vidUrl: i2v,
       framepackUrl: fp,

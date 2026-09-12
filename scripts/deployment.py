@@ -8,17 +8,19 @@ from pydantic import BaseModel
 # 1. Import the central app instance
 from shared_app import app
 
-# 2. Import all worker scripts so their decorators attach to the app
-import scraper
-import cloner
-import txt2img
-import img2img
-import txt2vid
-import img2vid
-import framepack
+# 2. Import worker scripts
 import music
 import web_loader
-import preprocessors
+
+if modal.is_local():
+    import scraper
+    import cloner
+    import txt2img
+    import img2img
+    import txt2vid
+    import img2vid
+    import framepack
+    import preprocessors
 
 # 3. Create the Monolithic API Router
 web_app = FastAPI(title="AlphaCore AIO Backend")
@@ -78,7 +80,11 @@ async def api_list_assets(subfolder: str = "checkpoints"):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 4. Expose the FastAPI app to Modal
-router_image = modal.Image.debian_slim(python_version="3.12").pip_install("fastapi[standard]", "pydantic", "requests")
+router_image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install("fastapi[standard]", "pydantic", "requests")
+    .add_local_python_source("shared_app", "music", "web_loader")
+)
 
 @app.function(image=router_image)
 @modal.asgi_app()

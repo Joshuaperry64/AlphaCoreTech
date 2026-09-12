@@ -491,24 +491,23 @@ export default function MugshotsPage() {
       try {
         let rawPosts = [];
 
-        // VECTOR 1: Token-less Scraper Microservice
-        let scraperEndpoint;
+        const defaultScraperEndpoint = 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots';
+        let scraperEndpoint = defaultScraperEndpoint;
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');
           if (customStr) {
             const custom = JSON.parse(customStr);
-            if (custom.fanninCrimeUrl) {
-                scraperEndpoint = custom.fanninCrimeUrl;
+            if (custom.fanninCrimeUrl && custom.fanninCrimeUrl.includes('josh64perry')) {
+              scraperEndpoint = custom.fanninCrimeUrl;
             } else {
-                scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
+              scraperEndpoint = defaultScraperEndpoint;
             }
-          } else {
-            scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
           }
         } catch(e) {
-          scraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-fastapi-a-314381.modal.run/api/mugshots';
+          scraperEndpoint = defaultScraperEndpoint;
         }
 
+        let fetchError = null;
         try {
           syncStatus.textContent = 'QUERYING ENDPOINT...';
           const res = await fetch(scraperEndpoint, { signal: AbortSignal.timeout(60000) });
@@ -518,14 +517,16 @@ export default function MugshotsPage() {
             const src = data.source || 'endpoint';
             syncStatus.textContent = `FEED RECEIVED [${src.toUpperCase()}] — ${rawPosts.length} RECORDS`;
           } else {
+            fetchError = `HTTP ${res.status}`;
             syncStatus.textContent = `ENDPOINT ERROR: HTTP ${res.status}`;
             statScraperStatus.textContent = 'DEGRADED';
             statScraperStatus.style.color = '#ff003c';
           }
         } catch(e) {
+          fetchError = e.message;
           console.warn('Scraper microservice unavailable:', e.message);
           syncStatus.textContent = 'SCRAPER UNREACHABLE — FALLBACK MODE';
-          statScraperStatus.textContent = 'DEGRADED';
+          statScraperStatus.textContent = 'OFFLINE';
           statScraperStatus.style.color = '#ffaa00';
         }
 
@@ -606,6 +607,16 @@ export default function MugshotsPage() {
               console.warn("Gazette augmentation failed for", parsed[i].name, e);
             }
           }
+        }
+
+        if (fetchError && rawPosts.length === 0) {
+          syncStatus.textContent = `SYNC FAILED: ${fetchError}`;
+          syncStatus.style.color = '#ff003c';
+          statScraperStatus.textContent = 'OFFLINE';
+          statScraperStatus.style.color = '#ff003c';
+          if (typeof showToast === 'function') showToast(`Scraper sync failed (${fetchError})`, 'error');
+          renderCards();
+          return;
         }
 
         const existingIds = new Set(allMugshots.map(m => m.id));

@@ -25,8 +25,8 @@ const DEFAULT_DB = {
   ],
   logs: [],
   settings: {
-    txt2imgUrl: 'https://ai-alphacore-tech--txt2img-inference-web.modal.run/',
-    img2imgUrl: 'https://ai-alphacore-tech--img2img-unifiedmodel-web.modal.run/',
+    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 10, stepsFocusedTxt: 50, stepsNormalTxt: 20,
     stepsFastImg: 8, stepsFocusedImg: 30, stepsNormalImg: 17,
