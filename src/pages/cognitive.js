@@ -1,5 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
+import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
@@ -55,9 +56,10 @@ export default function CognitiveUplink() {
 
       <!-- Main Chat Area -->
       <div class="panel chat-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
-        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid rgba(6,182,212,0.2);">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid rgba(6,182,212,0.2); flex-wrap: wrap; gap: 8px;">
           <span id="chat-channel-title">// PRIVATE_UPLINK</span>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="toggle-alphacore-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;" title="Apply AlphaCore System Instruction">ALPHA PROTOCOL: OFF</button>
             <button id="toggle-rag-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; border-color: rgba(6,182,212,0.3);" title="Inject Vault text files as context">VAULT RAG: OFF</button>
             <button id="toggle-tts-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; border-color: rgba(6,182,212,0.3);" title="Text-to-Speech Output">TTS: OFF</button>
             <button id="cmd-clear-chat" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; color: #ff003c; border-color: rgba(255,0,60,0.3);" title="Delete current session">DELETE SESSION</button>
@@ -95,6 +97,10 @@ export default function CognitiveUplink() {
     let useVaultRAG = false;
     let useTTS = false;
     
+    // AlphaCore System Instruction State
+    const storedPrivateAlpha = localStorage.getItem(`alphacore_instruction_private_${profile}`);
+    let useAlphaCorePrivate = storedPrivateAlpha !== null ? (storedPrivateAlpha === 'true') : false;
+    
     // UI Elements
     const tabs = container.querySelectorAll('.aim-seg-btn');
     const apiConfigView = container.querySelector('#cog-api-config');
@@ -119,8 +125,40 @@ export default function CognitiveUplink() {
     const micBtn = document.getElementById('mic-btn');
     const toggleRAGBtn = document.getElementById('toggle-rag-btn');
     const toggleTTSBtn = document.getElementById('toggle-tts-btn');
+    const toggleAlphaCoreBtn = container.querySelector('#toggle-alphacore-btn');
     const newThreadBtn = document.getElementById('new-thread-btn');
     const threadsList = document.getElementById('threads-list');
+
+    function updateAlphaCoreButtonUI() {
+      if (!toggleAlphaCoreBtn) return;
+      if (currentChannel === 'shared') {
+        toggleAlphaCoreBtn.disabled = true;
+        toggleAlphaCoreBtn.textContent = '🔒 ALPHA PROTOCOL: ENFORCED';
+        toggleAlphaCoreBtn.title = 'AlphaCore System Instruction is permanently locked and enforced on the Global Comm Link (No Option to Change)';
+        toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: rgba(0, 255, 140, 0.7); color: #00ff8c; background: rgba(0, 255, 140, 0.15); box-shadow: 0 0 8px rgba(0, 255, 140, 0.25); cursor: not-allowed; opacity: 0.95; font-weight: bold;';
+      } else {
+        toggleAlphaCoreBtn.disabled = false;
+        toggleAlphaCoreBtn.title = 'Click to toggle AlphaCore System Instruction for private uplink';
+        if (useAlphaCorePrivate) {
+          toggleAlphaCoreBtn.textContent = '⚡ ALPHA PROTOCOL: ON';
+          toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: #00ff8c; color: #00ff8c; background: rgba(0, 255, 140, 0.15); box-shadow: 0 0 8px rgba(0, 255, 140, 0.3); cursor: pointer; font-weight: bold;';
+        } else {
+          toggleAlphaCoreBtn.textContent = 'ALPHA PROTOCOL: OFF';
+          toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: rgba(6,182,212,0.3); color: var(--text-muted); background: transparent; cursor: pointer;';
+        }
+      }
+    }
+
+    if (toggleAlphaCoreBtn) {
+      toggleAlphaCoreBtn.addEventListener('click', () => {
+        if (currentChannel === 'shared') return; // Enforced on shared global
+        useAlphaCorePrivate = !useAlphaCorePrivate;
+        localStorage.setItem(`alphacore_instruction_private_${profile}`, useAlphaCorePrivate ? 'true' : 'false');
+        updateAlphaCoreButtonUI();
+        channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}${useAlphaCorePrivate ? ' // ALPHA' : ''}]`;
+        try { playSFX('button', 0.3); } catch(e) {}
+      });
+    }
 
     let isStreaming = false;
 
@@ -356,11 +394,13 @@ export default function CognitiveUplink() {
           
           if (target === 'cog-chat-private') {
             currentChannel = 'private';
-            channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}]`;
+            channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}${useAlphaCorePrivate ? ' // ALPHA' : ''}]`;
+            updateAlphaCoreButtonUI();
             loadThreads();
           } else if (target === 'cog-chat-shared') {
             currentChannel = 'shared';
-            channelTitle.textContent = '// GLOBAL_COMM_LINK [SHARED MATRIX]';
+            channelTitle.textContent = '// GLOBAL_COMM_LINK [SHARED MATRIX // ALPHA ENFORCED]';
+            updateAlphaCoreButtonUI();
             loadThreads();
           }
         }
@@ -376,14 +416,20 @@ export default function CognitiveUplink() {
         try { history = JSON.parse(historyStr); } catch(e) {}
       }
 
+      const isAlphaCoreActive = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+
       if (history.length === 0) {
-        appendMessage('SYSTEM', 'Neural bridge active. Ready for transmission.', 'system-msg');
+        const welcomeText = isAlphaCoreActive
+          ? 'AlphaCore neural bridge initialized. Protocols online and standing by.'
+          : 'Neural bridge active. Ready for transmission.';
+        appendMessage('SYSTEM', welcomeText, 'system-msg');
       } else {
         history.forEach(msg => {
           if (msg.role === 'user') {
             appendMessage(msg.author || 'USER', msg.displayHtml || msg.parts[0].text, 'user-msg', true);
           } else {
-            appendMessage('GEMINI', msg.parts[0].text, 'alpha-msg');
+            const author = msg.author || (isAlphaCoreActive ? 'ALPHA' : 'GEMINI');
+            appendMessage(author, msg.parts[0].text, 'alpha-msg');
           }
         });
       }
@@ -506,12 +552,15 @@ export default function CognitiveUplink() {
       pendingAttachments = [];
       renderAttachmentPreviews();
       
+      const isAlphaCoreActive = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+      const modelAuthor = isAlphaCoreActive ? 'ALPHA' : 'GEMINI';
+
       isStreaming = true;
       statusDot.classList.remove('online'); statusDot.classList.add('streaming');
-      statusText.textContent = 'CONNECTING TO GEMINI CLUSTER...';
+      statusText.textContent = isAlphaCoreActive ? 'CONNECTING TO ALPHA NEURAL MATRIX...' : 'CONNECTING TO GEMINI CLUSTER...';
       sendBtn.disabled = true;
 
-      const typingEl = appendMessage('GEMINI', '...', 'alpha-msg typing');
+      const typingEl = appendMessage(modelAuthor, '...', 'alpha-msg typing');
 
       try {
         let geminiHistory = [];
@@ -552,6 +601,13 @@ export default function CognitiveUplink() {
           generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         };
 
+        // Apply AlphaCore system instruction (always on shared, or when enabled on private)
+        if (isAlphaCoreActive) {
+          payload.systemInstruction = {
+            parts: [{ text: ALPHACORE_SYSTEM_INSTRUCTION }]
+          };
+        }
+
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -569,7 +625,7 @@ export default function CognitiveUplink() {
         const decoder = new TextDecoder("utf-8");
         let fullReply = "";
         
-        const streamEl = appendMessage('GEMINI', '', 'alpha-msg');
+        const streamEl = appendMessage(modelAuthor, '', 'alpha-msg');
         let buffer = "";
 
         while (true) {
@@ -591,7 +647,7 @@ export default function CognitiveUplink() {
           chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        saveMessageToHistory('model', formatOutput(fullReply), [{ text: fullReply }]);
+        saveMessageToHistory('model', formatOutput(fullReply), [{ text: fullReply }], modelAuthor);
         
         // TTS Output
         if (useTTS && window.speechSynthesis) {
@@ -612,7 +668,9 @@ export default function CognitiveUplink() {
       } finally {
         isStreaming = false;
         statusDot.classList.remove('streaming'); statusDot.classList.add('online');
-        statusText.textContent = 'SYSTEM READY — AWAITING INPUT';
+        statusText.textContent = isAlphaCoreActive
+          ? 'ALPHA PROTOCOL SYNCHRONIZED — AWAITING INPUT'
+          : 'SYSTEM READY — AWAITING INPUT';
         sendBtn.disabled = false;
       }
     }
@@ -645,6 +703,8 @@ export default function CognitiveUplink() {
       return html;
     }
 
+    channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}${useAlphaCorePrivate ? ' // ALPHA' : ''}]`;
+    updateAlphaCoreButtonUI();
     loadThreads();
 
   }, 50);

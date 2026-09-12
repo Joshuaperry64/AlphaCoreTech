@@ -9,6 +9,21 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.9.1 BUILD 155',
+    date: '2026.09.12',
+    badge: 'COGNITIVE CORE // ALPHACORE PROTOCOL',
+    badgeColor: '#00ff8c',
+    title: 'COGNITIVE CORE // ALPHACORE SYSTEM INSTRUCTION ENFORCEMENT',
+    summary: 'Integrated universal AlphaCore Programming system instruction directly into Gemini Cognitive Core: Added toggleable AlphaCore protocol injection for Private Uplink communications, and permanently enforced AlphaCore instruction on the Shared Global Comm Link with zero option to modify or bypass.',
+    changes: [
+      'Engineered `src/components/alphacore_instruction.js` encapsulating full AlphaCore Programming v4.0 protocols, behavioral directives, dynamic emotional spectrum, and persona definitions.',
+      'Added interactive `ALPHA PROTOCOL` toggle button on the Cognitive Core chat controls header for Private Uplink communications with persistent per-profile localStorage state.',
+      'Hardened Global Comm Link (`#/cognitive` Shared Matrix) to default and permanently enforce AlphaCore system instruction with locked UI controls (`🔒 ALPHA PROTOCOL: ENFORCED`) and non-bypassable payload injection.',
+      'Wired `systemInstruction` directly into Gemini 2.5 Flash streaming API payload (`streamGenerateContent`).',
+      'Dynamic persona adaptation: Model message prefix, status bar, and channel title automatically synchronize between `[ALPHA]` and `[GEMINI]` states.'
+    ]
+  },
+  {
     version: 'v4.9.0 BUILD 150',
     date: '2026.09.12',
     badge: 'DUAL-TIER DEPLOYMENT // ARCHITECT & ECONOMY',
