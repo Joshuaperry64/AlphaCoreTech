@@ -106,6 +106,34 @@ def sync_website_models(force: bool = False):
                 summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
                 return
 
+        # Check for existing variants/aliases (e.g. juggernautXL_ragnarokBy.safetensors)
+        if not force:
+            stem = filename.replace(".safetensors", "")
+            for existing in target_dir.glob(f"{stem}*.safetensors"):
+                if existing.is_file() and existing != dest_path and not existing.name.endswith(".tmp"):
+                    size_mb = existing.stat().st_size / (1024 * 1024)
+                    if size_mb > 1.0:
+                        print(f"[{category_name}] Found existing variant {existing.name} ({size_mb:.2f} MB) for {filename}. Linking...")
+                        try:
+                            os.link(str(existing), str(dest_path))
+                        except Exception:
+                            try:
+                                os.symlink(str(existing), str(dest_path))
+                            except Exception:
+                                import shutil
+                                shutil.copyfile(str(existing), str(dest_path))
+                        cache_volume.commit()
+                        summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
+                        return
+
+        # Clean stale tmp file if any
+        tmp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
+
         print(f"[{category_name}] Missing {filename}! Fetching metadata from CivitAI (ID: {version_id})...")
         try:
             meta_url = f"https://civitai.com/api/v1/model-versions/{version_id}"
