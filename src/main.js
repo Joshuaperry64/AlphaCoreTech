@@ -48,6 +48,7 @@ const routes = {
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
   '/aimodals': AiModals,
+  '/upscaler': AiModals,
   '/vault': VaultPage,
   '/research': Research,
   '/vision': VisionProcessor,

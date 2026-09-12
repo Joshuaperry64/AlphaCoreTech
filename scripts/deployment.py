@@ -14,6 +14,7 @@ from shared_app import app, CACHE_DIR, cache_volume
 import music
 import web_loader
 import cloner
+import upscaler
 
 if modal.is_local():
     import scraper
@@ -23,6 +24,7 @@ if modal.is_local():
     import img2vid
     import framepack
     import preprocessors
+    import upscaler
 
 # --- WEBSITE MODEL CATALOGS ---
 WEBSITE_CHECKPOINTS = {
@@ -60,8 +62,8 @@ def _get_secrets():
 
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner")
+    .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic", "Pillow", "numpy")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler")
 )
 
 @app.function(
@@ -380,11 +382,44 @@ async def api_voice_train(profile_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- NEURAL UPSCALER ENDPOINTS ---
+@web_app.get("/api/upscale/status")
+def api_upscale_status():
+    return {
+        "status": "online",
+        "engine": "Real-ESRGAN / Neural Super-Resolution Pipeline",
+        "hardware": "Modal Cloud A10G",
+        "models": [
+            {"id": "realesrgan-x4plus", "name": "RealESRGAN x4plus", "category": "Photo Realism", "scale": 4},
+            {"id": "realesrgan-anime", "name": "RealESRGAN Anime 6B", "category": "2D / Line Art", "scale": 4},
+            {"id": "ultrasharp-4x", "name": "4x UltraSharp", "category": "Crisp Textures", "scale": 4},
+            {"id": "dsp-fast", "name": "Fast Adaptive DSP", "category": "Instant Resampling", "scale": 4}
+        ],
+        "supported_scales": [2, 4, 8],
+        "timestamp": time.time()
+    }
+
+@web_app.post("/api/upscale")
+async def api_upscale(req: upscaler.UpscaleRequest):
+    try:
+        res = await upscaler.Upscaler().upscale_image.remote.aio(
+            image_b64=req.image_b64,
+            scale=req.scale,
+            model_name=req.model_name,
+            denoise=req.denoise,
+            sharpen=req.sharpen,
+            face_enhance=req.face_enhance,
+            output_format=req.output_format
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 4. Expose the FastAPI app to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi[standard]", "pydantic", "requests")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner")
+    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler")
 )
 
 @app.function(image=router_image)

@@ -9,6 +9,23 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.8.0 BUILD 142',
+    date: '2026.09.12',
+    badge: 'NEURAL SUPER-RESOLUTION & CLOUD UPSCALE',
+    badgeColor: '#38bdf8',
+    title: 'AI MODALS // NEURAL UPSCALER & A10G SUPER-RES',
+    summary: 'Engineered and launched the Neural Upscaler AI modal on Modal A10G infrastructure. Delivers 2x, 4x, and 8x super-resolution, artifact suppression, interactive before/after split comparison slider, and high-frequency edge enhancement.',
+    changes: [
+      'Engineered `scripts/upscaler.py` powered by pure PyTorch RRDBNet neural architecture with seamless tile-based inference supporting multi-gigapixel inputs without memory limits.',
+      'Configured multi-model support: RealESRGAN x4plus (Photorealism), RealESRGAN Anime 6B (Digital Art & Lineart), 4x-UltraSharp (Crisp Textures), and Fast Adaptive DSP (Lanczos resampling).',
+      'Exposed live Modal backend endpoints: `GET /api/upscale/status` and `POST /api/upscale` on `AlphaCore_Main_API`, plus standalone endpoint `Upscaler.web_upscale`.',
+      'Integrated dedicated `UPSCALER` tab into AI Modals (`#/aimodals` and `#/upscaler`) with drag & drop upload, clipboard paste, and automatic resolution calculation.',
+      'Built interactive Before/After Comparison Split Slider allowing real-time dragging between original and super-resolved outputs.',
+      'Added 1-click `🔍 UPSCALE` pipeline shortcut from Txt2Img and Img2Img generation result panels.',
+      'Implemented instant client-side Canvas DSP supersampling with unsharp convolution as a zero-latency fallback.'
+    ]
+  },
+  {
     version: 'v4.7.0 BUILD 135',
     date: '2026.09.12',
     badge: 'AUTONOMOUS VOLUME SYNC & CLOUD RE-ALIGNMENT',
