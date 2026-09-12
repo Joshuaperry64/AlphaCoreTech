@@ -52,7 +52,15 @@ LORA_WEIGHT = "qwen-image-edit-plus-nsfw-lora.safetensors"
 LORA_ADAPTER = "mcnl-nsfw-v1"
 
 image = image.add_local_python_source("shared_app")
-@app.cls(image=image, gpu="H100", volumes=volumes, secrets=secrets, scaledown_window=600)
+@app.cls(
+    image=image,
+    gpu="H100",
+    volumes=volumes,
+    secrets=secrets,
+    scaledown_window=600,
+    timeout=1200,
+    memory=64 * 1024
+)
 class Img2Img:
     @modal.enter()
     def enter(self):
@@ -75,21 +83,29 @@ class Img2Img:
         token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
         if token:
             os.environ["HF_TOKEN"] = token
+
+        cache_volume.reload()
         
         if model_choice == "flux":
-            print(f"Loading base model {FLUX_BASE}...")
-            from diffusers import AutoPipelineForImage2Image
-            self.pipe = AutoPipelineForImage2Image.from_pretrained(
+            print(f"Loading base model {FLUX_BASE} (bfloat16)...")
+            from diffusers import FluxImg2ImgPipeline
+            self.pipe = FluxImg2ImgPipeline.from_pretrained(
                 FLUX_BASE, 
-                torch_dtype=torch.float16,
+                torch_dtype=torch.bfloat16,
                 cache_dir=CACHE_DIR,
                 token=token
             )
             self.pipe.to("cuda")
             
+            try:
+                cache_volume.commit()
+                print("[FLUX] Successfully committed downloaded weights to persistent volume cache.")
+            except Exception as ce:
+                print(f"[FLUX] Volume commit note: {ce}")
+            
         elif model_choice == "qwen":
             from diffusers import QwenImageEditPlusPipeline
-            print(f"Loading base model {QWEN_BASE}...")
+            print(f"Loading base model {QWEN_BASE} (bfloat16)...")
             self.pipe = QwenImageEditPlusPipeline.from_pretrained(
                 QWEN_BASE,
                 torch_dtype=torch.bfloat16,
@@ -110,6 +126,11 @@ class Img2Img:
 
             print("Disabling safety checker.")
             self.pipe.safety_checker = lambda images, **kwargs: (images, [False] * len(images))
+
+            try:
+                cache_volume.commit()
+            except Exception:
+                pass
             
         self.current_model = model_choice
         print(f"✅ {model_choice.upper()} loaded successfully!")
@@ -173,16 +194,47 @@ class Img2Img:
                         return callback_kwargs
 
                     if self.current_model == "flux":
-                        strength = float(true_cfg_scale) / 10.0
+                        from PIL import Image
+                        w, h = pil_images[0].size
+                        scale_f = min(1.0, 1024.0 / max(w, h))
+                        tw = max(64, int(round(w * scale_f / 16) * 16))
+                        th = max(64, int(round(h * scale_f / 16) * 16))
+                        flux_img = pil_images[0].resize((tw, th), Image.Resampling.LANCZOS)
+
+                        # Parse and balance strength:
+                        if 0.0 < true_cfg_scale <= 1.0:
+                            strength = float(true_cfg_scale)
+                        elif true_cfg_scale <= 10.0:
+                            strength = float(true_cfg_scale) / 10.0
+                            if 0.35 <= strength <= 0.45:
+                                strength = 0.75
+                        else:
+                            strength = 0.80
+
+                        strength = max(0.20, min(0.98, strength))
+
+                        # Target 4 effective distillation denoising steps for FLUX.1-schnell:
+                        flux_total_steps = max(4, int(round(4.0 / max(0.1, strength))))
+                        if 4 <= num_inference_steps <= 10:
+                            flux_total_steps = int(round(num_inference_steps / max(0.1, strength)))
+                        flux_total_steps = min(12, flux_total_steps)
+
+                        def flux_step_callback(pipe, step_index, timestep, callback_kwargs):
+                            q.put({"step": step_index, "max_steps": flux_total_steps, "images_completed": images_completed, "total_images": batch_size})
+                            return callback_kwargs
+
+                        print(f"[FLUX] Schnell Img2Img inference: strength={strength:.2f}, steps={flux_total_steps}, dims=({tw}x{th})")
+
                         chunk_images = self.pipe(
                             prompt=prompt,
-                            image=pil_images[0],
-                            num_inference_steps=num_inference_steps,
+                            image=flux_img,
+                            num_inference_steps=flux_total_steps,
                             strength=strength,
                             guidance_scale=0.0,
+                            max_sequence_length=256,
                             num_images_per_prompt=current_batch_size,
                             generator=generator,
-                            callback_on_step_end=chunk_callback
+                            callback_on_step_end=flux_step_callback
                         ).images
                         
                     elif self.current_model == "qwen":
@@ -306,6 +358,7 @@ class Img2Img:
             Qwen: int = Form(1),
             Flux: int = Form(0),
             model_name: str = Form(""),
+            model: str = Form(""),
             prompt: str = Form("input requested image edits here."),
             negative_prompt: str = Form("worst quality, low quality"),
             true_cfg_scale: float = Form(4.0),
@@ -321,9 +374,17 @@ class Img2Img:
             refs_bytes = [ref.file.read() for ref in [ref1, ref2] if ref]
             seed_val = None if seed == -1 else seed
             
+            effective_model = (model_name or model or "").lower().strip()
+            if "flux" in effective_model:
+                Flux = 1
+                Qwen = 0
+            elif "qwen" in effective_model:
+                Qwen = 1
+                Flux = 0
+
             def event_generator():
                 for msg in self.run_stream.local(
-                    image_bytes=image_bytes, prompt=prompt, Qwen=Qwen, Flux=Flux, model_name=model_name,
+                    image_bytes=image_bytes, prompt=prompt, Qwen=Qwen, Flux=Flux, model_name=effective_model,
                     negative_prompt=negative_prompt, true_cfg_scale=true_cfg_scale, num_inference_steps=num_inference_steps,
                     batch_size=batch_size, lora=lora, seed=seed_val, image_bytes2=image_bytes2, refs=refs_bytes,
                 ):
@@ -345,6 +406,7 @@ class Img2Img:
             Qwen: int = Form(1),
             Flux: int = Form(0),
             model_name: str = Form(""),
+            model: str = Form(""),
             prompt: str = Form("input requested image edits here."),
             negative_prompt: str = Form("worst quality, low quality"),
             true_cfg_scale: float = Form(4.0),
@@ -356,8 +418,16 @@ class Img2Img:
             image_bytes = image.file.read()
             seed_val = None if seed == -1 else seed
             
+            effective_model = (model_name or model or "").lower().strip()
+            if "flux" in effective_model:
+                Flux = 1
+                Qwen = 0
+            elif "qwen" in effective_model:
+                Qwen = 1
+                Flux = 0
+
             output_bytes_list = self.inference.local(
-                image_bytes=image_bytes, prompt=prompt, Qwen=Qwen, Flux=Flux, model_name=model_name,
+                image_bytes=image_bytes, prompt=prompt, Qwen=Qwen, Flux=Flux, model_name=effective_model,
                 negative_prompt=negative_prompt, true_cfg_scale=true_cfg_scale, num_inference_steps=num_inference_steps,
                 batch_size=batch_size, lora=lora, seed=seed_val,
             )

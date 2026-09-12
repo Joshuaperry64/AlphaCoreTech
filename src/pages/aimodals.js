@@ -1007,7 +1007,7 @@ function buildImg2Img() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="i2i-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg)}</span></label>
+            <label class="aim-label" for="i2i-cfg" id="i2i-cfg-label">PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg)}</span></label>
             <input class="aim-range" type="range" id="i2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceImg}" />
           </div>
         </div>
@@ -1097,18 +1097,71 @@ function buildImg2Img() {
     });
   });
 
+  const speedBtns = wrap.querySelectorAll('#i2i-speed .aim-seg-btn');
+  const i2iCfgInput = wrap.querySelector('#i2i-cfg');
+  const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
+  const i2iCfgLabel = wrap.querySelector('#i2i-cfg-label');
+
   wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('#i2i-model-select .aim-seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+
+      const model = btn.dataset.model;
+      if (model === 'flux') {
+        if (speedBtns.length >= 3) {
+          speedBtns[0].textContent = '⚡ FAST (4)';
+          speedBtns[0].dataset.steps = '4';
+          speedBtns[1].textContent = '⚖ NORMAL (6)';
+          speedBtns[1].dataset.steps = '6';
+          speedBtns[2].textContent = '🎯 HIGH (8)';
+          speedBtns[2].dataset.steps = '8';
+        }
+        if (i2iCfgInput) {
+          i2iCfgInput.min = '1';
+          i2iCfgInput.max = '10';
+          i2iCfgInput.step = '0.5';
+          i2iCfgInput.value = '7.5';
+        }
+        if (i2iCfgLabel) {
+          i2iCfgLabel.innerHTML = `TRANSFORMATION STRENGTH (0.1 - 1.0): <span class="aim-val-display" id="i2i-cfg-val">7.5</span> (75%)`;
+        }
+      } else {
+        if (speedBtns.length >= 3) {
+          speedBtns[0].textContent = '⚡ FAST';
+          speedBtns[0].dataset.steps = settings.stepsFastImg || '15';
+          speedBtns[1].textContent = '⚖ NORMAL';
+          speedBtns[1].dataset.steps = settings.stepsNormalImg || '25';
+          speedBtns[2].textContent = '🎯 DETAILED';
+          speedBtns[2].dataset.steps = settings.stepsFocusedImg || '40';
+        }
+        if (i2iCfgInput) {
+          i2iCfgInput.min = '1';
+          i2iCfgInput.max = '20';
+          i2iCfgInput.step = '0.5';
+          i2iCfgInput.value = settings.guidanceImg || '4.0';
+        }
+        if (i2iCfgLabel) {
+          i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${parseFloat(settings.guidanceImg || 4.0)}</span>`;
+        }
+      }
     });
   });
 
-  const i2iCfgInput = wrap.querySelector('#i2i-cfg');
-  const i2iCfgVal = wrap.querySelector('#i2i-cfg-val');
-  if (i2iCfgInput && i2iCfgVal) {
+  if (i2iCfgInput) {
     i2iCfgInput.addEventListener('input', () => {
-      i2iCfgVal.textContent = parseFloat(i2iCfgInput.value);
+      const activeModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model;
+      const val = parseFloat(i2iCfgInput.value);
+      if (activeModel === 'flux') {
+        const pct = Math.round((val / 10.0) * 100);
+        if (i2iCfgLabel) {
+          i2iCfgLabel.innerHTML = `TRANSFORMATION STRENGTH (0.1 - 1.0): <span class="aim-val-display" id="i2i-cfg-val">${val}</span> (${pct}%)`;
+        }
+      } else {
+        if (i2iCfgLabel) {
+          i2iCfgLabel.innerHTML = `PROMPT ADHERANCE: <span class="aim-val-display" id="i2i-cfg-val">${val}</span>`;
+        }
+      }
     });
   }
 
