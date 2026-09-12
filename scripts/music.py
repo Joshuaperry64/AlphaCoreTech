@@ -167,6 +167,18 @@ class MusicGenerator:
         return Path(result.audios[0]["path"]).read_bytes()
 
 
+@app.cls(
+    gpu="A10G",
+    image=image,
+    volumes={checkpoints_dir: model_cache},
+    scaledown_window=60,
+    max_containers=1
+)
+class MusicGenerator_Eco(MusicGenerator._get_user_cls()):
+    """Economy tier music generator. Cost-optimized on A10G with 60s scaledown."""
+    pass
+
+
 # We can then generate music from anywhere by running code like what we have in the `local_entrypoint` below.
 
 
@@ -297,3 +309,53 @@ def ui_generate_music():
         )
 
     return mount_gradio_app(app=api, blocks=demo, path="/")
+
+
+@app.function(
+    image=web_image,
+    max_containers=1,
+)
+@modal.concurrent(max_inputs=100)
+@modal.asgi_app()
+def ui_generate_music_eco():
+    import gradio as gr
+    from fastapi import FastAPI
+    from gradio.routes import mount_gradio_app
+
+    api = FastAPI()
+    music_generator = MusicGenerator_Eco()
+    generate = music_generator.run.remote
+    temp_dir = Path("/dev/shm")
+
+    async def generate_music(
+        prompt: str, lyrics: str, duration: float = 30.0, format: str = "mp3"
+    ):
+        audio_bytes = await generate.aio(
+            prompt, lyrics, duration=duration, format=format
+        )
+        audio_path = temp_dir / f"{uuid4()}.{format}"
+        audio_path.write_bytes(audio_bytes)
+        return audio_path
+
+    with gr.Blocks(theme="soft") as demo:
+        gr.Markdown("# Generate Music (Economy Tier)")
+        with gr.Row():
+            with gr.Column():
+                prompt = gr.Textbox(label="Prompt")
+                lyrics = gr.Textbox(label="Lyrics")
+                duration = gr.Number(
+                    label="Duration (seconds)", value=10.0, minimum=1.0, maximum=120.0
+                )
+                format = gr.Radio(["wav", "mp3"], label="Format", value="mp3")
+                btn = gr.Button("Generate")
+            with gr.Column():
+                clip_output = gr.Audio(label="Generated Music", autoplay=True)
+
+        btn.click(
+            generate_music,
+            inputs=[prompt, lyrics, duration, format],
+            outputs=[clip_output],
+        )
+
+    return mount_gradio_app(app=api, blocks=demo, path="/")
+

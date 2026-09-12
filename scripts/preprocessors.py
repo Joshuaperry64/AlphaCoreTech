@@ -78,3 +78,10 @@ class Preprocessors:
         out_bytes = self.process.local(image_data, req.processor_type)
         out_b64 = base64.b64encode(out_bytes).decode('utf-8')
         return {"image_b64": f"data:image/png;base64,{out_b64}"}
+
+
+@app.cls(image=image, gpu="T4", scaledown_window=60, max_containers=1)
+class Preproc_Eco(Preprocessors._get_user_cls()):
+    """Economy tier endpoint for public/standard users. Cost-optimized on T4 with 60s scaledown."""
+    pass
+

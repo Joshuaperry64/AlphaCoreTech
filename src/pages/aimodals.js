@@ -1,11 +1,5 @@
 /**
- * AI Modals Page — t
-  if (window._cn_global_img && window._cn_global_type && document.querySelector('#t2i-cn-container').style.display !== 'none') {
-    payload.control_image_b64 = window._cn_global_img;
-    payload.control_type = window._cn_global_type;
-    payload.controlnet_conditioning_scale = 1.0;
-  }
-xt2img & img2img via Modal.run endpoints
+ * AI Modals Page — txt2img, img2img, upscaler, txt2vid, img2vid, controlnet, framepack via Modal.run endpoints
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
@@ -34,7 +28,10 @@ function resolveEndpoint(baseUrl, subPath = '') {
 }
 
 function getModalSettings() {
-  const defaults = {
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+
+  const architectEndpoints = {
     txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
     img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
     preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run',
@@ -44,6 +41,29 @@ function getModalSettings() {
     fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
     music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run',
     upscalerUrl: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run/api/upscale',
+    tierName: 'ARCHITECT PRIORITY',
+    tierHardware: 'H100 / L40S High-Performance Nodes',
+  };
+
+  const economyEndpoints = {
+    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-eco-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-eco-web-img2img.modal.run',
+    preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preproc-eco-web-process.modal.run',
+    txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-eco-web-txt2vid.modal.run/stream',
+    img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-eco-web-img2vid.modal.run/stream',
+    framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-eco-ui-framepack.modal.run',
+    fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
+    music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run',
+    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run/api/upscale',
+    tierName: 'PUBLIC ECONOMY',
+    tierHardware: 'Cost-Optimized Nodes (60s Auto-Scale, Max 1)',
+  };
+
+  const activeEndpoints = isArchitect ? architectEndpoints : economyEndpoints;
+
+  const defaults = {
+    ...activeEndpoints,
+    isArchitect,
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     guidanceScale: '7.0',
     guidanceImg: 4.0,
@@ -54,6 +74,12 @@ function getModalSettings() {
     stepsNormalImg: 25,
     stepsFocusedImg: 40
   };
+
+  // Economy tier is locked strictly to economy endpoints to prevent runaway bills
+  if (!isArchitect) {
+    return defaults;
+  }
+
   try {
     const customStr = localStorage.getItem('alphacore_modal_settings');
     if (customStr) {
@@ -2003,14 +2029,28 @@ export default function AiModals() {
 
 
 function buildMainUI() {
+  const settings = getModalSettings();
+  const isArchitect = settings.isArchitect;
+  const tierColor = isArchitect ? '#38bdf8' : '#10b981';
+  const tierBg = isArchitect ? 'rgba(56, 189, 248, 0.12)' : 'rgba(16, 185, 129, 0.12)';
+  const tierBorder = isArchitect ? 'rgba(56, 189, 248, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+  const tierIcon = isArchitect ? '⚡' : '🌱';
+
   const root = document.createElement('div');
   root.className = 'aim-root';
   root.innerHTML = `
     <div class="aim-header">
-      <div class="aim-header-badge">[SYS_MODULE] // GENERATIVE_AI</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+        <div class="aim-header-badge">[SYS_MODULE] // GENERATIVE_AI</div>
+        <div class="aim-tier-badge" style="background:${tierBg}; border:1px solid ${tierBorder}; color:${tierColor}; padding:4px 12px; font-family:var(--font-hud); font-size:0.75rem; border-radius:2px; font-weight:bold; letter-spacing:1px; display:inline-flex; align-items:center; gap:6px;">
+          <span>${tierIcon}</span>
+          <span>TIER: ${settings.tierName}</span>
+          <span style="opacity:0.8; font-weight:normal; font-size:0.7rem;">(${settings.tierHardware})</span>
+        </div>
+      </div>
       <h1 class="glitch aim-title" data-text="AI MODALS // SYNTHESIS_ENGINE">AI MODALS // SYNTHESIS_ENGINE</h1>
       <div class="header-line"></div>
-      <p class="aim-subtitle">Neural image synthesis via Modal GPU infrastructure. Select a generation mode below.</p>
+      <p class="aim-subtitle">Neural synthesis via Modal GPU infrastructure. Active routing: <strong style="color:${tierColor}">${settings.tierName}</strong> (${settings.tierHardware}).</p>
     </div>
 
     <div class="aim-tabs" id="aim-tabs">

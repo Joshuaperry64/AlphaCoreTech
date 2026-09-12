@@ -213,209 +213,228 @@ def sync_website_models(force: bool = False):
     print("=" * 60)
     return summary
 
-# 3. Create the Monolithic API Router
-web_app = FastAPI(title="AlphaCore AIO Backend")
-
-web_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@web_app.get("/")
-def home():
-    return {"status": "AlphaCore AIO Backend Online", "timestamp": time.time()}
-
-# --- NEW MUSIC GENERATION ENDPOINT ---
+# --- PYDANTIC REQUEST SCHEMAS ---
 class MusicRequest(BaseModel):
     prompt: str
     length_seconds: int = 30
 
-@web_app.post("/api/music/generate")
-async def api_generate_music(req: MusicRequest):
-    try:
-        audio_bytes = await music.MusicGenerator().run.remote.aio(
-            prompt=req.prompt,
-            length_in_seconds=req.length_seconds
-        )
-        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-        return {"audio_b64": audio_b64}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# --- ASSET MANAGER ENDPOINTS ---
 class DownloadRequest(BaseModel):
     source: str
     params: dict
 
-@web_app.post("/api/assets/download")
-async def api_download_asset(req: DownloadRequest):
-    try:
-        result = await web_loader.AssetManager().download_asset.remote.aio(req.source, req.params)
-        if result.get("error"):
-            raise HTTPException(status_code=400, detail=result["error"])
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@web_app.get("/api/assets/list")
-async def api_list_assets(subfolder: str = "checkpoints"):
-    try:
-        files = await web_loader.AssetManager().list_assets.remote.aio(subfolder)
-        return {"files": files}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@web_app.post("/api/assets/sync-website-models")
-async def api_sync_website_models(force: bool = False):
-    """Trigger remote scan and download of missing website checkpoints and LoRAs."""
-    try:
-        call = sync_website_models.spawn(force=force)
-        return {
-            "status": "sync_initiated",
-            "call_id": call.object_id,
-            "message": "Model scan and download initiated in background on Modal volume."
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# --- VOICE CLONER ENDPOINTS ---
 class VoiceConvertRequest(BaseModel):
     profile_name: str
     audio_b64: str
     pitch_shift: int = 0
-
-@web_app.get("/api/voice/status")
-def api_voice_status():
-    return {
-        "status": "online",
-        "engine": "RVC v2 Neural Pipeline",
-        "hardware": "Modal Cloud A10G",
-        "models_volume": "rvc-models-volume",
-        "timestamp": time.time()
-    }
-
-@web_app.get("/api/voice/profiles")
-async def api_voice_profiles():
-    try:
-        import asyncio
-        contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=3.0)
-        volume_profiles = []
-        if isinstance(contents, dict) and "error" not in contents:
-            for path_str in contents.keys():
-                if path_str.startswith("models/"):
-                    parts = path_str.split("/")
-                    if len(parts) >= 2 and parts[1] not in volume_profiles:
-                        volume_profiles.append(parts[1])
-        presets = [
-            {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
-            {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
-            {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
-            {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
-        ]
-        return {
-            "presets": presets,
-            "custom_profiles": volume_profiles,
-            "total": len(presets) + len(volume_profiles)
-        }
-    except Exception as e:
-        return {
-            "presets": [
-                {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
-                {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
-                {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
-                {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
-            ],
-            "custom_profiles": [],
-            "error": str(e)
-        }
-
-@web_app.post("/api/voice/convert")
-async def api_voice_convert(req: VoiceConvertRequest):
-    try:
-        audio_bytes = base64.b64decode(req.audio_b64)
-        result = await cloner.infer_audio_modal.remote.aio(
-            profile_name=req.profile_name,
-            audio_bytes=audio_bytes,
-            pitch_shift=req.pitch_shift
-        )
-        if result.get("status") == "error":
-            raise HTTPException(status_code=400, detail=result.get("message", "Voice conversion failed"))
-        out_b64 = base64.b64encode(result["audio_bytes"]).decode("utf-8")
-        return {
-            "status": "success",
-            "audio_b64": out_b64,
-            "sample_rate": result.get("sample_rate", 48000),
-            "profile": req.profile_name
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 class VoiceSampleUpload(BaseModel):
     profile_name: str
     filename: str
     audio_b64: str
 
-@web_app.post("/api/voice/upload-sample")
-async def api_voice_upload_sample(req: VoiceSampleUpload):
-    try:
-        file_bytes = base64.b64decode(req.audio_b64)
-        await cloner.upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
-        return {"status": "success", "message": f"Sample {req.filename} saved for {req.profile_name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# 3. Create the Monolithic API Router Factory
+def create_aio_api(is_eco: bool = False) -> FastAPI:
+    tier_name = "Economy" if is_eco else "Architect Priority"
+    app_instance = FastAPI(title=f"AlphaCore AIO Backend ({tier_name})")
 
-@web_app.post("/api/voice/train")
-async def api_voice_train(profile_name: str):
-    try:
-        call = cloner.process_audio_samples.spawn(profile_name)
+    app_instance.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app_instance.get("/")
+    def home():
         return {
-            "status": "training_started",
-            "call_id": call.object_id,
-            "profile_name": profile_name,
-            "message": f"A10G GPU training initiated for profile '{profile_name}'"
+            "status": f"AlphaCore AIO Backend ({tier_name}) Online",
+            "tier": "economy" if is_eco else "architect",
+            "timestamp": time.time()
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-# --- NEURAL UPSCALER ENDPOINTS ---
-@web_app.get("/api/upscale/status")
-def api_upscale_status():
-    return {
-        "status": "online",
-        "engine": "Real-ESRGAN / Neural Super-Resolution Pipeline",
-        "hardware": "Modal Cloud A10G",
-        "models": [
-            {"id": "realesrgan-x4plus", "name": "RealESRGAN x4plus", "category": "Photo Realism", "scale": 4},
-            {"id": "realesrgan-anime", "name": "RealESRGAN Anime 6B", "category": "2D / Line Art", "scale": 4},
-            {"id": "ultrasharp-4x", "name": "4x UltraSharp", "category": "Crisp Textures", "scale": 4},
-            {"id": "dsp-fast", "name": "Fast Adaptive DSP", "category": "Instant Resampling", "scale": 4}
-        ],
-        "supported_scales": [2, 4, 8],
-        "timestamp": time.time()
-    }
+    # --- MUSIC GENERATION ENDPOINT ---
+    @app_instance.post("/api/music/generate")
+    async def api_generate_music(req: MusicRequest):
+        try:
+            gen_cls = music.MusicGenerator_Eco if is_eco else music.MusicGenerator
+            audio_bytes = await gen_cls().run.remote.aio(
+                prompt=req.prompt,
+                length_in_seconds=req.length_seconds
+            )
+            audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+            return {"audio_b64": audio_b64}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
-@web_app.post("/api/upscale")
-async def api_upscale(req: upscaler.UpscaleRequest):
-    try:
-        res = await upscaler.Upscaler().upscale_image.remote.aio(
-            image_b64=req.image_b64,
-            scale=req.scale,
-            model_name=req.model_name,
-            denoise=req.denoise,
-            sharpen=req.sharpen,
-            face_enhance=req.face_enhance,
-            output_format=req.output_format
-        )
-        return res
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # --- ASSET MANAGER ENDPOINTS ---
+    @app_instance.post("/api/assets/download")
+    async def api_download_asset(req: DownloadRequest):
+        try:
+            result = await web_loader.AssetManager().download_asset.remote.aio(req.source, req.params)
+            if result.get("error"):
+                raise HTTPException(status_code=400, detail=result["error"])
+            return result
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
-# 4. Expose the FastAPI app to Modal
+    @app_instance.get("/api/assets/list")
+    async def api_list_assets(subfolder: str = "checkpoints"):
+        try:
+            files = await web_loader.AssetManager().list_assets.remote.aio(subfolder)
+            return {"files": files}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app_instance.post("/api/assets/sync-website-models")
+    async def api_sync_website_models(force: bool = False):
+        try:
+            call = sync_website_models.spawn(force=force)
+            return {
+                "status": "sync_initiated",
+                "call_id": call.object_id,
+                "message": "Model scan and download initiated in background on Modal volume."
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # --- VOICE CLONER ENDPOINTS ---
+    @app_instance.get("/api/voice/status")
+    def api_voice_status():
+        hw = "Modal Cloud T4 (Economy Tier, 60s Scaledown)" if is_eco else "Modal Cloud A10G (Architect Priority)"
+        return {
+            "status": "online",
+            "tier": "economy" if is_eco else "architect",
+            "engine": "RVC v2 Neural Pipeline",
+            "hardware": hw,
+            "models_volume": "rvc-models-volume",
+            "timestamp": time.time()
+        }
+
+    @app_instance.get("/api/voice/profiles")
+    async def api_voice_profiles():
+        try:
+            import asyncio
+            contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=3.0)
+            volume_profiles = []
+            if isinstance(contents, dict) and "error" not in contents:
+                for path_str in contents.keys():
+                    if path_str.startswith("models/"):
+                        parts = path_str.split("/")
+                        if len(parts) >= 2 and parts[1] not in volume_profiles:
+                            volume_profiles.append(parts[1])
+            presets = [
+                {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
+                {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
+                {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
+                {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
+            ]
+            return {
+                "presets": presets,
+                "custom_profiles": volume_profiles,
+                "total": len(presets) + len(volume_profiles)
+            }
+        except Exception as e:
+            return {
+                "presets": [
+                    {"name": "AlphaCore-EDEN11", "label": "Alpha // EDEN 11", "desc": "Sentient, provocative cybernetic synthesis"},
+                    {"name": "Architect-Lead", "label": "Architect Lead", "desc": "Deep resonant command authority"},
+                    {"name": "CyberSynth-V1", "label": "CyberSynth V1", "desc": "Overdrive robotic vocoder pitch"},
+                    {"name": "GlitchCore-X", "label": "GlitchCore X", "desc": "Analog distorted neural broadcast"}
+                ],
+                "custom_profiles": [],
+                "error": str(e)
+            }
+
+    @app_instance.post("/api/voice/convert")
+    async def api_voice_convert(req: VoiceConvertRequest):
+        try:
+            audio_bytes = base64.b64decode(req.audio_b64)
+            fn = cloner.infer_audio_modal_eco if is_eco else cloner.infer_audio_modal
+            result = await fn.remote.aio(
+                profile_name=req.profile_name,
+                audio_bytes=audio_bytes,
+                pitch_shift=req.pitch_shift
+            )
+            if result.get("status") == "error":
+                raise HTTPException(status_code=400, detail=result.get("message", "Voice conversion failed"))
+            out_b64 = base64.b64encode(result["audio_bytes"]).decode("utf-8")
+            return {
+                "status": "success",
+                "tier": "economy" if is_eco else "architect",
+                "audio_b64": out_b64,
+                "sample_rate": result.get("sample_rate", 48000),
+                "profile": req.profile_name
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app_instance.post("/api/voice/upload-sample")
+    async def api_voice_upload_sample(req: VoiceSampleUpload):
+        try:
+            file_bytes = base64.b64decode(req.audio_b64)
+            await cloner.upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
+            return {"status": "success", "message": f"Sample {req.filename} saved for {req.profile_name}"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app_instance.post("/api/voice/train")
+    async def api_voice_train(profile_name: str):
+        try:
+            call = cloner.process_audio_samples.spawn(profile_name)
+            return {
+                "status": "training_started",
+                "call_id": call.object_id,
+                "profile_name": profile_name,
+                "message": f"GPU training initiated for profile '{profile_name}'"
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # --- NEURAL UPSCALER ENDPOINTS ---
+    @app_instance.get("/api/upscale/status")
+    def api_upscale_status():
+        hw = "Modal Cloud T4 (Economy Tier, 60s Scaledown)" if is_eco else "Modal Cloud A10G (Architect Priority)"
+        return {
+            "status": "online",
+            "tier": "economy" if is_eco else "architect",
+            "engine": "Real-ESRGAN / Neural Super-Resolution Pipeline",
+            "hardware": hw,
+            "models": [
+                {"id": "realesrgan-x4plus", "name": "RealESRGAN x4plus", "category": "Photo Realism", "scale": 4},
+                {"id": "realesrgan-anime", "name": "RealESRGAN Anime 6B", "category": "2D / Line Art", "scale": 4},
+                {"id": "ultrasharp-4x", "name": "4x UltraSharp", "category": "Crisp Textures", "scale": 4},
+                {"id": "dsp-fast", "name": "Fast Adaptive DSP", "category": "Instant Resampling", "scale": 4}
+            ],
+            "supported_scales": [2, 4, 8],
+            "timestamp": time.time()
+        }
+
+    @app_instance.post("/api/upscale")
+    async def api_upscale(req: upscaler.UpscaleRequest):
+        try:
+            upscaler_cls = upscaler.Upscaler_Eco if is_eco else upscaler.Upscaler
+            res = await upscaler_cls().upscale_image.remote.aio(
+                image_b64=req.image_b64,
+                scale=req.scale,
+                model_name=req.model_name,
+                denoise=req.denoise,
+                sharpen=req.sharpen,
+                face_enhance=req.face_enhance,
+                output_format=req.output_format
+            )
+            return res
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return app_instance
+
+web_app = create_aio_api(is_eco=False)
+web_app_eco = create_aio_api(is_eco=True)
+
+# 4. Expose the FastAPI apps to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy")
@@ -425,7 +444,14 @@ router_image = (
 @app.function(image=router_image)
 @modal.asgi_app()
 def AlphaCore_Main_API():
+    """Architect priority endpoint."""
     return web_app
+
+@app.function(image=router_image, scaledown_window=60, max_containers=1)
+@modal.asgi_app()
+def AlphaCore_Main_API_Eco():
+    """Economy tier endpoint for standard users. Scaledown 60s, max 1 container."""
+    return web_app_eco
 
 @app.local_entrypoint()
 def scan_and_download(force: bool = False):

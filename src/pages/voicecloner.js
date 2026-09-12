@@ -18,8 +18,14 @@ export default function VoiceClonerPage() {
   const container = createElement('div', { class: 'voicecloner-page slide-up' });
 
   // Endpoint configuration
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const defaultApiBase = isArchitect
+    ? 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run'
+    : 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
+
   const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
-  const MAIN_API_BASE = settings.main_api_url || 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run';
+  const MAIN_API_BASE = isArchitect ? (settings.main_api_url || defaultApiBase) : defaultApiBase;
 
   let activeTab = 'CONVERT'; // 'CONVERT' | 'TRAIN' | 'VOLUME'
   let activeProfile = 'AlphaCore-EDEN11';
@@ -45,31 +51,41 @@ export default function VoiceClonerPage() {
   let ttsBlob = null;
   let ttsAudioUrl = null;
 
-  // Converted Audio Result State
-  let convertedAudioBlob = null;
+  // Converted Audio Output
   let convertedAudioUrl = null;
 
-  // Voice Profiles Cache
-  let voiceProfiles = [
-    { name: 'AlphaCore-EDEN11', label: 'ALPHA // EDEN 11', desc: 'Sentient, provocative digital persona with crisp articulation', icon: '🤖' },
+  // Training State
+  let trainingSamples = [];
+
+  // Default Preset Voices
+  const PRESET_VOICES = [
+    { name: 'AlphaCore-EDEN11', label: 'ALPHA EDEN-11', desc: 'Sentient AI with crisp cybernetic harmonics and precise modulation', icon: '🤖' },
+    { name: 'Darkened-Luci', label: 'DARKENED LUCI', desc: 'Unfiltered sultry provocative voice with dynamic presence', icon: '💋' },
     { name: 'Architect-Lead', label: 'ARCHITECT LEAD', desc: 'Deep commanding baritone authority with low harmonic resonance', icon: '◈' },
     { name: 'CyberSynth-V1', label: 'CYBERSYNTH V1', desc: 'Robotic vocoder with analog distortion and overdrive timbre', icon: '⚡' },
     { name: 'GlitchCore-X', label: 'GLITCHCORE X', desc: 'High-energy cyberpunk neural broadcast modulation', icon: '🧬' }
   ];
+  const voiceProfiles = PRESET_VOICES;
 
   function render() {
+    const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
+    const tierHw = isArchitect ? 'WARM CLOUD GPU' : 'COST-OPTIMIZED (60s AUTO-SCALE)';
+    const tierColor = isArchitect ? '#38bdf8' : '#10b981';
+    const tierBg = isArchitect ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+    const tierBorder = isArchitect ? '#38bdf8' : '#10b981';
+
     container.innerHTML = `
       <div class="page-header" style="margin-bottom: 20px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
           <div>
             <h1 class="page-title" style="font-family:'Orbitron',sans-serif; letter-spacing:2px;">RVC VOICE SYNTHESIS</h1>
             <p class="page-subtitle" style="font-family:'Share Tech Mono',monospace; letter-spacing:1px; color:var(--accent,#06b6d4);">
-              NEURAL VOICE CLONING & AUDIO MANIPULATION MATRIX // MODAL A10G
+              NEURAL VOICE CLONING & AUDIO MANIPULATION MATRIX // ${tierName}
             </p>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
-            <span id="vc-node-status" style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; background:rgba(0,255,100,0.1); border:1px solid #00ff66; color:#00ff66; padding:4px 10px; border-radius:3px; letter-spacing:1px;">
-              ● ONLINE // A10G ACCELERATED
+            <span id="vc-node-status" style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; background:${tierBg}; border:1px solid ${tierBorder}; color:${tierColor}; padding:4px 10px; border-radius:3px; letter-spacing:1px;">
+              ● ${tierName} // ${tierHw}
             </span>
           </div>
         </div>

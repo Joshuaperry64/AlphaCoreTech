@@ -215,6 +215,22 @@ class FramePack:
         # 2. Mount Gradio to the FastAPI root instance
         return gr.mount_gradio_app(web_app, demo, path="/")
 
+
+@app.cls(
+    image=image,
+    gpu="L40S",
+    timeout=3600,
+    scaledown_window=60,
+    max_containers=1,
+    volumes={VOL_MODELS: model_volume, VOL_OUTPUTS: output_volume},
+    secrets=[modal.Secret.from_dict({"CACHE_BUSTER": "6"})]
+)
+@modal.concurrent(max_inputs=100)
+class FramePack_Eco(FramePack._get_user_cls()):
+    """Economy tier endpoint for public/standard users. Cost-optimized on L40S with 60s scaledown."""
+    pass
+
+
 # Auto-generated class local_entrypoint wrappers
 @app.local_entrypoint()
 def entrypoint_FramePackContainer():

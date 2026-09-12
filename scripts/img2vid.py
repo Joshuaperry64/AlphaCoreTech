@@ -346,3 +346,16 @@ class Img2Vid:
             return StreamingResponse(event_stream(), media_type="text/event-stream")
 
         return web_app
+
+
+@app.cls(
+    gpu="L40S",
+    timeout=60 * MINUTES,
+    scaledown_window=60,
+    max_containers=1,
+    volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
+    secrets=[modal.Secret.from_name("huggingface-secret")],
+)
+class Img2Vid_Eco(Img2Vid._get_user_cls()):
+    """Economy tier endpoint for public/standard users. Cost-optimized on L40S with 60s scaledown."""
+    pass

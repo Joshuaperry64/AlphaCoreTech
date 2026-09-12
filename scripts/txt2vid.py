@@ -304,6 +304,20 @@ class Txt2Vid:
 
         return web_app
 
+
+@app.cls(
+    gpu="A10G",
+    timeout=60 * MINUTES,
+    scaledown_window=60,
+    max_containers=1,
+    volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
+    secrets=[modal.Secret.from_name("huggingface-secret")],
+)
+class Txt2Vid_Eco(Txt2Vid._get_user_cls()):
+    """Economy tier endpoint for public/standard users. Cost-optimized on A10G with 60s scaledown."""
+    pass
+
+
 @app.local_entrypoint()
 def main_txt2vid(
     prompt: str = "A highly detailed cinematic scene",

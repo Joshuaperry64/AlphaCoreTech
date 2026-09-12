@@ -9,6 +9,24 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.9.0 BUILD 150',
+    date: '2026.09.12',
+    badge: 'DUAL-TIER DEPLOYMENT // ARCHITECT & ECONOMY',
+    badgeColor: '#10b981',
+    title: 'DUAL-TIER CLOUD INFRASTRUCTURE & BUDGET ENFORCEMENT',
+    summary: 'Upgraded Modal cloud backend and frontend routing into a dual-tier architecture: Architect Priority (H100 / L40S warm instances) reserved exclusively for the Architect profile, and Public Economy (T4 / A10G / L40S with 60s auto-scaledown and strict max 1 container cap) for all public users and guests to eliminate idle costs.',
+    changes: [
+      'Engineered complete dual-tier backend duplication across `deployment.py` and all 9 worker modules (`txt2img.py`, `img2img.py`, `txt2vid.py`, `img2vid.py`, `framepack.py`, `preprocessors.py`, `upscaler.py`, `music.py`, and `cloner.py`).',
+      'Configured Economy Tier services (`Txt2Img_Eco`, `Img2Img_Eco`, `Preproc_Eco`, `Txt2Vid_Eco`, `Img2Vid_Eco`, `FramePack_Eco`, `Upscaler_Eco`, `MusicGen_Eco`, `AlphaCore_Main_API_Eco`) with minimum functional GPUs (T4 for Preprocessors & Upscaling; A10G for SDXL & Music; L40S for Wan 2.2 & Flux).',
+      'Enforced strict cost bounds on all Economy endpoints: `scaledown_window=60` (auto-sleep after 60s idle) and `max_containers=1` (strict concurrency cap preventing runaway bills).',
+      'Preserved Architect Priority endpoints on high-performance H100 and L40S GPU nodes with extended warm scaledown (600s) for ultra-low latency generation.',
+      'Implemented profile-aware frontend routing in `aimodals.js`: Guests and standard users are securely locked to Economy endpoints; Architect profile accesses priority warm infrastructure.',
+      'Wired profile-aware dual routing across `voicecloner.js`, `music.js`, and `assets.js`, with dynamic hardware badges and tier indicators.',
+      'Updated Administration console (`#/admin`) with dual-tier status indicators and architectural overview.',
+      'Deployed live to Modal under `josh64perry--alphacore-aio-backend` with all 9 dual endpoints verified operational.'
+    ]
+  },
+  {
     version: 'v4.8.0 BUILD 142',
     date: '2026.09.12',
     badge: 'NEURAL SUPER-RESOLUTION & CLOUD UPSCALE',

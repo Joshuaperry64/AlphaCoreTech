@@ -5,10 +5,27 @@ import { apiUrl } from '../components/api.js';
 export default function MusicPage() {
   const container = createElement('div', { class: 'music-page slide-up' });
 
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
+  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const defaultEndpoint = isArchitect
+    ? 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run'
+    : 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
+
+  const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
+  const tierHw = isArchitect ? 'L40S Node (Warm)' : 'Cost-Optimized Node (60s Auto-Scale)';
+  const tierColor = isArchitect ? '#38bdf8' : '#10b981';
+  const tierBg = isArchitect ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+  const tierBorder = isArchitect ? '#38bdf8' : '#10b981';
+
   container.innerHTML = `
     <div class="page-header">
-      <h1 class="page-title">MUSIC GENERATOR</h1>
-      <p class="page-subtitle">ACE-STEP 1.5 AUDIO SYNTHESIS</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+        <h1 class="page-title" style="margin:0;">MUSIC GENERATOR</h1>
+        <div style="background:${tierBg}; border:1px solid ${tierBorder}; color:${tierColor}; padding:4px 10px; font-family:var(--font-hud); font-size:0.75rem; border-radius:2px; font-weight:bold;">
+          ● ${tierName} // ${tierHw}
+        </div>
+      </div>
+      <p class="page-subtitle">ACE-STEP 1.5 AUDIO SYNTHESIS // ACTIVE ROUTING: ${tierName}</p>
     </div>
     
     <div class="prompt-container" style="max-width: 800px; margin: 0 auto;">
@@ -57,7 +74,7 @@ export default function MusicPage() {
 
     try {
       const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
-      const endpoint = settings.music_url || 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run';
+      const endpoint = isArchitect ? (settings.music_url || defaultEndpoint) : defaultEndpoint;
       
       status.textContent = 'SYNTHESIZING AUDIO...';
       

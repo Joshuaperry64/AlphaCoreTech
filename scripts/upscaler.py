@@ -348,3 +348,17 @@ class Upscaler:
             face_enhance=req.face_enhance,
             output_format=req.output_format
         )
+
+
+@app.cls(
+    image=image,
+    gpu="T4",
+    volumes={CACHE_DIR: cache_volume},
+    scaledown_window=60,
+    max_containers=1,
+    timeout=600
+)
+class Upscaler_Eco(Upscaler._get_user_cls()):
+    """Economy tier endpoint for public/standard users. Cost-optimized on T4 with 60s scaledown."""
+    pass
+

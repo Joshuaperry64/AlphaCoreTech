@@ -175,7 +175,20 @@ function buildAdminUI() {
 
     <!-- Generator configuration -->
     <div class="panel" style="margin-top: 20px;">
-      <div class="panel-title">// GENERATOR_PIPELINE_DEFAULTS</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div class="panel-title" style="margin:0;">// GENERATOR_PIPELINE_DEFAULTS</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="font-family:var(--font-hud); font-size:0.7rem; background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; padding:3px 8px; border-radius:2px;">
+            ⚡ ARCHITECT: H100/L40S WARM
+          </span>
+          <span style="font-family:var(--font-hud); font-size:0.7rem; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4); color:#10b981; padding:3px 8px; border-radius:2px;">
+            🌱 ECONOMY: T4/A10G 60s SCALE
+          </span>
+        </div>
+      </div>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px; line-height:1.4;">
+        Dual-tier backend active: Non-architect users are automatically isolated to Economy endpoints (60s scaledown, max 1 container) to eliminate idle costs. Architect profile has exclusive access to priority warm GPU pipelines.
+      </p>
       <div class="config-form">
         <div class="aim-row">
           <div class="aim-field aim-field-half">

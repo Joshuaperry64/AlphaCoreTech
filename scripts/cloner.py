@@ -386,10 +386,9 @@ def download_model_assets(profile_name: str) -> dict:
     return {"status": "success", "files": files}
 
 
-@app.function(image=image, gpu="A10G", timeout=300, volumes={"/mnt/rvc_data": volume})
-def infer_audio_modal(profile_name: str, audio_bytes: bytes, pitch_shift: int = 0) -> dict:
+def _execute_rvc_inference(profile_name: str, audio_bytes: bytes, pitch_shift: int = 0) -> dict:
     """
-    Cloud GPU file-to-file voice conversion via Modal.
+    Core RVC file-to-file voice conversion.
     Accepts raw audio bytes (wav/mp3), returns converted wav bytes.
     """
     import io
@@ -438,3 +437,15 @@ def infer_audio_modal(profile_name: str, audio_bytes: bytes, pitch_shift: int = 
         return {"status": "error", "message": str(e)}
     finally:
         Path(input_path).unlink(missing_ok=True)
+
+
+@app.function(image=image, gpu="A10G", timeout=300, volumes={"/mnt/rvc_data": volume})
+def infer_audio_modal(profile_name: str, audio_bytes: bytes, pitch_shift: int = 0) -> dict:
+    """Architect tier voice conversion on A10G GPU."""
+    return _execute_rvc_inference(profile_name, audio_bytes, pitch_shift)
+
+
+@app.function(image=image, gpu="T4", timeout=300, scaledown_window=60, max_containers=1, volumes={"/mnt/rvc_data": volume})
+def infer_audio_modal_eco(profile_name: str, audio_bytes: bytes, pitch_shift: int = 0) -> dict:
+    """Economy tier voice conversion on cost-optimized T4 GPU with 60s scaledown."""
+    return _execute_rvc_inference(profile_name, audio_bytes, pitch_shift)
