@@ -9,6 +9,23 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v4.7.0 BUILD 135',
+    date: '2026.09.12',
+    badge: 'AUTONOMOUS VOLUME SYNC & CLOUD RE-ALIGNMENT',
+    badgeColor: '#00ff66',
+    title: 'MODAL VOLUME SYNC, CIVITAI ENGINE & SCRAPER V2',
+    summary: 'Engineered an autonomous CivitAI volume synchronization engine on Modal, migrated and auto-healed all backend API routes under `josh64perry`, overhauled the high-velocity custody scraper, and hardened serverless ML pipelines.',
+    changes: [
+      'Engineered `sync_website_models` in `deployment.py`: Automatically scans the `/hf-hub-cache` Modal volume for all 7 website SDXL checkpoints and 8 curated LoRAs, downloading missing models directly from CivitAI with API authentication.',
+      'Implemented smart variant/alias linking and stale `.tmp` cleanup to prevent redundant multi-gigabyte downloads across volume lifecycles.',
+      'Exposed dual execution vectors for model synchronization: local CLI entrypoint (`modal run deployment.py`) and remote authenticated REST trigger (`POST /api/assets/sync-website-models`).',
+      'Migrated entire serverless backend infrastructure to the active `josh64perry` namespace across `aimodals.js`, `mugshots.js`, `admin.js`, `assets.js`, `music.js`, `server.js`, and `main.go`.',
+      'Implemented intelligent client-side endpoint auto-healing in `aimodals.js` and `mugshots.js` to automatically sanitize and upgrade legacy `localStorage` configs.',
+      'Overhauled `scripts/scraper.py` into a resilient, session-pooled booking intelligence pipeline delivering sub-8-second arrest record ingestion directly into Local Custody (`#/mugshots`).',
+      'Hardened worker container isolation and dependencies in `deployment.py` to eliminate worker module collisions.'
+    ]
+  },
+  {
     version: 'v4.6.0 BUILD 124',
     date: '2026.08.18',
     badge: 'CRIME INTEL & GRAPH API',
