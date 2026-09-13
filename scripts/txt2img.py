@@ -59,19 +59,34 @@ image = image.add_local_python_source("shared_app")
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class Txt2Img:
+    def __init__(self):
+        self.current_model = None
+        self.pipe = None
+
     @modal.enter()
     def setup(self):
         self.current_model = None
         self.pipe = None
 
     def _load_model(self, model_filename: str):
+        if not hasattr(self, "pipe"):
+            self.pipe = None
+        if not hasattr(self, "current_model"):
+            self.current_model = None
+
         if self.current_model == model_filename and self.pipe is not None:
             return
 
-        if self.pipe is not None:
-            print(f"Unloading {self.current_model} from VRAM...")
-            del self.pipe
-            torch.cuda.empty_cache()
+        if getattr(self, "pipe", None) is not None:
+            print(f"Unloading {getattr(self, 'current_model', 'model')} from VRAM...")
+            old_pipe = self.pipe
+            self.pipe = None
+            try:
+                del old_pipe
+            except Exception:
+                pass
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         print(f"Loading {model_filename} into VRAM...")
         model_path = Path(CACHE_DIR) / "checkpoints" / model_filename

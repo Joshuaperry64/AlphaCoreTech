@@ -153,21 +153,36 @@ image = image.add_local_python_source("shared_app")
     memory=64 * 1024
 )
 class Img2Img:
+    def __init__(self):
+        self.current_model = None
+        self.pipe = None
+
     @modal.enter()
     def enter(self):
         self.current_model = None
         self.pipe = None
         
     def _load_model(self, model_choice: str, checkpoint: str = ""):
+        if not hasattr(self, "pipe"):
+            self.pipe = None
+        if not hasattr(self, "current_model"):
+            self.current_model = None
+
         cache_key = f"sdxl:{resolve_checkpoint_filename(checkpoint)}" if model_choice == "sdxl" else model_choice
         if self.current_model == cache_key and self.pipe is not None:
             return
             
-        if self.pipe is not None:
-            print(f"Unloading {self.current_model} from VRAM...")
-            del self.pipe
+        if getattr(self, "pipe", None) is not None:
+            print(f"Unloading {getattr(self, 'current_model', 'model')} from VRAM...")
+            old_pipe = self.pipe
+            self.pipe = None
+            try:
+                del old_pipe
+            except Exception:
+                pass
             import torch
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             
         import os
         import torch

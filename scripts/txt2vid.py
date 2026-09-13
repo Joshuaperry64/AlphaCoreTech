@@ -79,13 +79,25 @@ class Txt2Vid:
         )
 
     def _load_model(self, model_filename: str):
+        if not hasattr(self, "pipe"):
+            self.pipe = None
+        if not hasattr(self, "current_model"):
+            self.current_model = None
+
         if self.current_model == model_filename and self.pipe is not None:
             return
 
-        if self.pipe is not None:
-            print(f"Unloading {self.current_model} from VRAM...")
-            del self.pipe
-            torch.cuda.empty_cache()
+        if getattr(self, "pipe", None) is not None:
+            print(f"Unloading {getattr(self, 'current_model', 'model')} from VRAM...")
+            old_pipe = self.pipe
+            self.pipe = None
+            try:
+                del old_pipe
+            except Exception:
+                pass
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         print(f"Loading {model_filename} into AnimateDiff SDXL Pipeline...")
         model_path = Path(CACHE_DIR) / "checkpoints" / model_filename

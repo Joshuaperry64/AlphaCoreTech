@@ -70,13 +70,24 @@ class Img2Vid:
         self.pipe = None
         
     def _load_model(self, resolution: str):
+        if not hasattr(self, "pipe"):
+            self.pipe = None
+        if not hasattr(self, "current_res"):
+            self.current_res = None
+
         if self.current_res == resolution and self.pipe is not None:
             return
 
-        if self.pipe is not None:
-            print(f"Unloading Wan {self.current_res} from VRAM...")
-            del self.pipe
-            torch.cuda.empty_cache()
+        if getattr(self, "pipe", None) is not None:
+            print(f"Unloading Wan {getattr(self, 'current_res', 'model')} from VRAM...")
+            old_pipe = self.pipe
+            self.pipe = None
+            try:
+                del old_pipe
+            except Exception:
+                pass
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         model_id = MODEL_720P if resolution == "720p" else MODEL_480P
         print(f"Loading Wan {resolution} I2V Model ({model_id}) into VRAM...")
