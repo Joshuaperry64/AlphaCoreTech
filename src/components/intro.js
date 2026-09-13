@@ -108,7 +108,7 @@ export default function createIntro(container) {
     });
 
     // Top Header Badge
-    const headerBadge = createElement('div', {}, 'ALPHACORE // KERNEL v4.3 BUILD 102');
+    const headerBadge = createElement('div', {}, 'ALPHACORE // KERNEL v5.0.0 BUILD 175');
     Object.assign(headerBadge.style, {
       fontFamily: "'Orbitron', sans-serif", fontSize: '0.8rem', color: '#06b6d4',
       letterSpacing: '3px', marginBottom: '15px', textShadow: '0 0 10px rgba(6,182,212,0.6)'
