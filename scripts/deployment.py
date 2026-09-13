@@ -90,7 +90,10 @@ def sync_website_models(force: bool = False):
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     lora_dir.mkdir(parents=True, exist_ok=True)
 
-    cache_volume.reload()
+    try:
+        cache_volume.reload()
+    except Exception as ve:
+        print(f"[DEPLOYMENT] Volume reload note (non-fatal): {ve}")
 
     summary = {
         "checkpoints": {"already_present": [], "downloaded": [], "failed": []},

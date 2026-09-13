@@ -177,7 +177,10 @@ class Img2Img:
         if token:
             os.environ["HF_TOKEN"] = token
 
-        cache_volume.reload()
+        try:
+            cache_volume.reload()
+        except Exception as ve:
+            print(f"[IMG2IMG] Volume reload note (non-fatal, open files or sync in progress): {ve}")
         
         if model_choice == "flux":
             print(f"Loading base model {FLUX_BASE} (bfloat16)...")

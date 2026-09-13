@@ -109,7 +109,10 @@ class AssetManager:
     @modal.method()
     def list_assets(self, subfolder: str = "checkpoints"):
         from pathlib import Path
-        cache_volume.reload()
+        try:
+            cache_volume.reload()
+        except Exception as ve:
+            print(f"[WEB_LOADER] Volume reload note (non-fatal): {ve}")
         dir_path = Path(CACHE_DIR) / subfolder
         if not dir_path.exists(): return []
         

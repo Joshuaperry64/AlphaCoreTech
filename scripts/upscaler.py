@@ -265,7 +265,10 @@ class Upscaler:
 
     def _ensure_weights(self, model_key: str) -> Path:
         import requests
-        cache_volume.reload()
+        try:
+            cache_volume.reload()
+        except Exception as ve:
+            print(f"[UPSCALER] Volume reload note (non-fatal): {ve}")
         UPSCALERS_DIR.mkdir(parents=True, exist_ok=True)
 
         meta = UPSCALER_MODELS.get(model_key, UPSCALER_MODELS["realesrgan-x4plus"])
@@ -416,7 +419,10 @@ class Upscaler:
         )
 
         print(f"[UPSCALER] Initializing SDXL ControlNet Tile ({controlnet_model_id})...")
-        cache_volume.reload()
+        try:
+            cache_volume.reload()
+        except Exception as ve:
+            print(f"[UPSCALER] Volume reload note (non-fatal): {ve}")
 
         cnet = ControlNetModel.from_pretrained(
             controlnet_model_id,
