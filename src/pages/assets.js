@@ -132,8 +132,8 @@ export default function AssetManagerPage() {
 
   const getEndpoint = () => {
     const defaultUrl = isArchitect
-      ? 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run'
-      : 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
+      ? 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run'
+      : 'https://josh627764--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
     const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
     return isArchitect ? (settings.music_url || defaultUrl) : defaultUrl;
   };

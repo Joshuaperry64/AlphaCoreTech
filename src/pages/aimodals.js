@@ -32,31 +32,31 @@ function getModalSettings() {
   const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
 
   const architectEndpoints = {
-    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
-    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
-    omnigenUrl: 'https://josh64perry--alphacore-aio-backend-omnigen-web-omnigen.modal.run',
-    preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run',
-    txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
-    img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
-    framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-ui-framepack.modal.run',
-    fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
-    music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run',
-    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-upscaler-web-upscale.modal.run',
+    txt2imgUrl: 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    omnigenUrl: 'https://josh627764--alphacore-aio-backend-omnigen-web-omnigen.modal.run',
+    preprocessorUrl: 'https://josh627764--alphacore-aio-backend-preprocessors-web-process.modal.run',
+    txt2vidUrl: 'https://josh627764--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
+    img2vidUrl: 'https://josh627764--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
+    framepackUrl: 'https://josh627764--alphacore-aio-backend-framepack-ui-framepack.modal.run',
+    fanninCrimeUrl: 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
+    music_url: 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run',
+    upscalerUrl: 'https://josh627764--alphacore-aio-backend-upscaler-web-upscale.modal.run',
     tierName: 'ARCHITECT PRIORITY',
     tierHardware: 'H100 / L40S High-Performance Nodes',
   };
 
   const economyEndpoints = {
-    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-eco-web-txt2img.modal.run',
-    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-eco-web-img2img.modal.run',
-    omnigenUrl: 'https://josh64perry--alphacore-aio-backend-omnigen-eco-web-omnigen.modal.run',
-    preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preproc-eco-web-process.modal.run',
-    txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-eco-web-txt2vid.modal.run/stream',
-    img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-eco-web-img2vid.modal.run/stream',
-    framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-eco-ui-framepack.modal.run',
-    fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
-    music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api-eco.modal.run',
-    upscalerUrl: 'https://josh64perry--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run',
+    txt2imgUrl: 'https://josh627764--alphacore-aio-backend-txt2img-eco-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh627764--alphacore-aio-backend-img2img-eco-web-img2img.modal.run',
+    omnigenUrl: 'https://josh627764--alphacore-aio-backend-omnigen-eco-web-omnigen.modal.run',
+    preprocessorUrl: 'https://josh627764--alphacore-aio-backend-preproc-eco-web-process.modal.run',
+    txt2vidUrl: 'https://josh627764--alphacore-aio-backend-txt2vid-eco-web-txt2vid.modal.run/stream',
+    img2vidUrl: 'https://josh627764--alphacore-aio-backend-img2vid-eco-web-img2vid.modal.run/stream',
+    framepackUrl: 'https://josh627764--alphacore-aio-backend-framepack-eco-ui-framepack.modal.run',
+    fanninCrimeUrl: 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
+    music_url: 'https://josh627764--alphacore-aio-backend-alphacore-main-api-eco.modal.run',
+    upscalerUrl: 'https://josh627764--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run',
     tierName: 'PUBLIC ECONOMY',
     tierHardware: 'Cost-Optimized Nodes (60s Auto-Scale, Max 1)',
   };
@@ -93,16 +93,16 @@ function getModalSettings() {
         }
       });
       // Auto-heal outdated endpoints in user's localStorage
-      if (custom.txt2imgUrl && (!custom.txt2imgUrl.includes('josh64perry') || custom.txt2imgUrl.endsWith('/stream'))) custom.txt2imgUrl = defaults.txt2imgUrl;
-      if (custom.img2imgUrl && (!custom.img2imgUrl.includes('josh64perry') || custom.img2imgUrl.endsWith('/stream'))) custom.img2imgUrl = defaults.img2imgUrl;
-      if (custom.omnigenUrl && !custom.omnigenUrl.includes('josh64perry')) custom.omnigenUrl = defaults.omnigenUrl;
-      if (custom.preprocessorUrl && !custom.preprocessorUrl.includes('josh64perry')) custom.preprocessorUrl = defaults.preprocessorUrl;
-      if (custom.txt2vidUrl && !custom.txt2vidUrl.includes('josh64perry')) custom.txt2vidUrl = defaults.txt2vidUrl;
-      if (custom.img2vidUrl && !custom.img2vidUrl.includes('josh64perry')) custom.img2vidUrl = defaults.img2vidUrl;
-      if (custom.framepackUrl && !custom.framepackUrl.includes('josh64perry')) custom.framepackUrl = defaults.framepackUrl;
-      if (custom.music_url && !custom.music_url.includes('josh64perry')) custom.music_url = defaults.music_url;
-      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('josh64perry') || custom.upscalerUrl.includes('alphacore-main-api'))) custom.upscalerUrl = defaults.upscalerUrl;
-      if (custom.fanninCrimeUrl && !custom.fanninCrimeUrl.includes('josh64perry')) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
+      if (custom.txt2imgUrl && (!custom.txt2imgUrl.includes('josh627764') || custom.txt2imgUrl.endsWith('/stream'))) custom.txt2imgUrl = defaults.txt2imgUrl;
+      if (custom.img2imgUrl && (!custom.img2imgUrl.includes('josh627764') || custom.img2imgUrl.endsWith('/stream'))) custom.img2imgUrl = defaults.img2imgUrl;
+      if (custom.omnigenUrl && !custom.omnigenUrl.includes('josh627764')) custom.omnigenUrl = defaults.omnigenUrl;
+      if (custom.preprocessorUrl && !custom.preprocessorUrl.includes('josh627764')) custom.preprocessorUrl = defaults.preprocessorUrl;
+      if (custom.txt2vidUrl && !custom.txt2vidUrl.includes('josh627764')) custom.txt2vidUrl = defaults.txt2vidUrl;
+      if (custom.img2vidUrl && !custom.img2vidUrl.includes('josh627764')) custom.img2vidUrl = defaults.img2vidUrl;
+      if (custom.framepackUrl && !custom.framepackUrl.includes('josh627764')) custom.framepackUrl = defaults.framepackUrl;
+      if (custom.music_url && !custom.music_url.includes('josh627764')) custom.music_url = defaults.music_url;
+      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('josh627764') || custom.upscalerUrl.includes('alphacore-main-api'))) custom.upscalerUrl = defaults.upscalerUrl;
+      if (custom.fanninCrimeUrl && !custom.fanninCrimeUrl.includes('josh627764')) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
 
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;
@@ -3242,7 +3242,7 @@ function buildUpscaler() {
       if (modelName === 'dsp-fast') {
         resultData = await clientSideUpscale(currentSourceB64, activeScale, sharpen, denoise);
       } else {
-        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://josh64perry--alphacore-aio-backend-upscaler-web-upscale.modal.run' : 'https://josh64perry--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run'));
+        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://josh627764--alphacore-aio-backend-upscaler-web-upscale.modal.run' : 'https://josh627764--alphacore-aio-backend-upscaler-eco-web-upscale.modal.run'));
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);

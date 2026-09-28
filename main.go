@@ -50,8 +50,8 @@ func getDefaultDB() Database {
 		},
 		Logs: []interface{}{},
 		Settings: Settings{
-			Txt2ImgUrl:      "https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run",
-			Img2ImgUrl:      "https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run",
+			Txt2ImgUrl:      "https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.modal.run",
+			Img2ImgUrl:      "https://josh627764--alphacore-aio-backend-img2img-web-img2img.modal.run",
 			NegativePrompt:  "worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts",
 			StepsFastTxt:    10,
 			StepsFocusedTxt: 50,

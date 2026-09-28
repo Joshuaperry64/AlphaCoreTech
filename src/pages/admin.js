@@ -30,14 +30,14 @@ function buildAdminUI() {
   root.className = 'admin-root';
 
   const defaultSettings = {
-    txt2imgUrl: 'https://josh64perry--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
-    img2imgUrl: 'https://josh64perry--alphacore-aio-backend-img2img-web-img2img.modal.run',
-    preprocessorUrl: 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run',
-    txt2vidUrl: 'https://josh64perry--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
-    img2vidUrl: 'https://josh64perry--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
-    framepackUrl: 'https://josh64perry--alphacore-aio-backend-framepack-ui-framepack.modal.run',
-    fanninCrimeUrl: 'https://josh64perry--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
-    music_url: 'https://josh64perry--alphacore-aio-backend-alphacore-main-api.modal.run',
+    txt2imgUrl: 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
+    img2imgUrl: 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    preprocessorUrl: 'https://josh627764--alphacore-aio-backend-preprocessors-web-process.modal.run',
+    txt2vidUrl: 'https://josh627764--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
+    img2vidUrl: 'https://josh627764--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
+    framepackUrl: 'https://josh627764--alphacore-aio-backend-framepack-ui-framepack.modal.run',
+    fanninCrimeUrl: 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
+    music_url: 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 20,
     stepsNormalTxt: 30,
@@ -482,7 +482,7 @@ function buildAdminUI() {
     const newSettings = {
       txt2imgUrl: t2i.replace(/\/+$/, ''),
       img2imgUrl: i2i.replace(/\/+$/, ''),
-      preprocessorUrl: (settings.preprocessorUrl || 'https://josh64perry--alphacore-aio-backend-preprocessors-web-process.modal.run').replace(/\/+$/, ''),
+      preprocessorUrl: (settings.preprocessorUrl || 'https://josh627764--alphacore-aio-backend-preprocessors-web-process.modal.run').replace(/\/+$/, ''),
       txt2vidUrl: t2v,
       img2vidUrl: i2v,
       framepackUrl: fp,
