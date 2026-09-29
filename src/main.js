@@ -36,12 +36,14 @@ import ChangelogPage from './pages/changelog.js';
 import NetworkMatrixPage from './pages/network.js';
 import MugshotsPage from './pages/mugshots.js';
 import TheLabPage from './pages/thelab.js';
+import TransferPage from './pages/transfer.js';
 
 const routes = {
   '/': Overview,
   '/overview': Overview,
   '/thelab': TheLabPage,
   '/lab': TheLabPage,
+  '/transfer': TransferPage,
   '/lore': Lore,
   '/diagnostics': Diagnostics,
   '/architect': ArchitectProfile,
