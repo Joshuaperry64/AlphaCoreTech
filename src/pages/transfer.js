@@ -17,21 +17,25 @@ class LaundromatAudioEngine {
 
   init() {
     if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      this.ctx = new AudioCtx();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
 
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
-      this.masterGain.connect(this.ctx.destination);
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
 
-      this.musicGain = this.ctx.createGain();
-      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
-      this.musicGain.connect(this.masterGain);
+        this.musicGain = this.ctx.createGain();
+        this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
+        this.musicGain.connect(this.masterGain);
 
-      this.sfxGain = this.ctx.createGain();
-      this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
-      this.sfxGain.connect(this.masterGain);
+        this.sfxGain = this.ctx.createGain();
+        this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+        this.sfxGain.connect(this.masterGain);
+      } catch (e) {
+        console.warn('AudioContext init prevented:', e);
+      }
 
       // Stop music if user navigates away from #/laundry or #/transfer
       if (!this.boundHashChange && typeof window !== 'undefined') {
@@ -569,6 +573,7 @@ export default function TransferPage() {
   // ─── Profile & Fee Configuration ──────────────────────────────────────────
   const getProfileFeeConfig = () => {
     const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
+    const profile = rawProfile.toLowerCase();
     const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
     const isArchitect = profile === 'architect' || currentPin === '672167566';
     const isFisherman = profile === 'fisherman';
@@ -1024,7 +1029,7 @@ export default function TransferPage() {
     // Auto-scroll active stepper item into center view on mobile touch devices
     setTimeout(() => {
       const activeStep = stepperEl.querySelector('.laundry-step-item.active');
-      if (activeStep) {
+      if (activeStep && typeof activeStep.scrollIntoView === 'function') {
         activeStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     }, 60);

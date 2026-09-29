@@ -12,7 +12,7 @@ export function escapeHTML(str) {
 export function createElement(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') el.className = v;
+    if (k === 'class' || k === 'className') el.className = v;
     else if (k === 'id') el.id = v;
     else el.setAttribute(k, v);
   }
