@@ -23,8 +23,8 @@ export default function TransferPage() {
         <span id="fee-capture">-$0.00</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
-        <span>AlphaCore Platform Fee:</span>
-        <span id="fee-alpha">-$1.00</span>
+        <span>AlphaCore Platform Fee (10%):</span>
+        <span id="fee-alpha">-$0.00</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
         <span>Connect Routing (0.25% + $0.25):</span>
@@ -60,6 +60,7 @@ export default function TransferPage() {
     const rawVal = parseFloat(e.target.value);
     if (isNaN(rawVal) || rawVal < 10) {
       elCapture.textContent = '-$0.00';
+      elAlpha.textContent = '-$0.00';
       elConnect.textContent = '-$0.00';
       elInstant.textContent = '-$0.00';
       elPayout.textContent = '$0.00';
@@ -68,10 +69,15 @@ export default function TransferPage() {
       return;
     }
 
+    // 1. Calculate Stripe Capture and AlphaCore 10% Cut upfront
     const captureFee = (rawVal * 0.029) + 0.30;
-    const platformFee = 1.00;
+    const platformFee = rawVal * 0.10;
     const remainder = rawVal - captureFee - platformFee;
 
+    // 2. Reverse engineer the payout to solve for the Connect & Instant fees simultaneously
+    // If payout < $33.33, instant fee is flat $0.50
+    // Equation 1: Payout = (Remainder - 0.75) / 1.0025
+    // Equation 2: Payout = (Remainder - 0.25) / 1.0175
     let payout = (remainder - 0.75) / 1.0025;
     let instantFee = 0.50;
     let connectFee = (payout * 0.0025) + 0.25;
@@ -92,71 +98,6 @@ export default function TransferPage() {
     elPayout.style.color = '#10b981';
     
     executeBtn.disabled = false;
-  });
-
-  // Execution Logic
-  executeBtn.addEventListener('click', async () => {
-    const rawVal = parseFloat(input.value);
-    executeBtn.textContent = 'AUTHORIZING...';
-    executeBtn.disabled = true;
-
-    try {
-      // Fetch the PaymentIntent from your Modal backend
-      const response = await fetch('https://joshuaperry64--alphacore-stripe-fastapi-app.modal.run/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: rawVal })
-      });
-
-      const { clientSecret } = await response.json();
-
-      if (!clientSecret) throw new Error("Failed to retrieve system intent.");
-
-      // Initialize Stripe with Live Key
-      const stripe = Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd'); 
-      const elements = stripe.elements();
-      
-      // Mount the secure card element
-      const cardContainer = createElement('div');
-      cardContainer.style.cssText = 'background: #000; border: 1px solid #10b981; padding: 15px; margin-top: 20px; border-radius: 4px;';
-      const cardElement = elements.create('card', {
-        style: { base: { color: '#10b981', fontFamily: '"Share Tech Mono", monospace', fontSize: '16px' } }
-      });
-      
-      executeBtn.insertAdjacentElement('beforebegin', cardContainer);
-      cardElement.mount(cardContainer);
-
-      executeBtn.textContent = 'CONFIRM TRANSFER';
-      executeBtn.disabled = false;
-
-      // Process the final charge
-      const newBtn = executeBtn.cloneNode(true);
-      executeBtn.parentNode.replaceChild(newBtn, executeBtn);
-      
-      newBtn.addEventListener('click', async () => {
-        newBtn.textContent = 'PROCESSING IN MATRIX...';
-        newBtn.disabled = true;
-
-        const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: { card: cardElement }
-        });
-
-        if (error) {
-          alert(`TRANSFER FAILED: ${error.message}`);
-          newBtn.textContent = 'CONFIRM TRANSFER';
-          newBtn.disabled = false;
-        } else if (paymentIntent.status === 'succeeded') {
-          newBtn.style.background = 'rgba(16, 185, 129, 0.2)';
-          newBtn.textContent = 'TRANSFER SECURED // FUNDS ROUTED';
-        }
-      });
-
-    } catch (err) {
-      console.error(err);
-      alert('SYSTEM ERROR: Could not connect to payment matrix.');
-      executeBtn.textContent = 'INITIATE SECURE TRANSFER';
-      executeBtn.disabled = false;
-    }
   });
 
   return container;
