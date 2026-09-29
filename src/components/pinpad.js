@@ -233,6 +233,9 @@ export function buildPinPad({
       try { logAction('AUTH_SUCCESS', { label: result.pinObj?.label }); } catch {}
 
       setTimeout(() => {
+        const allKnownRoles = ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'];
+        allKnownRoles.forEach(r => sessionStorage.removeItem(r + '_authenticated'));
+
         if (authKey) sessionStorage.setItem(authKey, '1');
         if (result.pinObj) {
           sessionStorage.setItem('current_profile', result.pinObj.label);

@@ -5,8 +5,9 @@ import { apiUrl } from '../components/api.js';
 export default function AssetManagerPage() {
   const container = createElement('div', { class: 'asset-manager-page slide-up' });
 
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
+  const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+  const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
   const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
   const tierHw = isArchitect ? 'Dedicated Storage Worker' : 'Cost-Optimized Worker (60s Auto-Scale)';
   const tierColor = isArchitect ? '#38bdf8' : '#10b981';

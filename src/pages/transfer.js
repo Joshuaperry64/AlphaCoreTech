@@ -569,8 +569,8 @@ export default function TransferPage() {
   // ─── Profile & Fee Configuration ──────────────────────────────────────────
   const getProfileFeeConfig = () => {
     const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
-    const profile = rawProfile.trim().toLowerCase();
-    const isArchitect = profile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+    const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+    const isArchitect = profile === 'architect' || currentPin === '672167566';
     const isFisherman = profile === 'fisherman';
 
     if (isArchitect) {

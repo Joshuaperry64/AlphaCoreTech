@@ -5,8 +5,9 @@ import { apiUrl } from '../components/api.js';
 export default function MusicPage() {
   const container = createElement('div', { class: 'music-page slide-up' });
 
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
+  const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+  const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
   const defaultEndpoint = isArchitect
     ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
     : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';

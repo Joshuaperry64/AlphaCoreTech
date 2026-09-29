@@ -364,8 +364,13 @@ function initApp() {
     lockLink.href = '#';
     lockLink.className = 'nav-item';
     lockLink.setAttribute('data-label', 'Lock System');
-    lockLink.innerHTML = '<span class="nav-icon">🔒</span><span class="nav-label">LOCK SYSTEM</span><span class="nav-arrow">›</span>';
-    lockLink.onclick = e => { e.preventDefault(); sessionStorage.removeItem('current_profile'); window.location.hash = '#'; renderRoute(); };
+    lockLink.onclick = e => {
+      e.preventDefault();
+      sessionStorage.clear();
+      sessionStorage.setItem('current_profile', 'Guest');
+      window.location.hash = '#';
+      renderRoute();
+    };
     nav.appendChild(lockLink);
   }
 

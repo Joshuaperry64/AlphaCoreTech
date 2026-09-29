@@ -18,8 +18,9 @@ export default function VoiceClonerPage() {
   const container = createElement('div', { class: 'voicecloner-page slide-up' });
 
   // Endpoint configuration
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
+  const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+  const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
   const defaultApiBase = isArchitect
     ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
     : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';

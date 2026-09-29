@@ -27,9 +27,10 @@ function resolveEndpoint(baseUrl, subPath = '') {
   return cleanSub ? `${cleanBase}/${cleanSub}` : cleanBase;
 }
 
-function getModalSettings() {
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+export function getModalSettings() {
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
+  const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+  const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
 
   const architectEndpoints = {
     txt2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
@@ -803,8 +804,7 @@ function dispatchControlNetToModal(tabSelector, options = {}) {
 /* ─── TXT2IMG PANEL ─────────────────────────────────────────── */
 function buildTxt2Img() {
   const settings = getModalSettings();
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = settings.isArchitect;
   const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
@@ -1318,8 +1318,7 @@ function buildTxt2Img() {
 /* ─── IMG2IMG PANEL ─────────────────────────────────────────── */
 function buildImg2Img() {
   const settings = getModalSettings();
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = settings.isArchitect;
   const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
@@ -2218,8 +2217,7 @@ function buildImg2Img() {
 /* ─── OMNIGEN MULTIMODAL SYNTHESIS PANEL (OBJECTIVE 1) ──────── */
 function buildOmniGen() {
   const settings = getModalSettings();
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = settings.isArchitect;
   const maxBatchCount = isArchitect ? Infinity : 4;
 
   const wrap = document.createElement('div');
@@ -2713,8 +2711,7 @@ async function clientSideUpscale(imageB64, scale = 4, sharpenVal = 0.35, denoise
 /* ─── UPSCALER PANEL ────────────────────────────────────────── */
 function buildUpscaler() {
   const settings = getModalSettings();
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const isArchitect = settings.isArchitect;
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
@@ -4063,8 +4060,8 @@ function buildImg2Vid() {
 
 /* ─── FRAMEPACK PANEL ───────────────────────────────────────── */
 function buildFramepack() {
-  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
-  const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+  const settings = getModalSettings();
+  const isArchitect = settings.isArchitect;
 
   const wrap = document.createElement('div');
   wrap.className = 'aim-panel';
@@ -4774,7 +4771,7 @@ function buildVid2Audio() {
       };
 
       const settings = getModalSettings();
-      let endpoint = settings.vid2audioUrl || 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-web.modal.run/stream';
+      let endpoint = settings.vid2audioUrl || (settings.isArchitect ? 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-web.modal.run/stream' : 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-eco-web.modal.run/stream');
       if (endpoint.includes('alphacore-main-api') && !endpoint.includes('/api/vid2audio/generate')) {
         endpoint = resolveEndpoint(endpoint, '/api/vid2audio/generate');
       }

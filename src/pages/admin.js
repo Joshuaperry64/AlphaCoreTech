@@ -226,8 +226,9 @@ function buildAdminUI() {
       target.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
     }
     
-    // Set active profile name
+    // Set active profile name and PIN
     sessionStorage.setItem('current_profile', target.label);
+    sessionStorage.setItem('current_pin', target.pin);
     
     // Redirect to overview to see what is unlocked
     window.location.hash = '#/';
