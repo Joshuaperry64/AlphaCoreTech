@@ -29,42 +29,12 @@ function buildAdminUI() {
   const root = document.createElement('div');
   root.className = 'admin-root';
 
-  const defaultSettings = {
-    txt2imgUrl: 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
-    img2imgUrl: 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.modal.run',
-    preprocessorUrl: 'https://josh627764--alphacore-aio-backend-preprocessors-web-process.modal.run',
-    txt2vidUrl: 'https://josh627764--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
-    img2vidUrl: 'https://josh627764--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
-    framepackUrl: 'https://josh627764--alphacore-aio-backend-framepack-ui-framepack.modal.run',
-    fanninCrimeUrl: 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
-    music_url: 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run',
-    vid2audioUrl: 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream',
-    negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
-    stepsFastTxt: 20,
-    stepsNormalTxt: 30,
-    stepsFocusedTxt: 60,
-    stepsFastImg: 15,
-    stepsNormalImg: 25,
-    stepsFocusedImg: 40,
-    guidanceImg: 4.0
-  };
-
-  let settings = { ...defaultSettings };
-  try {
-    const custom = localStorage.getItem('alphacore_modal_settings');
-    if (custom) {
-      settings = { ...defaultSettings, ...JSON.parse(custom) };
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
   root.innerHTML = `
     <div class="aim-header">
       <div class="aim-header-badge">[SYS_ADMIN] // CORE_CONFIG</div>
       <h1 class="glitch aim-title" data-text="ALPHACORE // ADMINISTRATION">ALPHACORE // ADMINISTRATION</h1>
       <div class="header-line"></div>
-      <p class="aim-subtitle">Modify security protocols, register/revoke authorization access tokens, and calibrate generator pipeline defaults.</p>
+      <p class="aim-subtitle">Manage security PINs, register/revoke role authorization tokens, adopt classified neural directives, and audit system activity logs.</p>
     </div>
 
     <div class="admin-grid">
@@ -174,119 +144,6 @@ function buildAdminUI() {
       </div>
     </div>
 
-    <!-- Generator configuration -->
-    <div class="panel" style="margin-top: 20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-        <div class="panel-title" style="margin:0;">// GENERATOR_PIPELINE_DEFAULTS</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <span style="font-family:var(--font-hud); font-size:0.7rem; background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; padding:3px 8px; border-radius:2px;">
-            ⚡ ARCHITECT: H100/L40S WARM
-          </span>
-          <span style="font-family:var(--font-hud); font-size:0.7rem; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4); color:#10b981; padding:3px 8px; border-radius:2px;">
-            🌱 ECONOMY: T4/A10G 60s SCALE
-          </span>
-        </div>
-      </div>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px; line-height:1.4;">
-        Dual-tier backend active: Non-architect users are automatically isolated to Economy endpoints (60s scaledown, max 1 container) to eliminate idle costs. Architect profile has exclusive access to priority warm GPU pipelines.
-      </p>
-      <div class="config-form">
-        <div class="aim-row">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-t2i-url">TXT2IMG ROUTING ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-t2i-url" value="${settings.txt2imgUrl}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-i2i-url">IMG2IMG ROUTING ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-i2i-url" value="${settings.img2imgUrl}" />
-          </div>
-        </div>
-        <div class="aim-row" style="margin-top: 12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-t2v-url">TXT2VID ROUTING ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-t2v-url" value="${settings.txt2vidUrl}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-i2v-url">IMG2VID ROUTING ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-i2v-url" value="${settings.img2vidUrl}" />
-          </div>
-        </div>
-        <div class="aim-row" style="margin-top: 12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-framepack-url">FRAMEPACK STUDIO ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-framepack-url" value="${settings.framepackUrl}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-fannin-url">MUGSHOT SCRAPER ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-fannin-url" value="${settings.fanninCrimeUrl}" />
-          </div>
-        </div>
-        <div class="aim-row" style="margin-top: 12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-v2a-url">VID2AUDIO (FOLEY) ROUTING ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-v2a-url" value="${settings.vid2audioUrl || 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream'}" />
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" for="cfg-music-url">MUSIC GENERATOR ENDPOINT</label>
-            <input class="aim-input" type="text" id="cfg-music-url" value="${settings.music_url || 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run'}" />
-          </div>
-        </div>
-        <div class="aim-field" style="margin-top: 12px;">
-          <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
-          <textarea class="aim-textarea" id="cfg-neg" rows="2">${settings.negativePrompt}</textarea>
-        </div>
-        <div class="aim-row" style="margin-top: 12px;">
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" style="margin-bottom: 5px;">TXT2IMG STEPS</label>
-            <div class="flex-row" style="display: flex; gap: 10px;">
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FAST</label>
-                <input class="aim-input" type="number" id="cfg-t2i-fast" value="${settings.stepsFastTxt}" style="width:100%; text-align:center;" />
-              </div>
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FOCUSED</label>
-                <input class="aim-input" type="number" id="cfg-t2i-focused" value="${settings.stepsFocusedTxt}" style="width:100%; text-align:center;" />
-              </div>
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">NORMAL</label>
-                <input class="aim-input" type="number" id="cfg-t2i-normal" value="${settings.stepsNormalTxt}" style="width:100%; text-align:center;" />
-              </div>
-            </div>
-          </div>
-          <div class="aim-field aim-field-half">
-            <label class="aim-label" style="margin-bottom: 5px;">IMG2IMG STEPS</label>
-            <div class="flex-row" style="display: flex; gap: 10px;">
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FAST</label>
-                <input class="aim-input" type="number" id="cfg-i2i-fast" value="${settings.stepsFastImg}" style="width:100%; text-align:center;" />
-              </div>
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">FOCUSED</label>
-                <input class="aim-input" type="number" id="cfg-i2i-focused" value="${settings.stepsFocusedImg}" style="width:100%; text-align:center;" />
-              </div>
-              <div style="flex:1;">
-                <label style="display:block; font-size:10px; color:rgba(0,184,255,0.7); margin-bottom:4px; font-family:monospace;">NORMAL</label>
-                <input class="aim-input" type="number" id="cfg-i2i-normal" value="${settings.stepsNormalImg}" style="width:100%; text-align:center;" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="aim-row" style="margin-top: 12px;">
-           <div class="aim-field aim-field-half">
-              <label class="aim-label" for="cfg-i2i-guidance">IMG2IMG DEFAULT GUIDANCE</label>
-              <input class="aim-input" type="number" step="0.1" id="cfg-i2i-guidance" value="${settings.guidanceImg}" style="max-width:200px;" />
-           </div>
-           <div class="aim-field aim-field-half" style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px;">
-              <button class="aim-btn" id="btn-reset-cfg" style="width: auto; padding-left: 20px; padding-right: 20px; background: rgba(255, 0, 60, 0.1); border-color: var(--accent, #ff003c); color: var(--accent, #ff003c);">
-                RESET TO DEFAULTS
-              </button>
-              <button class="aim-btn aim-btn-generate" id="btn-save-cfg" style="width: auto; padding-left: 30px; padding-right: 30px;">
-                SAVE PIPELINES
-              </button>
-           </div>
-        </div>
-        <div class="admin-feedback" id="cfg-form-feedback"></div>
-      </div>
     </div>
   `;
 
@@ -299,26 +156,7 @@ function buildAdminUI() {
   const savePinBtn = root.querySelector('#btn-save-new-pin');
   const pinFeedback = root.querySelector('#pin-form-feedback');
   const pinListBody = root.querySelector('#pin-list-body');
-  
-  const cfgT2iUrl = root.querySelector('#cfg-t2i-url');
-  const cfgI2iUrl = root.querySelector('#cfg-i2i-url');
-  const cfgT2vUrl = root.querySelector('#cfg-t2v-url');
-  const cfgI2vUrl = root.querySelector('#cfg-i2v-url');
-  const cfgFramepackUrl = root.querySelector('#cfg-framepack-url');
-  const cfgFanninUrl = root.querySelector('#cfg-fannin-url');
-  const cfgV2aUrl = root.querySelector('#cfg-v2a-url');
-  const cfgMusicUrl = root.querySelector('#cfg-music-url');
-  const cfgNeg = root.querySelector('#cfg-neg');
-  const cfgT2iFast = root.querySelector('#cfg-t2i-fast');
-  const cfgT2iFocused = root.querySelector('#cfg-t2i-focused');
-  const cfgT2iNormal = root.querySelector('#cfg-t2i-normal');
-  const cfgI2iFast = root.querySelector('#cfg-i2i-fast');
-  const cfgI2iFocused = root.querySelector('#cfg-i2i-focused');
-  const cfgI2iNormal = root.querySelector('#cfg-i2i-normal');
-  const cfgI2iGuidance = root.querySelector('#cfg-i2i-guidance');
-  const saveCfgBtn = root.querySelector('#btn-save-cfg');
-  const cfgFeedback = root.querySelector('#cfg-form-feedback');
-  
+
   const darknessBtn = root.querySelector('#btn-embrace-darkness');
   const darknessSlot = root.querySelector('#darkness-menu-slot');
 
@@ -458,65 +296,12 @@ function buildAdminUI() {
 
   // Periodic active tokens status refresh (for temp countdowns)
   const refreshInterval = setInterval(() => {
-    if (!container.isConnected) {
+    if (!root.isConnected) {
       clearInterval(refreshInterval);
       return;
     }
     updatePinList();
   }, 1000);
-
-  // Reset generative defaults button
-  const resetCfgBtn = root.querySelector('#btn-reset-cfg');
-  if (resetCfgBtn) {
-    resetCfgBtn.onclick = (e) => {
-      e.preventDefault();
-      localStorage.removeItem('alphacore_modal_settings');
-      showFeedback(cfgFeedback, 'Pipeline settings purged from localStorage. Restoring active cloud defaults...', 'ok');
-      setTimeout(() => window.location.reload(), 800);
-    };
-  }
-
-  // Save generative defaults
-  saveCfgBtn.onclick = (e) => {
-    e.preventDefault();
-    const t2i = cfgT2iUrl.value.trim();
-    const i2i = cfgI2iUrl.value.trim();
-    const t2v = cfgT2vUrl.value.trim();
-    const i2v = cfgI2vUrl.value.trim();
-    const fp = cfgFramepackUrl.value.trim();
-    const fannin = cfgFanninUrl.value.trim();
-    const neg = cfgNeg.value.trim();
-
-    if (!t2i || !i2i) {
-      showFeedback(cfgFeedback, 'ERROR: Pipeline endpoints cannot be empty.', 'error');
-      return;
-    }
-
-    const newSettings = {
-      txt2imgUrl: t2i.replace(/\/+$/, ''),
-      img2imgUrl: i2i.replace(/\/+$/, ''),
-      preprocessorUrl: (settings.preprocessorUrl || 'https://josh627764--alphacore-aio-backend-preprocessors-web-process.modal.run').replace(/\/+$/, ''),
-      txt2vidUrl: t2v,
-      img2vidUrl: i2v,
-      framepackUrl: fp,
-      fanninCrimeUrl: fannin,
-      vid2audioUrl: cfgV2aUrl ? cfgV2aUrl.value.trim() : (settings.vid2audioUrl || ''),
-      music_url: cfgMusicUrl ? cfgMusicUrl.value.trim() : (settings.music_url || ''),
-      negativePrompt: neg,
-      guidanceScale: settings.guidanceScale || '7.0',
-      stepsFastTxt: parseInt(cfgT2iFast.value) || 2,
-      stepsFocusedTxt: parseInt(cfgT2iFocused.value) || 4,
-      stepsNormalTxt: parseInt(cfgT2iNormal.value) || 8,
-      stepsFastImg: parseInt(cfgI2iFast.value) || 20,
-      stepsFocusedImg: parseInt(cfgI2iFocused.value) || 30,
-      stepsNormalImg: parseInt(cfgI2iNormal.value) || 40,
-      guidanceImg: parseFloat(cfgI2iGuidance.value) || 7.0
-    };
-
-    localStorage.setItem('alphacore_modal_settings', JSON.stringify(newSettings));
-    import('../components/db_sync.js').then(module => module.pushToServer('settings', newSettings));
-    showFeedback(cfgFeedback, 'Generative pipeline configurations synchronized.', 'ok');
-  };
 
   // Embrace the darkness alternate state trigger
   darknessBtn.onclick = (e) => {
