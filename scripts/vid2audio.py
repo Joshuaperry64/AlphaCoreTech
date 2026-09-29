@@ -69,6 +69,7 @@ image = image.add_local_python_source("shared_app")
 
 
 @app.cls(
+    image=image,
     gpu="L40S",  # Architect Tier: L40S high-performance node
     timeout=60 * MINUTES,
     scaledown_window=60,
@@ -225,6 +226,36 @@ class Vid2Audio:
             except:
                 pass
 
+    @modal.method()
+    def generate(
+        self,
+        video_b64: str,
+        prompt: str = "",
+        negative_prompt: str = "low quality, muffled, noise, distorted",
+        duration: float = 8.0,
+        num_steps: int = 25,
+        cfg_strength: float = 4.5,
+        variant: str = "large_44k_v2",
+        seed: int = -1,
+        return_video: bool = True
+    ) -> dict:
+        """Non-streaming remote execution method for monolithic deployment integration."""
+        msgs = list(self.run_stream.local(
+            video_b64=video_b64,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            duration=duration,
+            num_steps=num_steps,
+            cfg_strength=cfg_strength,
+            variant=variant,
+            seed=seed,
+            return_video=return_video,
+        ))
+        final_msg = msgs[-1]
+        if "error" in final_msg:
+            raise RuntimeError(final_msg["error"])
+        return final_msg
+
     @modal.asgi_app()
     def web(self):
         import fastapi
@@ -326,6 +357,7 @@ class Vid2Audio:
 
 
 @app.cls(
+    image=image,
     gpu="T4",  # Economy Tier: T4 Cost-optimized with 60s scaledown
     timeout=60 * MINUTES,
     scaledown_window=60,

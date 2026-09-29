@@ -4774,7 +4774,10 @@ function buildVid2Audio() {
       };
 
       const settings = getModalSettings();
-      const endpoint = settings.vid2audioUrl || 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream';
+      let endpoint = settings.vid2audioUrl || 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream';
+      if (endpoint.includes('alphacore-main-api') && !endpoint.includes('/api/vid2audio/generate')) {
+        endpoint = resolveEndpoint(endpoint, '/api/vid2audio/generate');
+      }
 
       let audioDataUrl = null;
       let videoDataUrl = null;

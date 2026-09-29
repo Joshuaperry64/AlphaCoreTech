@@ -270,7 +270,18 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
             "timestamp": time.time()
         }
 
-    # --- VID2AUDIO GENERATION ENDPOINT ---
+    # --- VID2AUDIO ENDPOINTS ---
+    @app_instance.get("/api/vid2audio/status")
+    def api_vid2audio_status():
+        hw = "Modal Cloud T4 (Economy Tier, 60s Scaledown)" if is_eco else "Modal Cloud L40S (Architect Priority)"
+        return {
+            "status": "online",
+            "tier": "economy" if is_eco else "architect",
+            "engine": "MMAudio 44.1kHz Neural Foley Pipeline",
+            "hardware": hw,
+            "timestamp": time.time()
+        }
+
     @app_instance.post("/api/vid2audio/generate")
     async def api_generate_vid2audio(req: Vid2AudioRequest):
         try:
@@ -279,7 +290,17 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
             if not video_input:
                 raise HTTPException(status_code=400, detail="Missing 'video' (base64) parameter")
             
-            result = await v2a_cls().generate_post.remote.aio(req.dict())
+            result = await v2a_cls().generate.remote.aio(
+                video_b64=video_input,
+                prompt=req.prompt,
+                negative_prompt=req.negative_prompt,
+                duration=req.duration,
+                num_steps=req.num_steps,
+                cfg_strength=req.cfg_strength,
+                variant=req.variant,
+                seed=req.seed,
+                return_video=req.return_video
+            )
             return result
         except HTTPException:
             raise
