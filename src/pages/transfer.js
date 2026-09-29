@@ -652,7 +652,8 @@ export default function TransferPage() {
     washerTraveled: false,
     dryerLoaded: false,
     dryerTraveled: false,
-    chronoOverlayText: ''
+    chronoOverlayText: '',
+    activeModal: null
   };
 
   let stripeInstance = null;
@@ -794,6 +795,13 @@ export default function TransferPage() {
     }
     .thermal-receipt::before { top: 0; }
     .thermal-receipt::after { bottom: 0; }
+    .laundry-distraction-modal {
+      animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes modal-pop {
+      0% { opacity: 0; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1); }
+    }
   `;
   container.appendChild(styleEl);
 
@@ -976,7 +984,7 @@ export default function TransferPage() {
             </div>
           </div>
 
-          <div style="display: flex; gap: 10px; max-width: 480px; margin: 0 auto;">
+          <div style="display: flex; gap: 10px; max-width: 480px; margin: 0 auto 10px auto;">
             <button id="btn-back-hamper" class="aim-btn" style="flex: 1; padding: 14px; background: transparent; border-color: #334155; color: #94a3b8; cursor: pointer;">
               ⬅ BACK
             </button>
@@ -984,6 +992,10 @@ export default function TransferPage() {
               🪙 SLIDE OVER TO CASH CHANGER ➔
             </button>
           </div>
+
+          <button id="btn-lost-found" class="aim-btn" style="max-width: 480px; width: 100%; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.82rem; font-weight: bold; cursor: pointer;">
+            👙 RUMMAGE THROUGH ABANDONED LOST & FOUND BASKET
+          </button>
         </div>
       `;
 
@@ -998,6 +1010,24 @@ export default function TransferPage() {
         state.stage = 'cash_to_coin';
         render();
       };
+      const btnLostFound = bodyBox.querySelector('#btn-lost-found');
+      if (btnLostFound) {
+        btnLostFound.onclick = () => {
+          playSFX('glitch');
+          state.activeModal = {
+            icon: '👙🔍',
+            title: '// ABANDONED GARMENT AUDIT',
+            titleColor: '#c084fc',
+            borderColor: '#a855f7',
+            glowColor: 'rgba(168,85,247,0.3)',
+            btnBg: 'rgba(168,85,247,0.25)',
+            message: 'You discreetly peeked through the dusty plastic laundry basket labeled "LOST & FORGOTTEN". Underneath a singed cyber-hoodie, you spotted a neon lace thong and a handwritten pager number with coordinates to Sector 9. An attendant yelled "HEY!" from across the folding table.',
+            subtext: '⚡ [SIMULATED SNOOPING // 0 DEDUCTION TO FUNDS]',
+            buttonText: '😳 QUICKLY DROP IT & LOOK INNOCENT ➔'
+          };
+          render();
+        };
+      }
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -1290,6 +1320,16 @@ export default function TransferPage() {
               </button>
             `)}
             
+            <!-- Suggestive Simulated Side Steps -->
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <button id="btn-lean-washer" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(6, 182, 212, 0.12); border-color: #06b6d4; color: #38bdf8; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+                📳 PRESS BODY TO WASHER (HIGH SPIN)
+              </button>
+              <button id="btn-sniff-pods" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+                👃 HUFF DETERGENT POD
+              </button>
+            </div>
+            
             <button id="btn-back-changer" class="aim-btn" style="padding: 10px; background: transparent; border-color: #334155; color: #888; font-size: 0.85rem; cursor: pointer;">
               ⬅ Back to Coin Changer
             </button>
@@ -1301,6 +1341,8 @@ export default function TransferPage() {
       const btnTravel1 = bodyBox.querySelector('#btn-time-travel-1');
       const btnDryer = bodyBox.querySelector('#btn-goto-dryer');
       const btnBack = bodyBox.querySelector('#btn-back-changer');
+      const btnLeanWasher = bodyBox.querySelector('#btn-lean-washer');
+      const btnSniffPods = bodyBox.querySelector('#btn-sniff-pods');
 
       if (btnLoad) {
         btnLoad.onclick = () => {
@@ -1331,6 +1373,40 @@ export default function TransferPage() {
         btnBack.onclick = () => {
           playSFX('click');
           state.stage = 'cash_to_coin';
+          render();
+        };
+      }
+      if (btnLeanWasher) {
+        btnLeanWasher.onclick = () => {
+          playSFX('success');
+          state.activeModal = {
+            icon: '📳💦',
+            title: '// 1400 RPM HARMONIC RESONANCE',
+            titleColor: '#06b6d4',
+            borderColor: '#06b6d4',
+            glowColor: 'rgba(6,182,212,0.3)',
+            btnBg: 'rgba(6,182,212,0.25)',
+            message: 'You leaned your entire torso against the commercial front-loader during the 1400 RPM spin cycle. The violent vibrations pulsed straight through your chassis. An observer folding towels nearby glanced over with intense curiosity.',
+            subtext: '⚡ [SIMULATED PHYSICAL SENSATION // NO REAL FEE DEDUCTED]',
+            buttonText: '🥵 STEP BACK & STRAIGHTEN YOUR COLLAR ➔'
+          };
+          render();
+        };
+      }
+      if (btnSniffPods) {
+        btnSniffPods.onclick = () => {
+          playSFX('glitch');
+          state.activeModal = {
+            icon: '👃🫧',
+            title: '// CONCENTRATED POD INHALATION',
+            titleColor: '#c084fc',
+            borderColor: '#a855f7',
+            glowColor: 'rgba(168,85,247,0.3)',
+            btnBg: 'rgba(168,85,247,0.25)',
+            message: 'You cracked open a fresh ultra-concentrated lavender neural-pod and took an aggressive, unfiltered inhale. Your eyes watered instantly and your brain cortex experienced 4 seconds of pure floral static.',
+            subtext: '⚡ [SIMULATED INHALATION // FREE OF CHARGE]',
+            buttonText: '🫧 BLINK RAPIDLY & RESUME WASH CYCLE ➔'
+          };
           render();
         };
       }
@@ -1386,6 +1462,16 @@ export default function TransferPage() {
               </button>
             `)}
             
+            <!-- Suggestive Simulated Side Steps -->
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <button id="btn-peep-dryer" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+                👀 PEEP AT PANTIES IN NEXT DRYER
+              </button>
+              <button id="btn-lint-trap" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(245, 158, 11, 0.12); border-color: #f59e0b; color: #fbbf24; font-size: 0.8rem; font-weight: bold; cursor: pointer;">
+                🧤 PROBE LINT CAVITY
+              </button>
+            </div>
+            
             <button id="btn-back-washer" class="aim-btn" style="padding: 10px; background: transparent; border-color: #334155; color: #888; font-size: 0.85rem; cursor: pointer;">
               ⬅ Back to Washer
             </button>
@@ -1397,6 +1483,8 @@ export default function TransferPage() {
       const btnTravel2 = bodyBox.querySelector('#btn-time-travel-2');
       const btnReceive = bodyBox.querySelector('#btn-goto-receive');
       const btnBackWasher = bodyBox.querySelector('#btn-back-washer');
+      const btnPeepDryer = bodyBox.querySelector('#btn-peep-dryer');
+      const btnLintTrap = bodyBox.querySelector('#btn-lint-trap');
 
       if (btnLoadDryer) {
         btnLoadDryer.onclick = () => {
@@ -1429,6 +1517,41 @@ export default function TransferPage() {
         btnBackWasher.onclick = () => {
           playSFX('click');
           state.stage = 'washing_machines';
+          render();
+        };
+      }
+      if (btnPeepDryer) {
+        btnPeepDryer.onclick = () => {
+          playSFX('incorrect');
+          setTimeout(() => laundromatAudio.playCoinClink(), 250);
+          state.activeModal = {
+            icon: '👀💸',
+            title: '// DISTRACTION PENALTY (SIMULATED)',
+            titleColor: '#ef4444',
+            borderColor: '#ef4444',
+            glowColor: 'rgba(239,68,68,0.35)',
+            btnBg: 'rgba(239,68,68,0.25)',
+            message: 'the woman stole $0.50 from your coin stack while you were distracted looking in the dryer',
+            subtext: '⚡ [SIMULATED FLAVOR ONLY — NO ACTUAL FEE CHARGED // YOUR PAYOUT IS 100% INTACT]',
+            buttonText: '😅 ACT CASUAL & GUARD YOUR REMAINING COINS ➔'
+          };
+          render();
+        };
+      }
+      if (btnLintTrap) {
+        btnLintTrap.onclick = () => {
+          playSFX('alert');
+          state.activeModal = {
+            icon: '🔥🧤',
+            title: '// LINT CAVITY EXPLORATION',
+            titleColor: '#f59e0b',
+            borderColor: '#f59e0b',
+            glowColor: 'rgba(245,158,11,0.3)',
+            btnBg: 'rgba(245,158,11,0.25)',
+            message: 'You shoved your entire forearm deep into the hot, fuzzy lint cavern. You pulled out a massive clump of pink neon fluff, an expired cyber-contraceptive packet, and a thumb drive labeled "DO NOT OPEN (UNFILTERED)".',
+            subtext: '⚡ [SIMULATED CAVITY SEARCH // 0 FEE DEDUCTION]',
+            buttonText: '🧤 WIPE YOUR HANDS & RETURN TO DRYER ➔'
+          };
           render();
         };
       }
@@ -1624,6 +1747,52 @@ NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
         state.stage = 'cash_to_coin';
         render();
       };
+    }
+
+    // ─── Interactive Distraction / Simulated Flavor Modal ───────────────────
+    if (state.activeModal) {
+      const modalOverlay = createElement('div', {
+        className: 'laundry-distraction-modal',
+        style: `
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 23, 0.88);
+          backdrop-filter: blur(8px);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        `
+      });
+
+      modalOverlay.innerHTML = `
+        <div style="background: #090e17; border: 2px solid ${state.activeModal.borderColor || '#ef4444'}; border-radius: 10px; max-width: 480px; width: 100%; padding: 24px; box-shadow: 0 15px 45px rgba(0,0,0,0.9), 0 0 30px ${state.activeModal.glowColor || 'rgba(239,68,68,0.3)'}; text-align: center; position: relative;">
+          <div style="font-size: 3.2rem; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(255,255,255,0.4));">
+            ${state.activeModal.icon || '👀💸'}
+          </div>
+          <div style="font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: ${state.activeModal.titleColor || '#ef4444'}; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px;">
+            ${state.activeModal.title || '// SIMULATED ENCOUNTER'}
+          </div>
+          <div style="color: #f1f5f9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; background: rgba(0,0,0,0.45); padding: 14px 18px; border-radius: 6px; border-left: 4px solid ${state.activeModal.borderColor || '#ef4444'}; text-align: left; font-family: 'Share Tech Mono', monospace;">
+            ${state.activeModal.message}
+          </div>
+          <div style="font-size: 0.75rem; color: #10b981; font-weight: bold; margin-bottom: 20px; letter-spacing: 0.5px;">
+            ${state.activeModal.subtext || '✓ [SIMULATED FLAVOR ONLY — NO ACTUAL FEE CHARGED // PAYOUT IS 100% INTACT]'}
+          </div>
+          <button id="modal-dismiss-btn" class="aim-btn" style="width: 100%; padding: 14px; background: ${state.activeModal.btnBg || 'rgba(239,68,68,0.2)'}; border-color: ${state.activeModal.borderColor || '#ef4444'}; color: #fff; font-weight: bold; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease;">
+            ${state.activeModal.buttonText || 'CLOSE & RESUME LAUNDRY ➔'}
+          </button>
+        </div>
+      `;
+
+      modalOverlay.querySelector('#modal-dismiss-btn').onclick = () => {
+        playSFX('click');
+        state.activeModal = null;
+        render();
+      };
+
+      container.appendChild(modalOverlay);
     }
   };
 
