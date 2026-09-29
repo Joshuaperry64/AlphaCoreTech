@@ -75,9 +75,6 @@ export default function TransferPage() {
     const remainder = rawVal - captureFee - platformFee;
 
     // 2. Reverse engineer the payout to solve for the Connect & Instant fees simultaneously
-    // If payout < $33.33, instant fee is flat $0.50
-    // Equation 1: Payout = (Remainder - 0.75) / 1.0025
-    // Equation 2: Payout = (Remainder - 0.25) / 1.0175
     let payout = (remainder - 0.75) / 1.0025;
     let instantFee = 0.50;
     let connectFee = (payout * 0.0025) + 0.25;
@@ -98,6 +95,43 @@ export default function TransferPage() {
     elPayout.style.color = '#10b981';
     
     executeBtn.disabled = false;
+  });
+
+  executeBtn.addEventListener('click', async () => {
+    const rawVal = parseFloat(input.value);
+    if (!rawVal || rawVal < 10) return;
+
+    executeBtn.textContent = 'ESTABLISHING SECURE UPLINK...';
+    executeBtn.disabled = true;
+
+    try {
+      const response = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: rawVal })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || 'Transfer API rejected request');
+      }
+
+      if (data.clientSecret) {
+        executeBtn.textContent = '// PAYMENT INTENT SECURED';
+        executeBtn.style.color = '#10b981';
+        executeBtn.style.borderColor = '#10b981';
+        console.log('Client Secret retrieved:', data.clientSecret);
+        
+        // Next phase: Render Stripe Elements here to capture card data
+      }
+    } catch (err) {
+      console.error('Stripe Uplink Error:', err);
+      executeBtn.textContent = 'CONNECTION FAILED // RETRY';
+      executeBtn.style.color = '#ff003c';
+      executeBtn.style.borderColor = '#ff003c';
+      executeBtn.disabled = false;
+    }
   });
 
   return container;
