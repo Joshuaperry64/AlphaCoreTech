@@ -4,6 +4,44 @@ export default function TransferPage() {
   const container = createElement('div', { className: 'page-container' });
   container.style.cssText = 'padding: 20px; max-width: 600px; margin: 0 auto; color: #fff; font-family: "Share Tech Mono", monospace;';
 
+  const getProfileFeeConfig = () => {
+    const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
+    const profile = rawProfile.trim().toLowerCase();
+    const isArchitect = profile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
+    const isFisherman = profile === 'fisherman';
+
+    if (isArchitect) {
+      return {
+        rate: 0.0,
+        profileName: 'Architect',
+        label: 'AlphaCore Platform Fee (0% // ARCHITECT EXEMPT):',
+        badge: 'ARCHITECT [0% SYSTEM FEE EXEMPT]',
+        badgeColor: '#10b981',
+        isExempt: true
+      };
+    } else if (isFisherman) {
+      return {
+        rate: 0.07,
+        profileName: 'Fisherman',
+        label: 'AlphaCore Platform Fee (7% // PREFERRED RATE):',
+        badge: 'FISHERMAN [7% PREFERRED RATE]',
+        badgeColor: '#06b6d4',
+        isExempt: false
+      };
+    } else {
+      return {
+        rate: 0.10,
+        profileName: rawProfile,
+        label: 'AlphaCore Platform Fee (10%):',
+        badge: `${rawProfile.toUpperCase()} [10% STANDARD RATE]`,
+        badgeColor: '#888888',
+        isExempt: false
+      };
+    }
+  };
+
+  const initialFeeConfig = getProfileFeeConfig();
+
   container.innerHTML = `
     <h1 style="font-family: 'Orbitron', sans-serif; color: #10b981; border-bottom: 1px solid #10b981; padding-bottom: 10px; margin-bottom: 20px;">
       // SECURE PUSH-TO-CARD
@@ -16,15 +54,20 @@ export default function TransferPage() {
     </div>
 
     <div style="background: #050505; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
-      <h3 style="font-family: 'Orbitron', sans-serif; margin-top: 0; color: #06b6d4; font-size: 1rem;">NETWORK FEE ROUTING</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px;">
+        <h3 style="font-family: 'Orbitron', sans-serif; margin: 0; color: #06b6d4; font-size: 1rem;">NETWORK FEE ROUTING</h3>
+        <span id="profile-tier-badge" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 3px; font-weight: bold; border: 1px solid ${initialFeeConfig.badgeColor}; color: ${initialFeeConfig.badgeColor}; background: ${initialFeeConfig.badgeColor}15;">
+          ${initialFeeConfig.badge}
+        </span>
+      </div>
       
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
         <span>Stripe Capture (2.9% + $0.30):</span>
         <span id="fee-capture">-$0.00</span>
       </div>
-      <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
-        <span>AlphaCore Platform Fee (10%):</span>
-        <span id="fee-alpha">-$0.00</span>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: ${initialFeeConfig.isExempt ? '#10b981' : (initialFeeConfig.rate === 0.07 ? '#06b6d4' : '#888')};">
+        <span id="fee-alpha-label">${initialFeeConfig.label}</span>
+        <span id="fee-alpha">${initialFeeConfig.isExempt ? '$0.00' : '-$0.00'}</span>
       </div>
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
         <span>Connect Routing (0.25% + $0.25):</span>
@@ -63,21 +106,42 @@ export default function TransferPage() {
 
   const elCapture = container.querySelector('#fee-capture');
   const elAlpha = container.querySelector('#fee-alpha');
+  const elAlphaLabel = container.querySelector('#fee-alpha-label');
+  const elBadge = container.querySelector('#profile-tier-badge');
   const elConnect = container.querySelector('#fee-connect');
   const elInstant = container.querySelector('#fee-instant');
   const elPayout = container.querySelector('#final-payout');
 
   let stripe, elements;
 
+  const refreshTierUI = () => {
+    const config = getProfileFeeConfig();
+    if (elBadge) {
+      elBadge.textContent = config.badge;
+      elBadge.style.color = config.badgeColor;
+      elBadge.style.borderColor = config.badgeColor;
+      elBadge.style.background = `${config.badgeColor}15`;
+    }
+    if (elAlphaLabel) {
+      elAlphaLabel.textContent = config.label;
+      if (elAlphaLabel.parentElement) {
+        elAlphaLabel.parentElement.style.color = config.isExempt ? '#10b981' : (config.rate === 0.07 ? '#06b6d4' : '#888');
+      }
+    }
+    return config;
+  };
+
   input.addEventListener('input', (e) => {
     stripeContainer.style.display = 'none';
     executeBtn.style.display = 'block';
     executeBtn.textContent = 'INITIATE SECURE TRANSFER';
 
+    const feeConfig = refreshTierUI();
+
     const rawVal = parseFloat(e.target.value);
     if (isNaN(rawVal) || rawVal < 10) {
       elCapture.textContent = '-$0.00';
-      elAlpha.textContent = '-$0.00';
+      elAlpha.textContent = feeConfig.rate === 0 ? '$0.00' : '-$0.00';
       elConnect.textContent = '-$0.00';
       elInstant.textContent = '-$0.00';
       elPayout.textContent = '$0.00';
@@ -87,7 +151,7 @@ export default function TransferPage() {
     }
 
     const captureFee = (rawVal * 0.029) + 0.30;
-    const platformFee = rawVal * 0.10;
+    const platformFee = rawVal * feeConfig.rate;
     const remainder = rawVal - captureFee - platformFee;
 
     let payout = (remainder - 0.75) / 1.0025;
@@ -103,7 +167,13 @@ export default function TransferPage() {
     if (payout < 0) payout = 0;
 
     elCapture.textContent = `-$${captureFee.toFixed(2)}`;
-    elAlpha.textContent = `-$${platformFee.toFixed(2)}`;
+    if (feeConfig.rate === 0) {
+      elAlpha.textContent = '$0.00 (WAIVED)';
+      elAlpha.style.color = '#10b981';
+    } else {
+      elAlpha.textContent = `-$${platformFee.toFixed(2)}`;
+      elAlpha.style.color = feeConfig.rate === 0.07 ? '#06b6d4' : '#888';
+    }
     elConnect.textContent = `-$${connectFee.toFixed(2)}`;
     elInstant.textContent = `-$${instantFee.toFixed(2)}`;
     elPayout.textContent = `$${payout.toFixed(2)}`;
@@ -116,6 +186,7 @@ export default function TransferPage() {
     const rawVal = parseFloat(input.value);
     if (!rawVal || rawVal < 10) return;
 
+    const feeConfig = getProfileFeeConfig();
     executeBtn.textContent = 'ESTABLISHING SECURE UPLINK...';
     executeBtn.disabled = true;
 
@@ -123,7 +194,11 @@ export default function TransferPage() {
       const response = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: rawVal })
+        body: JSON.stringify({ 
+          amount: rawVal,
+          profile: feeConfig.profileName,
+          fee_rate: feeConfig.rate
+        })
       });
       
       const data = await response.json();

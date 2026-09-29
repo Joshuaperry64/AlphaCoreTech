@@ -31,6 +31,8 @@ def fastapi_app():
         
         data = await request.json()
         amount_usd = data.get("amount")
+        profile = str(data.get("profile", "Guest")).strip()
+        fee_rate = data.get("fee_rate")
         
         if not amount_usd or amount_usd < 10:
             raise HTTPException(status_code=400, detail="Minimum transfer amount is $10.00")
@@ -38,6 +40,9 @@ def fastapi_app():
         # Convert USD to cents for Stripe API
         amount_cents = int(amount_usd * 100)
         
+        # Determine fee tier label for audit metadata
+        fee_label = "0%" if profile.lower() == "architect" else ("7%" if profile.lower() == "fisherman" else "10%")
+
         try:
             # Create a PaymentIntent with destination routing
             intent = stripe.PaymentIntent.create(
@@ -45,6 +50,10 @@ def fastapi_app():
                 currency="usd",
                 automatic_payment_methods={"enabled": True},
                 transfer_data={"destination": "acct_1UKrOjHx3NuZf8IK"}, 
+                metadata={
+                    "profile": profile,
+                    "platform_fee": fee_label
+                }
             )
             return {"clientSecret": intent.client_secret}
         except Exception as e:
