@@ -53,8 +53,8 @@ def fastapi_app():
         if not destination.startswith("acct_"):
             raise HTTPException(status_code=400, detail="Invalid destination account ID format (must start with 'acct_')")
         
-        if not amount_usd or amount_usd < 10:
-            raise HTTPException(status_code=400, detail="Minimum transfer amount is $10.00")
+        if not amount_usd or float(amount_usd) < 0.50:
+            raise HTTPException(status_code=400, detail="Minimum transfer amount is $0.50 (Stripe USD minimum)")
         
         # Convert USD to cents for Stripe API
         amount_cents = int(round(float(amount_usd) * 100))
@@ -73,35 +73,62 @@ def fastapi_app():
         
         fee_cents = int(round(amount_cents * fee_rate))
 
+        # 1. Primary Strategy: Direct Charge on destination account (bypasses platform 7-day hold)
         try:
-            # Build PaymentIntent payload with dynamic destination transfer routing
-            intent_params = {
+            direct_params = {
                 "amount": amount_cents,
                 "currency": "usd",
-                "automatic_payment_methods": {"enabled": True},
-                "transfer_data": {"destination": destination},
+                "payment_method_types": ["card"],
                 "metadata": {
                     "profile": profile,
                     "platform_fee": fee_label,
-                    "destination_account": destination
+                    "destination_account": destination,
+                    "charge_type": "direct"
                 }
             }
-
-            # Retain platform cut (Perry-IT LLC / AlphaCore) when fee > 0
             if fee_cents > 0:
-                intent_params["application_fee_amount"] = fee_cents
+                direct_params["application_fee_amount"] = fee_cents
 
-            intent = stripe.PaymentIntent.create(**intent_params)
+            intent = stripe.PaymentIntent.create(**direct_params, stripe_account=destination)
             return {
                 "clientSecret": intent.client_secret,
                 "destination": destination,
+                "chargeType": "direct",
                 "platformFee": fee_label,
                 "feeCents": fee_cents
             }
-        except stripe.error.StripeError as e:
-            raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        except Exception as direct_err:
+            print(f"[STRIPE] Direct charge failed, falling back to destination charge: {direct_err}")
+            try:
+                # 2. Fallback Strategy: Destination Charge via platform transfer
+                fallback_params = {
+                    "amount": amount_cents,
+                    "currency": "usd",
+                    "automatic_payment_methods": {"enabled": True},
+                    "transfer_data": {"destination": destination},
+                    "metadata": {
+                        "profile": profile,
+                        "platform_fee": fee_label,
+                        "destination_account": destination,
+                        "charge_type": "destination"
+                    }
+                }
+                if fee_cents > 0:
+                    fallback_params["application_fee_amount"] = fee_cents
+
+                intent = stripe.PaymentIntent.create(**fallback_params)
+                return {
+                    "clientSecret": intent.client_secret,
+                    "destination": destination,
+                    "chargeType": "destination",
+                    "directError": f"{type(direct_err).__name__}: {repr(direct_err)}",
+                    "platformFee": fee_label,
+                    "feeCents": fee_cents
+                }
+            except stripe.error.StripeError as e:
+                raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
 
     @web_app.post("/create-connect-account")
     async def create_connect_account(request: Request):
@@ -166,8 +193,10 @@ def fastapi_app():
                 "id": acc.id,
                 "name": getattr(acc.business_profile, "name", None) or getattr(acc, "email", "Connected Account"),
                 "email": getattr(acc, "email", None),
+                "type": getattr(acc, "type", None),
                 "payouts_enabled": getattr(acc, "payouts_enabled", False),
                 "charges_enabled": getattr(acc, "charges_enabled", False),
+                "capabilities": getattr(acc, "capabilities", None),
                 "bank_name": bank_name,
                 "last4": last4
             }

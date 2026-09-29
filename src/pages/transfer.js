@@ -609,20 +609,26 @@ export default function TransferPage() {
   // ─── Fee Calculation Math ────────────────────────────────────────────────
   const calculateFees = (val, rate) => {
     const rawVal = parseFloat(val);
-    if (isNaN(rawVal) || rawVal < 10) return null;
+    if (isNaN(rawVal) || rawVal < 0.50) return null;
 
     const captureFee = (rawVal * 0.029) + 0.30;
     const platformFee = rawVal * rate;
     const remainder = rawVal - captureFee - platformFee;
 
-    let payout = (remainder - 0.75) / 1.0025;
-    let instantFee = 0.50;
-    let connectFee = (payout * 0.0025) + 0.25;
+    let payout = Math.max(0.01, remainder);
+    let instantFee = 0.0;
+    let connectFee = 0.0;
 
-    if (payout >= 33.33) {
-      payout = (remainder - 0.25) / 1.0175;
-      instantFee = payout * 0.015;
+    if (rawVal >= 10) {
+      payout = (remainder - 0.75) / 1.0025;
+      instantFee = 0.50;
       connectFee = (payout * 0.0025) + 0.25;
+
+      if (payout >= 33.33) {
+        payout = (remainder - 0.25) / 1.0175;
+        instantFee = payout * 0.015;
+        connectFee = (payout * 0.0025) + 0.25;
+      }
     }
 
     if (payout < 0) payout = 0;
@@ -639,7 +645,7 @@ export default function TransferPage() {
       connectFee: utilityFee, // ensures sum of 4 items equals totalFees exactly
       payout,
       totalFees,
-      tokens: Math.floor(rawVal * 4) // 4 tokens per $1.00
+      tokens: Math.max(1, Math.floor(rawVal * 4)) // minimum 1 token
     };
   };
 
@@ -695,7 +701,7 @@ export default function TransferPage() {
     dryerTraveled: false,
     chronoOverlayText: '',
     activeModal: null,
-    countdownOverlayActive: true, // Temporary 7-day feature countdown overlay
+    countdownOverlayActive: false, // 7-day feature countdown disabled for active operation
     selectedDestination: initialDest,
     selectedDestinationName: initialDestName,
     customDestinationId: '',
@@ -1234,7 +1240,7 @@ export default function TransferPage() {
           </div>
           <div style="position: relative;">
             <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
-            <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="25.00" min="10" step="0.01"
+            <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="0.50" min="0.50" step="0.01"
               style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
           </div>
         </div>
@@ -1342,7 +1348,7 @@ export default function TransferPage() {
 
         <!-- Stripe Payment Authorization Section (Strictly Professional) -->
         <div style="margin-bottom: 20px;">
-          <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; min-height: 50px; padding: 14px; font-size: 1.05rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#f59e0b' : '#10b981'}; color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#fbbf24' : '#10b981'}; font-weight: bold; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
+          <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; min-height: 50px; padding: 14px; font-size: 1.05rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#f59e0b' : '#10b981'}; color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#fbbf24' : '#10b981'}; font-weight: bold; cursor: pointer;" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
             ${state.selectedDestination === DONATION_ACCOUNT_ID ? '💝 AUTHORIZE VOLUNTARY DONATION VIA STRIPE' : '💳 AUTHORIZE TRANSFER VIA STRIPE'}
           </button>
 
@@ -1363,9 +1369,9 @@ export default function TransferPage() {
             OPTIONAL: CONTINUE LAUNDRO-MAT MINIGAME
           </div>
           <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">
-            Grab your heavy sack of ${activeFeeData.tokens} tokens and proceed to the gaping washer hole for deep decontamination.
+            Grab your heavy sack of ${activeFeeData ? activeFeeData.tokens : 0} tokens and proceed to the gaping washer hole for deep decontamination.
           </div>
-          <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; min-height: 48px; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
+          <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; min-height: 48px; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
             🫧 TAKE TOKENS & PROCEED TO THE WASHER HOLE ➔
           </button>
         </div>
@@ -1512,7 +1518,7 @@ export default function TransferPage() {
       // Initiate Stripe payment
       btnPay.onclick = async () => {
         const val = parseFloat(cashInput.value);
-        if (!val || val < 10) return;
+        if (!val || val < 0.50) return;
 
         const targetDest = state.selectedDestination === 'custom' ? (state.customDestinationId || customDestInput.value).trim() : state.selectedDestination;
         if (!targetDest) {
@@ -1554,7 +1560,8 @@ export default function TransferPage() {
           }
 
           if (data.clientSecret && window.Stripe) {
-            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
+            const stripeOptions = data.chargeType === 'direct' ? { stripeAccount: data.destination } : {};
+            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd', stripeOptions);
             elementsInstance = stripeInstance.elements({
               appearance: { theme: 'night' },
               clientSecret: data.clientSecret
