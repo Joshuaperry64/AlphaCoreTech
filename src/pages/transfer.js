@@ -915,24 +915,24 @@ export default function TransferPage() {
             WASH LAUNDRY: STEP 01
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 24px auto; line-height: 1.6;">
-            Your cyber-threads, ledger tracks, and digital garments are soiled from street telemetry. Gather the dirty laundry into your hamper and head over to the 24/7 coin-op laundromat.
+            Your cyber-threads, ledger tracks, and digital garments are heavily soiled. Grab your bulging dirty load firmly with both hands and head over to the 24/7 coin-op laundromat.
           </p>
           
           <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 15px; max-width: 450px; margin: 0 auto 24px auto; text-align: left; font-size: 0.85rem;">
             <div style="color: #10b981; font-weight: bold; margin-bottom: 6px;">📋 LAUNDRY HAMPER INVENTORY:</div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Soiled Operative Overcoat:</span> <span style="color:#ef4444;">DIRTY (100%)</span>
+              <span>• Soiled Operative Overcoat:</span> <span style="color:#ef4444;">BULGING LOAD (100%)</span>
             </div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Telemetry-Laced Jeans:</span> <span style="color:#ef4444;">DIRTY (100%)</span>
+              <span>• Telemetry-Laced Jeans:</span> <span style="color:#ef4444;">SWEATY & STAINED</span>
             </div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between;">
-              <span>• Untracked Digital Stash:</span> <span style="color:#f59e0b;">READY FOR CLEANING</span>
+              <span>• Untracked Digital Stash:</span> <span style="color:#f59e0b;">READY FOR PENETRATION</span>
             </div>
           </div>
 
           <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-            🧺 GRAB LAUNDRY & GO TO LAUNDROMAT ➔
+            🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDROMAT ➔
           </button>
         </div>
       `;
@@ -960,19 +960,19 @@ export default function TransferPage() {
             THE LAUNDROMAT MAIN FLOOR
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
-            You arrive at the neon-lit laundromat. The radio plays a chill lo-fi beat while industrial vortex washers and gas tumbler dryers hum in the background. Convert your bills at the Cash-to-Coin machine to get started.
+            Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide hard coin tokens in. Head over to the cash changer and slide your bills in.
           </p>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto 20px auto; text-align: left;">
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">CURRENT STATUS</div>
-              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 1 FULL HAMPER</div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for wash tokens</div>
+              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 1 BULGING LOAD</div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for coin lube</div>
             </div>
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
-              <div style="font-size: 0.75rem; color: #888;">TOKEN POUCH</div>
+              <div style="font-size: 0.75rem; color: #888;">TOKEN SACK</div>
               <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 0 TOKENS</div>
-              <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Exchange cash required</div>
+              <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Needs insertion</div>
             </div>
           </div>
 
@@ -981,7 +981,7 @@ export default function TransferPage() {
               ⬅ BACK
             </button>
             <button id="btn-goto-changer" class="aim-btn" style="flex: 2; padding: 14px; background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer;">
-              🪙 CASH-TO-COIN MACHINE ➔
+              🪙 SLIDE OVER TO CASH CHANGER ➔
             </button>
           </div>
         </div>
@@ -1031,9 +1031,9 @@ export default function TransferPage() {
         <!-- Cash Input Form -->
         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
           <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-            <label style="color: #94a3b8; font-size: 0.85rem;">INSERT CASH / TARGET CHARGE (USD) [MIN $10.00]:</label>
+            <label style="color: #94a3b8; font-size: 0.85rem;">SLIDE CASH INTO THE ACCEPTOR SLOT (USD) [MIN $10.00]:</label>
             <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
-              🪙 ${activeFeeData.tokens} TOKENS
+              🪙 ${activeFeeData.tokens} HARD TOKENS
             </span>
           </div>
           <div style="position: relative;">
@@ -1078,7 +1078,7 @@ export default function TransferPage() {
         <!-- Stripe Payment Authorization Section -->
         <div style="margin-bottom: 20px;">
           <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
-            💳 INSERT BILLS // PROCESS PAYMENT WITH STRIPE
+            💳 SLIDE IT ALL THE WAY IN // AUTHORIZE VIA STRIPE
           </button>
 
           <!-- Stripe Card Element Mount Container -->
@@ -1086,7 +1086,7 @@ export default function TransferPage() {
             <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT TO DISPENSE TOKENS:</div>
             <div id="payment-element"></div>
             <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
-              AUTHORIZE & DISPENSE TOKENS
+              AUTHORIZE & DISPENSE HARD TOKENS
             </button>
             <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
           </div>
@@ -1098,10 +1098,10 @@ export default function TransferPage() {
             OPTIONAL: CONTINUE LAUNDROMAT MINIGAME
           </div>
           <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">
-            Proceed directly to the washing machines with your ${activeFeeData.tokens} tokens and run the vortex decontamination cycle.
+            Grab your heavy sack of ${activeFeeData.tokens} tokens and proceed to the gaping washer hole for deep decontamination.
           </div>
           <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
-            🫧 PROCEED TO WASHING MACHINES ➔
+            🫧 TAKE TOKENS & PROCEED TO THE WASHER HOLE ➔
           </button>
         </div>
       `;
@@ -1263,11 +1263,11 @@ export default function TransferPage() {
           <div style="margin-bottom: 20px;">
             <div style="font-size: 0.85rem; color: #94a3b8;">
               STATUS: <strong style="color: ${state.washerTraveled ? '#10b981' : (state.washerLoaded ? '#06b6d4' : '#f59e0b')};">
-                ${!state.washerLoaded ? 'EMPTY // AWAITING SOILED CLOTHES & TOKENS' : (state.washerTraveled ? 'WASH COMPLETE // EXTRACTION 1400 RPM OK' : 'CHURN ACTIVE // 60-MIN CYCLE IN PROGRESS')}
+                ${!state.washerLoaded ? 'DRUM IS GAPING // AWAITING YOUR FULL LOAD & HARD TOKENS' : (state.washerTraveled ? 'INTENSE SPIN COMPLETE // EVERYTHING DRIPPING AT 1400 RPM' : 'VORTEX CHURN ACTIVE // SOAKING WET & FOAMING AT THE RIM')}
               </strong>
             </div>
             <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-              ${state.washerTraveled ? 'TIME ELAPSED: 60:00 (1 HOUR COMPLETED)' : (state.washerLoaded ? 'TIME REMAINING: 59:58 (1 HOUR)' : `COST: ${tokensNeeded} TOKENS / LOAD`)}
+              ${state.washerTraveled ? 'TIME ELAPSED: 60:00 (1 HOUR OF VIOLENT VIBRATIONS FINISHED)' : (state.washerLoaded ? 'TIME REMAINING: 59:58 (1 HOUR OF CHURNING)' : `NEEDS: ${tokensNeeded} HARD TOKENS TO UNLOCK`)}
             </div>
           </div>
 
@@ -1275,18 +1275,18 @@ export default function TransferPage() {
           <div style="max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
             ${!state.washerLoaded ? `
               <button id="btn-load-washer" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                📥 INSERT ${tokensNeeded} TOKENS & LOAD DIRTY CLOTHES
+                📥 STUFF YOUR ENTIRE LOAD INTO THE WASHER HOLE & PUMP THE POD
               </button>
             ` : (!state.washerTraveled ? `
               <button id="btn-time-travel-1" class="aim-btn" style="padding: 16px; background: rgba(6, 182, 212, 0.25); border-color: #06b6d4; color: #38bdf8; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-                ⏳ TIME TRAVEL 1 HOUR INTO THE FUTURE ⚡
+                ⏳ FAST-FORWARD 1 HOUR OF INTENSE VIBRATING ACTION ⚡
               </button>
             ` : `
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
-                ✓ 60-Minute Wash Cycle Finished! Clothes drained and spun clean.
+                ✓ 60 Minutes of violent churning finished! The load is dripping, soaked, and thoroughly cleansed.
               </div>
               <button id="btn-goto-dryer" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                🧺 UNLOAD WET CLOTHES & MOVE TO DRYER ➔
+                🧺 PULL OUT YOUR DRIPPING WET LOAD & MOVE TO DRYER ➔
               </button>
             `)}
             
@@ -1359,11 +1359,11 @@ export default function TransferPage() {
           <div style="margin-bottom: 20px;">
             <div style="font-size: 0.85rem; color: #94a3b8;">
               STATUS: <strong style="color: ${state.dryerTraveled ? '#10b981' : (state.dryerLoaded ? '#f59e0b' : '#38bdf8')};">
-                ${!state.dryerLoaded ? 'DRYER OPEN // AWAITING WET LAUNDRY & DRYER SHEETS' : (state.dryerTraveled ? 'DRY COMPLETE // FLUFF & COOL-DOWN 100%' : 'GAS TUMBLE ACTIVE // HIGH HEAT 160°F // ANTI-STATIC INJECTED')}
+                ${!state.dryerLoaded ? 'DRYER HOLE IS HOT & GAPING // READY FOR WET INSERTION' : (state.dryerTraveled ? 'TUMBLE COMPLETE // TOASTY, FLUFFED & TOTALLY BONE-DRY' : 'HOT GAS INJECTED // 160°F STEAM BLASTING EVERY CREVICE')}
               </strong>
             </div>
             <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-              ${state.dryerTraveled ? 'TOTAL TIME ELAPSED: 2 HOURS (WASH + DRY FINISHED)' : (state.dryerLoaded ? 'TIME REMAINING: 59:59 (1 HOUR)' : 'ADD ANTI-STATIC DRYER SHEETS & CLOSE DOOR')}
+              ${state.dryerTraveled ? 'TOTAL TIME: 2 HOURS OF CONTINUOUS FRICTION COMPLETED' : (state.dryerLoaded ? 'TIME REMAINING: 59:59 (1 HOUR OF HOT TUMBLING)' : 'SLIP IN THE ANTI-STATIC SHEET TO PREVENT FRICTION')}
             </div>
           </div>
 
@@ -1371,18 +1371,18 @@ export default function TransferPage() {
           <div style="max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
             ${!state.dryerLoaded ? `
               <button id="btn-load-dryer" class="aim-btn" style="padding: 15px; background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #f59e0b; font-weight: bold; cursor: pointer;">
-                📥 TOSS WET CLOTHES IN & ADD DRYER SHEETS
+                📥 INSERT WET LAUNDRY INTO THE DRYER HOLE & RUB IN DRYER SHEETS
               </button>
             ` : (!state.dryerTraveled ? `
               <button id="btn-time-travel-2" class="aim-btn" style="padding: 16px; background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
-                ⏳ TIME TRAVEL ANOTHER HOUR INTO FUTURE ⚡
+                ⏳ TIME TRAVEL ANOTHER HOUR OF HIGH-HEAT TUMBLING ⚡
               </button>
             ` : `
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
-                ✓ Another Hour Elapsed! Clothes toasty, warm, and wrinkle-free.
+                ✓ Another hour of hot tumbling finished! Your load is toasty warm, fully fluffed, and wrinkle-free.
               </div>
               <button id="btn-goto-receive" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                ✨ RECEIVE CLEAN LAUNDRY & AUDIT RECEIPT ➔
+                ✨ PULL OUT YOUR WARM, FLUFFY LOAD & VIEW RECEIPT ➔
               </button>
             `)}
             
@@ -1470,7 +1470,7 @@ export default function TransferPage() {
             RECEIVE LAUNDRY
           </h2>
           <p style="color: #94a3b8; font-size: 0.9rem; margin: 0;">
-            Your garments are fresh, warm, folded, and completely cleansed of digital residue.
+            Look at that fresh, satisfied load. Cleaned down to the bare fibers, completely wrinkle-free and delivered warm to your hands.
           </p>
         </div>
 
@@ -1571,7 +1571,7 @@ export default function TransferPage() {
             📋 COPY RECEIPT AUDIT TO CLIPBOARD
           </button>
           <button id="btn-wash-another" class="aim-btn" style="padding: 14px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-            🔄 WASH ANOTHER LOAD (RESTART MINIGAME)
+            🔄 DROP ANOTHER DIRTY LOAD (START OVER)
           </button>
           <button id="btn-changer-return" class="aim-btn" style="padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.85rem; cursor: pointer;">
             🪙 Return to Cash-to-Coin Changer

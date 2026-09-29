@@ -5194,24 +5194,24 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             WASH LAUNDRY: STEP 01
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 24px auto; line-height: 1.6;">
-            Your cyber-threads, ledger tracks, and digital garments are soiled from street telemetry. Gather the dirty laundry into your hamper and head over to the 24/7 coin-op laundromat.
+            Your cyber-threads, ledger tracks, and digital garments are heavily soiled. Grab your bulging dirty load firmly with both hands and head over to the 24/7 coin-op laundromat.
           </p>
           
           <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 15px; max-width: 450px; margin: 0 auto 24px auto; text-align: left; font-size: 0.85rem;">
             <div style="color: #10b981; font-weight: bold; margin-bottom: 6px;">📋 LAUNDRY HAMPER INVENTORY:</div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Soiled Operative Overcoat:</span> <span style="color:#ef4444;">DIRTY (100%)</span>
+              <span>• Soiled Operative Overcoat:</span> <span style="color:#ef4444;">BULGING LOAD (100%)</span>
             </div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Telemetry-Laced Jeans:</span> <span style="color:#ef4444;">DIRTY (100%)</span>
+              <span>• Telemetry-Laced Jeans:</span> <span style="color:#ef4444;">SWEATY & STAINED</span>
             </div>
             <div style="color: #cbd5e1; display:flex; justify-content:space-between;">
-              <span>• Untracked Digital Stash:</span> <span style="color:#f59e0b;">READY FOR CLEANING</span>
+              <span>• Untracked Digital Stash:</span> <span style="color:#f59e0b;">READY FOR PENETRATION</span>
             </div>
           </div>
 
           <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-            🧺 GRAB LAUNDRY & GO TO LAUNDROMAT ➔
+            🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDROMAT ➔
           </button>
         </div>
       `,g.querySelector("#btn-goto-laundromat").onclick=()=>{le.init(),le.playDoorChime(),le.startMusic(),ae("navigate"),o.stage="laundromat_hub",l()};else if(o.stage==="laundromat_hub")g.innerHTML=`
@@ -5223,19 +5223,19 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             THE LAUNDROMAT MAIN FLOOR
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
-            You arrive at the neon-lit laundromat. The radio plays a chill lo-fi beat while industrial vortex washers and gas tumbler dryers hum in the background. Convert your bills at the Cash-to-Coin machine to get started.
+            Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide hard coin tokens in. Head over to the cash changer and slide your bills in.
           </p>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto 20px auto; text-align: left;">
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">CURRENT STATUS</div>
-              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 1 FULL HAMPER</div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for wash tokens</div>
+              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 1 BULGING LOAD</div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for coin lube</div>
             </div>
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
-              <div style="font-size: 0.75rem; color: #888;">TOKEN POUCH</div>
+              <div style="font-size: 0.75rem; color: #888;">TOKEN SACK</div>
               <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 0 TOKENS</div>
-              <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Exchange cash required</div>
+              <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Needs insertion</div>
             </div>
           </div>
 
@@ -5244,7 +5244,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
               ⬅ BACK
             </button>
             <button id="btn-goto-changer" class="aim-btn" style="flex: 2; padding: 14px; background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer;">
-              🪙 CASH-TO-COIN MACHINE ➔
+              🪙 SLIDE OVER TO CASH CHANGER ➔
             </button>
           </div>
         </div>
@@ -5264,9 +5264,9 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
         <!-- Cash Input Form -->
         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
           <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-            <label style="color: #94a3b8; font-size: 0.85rem;">INSERT CASH / TARGET CHARGE (USD) [MIN $10.00]:</label>
+            <label style="color: #94a3b8; font-size: 0.85rem;">SLIDE CASH INTO THE ACCEPTOR SLOT (USD) [MIN $10.00]:</label>
             <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
-              🪙 ${f.tokens} TOKENS
+              🪙 ${f.tokens} HARD TOKENS
             </span>
           </div>
           <div style="position: relative;">
@@ -5311,7 +5311,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
         <!-- Stripe Payment Authorization Section -->
         <div style="margin-bottom: 20px;">
           <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;" ${f.rawVal<10?"disabled":""}>
-            💳 INSERT BILLS // PROCESS PAYMENT WITH STRIPE
+            💳 SLIDE IT ALL THE WAY IN // AUTHORIZE VIA STRIPE
           </button>
 
           <!-- Stripe Card Element Mount Container -->
@@ -5319,7 +5319,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT TO DISPENSE TOKENS:</div>
             <div id="payment-element"></div>
             <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
-              AUTHORIZE & DISPENSE TOKENS
+              AUTHORIZE & DISPENSE HARD TOKENS
             </button>
             <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
           </div>
@@ -5331,10 +5331,10 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             OPTIONAL: CONTINUE LAUNDROMAT MINIGAME
           </div>
           <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">
-            Proceed directly to the washing machines with your ${f.tokens} tokens and run the vortex decontamination cycle.
+            Grab your heavy sack of ${f.tokens} tokens and proceed to the gaping washer hole for deep decontamination.
           </div>
           <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${f.rawVal<10?"disabled":""}>
-            🫧 PROCEED TO WASHING MACHINES ➔
+            🫧 TAKE TOKENS & PROCEED TO THE WASHER HOLE ➔
           </button>
         </div>
       `;const _=g.querySelector("#cash-amount-input"),M=g.querySelector("#token-count-display"),b=g.querySelector("#fee-capture"),S=g.querySelector("#fee-alpha"),y=g.querySelector("#fee-connect"),N=g.querySelector("#fee-instant"),T=g.querySelector("#final-payout"),C=g.querySelector("#btn-initiate-payment"),j=g.querySelector("#btn-continue-minigame"),$=g.querySelector("#stripe-ui-container"),W=g.querySelector("#submit-payment-btn"),w=g.querySelector("#payment-message");_.oninput=I=>{const h=parseFloat(I.target.value);o.amount=isNaN(h)?0:h,$.style.display="none",C.style.display="block",C.textContent="💳 INSERT BILLS // PROCESS PAYMENT WITH STRIPE";const D=a(h,s.rate);if(!D){M.textContent="🪙 0 TOKENS",b.textContent="-$0.00",S.textContent=s.isExempt?"$0.00":"-$0.00",y.textContent="-$0.00",N.textContent="-$0.00",T.textContent="$0.00",T.style.color="#ef4444",C.disabled=!0,j.disabled=!0;return}M.textContent=`🪙 ${D.tokens} TOKENS`,b.textContent=`-$${D.captureFee.toFixed(2)}`,S.textContent=s.isExempt?"$0.00 (WAIVED)":`-$${D.platformFee.toFixed(2)}`,y.textContent=`-$${D.connectFee.toFixed(2)}`,N.textContent=`-$${D.instantFee.toFixed(2)}`,T.textContent=`$${D.payout.toFixed(2)}`,T.style.color="#10b981",C.disabled=!1,j.disabled=!1},j.onclick=()=>{le.playCoinClink(),ae("navigate"),o.stage="washing_machines",l()},C.onclick=async()=>{const I=parseFloat(_.value);if(!(!I||I<10)){C.textContent="ESTABLISHING SECURE STRIPE UPLINK...",C.disabled=!0,le.playBillWhir();try{const h=await fetch("https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({amount:I,profile:s.profileName,fee_rate:s.rate})}),D=await h.json();if(!h.ok)throw new Error(D.detail||"Transfer API rejected request");D.clientSecret&&window.Stripe&&(i=window.Stripe("pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd"),n=i.elements({appearance:{theme:"night"},clientSecret:D.clientSecret}),n.create("payment").mount("#payment-element"),C.style.display="none",$.style.display="block",ae("modal"))}catch(h){console.error("Stripe Uplink Error:",h),C.textContent="CONNECTION FAILED // RETRY",C.style.color="#ef4444",C.style.borderColor="#ef4444",C.disabled=!1,ae("incorrect")}}},W.onclick=async()=>{if(!i||!n)return;W.disabled=!0,W.textContent="PROCESSING DISPENSER...",w.style.display="none",le.playBillWhir();const{error:I}=await i.confirmPayment({elements:n,redirect:"if_required"});I?(w.textContent=I.message,w.style.display="block",W.disabled=!1,W.textContent="AUTHORIZE & DISPENSE TOKENS",ae("incorrect")):(o.paymentAuthorized=!0,le.playCoinClink(),ae("response"),o.stage="washing_machines",l())}}else if(o.stage==="washing_machines"){a(o.amount,s.rate);const f=12;g.innerHTML=`
@@ -5356,11 +5356,11 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
           <div style="margin-bottom: 20px;">
             <div style="font-size: 0.85rem; color: #94a3b8;">
               STATUS: <strong style="color: ${o.washerTraveled?"#10b981":o.washerLoaded?"#06b6d4":"#f59e0b"};">
-                ${o.washerLoaded?o.washerTraveled?"WASH COMPLETE // EXTRACTION 1400 RPM OK":"CHURN ACTIVE // 60-MIN CYCLE IN PROGRESS":"EMPTY // AWAITING SOILED CLOTHES & TOKENS"}
+                ${o.washerLoaded?o.washerTraveled?"INTENSE SPIN COMPLETE // EVERYTHING DRIPPING AT 1400 RPM":"VORTEX CHURN ACTIVE // SOAKING WET & FOAMING AT THE RIM":"DRUM IS GAPING // AWAITING YOUR FULL LOAD & HARD TOKENS"}
               </strong>
             </div>
             <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-              ${o.washerTraveled?"TIME ELAPSED: 60:00 (1 HOUR COMPLETED)":o.washerLoaded?"TIME REMAINING: 59:58 (1 HOUR)":`COST: ${f} TOKENS / LOAD`}
+              ${o.washerTraveled?"TIME ELAPSED: 60:00 (1 HOUR OF VIOLENT VIBRATIONS FINISHED)":o.washerLoaded?"TIME REMAINING: 59:58 (1 HOUR OF CHURNING)":`NEEDS: ${f} HARD TOKENS TO UNLOCK`}
             </div>
           </div>
 
@@ -5368,18 +5368,18 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
           <div style="max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
             ${o.washerLoaded?o.washerTraveled?`
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
-                ✓ 60-Minute Wash Cycle Finished! Clothes drained and spun clean.
+                ✓ 60 Minutes of violent churning finished! The load is dripping, soaked, and thoroughly cleansed.
               </div>
               <button id="btn-goto-dryer" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                🧺 UNLOAD WET CLOTHES & MOVE TO DRYER ➔
+                🧺 PULL OUT YOUR DRIPPING WET LOAD & MOVE TO DRYER ➔
               </button>
             `:`
               <button id="btn-time-travel-1" class="aim-btn" style="padding: 16px; background: rgba(6, 182, 212, 0.25); border-color: #06b6d4; color: #38bdf8; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-                ⏳ TIME TRAVEL 1 HOUR INTO THE FUTURE ⚡
+                ⏳ FAST-FORWARD 1 HOUR OF INTENSE VIBRATING ACTION ⚡
               </button>
             `:`
               <button id="btn-load-washer" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                📥 INSERT ${f} TOKENS & LOAD DIRTY CLOTHES
+                📥 STUFF YOUR ENTIRE LOAD INTO THE WASHER HOLE & PUMP THE POD
               </button>
             `}
             
@@ -5407,11 +5407,11 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
           <div style="margin-bottom: 20px;">
             <div style="font-size: 0.85rem; color: #94a3b8;">
               STATUS: <strong style="color: ${o.dryerTraveled?"#10b981":o.dryerLoaded?"#f59e0b":"#38bdf8"};">
-                ${o.dryerLoaded?o.dryerTraveled?"DRY COMPLETE // FLUFF & COOL-DOWN 100%":"GAS TUMBLE ACTIVE // HIGH HEAT 160°F // ANTI-STATIC INJECTED":"DRYER OPEN // AWAITING WET LAUNDRY & DRYER SHEETS"}
+                ${o.dryerLoaded?o.dryerTraveled?"TUMBLE COMPLETE // TOASTY, FLUFFED & TOTALLY BONE-DRY":"HOT GAS INJECTED // 160°F STEAM BLASTING EVERY CREVICE":"DRYER HOLE IS HOT & GAPING // READY FOR WET INSERTION"}
               </strong>
             </div>
             <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-              ${o.dryerTraveled?"TOTAL TIME ELAPSED: 2 HOURS (WASH + DRY FINISHED)":o.dryerLoaded?"TIME REMAINING: 59:59 (1 HOUR)":"ADD ANTI-STATIC DRYER SHEETS & CLOSE DOOR"}
+              ${o.dryerTraveled?"TOTAL TIME: 2 HOURS OF CONTINUOUS FRICTION COMPLETED":o.dryerLoaded?"TIME REMAINING: 59:59 (1 HOUR OF HOT TUMBLING)":"SLIP IN THE ANTI-STATIC SHEET TO PREVENT FRICTION"}
             </div>
           </div>
 
@@ -5419,18 +5419,18 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
           <div style="max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
             ${o.dryerLoaded?o.dryerTraveled?`
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
-                ✓ Another Hour Elapsed! Clothes toasty, warm, and wrinkle-free.
+                ✓ Another hour of hot tumbling finished! Your load is toasty warm, fully fluffed, and wrinkle-free.
               </div>
               <button id="btn-goto-receive" class="aim-btn" style="padding: 15px; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-                ✨ RECEIVE CLEAN LAUNDRY & AUDIT RECEIPT ➔
+                ✨ PULL OUT YOUR WARM, FLUFFY LOAD & VIEW RECEIPT ➔
               </button>
             `:`
               <button id="btn-time-travel-2" class="aim-btn" style="padding: 16px; background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
-                ⏳ TIME TRAVEL ANOTHER HOUR INTO FUTURE ⚡
+                ⏳ TIME TRAVEL ANOTHER HOUR OF HIGH-HEAT TUMBLING ⚡
               </button>
             `:`
               <button id="btn-load-dryer" class="aim-btn" style="padding: 15px; background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #f59e0b; font-weight: bold; cursor: pointer;">
-                📥 TOSS WET CLOTHES IN & ADD DRYER SHEETS
+                📥 INSERT WET LAUNDRY INTO THE DRYER HOLE & RUB IN DRYER SHEETS
               </button>
             `}
             
@@ -5451,7 +5451,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             RECEIVE LAUNDRY
           </h2>
           <p style="color: #94a3b8; font-size: 0.9rem; margin: 0;">
-            Your garments are fresh, warm, folded, and completely cleansed of digital residue.
+            Look at that fresh, satisfied load. Cleaned down to the bare fibers, completely wrinkle-free and delivered warm to your hands.
           </p>
         </div>
 
@@ -5552,7 +5552,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;C.push({id:Date.now(),filename:j,type:"text/plain",
             📋 COPY RECEIPT AUDIT TO CLIPBOARD
           </button>
           <button id="btn-wash-another" class="aim-btn" style="padding: 14px; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-            🔄 WASH ANOTHER LOAD (RESTART MINIGAME)
+            🔄 DROP ANOTHER DIRTY LOAD (START OVER)
           </button>
           <button id="btn-changer-return" class="aim-btn" style="padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.85rem; cursor: pointer;">
             🪙 Return to Cash-to-Coin Changer
