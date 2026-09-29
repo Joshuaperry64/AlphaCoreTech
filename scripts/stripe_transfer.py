@@ -15,10 +15,20 @@ def fastapi_app():
 
     web_app = FastAPI()
 
-    # Allow CORS for your frontend
+    # Allow CORS for authorized domains and local dev environments
+    origins = [
+        "https://alpha-core.tech",
+        "https://www.alpha-core.tech",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
+
     web_app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"], 
+        allow_origins=origins,
+        allow_origin_regex=r"https://.*\.alpha-core\.tech",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -32,31 +42,49 @@ def fastapi_app():
         data = await request.json()
         amount_usd = data.get("amount")
         profile = str(data.get("profile", "Guest")).strip()
-        fee_rate = data.get("fee_rate")
         
         if not amount_usd or amount_usd < 10:
             raise HTTPException(status_code=400, detail="Minimum transfer amount is $10.00")
         
         # Convert USD to cents for Stripe API
-        amount_cents = int(amount_usd * 100)
+        amount_cents = int(round(float(amount_usd) * 100))
         
-        # Determine fee tier label for audit metadata
-        fee_label = "0%" if profile.lower() == "architect" else ("7%" if profile.lower() == "fisherman" else "10%")
+        # Determine platform fee tier based on profile
+        profile_lower = profile.lower()
+        if profile_lower == "architect":
+            fee_label = "0%"
+            fee_rate = 0.0
+        elif profile_lower == "fisherman":
+            fee_label = "7%"
+            fee_rate = 0.07
+        else:
+            fee_label = "10%"
+            fee_rate = 0.10
+        
+        fee_cents = int(round(amount_cents * fee_rate))
 
         try:
-            # Create a PaymentIntent with destination routing
-            intent = stripe.PaymentIntent.create(
-                amount=amount_cents,
-                currency="usd",
-                automatic_payment_methods={"enabled": True},
-                transfer_data={"destination": "acct_1UKrOjHx3NuZf8IK"}, 
-                metadata={
+            # Build PaymentIntent payload with destination transfer routing
+            intent_params = {
+                "amount": amount_cents,
+                "currency": "usd",
+                "automatic_payment_methods": {"enabled": True},
+                "transfer_data": {"destination": "acct_1UKrOjHx3NuZf8IK"},
+                "metadata": {
                     "profile": profile,
                     "platform_fee": fee_label
                 }
-            )
+            }
+
+            # Retain platform cut (AlphaCore / Perry-IT LLC) when fee > 0
+            if fee_cents > 0:
+                intent_params["application_fee_amount"] = fee_cents
+
+            intent = stripe.PaymentIntent.create(**intent_params)
             return {"clientSecret": intent.client_secret}
+        except stripe.error.StripeError as e:
+            raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
         except Exception as e:
-            raise HTTPException(status_code=403, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e))
 
     return web_app
