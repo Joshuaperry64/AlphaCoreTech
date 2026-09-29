@@ -1,6 +1,567 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
 
+// ─── Procedural Laundromat Audio & Music Synthesizer Engine ──────────────────
+class LaundromatAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.isMusicPlaying = false;
+    this.musicTimer = null;
+    this.musicVolume = 0.35;
+    this.masterGain = null;
+    this.musicGain = null;
+    this.sfxGain = null;
+    this.currentStep = 0;
+    this.boundHashChange = null;
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      this.ctx = new AudioCtx();
+
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+      this.masterGain.connect(this.ctx.destination);
+
+      this.musicGain = this.ctx.createGain();
+      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
+      this.musicGain.connect(this.masterGain);
+
+      this.sfxGain = this.ctx.createGain();
+      this.sfxGain.gain.setValueAtTime(0.65, this.ctx.currentTime);
+      this.sfxGain.connect(this.masterGain);
+
+      // Stop music if user navigates away from #/laundry or #/transfer
+      if (!this.boundHashChange && typeof window !== 'undefined') {
+        this.boundHashChange = () => {
+          if (!window.location.hash.includes('laundry') && !window.location.hash.includes('transfer')) {
+            this.stopMusic();
+          }
+        };
+        window.addEventListener('hashchange', this.boundHashChange);
+      }
+    }
+
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  // ─── Lo-Fi Laundromat Music Generator ─────────────────────────────────────
+  startMusic() {
+    this.init();
+    if (!this.ctx || this.isMusicPlaying) return;
+    this.isMusicPlaying = true;
+    this.currentStep = 0;
+
+    // 80 BPM Lo-Fi Beat: 1 beat = 0.75s, 16th note = 0.1875s
+    const beatIntervalMs = 750;
+
+    // Jazz Chords Progression (Dm9 -> G13 -> Cmaj9 -> A7alt)
+    const chords = [
+      [146.83, 174.61, 220.00, 261.63, 329.63], // Dm9: D3, F3, A3, C4, E4
+      [98.00, 174.61, 246.94, 329.63, 392.00],  // G13: G2, F3, B3, E4, G4
+      [130.81, 164.81, 196.00, 246.94, 293.66], // Cmaj9: C3, E3, G3, B3, D4
+      [110.00, 196.00, 261.63, 311.13, 349.23]  // A7alt: A2, G3, C4, D#4, F4
+    ];
+
+    const bassRoots = [73.42, 98.00, 65.41, 110.00]; // D2, G2, C2, A2
+
+    let beat = 0;
+    const tick = () => {
+      if (!this.isMusicPlaying || !this.ctx) return;
+      const t = this.ctx.currentTime;
+      const bar = Math.floor(beat / 4) % 4;
+      const beatInBar = beat % 4;
+
+      // Chord Pad on beat 1 of each bar
+      if (beatInBar === 0) {
+        const chordNotes = chords[bar];
+        chordNotes.forEach(freq => {
+          this._playSoftPad(freq, t, 2.8);
+        });
+        // Sub Bass Note
+        this._playSubBass(bassRoots[bar], t, 2.5);
+      } else if (beatInBar === 2) {
+        // Light chord re-trigger
+        const chordNotes = chords[bar].slice(1, 4);
+        chordNotes.forEach(freq => {
+          this._playSoftPad(freq, t, 1.3, 0.05);
+        });
+      }
+
+      // Chillhop Drum Patterns
+      if (beatInBar === 0 || beatInBar === 2) {
+        // Soft Lofi Kick on 1 and 3
+        this._playLofiKick(t);
+      }
+      if (beatInBar === 1 || beatInBar === 3) {
+        // Soft Lofi Snare / Rimshot on 2 and 4
+        this._playLofiSnare(t);
+      }
+
+      // Hi-Hat on every beat + 8th note swing
+      this._playLofiHiHat(t);
+      this._playLofiHiHat(t + 0.38, 0.02);
+
+      // Melodic Lo-Fi pentatonic floating notes
+      if (beat % 2 === 1 && Math.random() > 0.4) {
+        const melodyPool = [293.66, 329.63, 392.00, 440.00, 523.25, 587.33];
+        const pickNote = melodyPool[Math.floor(Math.random() * melodyPool.length)];
+        this._playLofiMelody(pickNote, t + 0.15);
+      }
+
+      beat++;
+      this.musicTimer = setTimeout(tick, beatIntervalMs);
+    };
+
+    tick();
+  }
+
+  stopMusic() {
+    this.isMusicPlaying = false;
+    if (this.musicTimer) {
+      clearTimeout(this.musicTimer);
+      this.musicTimer = null;
+    }
+  }
+
+  toggleMusic() {
+    if (this.isMusicPlaying) {
+      this.stopMusic();
+    } else {
+      this.startMusic();
+    }
+    return this.isMusicPlaying;
+  }
+
+  setVolume(vol) {
+    this.musicVolume = Math.max(0, Math.min(1, vol));
+    if (this.musicGain && this.ctx) {
+      this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
+    }
+  }
+
+  // ─── Sound FX Generators ──────────────────────────────────────────────────
+
+  // 1. Door Chime (Entering laundromat)
+  playDoorChime() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    [659.25, 523.25].forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + i * 0.22);
+
+      gain.gain.setValueAtTime(0, t + i * 0.22);
+      gain.gain.linearRampToValueAtTime(0.25, t + i * 0.22 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.22 + 0.8);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + i * 0.22);
+      osc.stop(t + i * 0.22 + 0.85);
+    });
+  }
+
+  // 2. Metallic Coin Clink & Drop (Coin Changer payout)
+  playCoinClink() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const freqs = [2800, 3400, 4200, 3100, 3900];
+    freqs.forEach((freq, idx) => {
+      const delay = idx * 0.055;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + delay);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq, t + delay);
+      filter.Q.setValueAtTime(12, t + delay);
+
+      gain.gain.setValueAtTime(0.3, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.09);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.1);
+    });
+  }
+
+  // 3. Bill Validator Whir (Cash intake)
+  playBillWhir() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(95, t);
+    osc.frequency.linearRampToValueAtTime(140, t + 0.35);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(450, t);
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.42);
+  }
+
+  // 4. Mechanical Door Lock (Heavy latch clunk)
+  playDoorLock() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // Dual impact
+    [0, 0.06].forEach((offset, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(idx === 0 ? 160 : 90, t + offset);
+      osc.frequency.exponentialRampToValueAtTime(45, t + offset + 0.08);
+
+      gain.gain.setValueAtTime(0.4, t + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.1);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + offset);
+      osc.stop(t + offset + 0.12);
+    });
+  }
+
+  // 5. Water Fill & Bubbling Suds
+  playWaterFill() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const bufferSize = this.ctx.sampleRate * 0.8;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(320, t);
+    filter.frequency.linearRampToValueAtTime(750, t + 0.7);
+    filter.Q.setValueAtTime(3, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.2, t + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    noise.start(t);
+    noise.stop(t + 0.82);
+  }
+
+  // 6. Chrono-Warp Time Travel (+1 Hour Warp)
+  playTimeWarp() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // Rising cosmic sweep
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(1800, t + 0.65);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, t);
+    filter.frequency.linearRampToValueAtTime(3200, t + 0.65);
+    filter.Q.setValueAtTime(6, t);
+
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.linearRampToValueAtTime(0.35, t + 0.45);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.85);
+
+    // Concluding timeline bell chime
+    setTimeout(() => {
+      if (!this.ctx) return;
+      const tBell = this.ctx.currentTime;
+      const bell = this.ctx.createOscillator();
+      const bGain = this.ctx.createGain();
+      bell.type = 'sine';
+      bell.frequency.setValueAtTime(880, tBell);
+      bGain.gain.setValueAtTime(0.3, tBell);
+      bGain.gain.exponentialRampToValueAtTime(0.001, tBell + 0.9);
+      bell.connect(bGain);
+      bGain.connect(this.sfxGain);
+      bell.start(tBell);
+      bell.stop(tBell + 0.95);
+    }, 600);
+  }
+
+  // 7. Dryer Gas Burner Ignition & Tumble Hum
+  playDryerStart() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(75, t);
+    osc.frequency.linearRampToValueAtTime(120, t + 0.5);
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.22, t + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(t);
+    osc.stop(t + 0.75);
+  }
+
+  // 8. Authentic Vintage Commercial Dryer Buzzer (*BZZZZT!*)
+  playDryerBuzzer() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    // Harsh 180Hz buzz with 60Hz harmonic edge
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, t);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, t);
+
+    gain.gain.setValueAtTime(0.4, t);
+    gain.gain.setValueAtTime(0.4, t + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.75);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.78);
+  }
+
+  // 9. Clean Sparkle Chimes (Pickup Golden Basket)
+  playCleanSparkle() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const arpeggio = [523.25, 659.25, 783.99, 987.77, 1046.50]; // C5, E5, G5, B5, C6
+    arpeggio.forEach((freq, idx) => {
+      const delay = idx * 0.08;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + delay);
+
+      gain.gain.setValueAtTime(0, t + delay);
+      gain.gain.linearRampToValueAtTime(0.25, t + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.7);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.75);
+    });
+  }
+
+  // 10. Thermal Receipt Printer Chatter
+  playReceiptPrinter() {
+    this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 9; i++) {
+      const delay = i * 0.045;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1400 + Math.random() * 400, t + delay);
+
+      gain.gain.setValueAtTime(0.08, t + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.025);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + delay);
+      osc.stop(t + delay + 0.03);
+    }
+  }
+
+  // ─── Internal Synth Helpers ───────────────────────────────────────────────
+  _playSoftPad(freq, t, dur = 2.5, maxVol = 0.07) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, t);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(950, t);
+    filter.Q.setValueAtTime(1.2, t);
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(maxVol, t + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.musicGain);
+
+    osc.start(t);
+    osc.stop(t + dur + 0.1);
+  }
+
+  _playSubBass(freq, t, dur = 2.2) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(t);
+    osc.stop(t + dur + 0.1);
+  }
+
+  _playLofiKick(t) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(t);
+    osc.stop(t + 0.22);
+  }
+
+  _playLofiSnare(t) {
+    const bufferSize = this.ctx.sampleRate * 0.12;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, t);
+    filter.Q.setValueAtTime(2, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.musicGain);
+
+    noise.start(t);
+    noise.stop(t + 0.14);
+  }
+
+  _playLofiHiHat(t, vol = 0.04) {
+    const bufferSize = this.ctx.sampleRate * 0.04;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(7000, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.musicGain);
+
+    noise.start(t);
+    noise.stop(t + 0.045);
+  }
+
+  _playLofiMelody(freq, t) {
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.06, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+
+    osc.connect(gain);
+    gain.connect(this.musicGain);
+    osc.start(t);
+    osc.stop(t + 0.55);
+  }
+}
+
+// Global Singleton for the Laundromat Session
+const laundromatAudio = new LaundromatAudioEngine();
+
 export default function TransferPage() {
   const container = createElement('div', { className: 'page-container laundry-page' });
   container.style.cssText = 'padding: 20px; max-width: 650px; margin: 0 auto; color: #fff; font-family: "Share Tech Mono", monospace; min-height: 80vh;';
@@ -107,7 +668,7 @@ export default function TransferPage() {
       border: 1px solid #1f2937;
       border-radius: 6px;
       padding: 8px 12px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       overflow-x: auto;
       gap: 6px;
     }
@@ -131,6 +692,29 @@ export default function TransferPage() {
     }
     .laundry-step-item.completed {
       color: #06b6d4;
+    }
+    .laundry-radio-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      font-size: 0.8rem;
+    }
+    .radio-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: radio-pulse 1.5s infinite alternate;
+    }
+    @keyframes radio-pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 8px #10b981; }
     }
     .laundry-box {
       background: #070d17;
@@ -215,15 +799,13 @@ export default function TransferPage() {
 
   // ─── Main Render Function ─────────────────────────────────────────────────
   const render = () => {
-    // Preserve any existing input amount
     const feeConfig = getProfileFeeConfig();
-    const feeData = calculateFees(state.amount, feeConfig.rate);
 
     container.innerHTML = '';
     container.appendChild(styleEl);
 
     // ─── Top Header ─────────────────────────────────────────────────────────
-    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px; border-bottom:1px solid #1e293b; padding-bottom:12px;' });
+    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px;' });
     headerEl.innerHTML = `
       <div>
         <div style="font-size:0.75rem; color:#06b6d4; letter-spacing:2px; font-weight:bold;">// SECTOR 7 COIN-OP PROTOCOL</div>
@@ -258,6 +840,7 @@ export default function TransferPage() {
         innerHTML: `<span>${idx < stageIdx ? '✓' : step.icon}</span> ${step.label}`
       });
       stepItem.onclick = () => {
+        laundromatAudio.init();
         playSFX('click');
         state.stage = step.id;
         render();
@@ -265,6 +848,36 @@ export default function TransferPage() {
       stepperEl.appendChild(stepItem);
     });
     container.appendChild(stepperEl);
+
+    // ─── Laundromat Radio Bar (Cozy Lo-Fi Music In Background) ──────────────
+    const radioBar = createElement('div', { className: 'laundry-radio-bar' });
+    radioBar.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="radio-dot" style="${!laundromatAudio.isMusicPlaying ? 'background:#64748b; animation:none;' : ''}"></span>
+        <span style="color:#06b6d4; font-weight:bold;">📻 LAUNDROMAT RADIO:</span>
+        <span style="color:${laundromatAudio.isMusicPlaying ? '#38bdf8' : '#64748b'}; font-size:0.78rem;">
+          ${laundromatAudio.isMusicPlaying ? '24/7 Neon-Spin Lo-Fi Chillhop [80 BPM]' : 'Radio Paused'}
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="radio-btn-toggle" class="aim-btn" style="padding:4px 10px; font-size:0.75rem; background:${laundromatAudio.isMusicPlaying ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border-color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; cursor:pointer;">
+          ${laundromatAudio.isMusicPlaying ? '⏸ PAUSE' : '▶ PLAY'}
+        </button>
+        <span style="font-size:0.75rem; color:#64748b;">VOL</span>
+        <input type="range" id="radio-vol-slider" min="0" max="1" step="0.05" value="${laundromatAudio.musicVolume}" style="width:55px; accent-color:#06b6d4; cursor:pointer;" title="Laundromat Radio Volume">
+      </div>
+    `;
+
+    radioBar.querySelector('#radio-btn-toggle').onclick = () => {
+      laundromatAudio.toggleMusic();
+      render();
+    };
+
+    radioBar.querySelector('#radio-vol-slider').oninput = (e) => {
+      laundromatAudio.setVolume(parseFloat(e.target.value));
+    };
+
+    container.appendChild(radioBar);
 
     // ─── Stage Body Container ───────────────────────────────────────────────
     const bodyBox = createElement('div', { className: 'laundry-box' });
@@ -325,6 +938,9 @@ export default function TransferPage() {
       `;
 
       bodyBox.querySelector('#btn-goto-laundromat').onclick = () => {
+        laundromatAudio.init();
+        laundromatAudio.playDoorChime();
+        laundromatAudio.startMusic();
         playSFX('navigate');
         state.stage = 'laundromat_hub';
         render();
@@ -344,7 +960,7 @@ export default function TransferPage() {
             THE LAUNDROMAT MAIN FLOOR
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
-            You arrive at the neon-lit laundromat. Rows of industrial vortex washers and gas tumbler dryers are humming. The machines do not accept cash directly — you must convert your bills at the Cash-to-Coin machine.
+            You arrive at the neon-lit laundromat. The radio plays a chill lo-fi beat while industrial vortex washers and gas tumbler dryers hum in the background. Convert your bills at the Cash-to-Coin machine to get started.
           </p>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto 20px auto; text-align: left;">
@@ -377,6 +993,7 @@ export default function TransferPage() {
         render();
       };
       bodyBox.querySelector('#btn-goto-changer').onclick = () => {
+        laundromatAudio.playCoinClink();
         playSFX('transition');
         state.stage = 'cash_to_coin';
         render();
@@ -489,7 +1106,6 @@ export default function TransferPage() {
         </div>
       `;
 
-      // Live amount input updates
       const cashInput = bodyBox.querySelector('#cash-amount-input');
       const tokenDisplay = bodyBox.querySelector('#token-count-display');
       const elCapture = bodyBox.querySelector('#fee-capture');
@@ -535,8 +1151,9 @@ export default function TransferPage() {
         btnContinue.disabled = false;
       };
 
-      // Proceed to washing machines (continue minigame)
+      // Proceed to washing machines
       btnContinue.onclick = () => {
+        laundromatAudio.playCoinClink();
         playSFX('navigate');
         state.stage = 'washing_machines';
         render();
@@ -549,7 +1166,7 @@ export default function TransferPage() {
 
         btnPay.textContent = 'ESTABLISHING SECURE STRIPE UPLINK...';
         btnPay.disabled = true;
-        playSFX('click');
+        laundromatAudio.playBillWhir();
 
         try {
           const response = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent', {
@@ -597,7 +1214,7 @@ export default function TransferPage() {
         submitPayBtn.disabled = true;
         submitPayBtn.textContent = 'PROCESSING DISPENSER...';
         payMsgEl.style.display = 'none';
-        playSFX('click');
+        laundromatAudio.playBillWhir();
 
         const { error } = await stripeInstance.confirmPayment({
           elements: elementsInstance,
@@ -612,6 +1229,7 @@ export default function TransferPage() {
           playSFX('incorrect');
         } else {
           state.paymentAuthorized = true;
+          laundromatAudio.playCoinClink();
           playSFX('response');
           state.stage = 'washing_machines';
           render();
@@ -686,14 +1304,16 @@ export default function TransferPage() {
 
       if (btnLoad) {
         btnLoad.onclick = () => {
-          playSFX('pop');
+          laundromatAudio.playCoinClink();
+          laundromatAudio.playDoorLock();
+          laundromatAudio.playWaterFill();
           state.washerLoaded = true;
           render();
         };
       }
       if (btnTravel1) {
         btnTravel1.onclick = () => {
-          playSFX('bypass');
+          laundromatAudio.playTimeWarp();
           state.chronoOverlayText = '⏳ TIME TRAVELING 1 HOUR...';
           state.washerTraveled = true;
           render();
@@ -701,6 +1321,7 @@ export default function TransferPage() {
       }
       if (btnDryer) {
         btnDryer.onclick = () => {
+          laundromatAudio.playDoorLock();
           playSFX('navigate');
           state.stage = 'dryer_machines';
           render();
@@ -779,14 +1400,18 @@ export default function TransferPage() {
 
       if (btnLoadDryer) {
         btnLoadDryer.onclick = () => {
-          playSFX('pop');
+          laundromatAudio.playDoorLock();
+          laundromatAudio.playDryerStart();
           state.dryerLoaded = true;
           render();
         };
       }
       if (btnTravel2) {
         btnTravel2.onclick = () => {
-          playSFX('bypass');
+          laundromatAudio.playTimeWarp();
+          setTimeout(() => {
+            laundromatAudio.playDryerBuzzer();
+          }, 700);
           state.chronoOverlayText = '⏳ TIME TRAVELING ANOTHER HOUR...';
           state.dryerTraveled = true;
           render();
@@ -794,6 +1419,7 @@ export default function TransferPage() {
       }
       if (btnReceive) {
         btnReceive.onclick = () => {
+          laundromatAudio.playCleanSparkle();
           playSFX('login');
           state.stage = 'receive_laundry';
           render();
@@ -826,6 +1452,11 @@ export default function TransferPage() {
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }).toUpperCase();
       const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+
+      // Trigger printer effect once on entry
+      setTimeout(() => {
+        laundromatAudio.playReceiptPrinter();
+      }, 200);
 
       bodyBox.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px;">
@@ -950,7 +1581,7 @@ export default function TransferPage() {
 
       // Copy Receipt
       bodyBox.querySelector('#btn-copy-receipt').onclick = () => {
-        playSFX('click');
+        laundromatAudio.playCleanSparkle();
         const text = `
 ========================================
 24/7 CYBER-SPIN COMMERCIAL LAUNDROMAT
@@ -978,7 +1609,7 @@ NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
 
       // Restart Minigame
       bodyBox.querySelector('#btn-wash-another').onclick = () => {
-        playSFX('transition');
+        laundromatAudio.playDoorChime();
         state.stage = 'wash_laundry';
         state.washerLoaded = false;
         state.washerTraveled = false;
@@ -989,7 +1620,7 @@ NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
 
       // Return to Cash-to-Coin
       bodyBox.querySelector('#btn-changer-return').onclick = () => {
-        playSFX('click');
+        laundromatAudio.playCoinClink();
         state.stage = 'cash_to_coin';
         render();
       };
