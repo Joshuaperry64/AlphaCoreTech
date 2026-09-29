@@ -10,5 +10,6 @@ server_mipsle
 __pycache__/
 *.pyc
 .agents/
+scratch/
 
 /scripts/__pycache__
