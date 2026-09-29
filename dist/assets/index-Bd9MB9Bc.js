@@ -5272,10 +5272,10 @@ ORIGINAL SOURCE: ${y.fbUrl}`;O.push({id:Date.now(),filename:j,type:"text/plain",
           </div>
         </div>
 
-        <!-- Cash Input Form -->
+        <!-- Cash Input Form (Strictly Professional) -->
         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
           <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-            <label style="color: #94a3b8; font-size: 0.85rem;">SLIDE CASH INTO THE ACCEPTOR SLOT (USD) [MIN $10.00]:</label>
+            <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER TRANSFER AMOUNT (USD) [MIN $10.00]:</label>
             <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
               🪙 ${f.tokens} HARD TOKENS
             </span>
@@ -5319,18 +5319,18 @@ ORIGINAL SOURCE: ${y.fbUrl}`;O.push({id:Date.now(),filename:j,type:"text/plain",
           </div>
         </div>
 
-        <!-- Stripe Payment Authorization Section -->
+        <!-- Stripe Payment Authorization Section (Strictly Professional) -->
         <div style="margin-bottom: 20px;">
           <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;" ${f.rawVal<10?"disabled":""}>
-            💳 SLIDE IT ALL THE WAY IN // AUTHORIZE VIA STRIPE
+            💳 AUTHORIZE TRANSFER VIA STRIPE
           </button>
 
           <!-- Stripe Card Element Mount Container -->
           <div id="stripe-ui-container" style="display: none; margin-top: 15px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 6px;">
-            <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT TO DISPENSE TOKENS:</div>
+            <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT & COMPLETE TRANSFER:</div>
             <div id="payment-element"></div>
             <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
-              AUTHORIZE & DISPENSE HARD TOKENS
+              CONFIRM & COMPLETE TRANSFER
             </button>
             <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
           </div>
@@ -5348,7 +5348,7 @@ ORIGINAL SOURCE: ${y.fbUrl}`;O.push({id:Date.now(),filename:j,type:"text/plain",
             🫧 TAKE TOKENS & PROCEED TO THE WASHER HOLE ➔
           </button>
         </div>
-      `;const _=m.querySelector("#cash-amount-input"),M=m.querySelector("#token-count-display"),b=m.querySelector("#fee-capture"),E=m.querySelector("#fee-alpha"),y=m.querySelector("#fee-connect"),C=m.querySelector("#fee-instant"),T=m.querySelector("#final-payout"),O=m.querySelector("#btn-initiate-payment"),j=m.querySelector("#btn-continue-minigame"),$=m.querySelector("#stripe-ui-container"),W=m.querySelector("#submit-payment-btn"),w=m.querySelector("#payment-message");_.oninput=I=>{const h=parseFloat(I.target.value);o.amount=isNaN(h)?0:h,$.style.display="none",O.style.display="block",O.textContent="💳 INSERT BILLS // PROCESS PAYMENT WITH STRIPE";const D=a(h,s.rate);if(!D){M.textContent="🪙 0 TOKENS",b.textContent="-$0.00",E.textContent=s.isExempt?"$0.00":"-$0.00",y.textContent="-$0.00",C.textContent="-$0.00",T.textContent="$0.00",T.style.color="#ef4444",O.disabled=!0,j.disabled=!0;return}M.textContent=`🪙 ${D.tokens} TOKENS`,b.textContent=`-$${D.captureFee.toFixed(2)}`,E.textContent=s.isExempt?"$0.00 (WAIVED)":`-$${D.platformFee.toFixed(2)}`,y.textContent=`-$${D.connectFee.toFixed(2)}`,C.textContent=`-$${D.instantFee.toFixed(2)}`,T.textContent=`$${D.payout.toFixed(2)}`,T.style.color="#10b981",O.disabled=!1,j.disabled=!1},j.onclick=()=>{le.playCoinClink(),te("navigate"),o.stage="washing_machines",l()},O.onclick=async()=>{const I=parseFloat(_.value);if(!(!I||I<10)){O.textContent="ESTABLISHING SECURE STRIPE UPLINK...",O.disabled=!0,le.playBillWhir();try{const h=await fetch("https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({amount:I,profile:s.profileName,fee_rate:s.rate})}),D=await h.json();if(!h.ok)throw new Error(D.detail||"Transfer API rejected request");D.clientSecret&&window.Stripe&&(i=window.Stripe("pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd"),n=i.elements({appearance:{theme:"night"},clientSecret:D.clientSecret}),n.create("payment").mount("#payment-element"),O.style.display="none",$.style.display="block",te("modal"))}catch(h){console.error("Stripe Uplink Error:",h),O.textContent="CONNECTION FAILED // RETRY",O.style.color="#ef4444",O.style.borderColor="#ef4444",O.disabled=!1,te("incorrect")}}},W.onclick=async()=>{if(!i||!n)return;W.disabled=!0,W.textContent="PROCESSING DISPENSER...",w.style.display="none",le.playBillWhir();const{error:I}=await i.confirmPayment({elements:n,redirect:"if_required"});I?(w.textContent=I.message,w.style.display="block",W.disabled=!1,W.textContent="AUTHORIZE & DISPENSE TOKENS",te("incorrect")):(o.paymentAuthorized=!0,le.playCoinClink(),te("response"),o.stage="washing_machines",l())}}else if(o.stage==="washing_machines"){a(o.amount,s.rate);const f=12;m.innerHTML=`
+      `;const _=m.querySelector("#cash-amount-input"),M=m.querySelector("#token-count-display"),b=m.querySelector("#fee-capture"),E=m.querySelector("#fee-alpha"),y=m.querySelector("#fee-connect"),C=m.querySelector("#fee-instant"),T=m.querySelector("#final-payout"),O=m.querySelector("#btn-initiate-payment"),j=m.querySelector("#btn-continue-minigame"),$=m.querySelector("#stripe-ui-container"),W=m.querySelector("#submit-payment-btn"),w=m.querySelector("#payment-message");_.oninput=I=>{const h=parseFloat(I.target.value);o.amount=isNaN(h)?0:h,$.style.display="none",O.style.display="block",O.textContent="💳 AUTHORIZE TRANSFER VIA STRIPE";const D=a(h,s.rate);if(!D){M.textContent="🪙 0 TOKENS",b.textContent="-$0.00",E.textContent=s.isExempt?"$0.00":"-$0.00",y.textContent="-$0.00",C.textContent="-$0.00",T.textContent="$0.00",T.style.color="#ef4444",O.disabled=!0,j.disabled=!0;return}M.textContent=`🪙 ${D.tokens} TOKENS`,b.textContent=`-$${D.captureFee.toFixed(2)}`,E.textContent=s.isExempt?"$0.00 (WAIVED)":`-$${D.platformFee.toFixed(2)}`,y.textContent=`-$${D.connectFee.toFixed(2)}`,C.textContent=`-$${D.instantFee.toFixed(2)}`,T.textContent=`$${D.payout.toFixed(2)}`,T.style.color="#10b981",O.disabled=!1,j.disabled=!1},j.onclick=()=>{le.playCoinClink(),te("navigate"),o.stage="washing_machines",l()},O.onclick=async()=>{const I=parseFloat(_.value);if(!(!I||I<10)){O.textContent="ESTABLISHING SECURE STRIPE UPLINK...",O.disabled=!0,le.playBillWhir();try{const h=await fetch("https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({amount:I,profile:s.profileName,fee_rate:s.rate})}),D=await h.json();if(!h.ok)throw new Error(D.detail||"Transfer API rejected request");D.clientSecret&&window.Stripe&&(i=window.Stripe("pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd"),n=i.elements({appearance:{theme:"night"},clientSecret:D.clientSecret}),n.create("payment").mount("#payment-element"),O.style.display="none",$.style.display="block",te("modal"))}catch(h){console.error("Stripe Uplink Error:",h),O.textContent="CONNECTION FAILED // RETRY",O.style.color="#ef4444",O.style.borderColor="#ef4444",O.disabled=!1,te("incorrect")}}},W.onclick=async()=>{if(!i||!n)return;W.disabled=!0,W.textContent="PROCESSING DISPENSER...",w.style.display="none",le.playBillWhir();const{error:I}=await i.confirmPayment({elements:n,redirect:"if_required"});I?(w.textContent=I.message,w.style.display="block",W.disabled=!1,W.textContent="AUTHORIZE & DISPENSE TOKENS",te("incorrect")):(o.paymentAuthorized=!0,le.playCoinClink(),te("response"),o.stage="washing_machines",l())}}else if(o.stage==="washing_machines"){a(o.amount,s.rate);const f=12;m.innerHTML=`
         <div style="text-align: center;">
           <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px;">
             // HIGH-SPEED COMMERCIAL VORTEX UNIT #07

@@ -1058,10 +1058,10 @@ export default function TransferPage() {
           </div>
         </div>
 
-        <!-- Cash Input Form -->
+        <!-- Cash Input Form (Strictly Professional) -->
         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
           <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
-            <label style="color: #94a3b8; font-size: 0.85rem;">SLIDE CASH INTO THE ACCEPTOR SLOT (USD) [MIN $10.00]:</label>
+            <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER TRANSFER AMOUNT (USD) [MIN $10.00]:</label>
             <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
               🪙 ${activeFeeData.tokens} HARD TOKENS
             </span>
@@ -1105,18 +1105,18 @@ export default function TransferPage() {
           </div>
         </div>
 
-        <!-- Stripe Payment Authorization Section -->
+        <!-- Stripe Payment Authorization Section (Strictly Professional) -->
         <div style="margin-bottom: 20px;">
           <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
-            💳 SLIDE IT ALL THE WAY IN // AUTHORIZE VIA STRIPE
+            💳 AUTHORIZE TRANSFER VIA STRIPE
           </button>
 
           <!-- Stripe Card Element Mount Container -->
           <div id="stripe-ui-container" style="display: none; margin-top: 15px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 6px;">
-            <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT TO DISPENSE TOKENS:</div>
+            <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT & COMPLETE TRANSFER:</div>
             <div id="payment-element"></div>
             <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
-              AUTHORIZE & DISPENSE HARD TOKENS
+              CONFIRM & COMPLETE TRANSFER
             </button>
             <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
           </div>
@@ -1154,7 +1154,7 @@ export default function TransferPage() {
         state.amount = isNaN(val) ? 0 : val;
         stripeBox.style.display = 'none';
         btnPay.style.display = 'block';
-        btnPay.textContent = '💳 INSERT BILLS // PROCESS PAYMENT WITH STRIPE';
+        btnPay.textContent = '💳 AUTHORIZE TRANSFER VIA STRIPE';
 
         const calc = calculateFees(val, feeConfig.rate);
         if (!calc) {
