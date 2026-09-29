@@ -44,6 +44,7 @@ const routes = {
   '/thelab': TheLabPage,
   '/lab': TheLabPage,
   '/transfer': TransferPage,
+  '/laundry': TransferPage,
   '/lore': Lore,
   '/diagnostics': Diagnostics,
   '/architect': ArchitectProfile,
@@ -69,7 +70,8 @@ const routes = {
 function updateActiveNav(hash) {
   document.querySelectorAll('#sidebar-nav .nav-item').forEach(item => {
     const route = item.getAttribute('data-route');
-    item.classList.toggle('active', route === hash);
+    const isMatch = route === hash || ((hash === '/laundry' || hash === '/transfer') && (route === '/laundry' || route === '/transfer'));
+    item.classList.toggle('active', isMatch);
   });
 }
 
