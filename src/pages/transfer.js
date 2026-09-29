@@ -711,37 +711,63 @@ export default function TransferPage() {
   // ─── Inject Scoped Styles ─────────────────────────────────────────────────
   const styleEl = document.createElement('style');
   styleEl.textContent = `
+    .laundry-page {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
     .laundry-stepper {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       background: #060b13;
       border: 1px solid #1f2937;
-      border-radius: 6px;
-      padding: 8px 12px;
+      border-radius: 8px;
+      padding: 8px 10px;
       margin-bottom: 14px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #06b6d4 #030712;
       gap: 6px;
+      scroll-snap-type: x mandatory;
+    }
+    .laundry-stepper::-webkit-scrollbar {
+      height: 4px;
+    }
+    .laundry-stepper::-webkit-scrollbar-track {
+      background: #030712;
+    }
+    .laundry-stepper::-webkit-scrollbar-thumb {
+      background: #06b6d4;
+      border-radius: 2px;
     }
     .laundry-step-item {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #6b7280;
       white-space: nowrap;
       cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 6px;
       transition: all 0.2s ease;
+      scroll-snap-align: start;
+      user-select: none;
+      flex-shrink: 0;
+      min-height: 36px;
     }
     .laundry-step-item.active {
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.16);
       color: #10b981;
       border: 1px solid #10b981;
       font-weight: bold;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
     }
     .laundry-step-item.completed {
       color: #06b6d4;
+      background: rgba(6, 182, 212, 0.05);
     }
     .laundry-radio-bar {
       display: flex;
@@ -861,6 +887,56 @@ export default function TransferPage() {
       0% { opacity: 0; transform: scale(0.92); }
       100% { opacity: 1; transform: scale(1); }
     }
+
+    /* ─── High Immersion Mobile Responsive Overrides ─── */
+    @media (max-width: 640px) {
+      .laundry-page {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+      }
+      .laundry-box {
+        padding: 16px 12px !important;
+        border-radius: 6px !important;
+      }
+      .laundry-radio-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 10px 12px !important;
+      }
+      .laundry-radio-bar-left {
+        justify-content: flex-start !important;
+      }
+      .laundry-radio-bar-right {
+        justify-content: space-between !important;
+        width: 100% !important;
+      }
+      .laundry-step-item {
+        padding: 6px 10px !important;
+        font-size: 0.72rem !important;
+        min-height: 34px !important;
+      }
+      .drum-viewport {
+        width: 140px !important;
+        height: 140px !important;
+        margin: 16px auto !important;
+      }
+      .thermal-receipt {
+        padding: 16px 10px !important;
+        font-size: 0.8rem !important;
+      }
+      .laundry-countdown-banner {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+      .laundry-countdown-banner > button {
+        width: 100% !important;
+      }
+      .mobile-stack-columns {
+        grid-template-columns: 1fr !important;
+      }
+    }
   `;
   container.appendChild(styleEl);
 
@@ -872,16 +948,16 @@ export default function TransferPage() {
     container.appendChild(styleEl);
 
     // ─── Top Header ─────────────────────────────────────────────────────────
-    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px;' });
+    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px; flex-wrap:wrap; gap:8px;' });
     headerEl.innerHTML = `
       <div>
         <div style="font-size:0.75rem; color:#06b6d4; letter-spacing:2px; font-weight:bold;">// SECTOR 7 COIN-OP PROTOCOL</div>
-        <h1 style="font-family:'Orbitron', sans-serif; font-size:1.4rem; color:#10b981; margin:4px 0 0 0; display:flex; align-items:center; gap:8px;">
-          <span>🧺</span> THE LAUNDRY MACHINE
+        <h1 style="font-family:'Orbitron', sans-serif; font-size:clamp(1.15rem, 4vw, 1.45rem); color:#10b981; margin:4px 0 0 0; display:flex; align-items:center; gap:8px;">
+          <span>🧺</span> THE LAUNDRO-MAT
         </h1>
       </div>
       <div style="text-align:right;">
-        <span style="display:inline-block; font-size:0.75rem; padding:3px 8px; border-radius:3px; font-weight:bold; border:1px solid ${feeConfig.badgeColor}; color:${feeConfig.badgeColor}; background:${feeConfig.badgeColor}15;">
+        <span style="display:inline-block; font-size:0.75rem; padding:4px 10px; border-radius:3px; font-weight:bold; border:1px solid ${feeConfig.badgeColor}; color:${feeConfig.badgeColor}; background:${feeConfig.badgeColor}15;">
           ${feeConfig.badge}
         </span>
       </div>
@@ -892,14 +968,14 @@ export default function TransferPage() {
     if (!state.countdownOverlayActive) {
       const bannerEl = createElement('div', {
         className: 'laundry-countdown-banner',
-        style: 'background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;'
+        style: 'background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;'
       });
       bannerEl.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px; color: #fbbf24; font-size: 0.82rem;">
+        <div style="display: flex; align-items: center; gap: 10px; color: #fbbf24; font-size: 0.82rem; flex: 1; min-width: 200px;">
           <span style="font-size: 1.2rem; filter: drop-shadow(0 0 6px #f59e0b);">☣️</span>
-          <span><strong>7-DAY LAUNDROMAT SANITATION HOLD:</strong> "Gotta wear your clothes for 7 days until the laundromat is open for business!" (Grand Opening: Oct 6, 2026)</span>
+          <span><strong>7-DAY LAUNDRO-MAT SANITATION HOLD:</strong> "Gotta wear your clothes for 7 days until the laundro-mat is open for business!" (Grand Opening: Oct 6, 2026)</span>
         </div>
-        <button id="btn-reopen-countdown" class="aim-btn" style="padding: 5px 12px; font-size: 0.75rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap; font-weight: bold;">
+        <button id="btn-reopen-countdown" class="aim-btn" style="padding: 6px 14px; font-size: 0.75rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap; font-weight: bold; min-height: 36px;">
           VIEW COUNTDOWN ➔
         </button>
       `;
@@ -914,7 +990,7 @@ export default function TransferPage() {
     // ─── Top Stepper Progress Bar ───────────────────────────────────────────
     const steps = [
       { id: 'wash_laundry', label: '1. Wash Laundry', icon: '🧺' },
-      { id: 'laundromat_hub', label: '2. Laundromat', icon: '🏪' },
+      { id: 'laundromat_hub', label: '2. Laundro-mat', icon: '🏪' },
       { id: 'cash_to_coin', label: '3. Coin Changer', icon: '🪙' },
       { id: 'washing_machines', label: '4. Washer', icon: '🫧' },
       { id: 'dryer_machines', label: '5. Dryer', icon: '🔥' },
@@ -939,22 +1015,30 @@ export default function TransferPage() {
     });
     container.appendChild(stepperEl);
 
-    // ─── Laundromat Radio Bar (Cozy Lo-Fi Music In Background) ──────────────
+    // Auto-scroll active stepper item into center view on mobile touch devices
+    setTimeout(() => {
+      const activeStep = stepperEl.querySelector('.laundry-step-item.active');
+      if (activeStep) {
+        activeStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }, 60);
+
+    // ─── Laundro-mat Radio Bar (Cozy Lo-Fi Music In Background) ──────────────
     const radioBar = createElement('div', { className: 'laundry-radio-bar' });
     radioBar.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px;">
+      <div class="laundry-radio-bar-left" style="display:flex; align-items:center; gap:8px;">
         <span class="radio-dot" style="${!laundromatAudio.isMusicPlaying ? 'background:#64748b; animation:none;' : ''}"></span>
-        <span style="color:#06b6d4; font-weight:bold;">📻 LAUNDROMAT RADIO:</span>
+        <span style="color:#06b6d4; font-weight:bold;">📻 LAUNDRO-MAT RADIO:</span>
         <span style="color:${laundromatAudio.isMusicPlaying ? '#38bdf8' : '#64748b'}; font-size:0.78rem;">
           ${laundromatAudio.isMusicPlaying ? '24/7 Neon-Spin Lo-Fi Chillhop [80 BPM]' : 'Radio Paused'}
         </span>
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button id="radio-btn-toggle" class="aim-btn" style="padding:4px 10px; font-size:0.75rem; background:${laundromatAudio.isMusicPlaying ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border-color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; cursor:pointer;">
+      <div class="laundry-radio-bar-right" style="display:flex; align-items:center; gap:8px;">
+        <button id="radio-btn-toggle" class="aim-btn" style="padding:6px 12px; font-size:0.75rem; background:${laundromatAudio.isMusicPlaying ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border-color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; cursor:pointer; min-height:36px;">
           ${laundromatAudio.isMusicPlaying ? '⏸ PAUSE' : '▶ PLAY'}
         </button>
         <span style="font-size:0.75rem; color:#64748b;">VOL</span>
-        <input type="range" id="radio-vol-slider" min="0" max="1" step="0.05" value="${laundromatAudio.musicVolume}" style="width:55px; accent-color:#06b6d4; cursor:pointer;" title="Laundromat Radio Volume">
+        <input type="range" id="radio-vol-slider" min="0" max="1" step="0.05" value="${laundromatAudio.musicVolume}" style="width:65px; height:24px; accent-color:#06b6d4; cursor:pointer;" title="Laundro-mat Radio Volume">
       </div>
     `;
 
@@ -1001,11 +1085,11 @@ export default function TransferPage() {
           <div style="color: #ef4444; font-size: 0.85rem; letter-spacing: 1px; font-weight: bold; margin-bottom: 8px;">
             [!] SOIL DETECTED // STREET DATA RESIDUE CRITICAL
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 12px 0; font-size: 1.3rem;">
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 12px 0; font-size: clamp(1.15rem, 3.5vw, 1.35rem);">
             WASH LAUNDRY: STEP 01
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 24px auto; line-height: 1.6;">
-            Your cyber-threads, ledger tracks, and digital garments are heavily soiled. Grab your bulging dirty load firmly with both hands and head over to the 24/7 coin-op laundromat.
+            Your cyber-threads, ledger tracks, and digital garments are heavily soiled. Grab your bulging dirty load firmly with both hands and head over to the 24/7 coin-op laundro-mat.
           </p>
           
           <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 15px; max-width: 450px; margin: 0 auto 24px auto; text-align: left; font-size: 0.85rem;">
@@ -1021,8 +1105,8 @@ export default function TransferPage() {
             </div>
           </div>
 
-          <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;">
-            🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDROMAT ➔
+          <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 48px;">
+            🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDRO-MAT ➔
           </button>
         </div>
       `;
@@ -1038,7 +1122,7 @@ export default function TransferPage() {
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // STAGE 2: GOTO LAUNDROMAT (Arrive at Laundromat Hub)
+    // STAGE 2: GOTO LAUNDROMAT (Arrive at Laundro-mat Hub)
     // ────────────────────────────────────────────────────────────────────────
     else if (state.stage === 'laundromat_hub') {
       bodyBox.innerHTML = `
@@ -1046,8 +1130,8 @@ export default function TransferPage() {
           <div style="display:inline-block; background:rgba(6,182,212,0.1); border:1px solid #06b6d4; padding:6px 14px; border-radius:20px; font-size:0.8rem; color:#06b6d4; margin-bottom:12px; font-weight:bold;">
             ⚡ 24/7 CYBER-SPIN COIN-OP // SECTOR 07 ⚡
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 10px 0; font-size: 1.3rem;">
-            THE LAUNDROMAT MAIN FLOOR
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 10px 0; font-size: clamp(1.15rem, 3.5vw, 1.35rem);">
+            THE LAUNDRO-MAT MAIN FLOOR
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
             Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide hard coin tokens in. Head over to the cash changer and slide your bills in.
@@ -1128,10 +1212,10 @@ export default function TransferPage() {
       };
 
       bodyBox.innerHTML = `
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
           <div>
             <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold;">// HARDWARE CHANGER #C-9000</span>
-            <h3 style="font-family: 'Orbitron', sans-serif; margin: 4px 0 0 0; color: #fff; font-size: 1.15rem;">
+            <h3 style="font-family: 'Orbitron', sans-serif; margin: 4px 0 0 0; color: #fff; font-size: clamp(1.05rem, 3.5vw, 1.2rem);">
               CASH-TO-COIN MACHINE
             </h3>
           </div>
@@ -1142,31 +1226,31 @@ export default function TransferPage() {
 
         <!-- Cash Input Form (Strictly Professional) -->
         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
             <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER TRANSFER AMOUNT (USD) [MIN $10.00]:</label>
             <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
               🪙 ${activeFeeData.tokens} HARD TOKENS
             </span>
           </div>
           <div style="position: relative;">
-            <span style="position: absolute; left: 14px; top: 10px; font-size: 1.5rem; color: #10b981;">$</span>
+            <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
             <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="25.00" min="10" step="0.01"
-              style="width: 100%; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
+              style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
           </div>
         </div>
 
         <!-- Dynamic Destination Account Selector (Scenario B Multi-Account Routing) -->
         <div style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
             <label style="color: #38bdf8; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
               <span>🎯</span> SELECT DESTINATION ACCOUNT (RECIPIENT):
             </label>
-            <button id="btn-open-onboard" class="aim-btn" style="padding: 4px 8px; font-size: 0.72rem; border-color: #06b6d4; color: #38bdf8; cursor: pointer;">
+            <button id="btn-open-onboard" class="aim-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: #06b6d4; color: #38bdf8; cursor: pointer; min-height: 36px;">
               ➕ ONBOARD NEW RECIPIENT
             </button>
           </div>
 
-          <select id="destination-select" style="width: 100%; background: #000; border: 1px solid #06b6d4; color: #38bdf8; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; border-radius: 4px; outline: none; margin-bottom: 8px; cursor: pointer;">
+          <select id="destination-select" style="width: 100%; min-height: 46px; background: #000; border: 1px solid #06b6d4; color: #38bdf8; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; border-radius: 4px; outline: none; margin-bottom: 8px; cursor: pointer;">
             <option value="" ${!state.selectedDestination ? 'selected' : ''} disabled>
               -- SELECT RECIPIENT DESTINATION (REQUIRED) --
             </option>
@@ -1186,10 +1270,10 @@ export default function TransferPage() {
 
           <!-- Custom ID Input (Shown when "custom" is selected) -->
           <div id="custom-destination-box" style="display: ${state.selectedDestination === 'custom' ? 'block' : 'none'}; margin-top: 10px; background: #020617; border: 1px dashed #334155; padding: 12px; border-radius: 4px;">
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
               <input type="text" id="custom-dest-input" value="${state.customDestinationId || ''}" placeholder="acct_1..." 
-                style="flex: 1; background: #000; border: 1px solid #334155; color: #fff; padding: 8px 10px; font-family: monospace; font-size: 0.85rem; border-radius: 4px; outline: none;">
-              <button id="btn-verify-dest" class="aim-btn" style="padding: 8px 14px; font-size: 0.8rem; background: rgba(6,182,212,0.15); border-color: #06b6d4; color: #38bdf8; cursor: pointer; white-space: nowrap;">
+                style="flex: 1; min-width: 180px; min-height: 42px; background: #000; border: 1px solid #334155; color: #fff; padding: 8px 10px; font-family: monospace; font-size: 0.85rem; border-radius: 4px; outline: none;">
+              <button id="btn-verify-dest" class="aim-btn" style="padding: 8px 14px; font-size: 0.8rem; min-height: 42px; background: rgba(6,182,212,0.15); border-color: #06b6d4; color: #38bdf8; cursor: pointer; white-space: nowrap;">
                 VERIFY ID
               </button>
             </div>
@@ -1200,15 +1284,15 @@ export default function TransferPage() {
 
           <!-- Voluntary Donation Confirmation Notice (Shown when donation option is active) -->
           ${state.selectedDestination === DONATION_ACCOUNT_ID ? `
-            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px;">
                 <span style="font-size: 1.5rem;">💝</span>
                 <div>
                   <div style="color: #fbbf24; font-weight: bold; font-size: 0.88rem;">VOLUNTARY DONATION TO ALPHACORE ACTIVE</div>
                   <div style="color: #cbd5e1; font-size: 0.78rem;">Net transfer funds go directly to AlphaCore Development Operations (<code style="color: #38bdf8;">${DONATION_ACCOUNT_ID}</code>).</div>
                 </div>
               </div>
-              <button id="btn-reopen-donation-confirm" class="aim-btn" style="padding: 4px 8px; font-size: 0.72rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap;">
+              <button id="btn-reopen-donation-confirm" class="aim-btn" style="padding: 6px 12px; font-size: 0.75rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap; min-height: 36px;">
                 AUDIT NOTICE
               </button>
             </div>
@@ -1258,15 +1342,15 @@ export default function TransferPage() {
 
         <!-- Stripe Payment Authorization Section (Strictly Professional) -->
         <div style="margin-bottom: 20px;">
-          <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
-            💳 AUTHORIZE TRANSFER VIA STRIPE
+          <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; min-height: 50px; padding: 14px; font-size: 1.05rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#f59e0b' : '#10b981'}; color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#fbbf24' : '#10b981'}; font-weight: bold; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
+            ${state.selectedDestination === DONATION_ACCOUNT_ID ? '💝 AUTHORIZE VOLUNTARY DONATION VIA STRIPE' : '💳 AUTHORIZE TRANSFER VIA STRIPE'}
           </button>
 
           <!-- Stripe Card Element Mount Container -->
           <div id="stripe-ui-container" style="display: none; margin-top: 15px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 6px;">
             <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// AUTHORIZE PAYMENT & COMPLETE TRANSFER:</div>
             <div id="payment-element"></div>
-            <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
+            <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
               CONFIRM & COMPLETE TRANSFER
             </button>
             <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
@@ -1276,12 +1360,12 @@ export default function TransferPage() {
         <!-- Optional Minigame Continuation Pathway -->
         <div style="background: rgba(6, 182, 212, 0.05); border: 1px dashed rgba(6, 182, 212, 0.4); padding: 16px; border-radius: 6px; text-align: center;">
           <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; margin-bottom: 6px;">
-            OPTIONAL: CONTINUE LAUNDROMAT MINIGAME
+            OPTIONAL: CONTINUE LAUNDRO-MAT MINIGAME
           </div>
           <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 14px;">
             Grab your heavy sack of ${activeFeeData.tokens} tokens and proceed to the gaping washer hole for deep decontamination.
           </div>
-          <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
+          <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; min-height: 48px; padding: 14px; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; font-size: 1rem; cursor: pointer;" ${activeFeeData.rawVal < 10 ? 'disabled' : ''}>
             🫧 TAKE TOKENS & PROCEED TO THE WASHER HOLE ➔
           </button>
         </div>
@@ -2319,8 +2403,8 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
           </div>
 
           <!-- User's Requested Headline -->
-          <h2 style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: #fbbf24; margin: 0 0 14px 0; line-height: 1.45; text-transform: uppercase; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5);">
-            "GOTTA WEAR YOUR CLOTHES FOR 7 DAYS UNTIL THE LAUNDROMAT IS OPEN FOR BUSINESS!"
+          <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.05rem, 3.5vw, 1.25rem); color: #fbbf24; margin: 0 0 14px 0; line-height: 1.45; text-transform: uppercase; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5);">
+            "GOTTA WEAR YOUR CLOTHES FOR 7 DAYS UNTIL THE LAUNDRO-MAT IS OPEN FOR BUSINESS!"
           </h2>
 
           <div style="color: #94a3b8; font-size: 0.88rem; line-height: 1.55; margin-bottom: 22px;">
@@ -2328,33 +2412,33 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
           </div>
 
           <!-- Digital Countdown Display -->
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px;">
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 6px; box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.15);">
-              <div id="cd-days" style="font-family: 'Orbitron', sans-serif; font-size: 1.85rem; font-weight: bold; color: #fbbf24; text-shadow: 0 0 10px #f59e0b;">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
+            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #f59e0b; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.15);">
+              <div id="cd-days" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #fbbf24; text-shadow: 0 0 10px #f59e0b;">
                 ${String(rem.days).padStart(2, '0')}
               </div>
-              <div style="font-size: 0.7rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">DAYS</div>
+              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">DAYS</div>
             </div>
 
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #06b6d4; border-radius: 8px; padding: 12px 6px; box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15);">
-              <div id="cd-hours" style="font-family: 'Orbitron', sans-serif; font-size: 1.85rem; font-weight: bold; color: #38bdf8; text-shadow: 0 0 10px #06b6d4;">
+            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #06b6d4; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15);">
+              <div id="cd-hours" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #38bdf8; text-shadow: 0 0 10px #06b6d4;">
                 ${String(rem.hours).padStart(2, '0')}
               </div>
-              <div style="font-size: 0.7rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">HOURS</div>
+              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">HOURS</div>
             </div>
 
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #10b981; border-radius: 8px; padding: 12px 6px; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.15);">
-              <div id="cd-mins" style="font-family: 'Orbitron', sans-serif; font-size: 1.85rem; font-weight: bold; color: #34d399; text-shadow: 0 0 10px #10b981;">
+            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #10b981; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.15);">
+              <div id="cd-mins" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #34d399; text-shadow: 0 0 10px #10b981;">
                 ${String(rem.mins).padStart(2, '0')}
               </div>
-              <div style="font-size: 0.7rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">MINUTES</div>
+              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">MINS</div>
             </div>
 
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #ef4444; border-radius: 8px; padding: 12px 6px; box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.15);">
-              <div id="cd-secs" style="font-family: 'Orbitron', sans-serif; font-size: 1.85rem; font-weight: bold; color: #f87171; text-shadow: 0 0 10px #ef4444;">
+            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #ef4444; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.15);">
+              <div id="cd-secs" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #f87171; text-shadow: 0 0 10px #ef4444;">
                 ${String(rem.secs).padStart(2, '0')}
               </div>
-              <div style="font-size: 0.7rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">SECONDS</div>
+              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">SECS</div>
             </div>
           </div>
 
@@ -2370,10 +2454,10 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
 
           <!-- Action Buttons -->
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="btn-bypass-countdown" class="aim-btn" style="padding: 14px; background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 0.94rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);">
-              🦹 SNEAK INTO LAUNDROMAT ANYWAY // DEV BYPASS ➔
+            <button id="btn-bypass-countdown" class="aim-btn" style="padding: 14px; min-height: 48px; background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 0.94rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);">
+              🦹 SNEAK INTO LAUNDRO-MAT ANYWAY // DEV BYPASS ➔
             </button>
-            <button id="btn-notify-opening" class="aim-btn" style="padding: 11px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.82rem; cursor: pointer;">
+            <button id="btn-notify-opening" class="aim-btn" style="padding: 11px; min-height: 42px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.82rem; cursor: pointer;">
               🔔 REMIND ME ON OCTOBER 6 GRAND OPENING
             </button>
           </div>
