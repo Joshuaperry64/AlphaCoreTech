@@ -52,6 +52,8 @@ const routes = {
   '/admin': AdminPanel,
   '/aimodals': AiModals,
   '/upscaler': AiModals,
+  '/vid2audio': AiModals,
+  '/v2a': AiModals,
   '/vault': VaultPage,
   '/research': Research,
   '/vision': VisionProcessor,

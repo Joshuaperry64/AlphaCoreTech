@@ -20,6 +20,8 @@ const COMMANDS = [
   { icon: '🌐', title: 'Go to Network Matrix', path: '#/network' },
   { icon: '⚙', title: 'Go to Administration', path: '#/admin' },
   { icon: '✦', title: 'Go to AI Modals Hub', path: '#/aimodals' },
+  { icon: '🔊', title: 'Go to Vid2Audio (Video to Foley)', path: '#/aimodals?tab=vid2audio' },
+  { icon: '🎵', title: 'Go to Music Generator', path: '#/music' },
   { icon: '🔍', title: 'Go to Neural Upscaler', path: '#/upscaler' },
   { icon: '🔐', title: 'Go to Classified Vault', path: '#/vault' },
   { icon: '👁', title: 'Go to Vision Processor', path: '#/vision' },

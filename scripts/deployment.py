@@ -15,6 +15,7 @@ import music
 import web_loader
 import cloner
 import upscaler
+import vid2audio
 
 if modal.is_local():
     import scraper
@@ -25,6 +26,7 @@ if modal.is_local():
     import framepack
     import preprocessors
     import upscaler
+    import vid2audio
 
 # --- WEBSITE MODEL CATALOGS ---
 WEBSITE_CHECKPOINTS = {
@@ -63,7 +65,7 @@ def _get_secrets():
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic", "Pillow", "numpy")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
 )
 
 @app.function(
@@ -235,6 +237,18 @@ class VoiceSampleUpload(BaseModel):
     filename: str
     audio_b64: str
 
+class Vid2AudioRequest(BaseModel):
+    video: Optional[str] = None
+    video_b64: Optional[str] = None
+    prompt: str = ""
+    negative_prompt: str = "low quality, muffled, noise, distorted"
+    duration: float = 8.0
+    num_steps: int = 25
+    cfg_strength: float = 4.5
+    variant: str = "large_44k_v2"
+    seed: int = -1
+    return_video: bool = True
+
 # 3. Create the Monolithic API Router Factory
 def create_aio_api(is_eco: bool = False) -> FastAPI:
     tier_name = "Economy" if is_eco else "Architect Priority"
@@ -255,6 +269,22 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
             "tier": "economy" if is_eco else "architect",
             "timestamp": time.time()
         }
+
+    # --- VID2AUDIO GENERATION ENDPOINT ---
+    @app_instance.post("/api/vid2audio/generate")
+    async def api_generate_vid2audio(req: Vid2AudioRequest):
+        try:
+            v2a_cls = vid2audio.Vid2Audio_Eco if is_eco else vid2audio.Vid2Audio
+            video_input = req.video or req.video_b64
+            if not video_input:
+                raise HTTPException(status_code=400, detail="Missing 'video' (base64) parameter")
+            
+            result = await v2a_cls().generate_post.remote.aio(req.dict())
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     # --- MUSIC GENERATION ENDPOINT ---
     @app_instance.post("/api/music/generate")
@@ -441,7 +471,7 @@ web_app_eco = create_aio_api(is_eco=True)
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
 )
 
 @app.function(image=router_image)

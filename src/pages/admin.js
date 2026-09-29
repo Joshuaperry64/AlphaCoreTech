@@ -38,6 +38,7 @@ function buildAdminUI() {
     framepackUrl: 'https://josh627764--alphacore-aio-backend-framepack-ui-framepack.modal.run',
     fanninCrimeUrl: 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots',
     music_url: 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run',
+    vid2audioUrl: 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 20,
     stepsNormalTxt: 30,
@@ -220,6 +221,16 @@ function buildAdminUI() {
             <input class="aim-input" type="text" id="cfg-fannin-url" value="${settings.fanninCrimeUrl}" />
           </div>
         </div>
+        <div class="aim-row" style="margin-top: 12px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-v2a-url">VID2AUDIO (FOLEY) ROUTING ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-v2a-url" value="${settings.vid2audioUrl || 'https://josh627764--alphacore-aio-backend-vid2audio-web-vid2audio.modal.run/stream'}" />
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="cfg-music-url">MUSIC GENERATOR ENDPOINT</label>
+            <input class="aim-input" type="text" id="cfg-music-url" value="${settings.music_url || 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run'}" />
+          </div>
+        </div>
         <div class="aim-field" style="margin-top: 12px;">
           <label class="aim-label" for="cfg-neg">GLOBAL DEFAULT NEGATIVE PROMPT</label>
           <textarea class="aim-textarea" id="cfg-neg" rows="2">${settings.negativePrompt}</textarea>
@@ -295,6 +306,8 @@ function buildAdminUI() {
   const cfgI2vUrl = root.querySelector('#cfg-i2v-url');
   const cfgFramepackUrl = root.querySelector('#cfg-framepack-url');
   const cfgFanninUrl = root.querySelector('#cfg-fannin-url');
+  const cfgV2aUrl = root.querySelector('#cfg-v2a-url');
+  const cfgMusicUrl = root.querySelector('#cfg-music-url');
   const cfgNeg = root.querySelector('#cfg-neg');
   const cfgT2iFast = root.querySelector('#cfg-t2i-fast');
   const cfgT2iFocused = root.querySelector('#cfg-t2i-focused');
@@ -487,6 +500,8 @@ function buildAdminUI() {
       img2vidUrl: i2v,
       framepackUrl: fp,
       fanninCrimeUrl: fannin,
+      vid2audioUrl: cfgV2aUrl ? cfgV2aUrl.value.trim() : (settings.vid2audioUrl || ''),
+      music_url: cfgMusicUrl ? cfgMusicUrl.value.trim() : (settings.music_url || ''),
       negativePrompt: neg,
       guidanceScale: settings.guidanceScale || '7.0',
       stepsFastTxt: parseInt(cfgT2iFast.value) || 2,
