@@ -647,10 +647,15 @@ export default function TransferPage() {
   const LAUNDROMAT_OPENING_TIME = new Date('2026-10-06T00:00:00-04:00').getTime();
   let countdownTimerId = null;
 
-  // ─── Destination Account Directory Storage ────────────────────────────────
+  // ─── Destination Constants & Directory Storage ───────────────────────────
+  const DONATION_ACCOUNT_ID = 'acct_1UKrOjHx3NuZf8IK';
+  const DONATION_ACCOUNT_NAME = '💝 AlphaCore Dev Fund (acct_1UKrOjHx3NuZf8IK) [DONATION]';
+
   const getSavedDestinations = () => {
     try {
-      return JSON.parse(localStorage.getItem('alphacore_saved_destinations') || '[]');
+      const all = JSON.parse(localStorage.getItem('alphacore_saved_destinations') || '[]');
+      // Filter out donation ID so it only appears in the dedicated donation section
+      return all.filter(d => d.id !== DONATION_ACCOUNT_ID);
     } catch {
       return [];
     }
@@ -658,6 +663,7 @@ export default function TransferPage() {
 
   const saveDestination = (id, name) => {
     try {
+      if (id === DONATION_ACCOUNT_ID) return; // Do not save donation account as custom
       const existing = getSavedDestinations().filter(d => d.id !== id);
       existing.push({ id, name, addedAt: Date.now() });
       localStorage.setItem('alphacore_saved_destinations', JSON.stringify(existing));
@@ -675,6 +681,10 @@ export default function TransferPage() {
   } catch {}
 
   // ─── Minigame State ───────────────────────────────────────────────────────
+  const initialSaved = getSavedDestinations();
+  const initialDest = initialSaved.length > 0 ? initialSaved[0].id : '';
+  const initialDestName = initialSaved.length > 0 ? `👤 ${initialSaved[0].name} [${initialSaved[0].id}]` : '';
+
   let state = {
     stage: 'wash_laundry', // 'wash_laundry' | 'laundromat_hub' | 'cash_to_coin' | 'washing_machines' | 'dryer_machines' | 'receive_laundry'
     amount: 25.00,
@@ -686,11 +696,13 @@ export default function TransferPage() {
     chronoOverlayText: '',
     activeModal: null,
     countdownOverlayActive: true, // Temporary 7-day feature countdown overlay
-    selectedDestination: 'acct_1UKrOjHx3NuZf8IK',
-    selectedDestinationName: 'PerryIT Vault (Sutton Bank ••••4670)',
+    selectedDestination: initialDest,
+    selectedDestinationName: initialDestName,
     customDestinationId: '',
     verifiedCustomInfo: null,
-    onboardingModalActive: false
+    onboardingModalActive: false,
+    donationConfirmModalActive: false, // Confirmation screen for voluntary donation to AlphaCore
+    donationConfirmed: false // Explicit user confirmation that money goes to AlphaCore
   };
 
   let stripeInstance = null;
@@ -1155,8 +1167,8 @@ export default function TransferPage() {
           </div>
 
           <select id="destination-select" style="width: 100%; background: #000; border: 1px solid #06b6d4; color: #38bdf8; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; border-radius: 4px; outline: none; margin-bottom: 8px; cursor: pointer;">
-            <option value="acct_1UKrOjHx3NuZf8IK" ${state.selectedDestination === 'acct_1UKrOjHx3NuZf8IK' ? 'selected' : ''}>
-              🏦 PerryIT Vault (Sutton Bank ••••4670) [Default]
+            <option value="" ${!state.selectedDestination ? 'selected' : ''} disabled>
+              -- SELECT RECIPIENT DESTINATION (REQUIRED) --
             </option>
             ${getSavedDestinations().map(d => `
               <option value="${d.id}" ${state.selectedDestination === d.id ? 'selected' : ''}>
@@ -1165,6 +1177,10 @@ export default function TransferPage() {
             `).join('')}
             <option value="custom" ${state.selectedDestination === 'custom' ? 'selected' : ''}>
               ➕ Enter Custom Destination ID (acct_...)
+            </option>
+            <option disabled style="color: #64748b;">────────── VOLUNTARY DONATION ──────────</option>
+            <option value="${DONATION_ACCOUNT_ID}" ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'selected' : ''} style="color: #fbbf24; background: #1e1402; font-weight: bold;">
+              💝 VOLUNTARY DONATION: Send Funds to AlphaCore / PerryIT [Requires Confirmation]
             </option>
           </select>
 
@@ -1181,6 +1197,22 @@ export default function TransferPage() {
               ${state.verifiedCustomInfo ? `<span style="color: #10b981;">✓ Verified: ${state.verifiedCustomInfo.name} (Bank: ${state.verifiedCustomInfo.bank_name} ••••${state.verifiedCustomInfo.last4})</span>` : 'Enter a valid Stripe connected account ID starting with <code>acct_</code>.'}
             </div>
           </div>
+
+          <!-- Voluntary Donation Confirmation Notice (Shown when donation option is active) -->
+          ${state.selectedDestination === DONATION_ACCOUNT_ID ? `
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.5rem;">💝</span>
+                <div>
+                  <div style="color: #fbbf24; font-weight: bold; font-size: 0.88rem;">VOLUNTARY DONATION TO ALPHACORE ACTIVE</div>
+                  <div style="color: #cbd5e1; font-size: 0.78rem;">Net transfer funds go directly to AlphaCore Development Operations (<code style="color: #38bdf8;">${DONATION_ACCOUNT_ID}</code>).</div>
+                </div>
+              </div>
+              <button id="btn-reopen-donation-confirm" class="aim-btn" style="padding: 4px 8px; font-size: 0.72rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap;">
+                AUDIT NOTICE
+              </button>
+            </div>
+          ` : ''}
 
           <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">
             * Source card pays defined amount. Perry-IT collects platform fee (${feeConfig.label.split(':')[0]}). Net assets route directly to this destination.
@@ -1217,7 +1249,7 @@ export default function TransferPage() {
             <div>
               <strong>DESTINATION RECEIVES:</strong>
               <div style="font-size: 0.75rem; color: #38bdf8; font-weight: normal;" id="dest-target-label">
-                TARGET: ${state.selectedDestinationName || 'PerryIT Vault'}
+                TARGET: ${state.selectedDestinationName || '⚠️ Select Recipient Above'}
               </div>
             </div>
             <strong id="final-payout" style="color: #10b981;">$${activeFeeData.payout.toFixed(2)}</strong>
@@ -1277,16 +1309,37 @@ export default function TransferPage() {
       if (destSelect) {
         destSelect.onchange = (e) => {
           const val = e.target.value;
+          if (val === DONATION_ACCOUNT_ID) {
+            // Trigger confirmation screen modal immediately!
+            playSFX('modal');
+            state.donationConfirmModalActive = true;
+            render();
+            return;
+          }
+
+          state.donationConfirmed = false;
           state.selectedDestination = val;
           if (val === 'custom') {
             customDestBox.style.display = 'block';
             state.selectedDestinationName = state.customDestinationId || 'Custom Account';
+          } else if (!val) {
+            customDestBox.style.display = 'none';
+            state.selectedDestinationName = '';
           } else {
             customDestBox.style.display = 'none';
             state.selectedDestinationName = e.target.options[e.target.selectedIndex].text;
           }
           const targetLbl = bodyBox.querySelector('#dest-target-label');
-          if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName}`;
+          if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName || '⚠️ Select Recipient Above'}`;
+        };
+      }
+
+      const btnReopenDonation = bodyBox.querySelector('#btn-reopen-donation-confirm');
+      if (btnReopenDonation) {
+        btnReopenDonation.onclick = () => {
+          playSFX('modal');
+          state.donationConfirmModalActive = true;
+          render();
         };
       }
 
@@ -1335,7 +1388,9 @@ export default function TransferPage() {
         state.amount = isNaN(val) ? 0 : val;
         stripeBox.style.display = 'none';
         btnPay.style.display = 'block';
-        btnPay.textContent = '💳 AUTHORIZE TRANSFER VIA STRIPE';
+        btnPay.textContent = state.selectedDestination === DONATION_ACCOUNT_ID 
+          ? '💝 AUTHORIZE VOLUNTARY DONATION VIA STRIPE' 
+          : '💳 AUTHORIZE TRANSFER VIA STRIPE';
 
         const calc = calculateFees(val, feeConfig.rate);
         if (!calc) {
@@ -1376,7 +1431,19 @@ export default function TransferPage() {
         if (!val || val < 10) return;
 
         const targetDest = state.selectedDestination === 'custom' ? (state.customDestinationId || customDestInput.value).trim() : state.selectedDestination;
-        if (!targetDest || !targetDest.startsWith('acct_')) {
+        if (!targetDest) {
+          alert('Please select a destination recipient account (or onboard a new recipient) before proceeding.');
+          return;
+        }
+
+        if (targetDest === DONATION_ACCOUNT_ID && !state.donationConfirmed) {
+          playSFX('modal');
+          state.donationConfirmModalActive = true;
+          render();
+          return;
+        }
+
+        if (!targetDest.startsWith('acct_')) {
           alert('Please select or verify a valid destination account starting with acct_');
           return;
         }
@@ -1423,6 +1490,7 @@ export default function TransferPage() {
           btnPay.style.borderColor = '#ef4444';
           btnPay.disabled = false;
           playSFX('incorrect');
+        }
       };
 
       // Submit payment
@@ -1869,7 +1937,7 @@ export default function TransferPage() {
           <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; border-bottom: 1px dashed #334155; padding-bottom: 8px;">
             <span style="color: #94a3b8;">DISPATCHED TO DESTINATION:</span>
             <span style="color: #38bdf8; font-weight: bold; text-align: right; max-width: 60%; word-break: break-all;">
-              ${state.selectedDestinationName || 'PerryIT Vault (Sutton Bank)'}
+              ${state.selectedDestinationName || (state.selectedDestination === DONATION_ACCOUNT_ID ? DONATION_ACCOUNT_NAME : 'Personal Recipient Vault')}
             </span>
           </div>
 
@@ -1922,6 +1990,7 @@ ITEMIZED LAUNDRY FACILITY EXPENSES:
 ----------------------------------------
 TOTAL LAUNDRY OPERATING FEES:        -$${receiptData.totalFees.toFixed(2)}
 NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
+DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Personal Recipient Vault'}
 ========================================
         `.trim();
         navigator.clipboard.writeText(text).then(() => {
@@ -2105,6 +2174,98 @@ NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
       };
 
       container.appendChild(onboardModal);
+    }
+
+    // ─── Voluntary Donation Confirmation Screen Modal ───────────────────────
+    if (state.donationConfirmModalActive) {
+      const donationModal = createElement('div', {
+        className: 'laundry-donation-modal',
+        style: `
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 23, 0.94);
+          backdrop-filter: blur(12px);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        `
+      });
+
+      donationModal.innerHTML = `
+        <div style="background: #090e1a; border: 2px solid #f59e0b; border-radius: 12px; max-width: 540px; width: 100%; padding: 26px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 35px rgba(245, 158, 11, 0.35); text-align: center; position: relative;">
+          
+          <!-- Hazard Warning Tape -->
+          <div style="height: 8px; border-radius: 4px; margin-bottom: 16px; background: repeating-linear-gradient(45deg, #f59e0b, #f59e0b 12px, #0f172a 12px, #0f172a 24px); box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"></div>
+
+          <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+            <span style="font-size: 2.2rem; filter: drop-shadow(0 0 10px #f59e0b);">⚠️</span>
+            <span style="font-size: 2.6rem; filter: drop-shadow(0 0 12px #ec4899);">💝</span>
+            <span style="font-size: 2.2rem; filter: drop-shadow(0 0 10px #f59e0b);">⚠️</span>
+          </div>
+
+          <div style="font-size: 0.78rem; color: #f59e0b; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px;">
+            // RECIPIENT AUDIT &bull; VOLUNTARY DONATION GATEWAY
+          </div>
+
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.25rem; margin: 0 0 14px 0;">
+            CONFIRM DONATION ROUTING
+          </h2>
+
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 8px; padding: 18px; margin-bottom: 20px; text-align: left;">
+            <div style="color: #f8fafc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 12px;">
+              You have selected the <strong>AlphaCore Voluntary Donation</strong> recipient option.
+            </div>
+
+            <div style="background: #020617; border-left: 3px solid #f59e0b; padding: 10px 14px; margin-bottom: 14px; font-family: monospace; font-size: 0.85rem; color: #38bdf8; border-radius: 0 4px 4px 0;">
+              <div>RECIPIENT: AlphaCore / PerryIT Development Vault</div>
+              <div>ACCOUNT ID: ${DONATION_ACCOUNT_ID}</div>
+            </div>
+
+            <div style="color: #fbbf24; font-size: 1.05rem; font-weight: bold; line-height: 1.5; border-top: 1px dashed rgba(245, 158, 11, 0.4); padding-top: 12px;">
+              ⚠️ The money goes to AlphaCore. Are you sure this is your expected function?
+            </div>
+          </div>
+
+          <div style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 22px; line-height: 1.5; text-align: left;">
+            • If you are making a voluntary donation to support AlphaCore development, click <strong>CONFIRM DONATION</strong>.<br>
+            • If you meant to transfer funds to yourself or a customer, click <strong>CANCEL</strong> to select your own connected account or enter a custom recipient ID.
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-confirm-donation-yes" class="aim-btn" style="width: 100%; padding: 14px; background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 0.95rem; cursor: pointer;">
+              ✓ YES, THIS IS MY EXPECTED FUNCTION (PROCEED WITH DONATION)
+            </button>
+            <button id="btn-confirm-donation-no" class="aim-btn" style="width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #f87171; font-weight: bold; font-size: 0.9rem; cursor: pointer;">
+              🛑 NO / CANCEL (RETURN TO RECIPIENT SELECTION)
+            </button>
+          </div>
+        </div>
+      `;
+
+      const btnYes = donationModal.querySelector('#btn-confirm-donation-yes');
+      const btnNo = donationModal.querySelector('#btn-confirm-donation-no');
+
+      btnYes.onclick = () => {
+        playSFX('success');
+        state.selectedDestination = DONATION_ACCOUNT_ID;
+        state.selectedDestinationName = DONATION_ACCOUNT_NAME;
+        state.donationConfirmed = true;
+        state.donationConfirmModalActive = false;
+        render();
+      };
+
+      btnNo.onclick = () => {
+        playSFX('click');
+        state.selectedDestination = '';
+        state.selectedDestinationName = '';
+        state.donationConfirmed = false;
+        state.donationConfirmModalActive = false;
+        render();
+      };
+
+      container.appendChild(donationModal);
     }
 
     // ─── 7-Day Temporary Feature Countdown Overlay ─────────────────────────
