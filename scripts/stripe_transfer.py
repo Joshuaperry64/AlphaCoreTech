@@ -18,7 +18,7 @@ def fastapi_app():
     # Allow CORS for your frontend
     web_app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"], # Restrict to alpha-core.tech in production
+        allow_origins=["*"], 
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -44,8 +44,7 @@ def fastapi_app():
                 amount=amount_cents,
                 currency="usd",
                 automatic_payment_methods={"enabled": True},
-                # Destination routing requires the recipient's Stripe Connect Account ID
-                # transfer_data={"destination": "acct_123456789"}, 
+                transfer_data={"destination": "acct_1UKrOjHx3NuZf8IK"}, 
             )
             return {"clientSecret": intent.client_secret}
         except Exception as e:

@@ -15,7 +15,7 @@ export default function TransferPage() {
         style="width: 100%; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box;">
     </div>
 
-    <div style="background: #050505; border: 1px solid #333; padding: 20px; border-radius: 4px;">
+    <div style="background: #050505; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
       <h3 style="font-family: 'Orbitron', sans-serif; margin-top: 0; color: #06b6d4; font-size: 1rem;">NETWORK FEE ROUTING</h3>
       
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #888;">
@@ -41,22 +41,39 @@ export default function TransferPage() {
       </div>
     </div>
 
-    <button id="execute-transfer-btn" class="aim-btn" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1rem; background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981;" disabled>
+    <button id="execute-transfer-btn" class="aim-btn" style="width: 100%; padding: 15px; font-size: 1.1rem; background: rgba(16, 185, 129, 0.1); border-color: #10b981; color: #10b981;" disabled>
       INITIATE SECURE TRANSFER
     </button>
+
+    <!-- Hidden until clientSecret is generated -->
+    <div id="stripe-ui-container" style="display: none; margin-top: 20px; background: #fff; padding: 20px; border-radius: 4px;">
+      <div id="payment-element"></div>
+      <button id="submit-payment-btn" class="aim-btn" style="width: 100%; margin-top: 20px; padding: 15px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold;">
+        AUTHORIZE FUNDS
+      </button>
+      <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
+    </div>
   `;
 
   const input = container.querySelector('#transfer-input');
   const executeBtn = container.querySelector('#execute-transfer-btn');
+  const stripeContainer = container.querySelector('#stripe-ui-container');
+  const submitBtn = container.querySelector('#submit-payment-btn');
+  const messageEl = container.querySelector('#payment-message');
 
-  // Math references
   const elCapture = container.querySelector('#fee-capture');
   const elAlpha = container.querySelector('#fee-alpha');
   const elConnect = container.querySelector('#fee-connect');
   const elInstant = container.querySelector('#fee-instant');
   const elPayout = container.querySelector('#final-payout');
 
+  let stripe, elements;
+
   input.addEventListener('input', (e) => {
+    stripeContainer.style.display = 'none';
+    executeBtn.style.display = 'block';
+    executeBtn.textContent = 'INITIATE SECURE TRANSFER';
+
     const rawVal = parseFloat(e.target.value);
     if (isNaN(rawVal) || rawVal < 10) {
       elCapture.textContent = '-$0.00';
@@ -69,12 +86,10 @@ export default function TransferPage() {
       return;
     }
 
-    // 1. Calculate Stripe Capture and AlphaCore 10% Cut upfront
     const captureFee = (rawVal * 0.029) + 0.30;
     const platformFee = rawVal * 0.10;
     const remainder = rawVal - captureFee - platformFee;
 
-    // 2. Reverse engineer the payout to solve for the Connect & Instant fees simultaneously
     let payout = (remainder - 0.75) / 1.0025;
     let instantFee = 0.50;
     let connectFee = (payout * 0.0025) + 0.25;
@@ -118,12 +133,16 @@ export default function TransferPage() {
       }
 
       if (data.clientSecret) {
-        executeBtn.textContent = '// PAYMENT INTENT SECURED';
-        executeBtn.style.color = '#10b981';
-        executeBtn.style.borderColor = '#10b981';
-        console.log('Client Secret retrieved:', data.clientSecret);
+        stripe = Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd'); 
         
-        // Next phase: Render Stripe Elements here to capture card data
+        const appearance = { theme: 'night' };
+        elements = stripe.elements({ appearance, clientSecret: data.clientSecret });
+        
+        const paymentElement = elements.create('payment');
+        paymentElement.mount('#payment-element');
+
+        executeBtn.style.display = 'none';
+        stripeContainer.style.display = 'block';
       }
     } catch (err) {
       console.error('Stripe Uplink Error:', err);
@@ -131,6 +150,26 @@ export default function TransferPage() {
       executeBtn.style.color = '#ff003c';
       executeBtn.style.borderColor = '#ff003c';
       executeBtn.disabled = false;
+    }
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'PROCESSING...';
+    messageEl.style.display = 'none';
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.href, 
+      },
+    });
+
+    if (error) {
+      messageEl.textContent = error.message;
+      messageEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'AUTHORIZE FUNDS';
     }
   });
 
