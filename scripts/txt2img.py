@@ -59,9 +59,8 @@ image = image.add_local_python_source("shared_app")
     secrets=[modal.Secret.from_name("huggingface-secret")],
 )
 class Txt2Img:
-    def __init__(self):
-        self.current_model = None
-        self.pipe = None
+    current_model = None
+    pipe = None
 
     @modal.enter()
     def setup(self):

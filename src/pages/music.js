@@ -8,8 +8,8 @@ export default function MusicPage() {
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
   const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
   const defaultEndpoint = isArchitect
-    ? 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run'
-    : 'https://josh627764--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
+    ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
+    : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';
 
   const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
   const tierHw = isArchitect ? 'L40S Node (Warm)' : 'Cost-Optimized Node (60s Auto-Scale)';

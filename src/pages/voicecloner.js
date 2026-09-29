@@ -1,6 +1,6 @@
 /**
  * AlphaCore RVC v2 Voice Synthesis & Neural Cloning Suite
- * Connects directly to Modal A10G Cloud GPU backend (josh627764).
+ * Connects directly to Modal A10G Cloud GPU backend (alphacoreprogramming).
  * Available to ALL operators with zero guest lockouts.
  * Supports:
  *   - Microphone Audio Recording (with real-time oscilloscope waveform)
@@ -21,8 +21,8 @@ export default function VoiceClonerPage() {
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
   const isArchitect = currentProfile === 'architect' || sessionStorage.getItem('admin_authenticated') === '1';
   const defaultApiBase = isArchitect
-    ? 'https://josh627764--alphacore-aio-backend-alphacore-main-api.modal.run'
-    : 'https://josh627764--alphacore-aio-backend-alphacore-main-api-eco.modal.run';
+    ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
+    : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';
 
   const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
   const MAIN_API_BASE = isArchitect ? (settings.main_api_url || defaultApiBase) : defaultApiBase;

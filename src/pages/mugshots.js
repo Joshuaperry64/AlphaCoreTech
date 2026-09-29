@@ -491,13 +491,13 @@ export default function MugshotsPage() {
       try {
         let rawPosts = [];
 
-        const defaultScraperEndpoint = 'https://josh627764--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots';
+        const defaultScraperEndpoint = 'https://alphacoreprogramming--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots';
         let scraperEndpoint = defaultScraperEndpoint;
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');
           if (customStr) {
             const custom = JSON.parse(customStr);
-            if (custom.fanninCrimeUrl && custom.fanninCrimeUrl.includes('josh627764')) {
+            if (custom.fanninCrimeUrl && custom.fanninCrimeUrl.includes('alphacoreprogramming')) {
               scraperEndpoint = custom.fanninCrimeUrl;
             } else {
               scraperEndpoint = defaultScraperEndpoint;
