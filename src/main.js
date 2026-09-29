@@ -37,6 +37,7 @@ import NetworkMatrixPage from './pages/network.js';
 import MugshotsPage from './pages/mugshots.js';
 import TheLabPage from './pages/thelab.js';
 import TransferPage from './pages/transfer.js';
+import CyberDirectorPage from './pages/director.js';
 
 const routes = {
   '/': Overview,
@@ -50,6 +51,8 @@ const routes = {
   '/architect': ArchitectProfile,
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
+  '/director': CyberDirectorPage,
+  '/cyberdirector': CyberDirectorPage,
   '/aimodals': AiModals,
   '/upscaler': AiModals,
   '/vid2audio': AiModals,
