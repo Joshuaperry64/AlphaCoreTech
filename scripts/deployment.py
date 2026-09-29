@@ -6,7 +6,9 @@ from typing import Optional, Dict, Any, List
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+import json
 
 # 1. Import the central app instance and volume definitions
 from shared_app import app, CACHE_DIR, cache_volume
@@ -26,8 +28,6 @@ if modal.is_local():
     import img2vid
     import framepack
     import preprocessors
-    import upscaler
-    import vid2audio
 
 # --- WEBSITE MODEL CATALOGS ---
 WEBSITE_CHECKPOINTS = {
@@ -148,6 +148,8 @@ def sync_website_models(force: bool = False):
             meta_res = requests.get(meta_url, headers=headers, timeout=30)
             if meta_res.status_code != 200:
                 err = f"CivitAI API error: HTTP {meta_res.status_code}"
+                if meta_res.status_code in (401, 403):
+                    err += " (Unauthorized/Forbidden - CIVITAI_API_KEY required for gated/NSFW models)"
                 print(f"  -> ERROR: {err}")
                 summary[category_key]["failed"].append({"file": filename, "error": err})
                 return
@@ -183,6 +185,15 @@ def sync_website_models(force: bool = False):
                     for chunk in r.iter_content(chunk_size=65536):
                         f.write(chunk)
                         bar.update(len(chunk))
+
+            tmp_size_mb = tmp_path.stat().st_size / (1024 * 1024)
+            min_mb = 10.0 if category_key == "checkpoints" else 1.0
+            if tmp_size_mb < min_mb:
+                tmp_path.unlink(missing_ok=True)
+                err = f"Downloaded file size too small ({tmp_size_mb:.2f} MB), potentially corrupt or HTML error response."
+                print(f"  -> ERROR: {err}")
+                summary[category_key]["failed"].append({"file": filename, "error": err})
+                return
 
             tmp_path.rename(dest_path)
             cache_volume.commit()
@@ -222,7 +233,11 @@ def sync_website_models(force: bool = False):
 # --- PYDANTIC REQUEST SCHEMAS ---
 class MusicRequest(BaseModel):
     prompt: str
-    length_seconds: int = 30
+    lyrics: Optional[str] = "[Instrumental]"
+    length_seconds: Optional[int] = 30
+    duration: Optional[float] = None
+    format: str = "mp3"
+    seed: Optional[int] = 1
 
 class DownloadRequest(BaseModel):
     source: str
@@ -237,6 +252,9 @@ class VoiceSampleUpload(BaseModel):
     profile_name: str
     filename: str
     audio_b64: str
+
+class VoiceTrainRequest(BaseModel):
+    profile_name: Optional[str] = None
 
 class Vid2AudioRequest(BaseModel):
     video: Optional[str] = None
@@ -308,17 +326,60 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app_instance.post("/api/vid2audio/stream")
+    async def api_generate_vid2audio_stream(req: Vid2AudioRequest):
+        v2a_cls = vid2audio.Vid2Audio_Eco if is_eco else vid2audio.Vid2Audio
+        video_input = req.video or req.video_b64
+        if not video_input:
+            raise HTTPException(status_code=400, detail="Missing 'video' (base64) parameter")
+
+        async def event_generator():
+            try:
+                for update in v2a_cls().run_stream.remote_gen(
+                    video_b64=video_input,
+                    prompt=req.prompt,
+                    negative_prompt=req.negative_prompt,
+                    duration=req.duration,
+                    num_steps=req.num_steps,
+                    cfg_strength=req.cfg_strength,
+                    variant=req.variant,
+                    seed=req.seed,
+                    return_video=req.return_video
+                ):
+                    yield f"data: {json.dumps(update)}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            }
+        )
+
     # --- MUSIC GENERATION ENDPOINT ---
     @app_instance.post("/api/music/generate")
     async def api_generate_music(req: MusicRequest):
         try:
             gen_cls = music.MusicGenerator_Eco if is_eco else music.MusicGenerator
+            target_duration = float(req.duration if req.duration is not None else (req.length_seconds or 30))
             audio_bytes = await gen_cls().run.remote.aio(
                 prompt=req.prompt,
-                length_in_seconds=req.length_seconds
+                lyrics=req.lyrics or "[Instrumental]",
+                duration=target_duration,
+                format=req.format or "mp3",
+                manual_seeds=req.seed
             )
             audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-            return {"audio_b64": audio_b64}
+            return {
+                "status": "success",
+                "audio_b64": audio_b64,
+                "format": req.format or "mp3",
+                "duration": target_duration
+            }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -370,7 +431,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_profiles():
         try:
             import asyncio
-            contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=3.0)
+            contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=15.0)
             volume_profiles = []
             if isinstance(contents, dict) and "error" not in contents:
                 for path_str in contents.keys():
@@ -436,17 +497,44 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e))
 
     @app_instance.post("/api/voice/train")
-    async def api_voice_train(profile_name: str):
+    async def api_voice_train(profile_name: Optional[str] = None, req: Optional[VoiceTrainRequest] = None):
+        target_name = profile_name or (req.profile_name if req else None)
+        if not target_name:
+            raise HTTPException(status_code=400, detail="Missing 'profile_name' parameter")
         try:
-            call = cloner.process_audio_samples.spawn(profile_name)
+            call = cloner.process_audio_samples.spawn(target_name)
             return {
                 "status": "training_started",
                 "call_id": call.object_id,
-                "profile_name": profile_name,
-                "message": f"GPU training initiated for profile '{profile_name}'"
+                "profile_name": target_name,
+                "message": f"GPU training initiated for profile '{target_name}'"
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    # --- UNIVERSAL CALL STATUS ENDPOINT ---
+    @app_instance.get("/api/call-status/{call_id}")
+    def api_get_call_status(call_id: str):
+        try:
+            fc = modal.functions.FunctionCall.from_id(call_id)
+            try:
+                result = fc.get(timeout=0)
+                return {
+                    "status": "completed",
+                    "call_id": call_id,
+                    "result": result
+                }
+            except TimeoutError:
+                return {
+                    "status": "running",
+                    "call_id": call_id
+                }
+        except Exception as e:
+            return {
+                "status": "failed",
+                "call_id": call_id,
+                "error": str(e)
+            }
 
     # --- NEURAL UPSCALER ENDPOINTS ---
     @app_instance.get("/api/upscale/status")
@@ -472,13 +560,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
         try:
             upscaler_cls = upscaler.Upscaler_Eco if is_eco else upscaler.Upscaler
             res = await upscaler_cls().upscale_image.remote.aio(
-                image_b64=req.image_b64,
-                scale=req.scale,
-                model_name=req.model_name,
-                denoise=req.denoise,
-                sharpen=req.sharpen,
-                face_enhance=req.face_enhance,
-                output_format=req.output_format
+                **req.model_dump()
             )
             return res
         except Exception as e:
