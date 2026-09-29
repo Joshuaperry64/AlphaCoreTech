@@ -647,6 +647,33 @@ export default function TransferPage() {
   const LAUNDROMAT_OPENING_TIME = new Date('2026-10-06T00:00:00-04:00').getTime();
   let countdownTimerId = null;
 
+  // ─── Destination Account Directory Storage ────────────────────────────────
+  const getSavedDestinations = () => {
+    try {
+      return JSON.parse(localStorage.getItem('alphacore_saved_destinations') || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  const saveDestination = (id, name) => {
+    try {
+      const existing = getSavedDestinations().filter(d => d.id !== id);
+      existing.push({ id, name, addedAt: Date.now() });
+      localStorage.setItem('alphacore_saved_destinations', JSON.stringify(existing));
+    } catch {}
+  };
+
+  // Check for newly onboarded account in URL query
+  try {
+    const hashParts = (window.location.hash || '').split('?');
+    const searchParams = new URLSearchParams(hashParts[1] || window.location.search);
+    const onboardedAcct = searchParams.get('onboarded_acct');
+    if (onboardedAcct && onboardedAcct.startsWith('acct_')) {
+      saveDestination(onboardedAcct, `Onboarded Recipient (${onboardedAcct.slice(-6)})`);
+    }
+  } catch {}
+
   // ─── Minigame State ───────────────────────────────────────────────────────
   let state = {
     stage: 'wash_laundry', // 'wash_laundry' | 'laundromat_hub' | 'cash_to_coin' | 'washing_machines' | 'dryer_machines' | 'receive_laundry'
@@ -658,7 +685,12 @@ export default function TransferPage() {
     dryerTraveled: false,
     chronoOverlayText: '',
     activeModal: null,
-    countdownOverlayActive: true // Temporary 7-day feature countdown overlay
+    countdownOverlayActive: true, // Temporary 7-day feature countdown overlay
+    selectedDestination: 'acct_1UKrOjHx3NuZf8IK',
+    selectedDestinationName: 'PerryIT Vault (Sutton Bank ••••4670)',
+    customDestinationId: '',
+    verifiedCustomInfo: null,
+    onboardingModalActive: false
   };
 
   let stripeInstance = null;
@@ -1111,6 +1143,50 @@ export default function TransferPage() {
           </div>
         </div>
 
+        <!-- Dynamic Destination Account Selector (Scenario B Multi-Account Routing) -->
+        <div style="background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.3); padding: 16px; border-radius: 6px; margin-bottom: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="color: #38bdf8; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <span>🎯</span> SELECT DESTINATION ACCOUNT (RECIPIENT):
+            </label>
+            <button id="btn-open-onboard" class="aim-btn" style="padding: 4px 8px; font-size: 0.72rem; border-color: #06b6d4; color: #38bdf8; cursor: pointer;">
+              ➕ ONBOARD NEW RECIPIENT
+            </button>
+          </div>
+
+          <select id="destination-select" style="width: 100%; background: #000; border: 1px solid #06b6d4; color: #38bdf8; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; border-radius: 4px; outline: none; margin-bottom: 8px; cursor: pointer;">
+            <option value="acct_1UKrOjHx3NuZf8IK" ${state.selectedDestination === 'acct_1UKrOjHx3NuZf8IK' ? 'selected' : ''}>
+              🏦 PerryIT Vault (Sutton Bank ••••4670) [Default]
+            </option>
+            ${getSavedDestinations().map(d => `
+              <option value="${d.id}" ${state.selectedDestination === d.id ? 'selected' : ''}>
+                👤 ${d.name} [${d.id}]
+              </option>
+            `).join('')}
+            <option value="custom" ${state.selectedDestination === 'custom' ? 'selected' : ''}>
+              ➕ Enter Custom Destination ID (acct_...)
+            </option>
+          </select>
+
+          <!-- Custom ID Input (Shown when "custom" is selected) -->
+          <div id="custom-destination-box" style="display: ${state.selectedDestination === 'custom' ? 'block' : 'none'}; margin-top: 10px; background: #020617; border: 1px dashed #334155; padding: 12px; border-radius: 4px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" id="custom-dest-input" value="${state.customDestinationId || ''}" placeholder="acct_1..." 
+                style="flex: 1; background: #000; border: 1px solid #334155; color: #fff; padding: 8px 10px; font-family: monospace; font-size: 0.85rem; border-radius: 4px; outline: none;">
+              <button id="btn-verify-dest" class="aim-btn" style="padding: 8px 14px; font-size: 0.8rem; background: rgba(6,182,212,0.15); border-color: #06b6d4; color: #38bdf8; cursor: pointer; white-space: nowrap;">
+                VERIFY ID
+              </button>
+            </div>
+            <div id="dest-verify-status" style="font-size: 0.78rem; color: #94a3b8;">
+              ${state.verifiedCustomInfo ? `<span style="color: #10b981;">✓ Verified: ${state.verifiedCustomInfo.name} (Bank: ${state.verifiedCustomInfo.bank_name} ••••${state.verifiedCustomInfo.last4})</span>` : 'Enter a valid Stripe connected account ID starting with <code>acct_</code>.'}
+            </div>
+          </div>
+
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">
+            * Source card pays defined amount. Perry-IT collects platform fee (${feeConfig.label.split(':')[0]}). Net assets route directly to this destination.
+          </div>
+        </div>
+
         <!-- Live Network Fee Breakdown -->
         <div style="background: #050912; border: 1px solid #1e293b; padding: 16px; border-radius: 6px; margin-bottom: 18px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1f293d; padding-bottom: 8px;">
@@ -1137,8 +1213,13 @@ export default function TransferPage() {
             <span id="fee-instant" style="color:#cbd5e1;">-$${activeFeeData.instantFee.toFixed(2)}</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 1.1rem; color: #fff;">
-            <strong>DESTINATION RECEIVES (CLEAN ASSETS):</strong>
+          <div style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 1.05rem; color: #fff; border-top: 1px solid #1e293b; padding-top: 10px;">
+            <div>
+              <strong>DESTINATION RECEIVES:</strong>
+              <div style="font-size: 0.75rem; color: #38bdf8; font-weight: normal;" id="dest-target-label">
+                TARGET: ${state.selectedDestinationName || 'PerryIT Vault'}
+              </div>
+            </div>
             <strong id="final-payout" style="color: #10b981;">$${activeFeeData.payout.toFixed(2)}</strong>
           </div>
         </div>
@@ -1186,6 +1267,68 @@ export default function TransferPage() {
       const stripeBox = bodyBox.querySelector('#stripe-ui-container');
       const submitPayBtn = bodyBox.querySelector('#submit-payment-btn');
       const payMsgEl = bodyBox.querySelector('#payment-message');
+      const destSelect = bodyBox.querySelector('#destination-select');
+      const customDestBox = bodyBox.querySelector('#custom-destination-box');
+      const customDestInput = bodyBox.querySelector('#custom-dest-input');
+      const btnVerifyDest = bodyBox.querySelector('#btn-verify-dest');
+      const destVerifyStatus = bodyBox.querySelector('#dest-verify-status');
+      const btnOpenOnboard = bodyBox.querySelector('#btn-open-onboard');
+
+      if (destSelect) {
+        destSelect.onchange = (e) => {
+          const val = e.target.value;
+          state.selectedDestination = val;
+          if (val === 'custom') {
+            customDestBox.style.display = 'block';
+            state.selectedDestinationName = state.customDestinationId || 'Custom Account';
+          } else {
+            customDestBox.style.display = 'none';
+            state.selectedDestinationName = e.target.options[e.target.selectedIndex].text;
+          }
+          const targetLbl = bodyBox.querySelector('#dest-target-label');
+          if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName}`;
+        };
+      }
+
+      if (btnVerifyDest) {
+        btnVerifyDest.onclick = async () => {
+          const id = customDestInput.value.trim();
+          if (!id || !id.startsWith('acct_')) {
+            destVerifyStatus.innerHTML = '<span style="color:#ef4444;">[!] Error: ID must start with acct_</span>';
+            return;
+          }
+          btnVerifyDest.disabled = true;
+          btnVerifyDest.textContent = 'CHECKING...';
+          destVerifyStatus.textContent = 'Querying Stripe network...';
+          try {
+            const resp = await fetch(`https://josh627764--alphacore-stripe-fastapi-app.modal.run/get-account-info?account_id=${id}`);
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || 'Account lookup failed');
+            state.verifiedCustomInfo = data;
+            state.customDestinationId = id;
+            saveDestination(id, data.name || `Account (${id.slice(-6)})`);
+            destVerifyStatus.innerHTML = `<span style="color:#10b981;">✓ Verified: ${data.name} (Bank: ${data.bank_name} ••••${data.last4})</span>`;
+            state.selectedDestinationName = `${data.name} [${id}]`;
+            const targetLbl = bodyBox.querySelector('#dest-target-label');
+            if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName}`;
+            playSFX('success');
+          } catch (err) {
+            destVerifyStatus.innerHTML = `<span style="color:#ef4444;">[!] ${err.message}</span>`;
+            playSFX('incorrect');
+          } finally {
+            btnVerifyDest.disabled = false;
+            btnVerifyDest.textContent = 'VERIFY ID';
+          }
+        };
+      }
+
+      if (btnOpenOnboard) {
+        btnOpenOnboard.onclick = () => {
+          playSFX('modal');
+          state.onboardingModalActive = true;
+          render();
+        };
+      }
 
       cashInput.oninput = (e) => {
         const val = parseFloat(e.target.value);
@@ -1232,6 +1375,12 @@ export default function TransferPage() {
         const val = parseFloat(cashInput.value);
         if (!val || val < 10) return;
 
+        const targetDest = state.selectedDestination === 'custom' ? (state.customDestinationId || customDestInput.value).trim() : state.selectedDestination;
+        if (!targetDest || !targetDest.startsWith('acct_')) {
+          alert('Please select or verify a valid destination account starting with acct_');
+          return;
+        }
+
         btnPay.textContent = 'ESTABLISHING SECURE STRIPE UPLINK...';
         btnPay.disabled = true;
         laundromatAudio.playBillWhir();
@@ -1243,7 +1392,8 @@ export default function TransferPage() {
             body: JSON.stringify({
               amount: val,
               profile: feeConfig.profileName,
-              fee_rate: feeConfig.rate
+              fee_rate: feeConfig.rate,
+              destination: targetDest
             })
           });
 
@@ -1273,7 +1423,6 @@ export default function TransferPage() {
           btnPay.style.borderColor = '#ef4444';
           btnPay.disabled = false;
           playSFX('incorrect');
-        }
       };
 
       // Submit payment
@@ -1710,6 +1859,20 @@ export default function TransferPage() {
             </div>
           </div>
 
+          <!-- Multi-Account Destination Routing Summary -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem;">
+            <span style="color: #94a3b8;">PERRY-IT SYSTEM RETENTION:</span>
+            <span style="color: ${feeConfig.isExempt ? '#10b981' : '#f59e0b'}; font-weight: bold;">
+              ${feeConfig.isExempt ? '$0.00 (WAIVED)' : `+$${receiptData.platformFee.toFixed(2)} (${feeConfig.label.split(':')[0]})`}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; border-bottom: 1px dashed #334155; padding-bottom: 8px;">
+            <span style="color: #94a3b8;">DISPATCHED TO DESTINATION:</span>
+            <span style="color: #38bdf8; font-weight: bold; text-align: right; max-width: 60%; word-break: break-all;">
+              ${state.selectedDestinationName || 'PerryIT Vault (Sutton Bank)'}
+            </span>
+          </div>
+
           <!-- Totals -->
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem;">
             <span style="color: #94a3b8; font-weight: bold;">TOTAL LAUNDRY OPERATING FEES:</span>
@@ -1831,6 +1994,117 @@ NET CLEAN ASSETS EXTRACTED:          +$${receiptData.payout.toFixed(2)}
       };
 
       container.appendChild(modalOverlay);
+    }
+
+    // ─── Stripe Connect Recipient Onboarding Modal ──────────────────────────
+    if (state.onboardingModalActive) {
+      const onboardModal = createElement('div', {
+        className: 'laundry-distraction-modal',
+        style: `
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 23, 0.92);
+          backdrop-filter: blur(8px);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        `
+      });
+
+      onboardModal.innerHTML = `
+        <div style="background: #090e17; border: 2px solid #06b6d4; border-radius: 10px; max-width: 480px; width: 100%; padding: 24px; box-shadow: 0 15px 45px rgba(0,0,0,0.9), 0 0 30px rgba(6,182,212,0.3); text-align: center; position: relative;">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">🌐💳</div>
+          <h3 style="font-family: 'Orbitron', sans-serif; color: #38bdf8; font-size: 1.15rem; margin: 0 0 8px 0;">
+            ONBOARD RECIPIENT ACCOUNT
+          </h3>
+          <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0 0 16px 0;">
+            Generate a secure Stripe Express onboarding link for a recipient. They will enter their bank account or debit card directly on Stripe's secure portal to receive transfers.
+          </p>
+
+          <div style="text-align: left; margin-bottom: 12px;">
+            <label style="color: #cbd5e1; font-size: 0.8rem; font-weight: bold;">RECIPIENT NAME / BUSINESS:</label>
+            <input type="text" id="onboard-name-input" placeholder="e.g. John Doe / Apex Labs" style="width: 100%; background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; font-size: 0.9rem; border-radius: 4px; box-sizing: border-box; margin-top: 4px;">
+          </div>
+
+          <div style="text-align: left; margin-bottom: 16px;">
+            <label style="color: #cbd5e1; font-size: 0.8rem; font-weight: bold;">RECIPIENT EMAIL (OPTIONAL):</label>
+            <input type="email" id="onboard-email-input" placeholder="recipient@example.com" style="width: 100%; background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; font-size: 0.9rem; border-radius: 4px; box-sizing: border-box; margin-top: 4px;">
+          </div>
+
+          <div id="onboard-status-msg" style="color: #ef4444; font-size: 0.8rem; margin-bottom: 12px; display: none;"></div>
+
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-submit-onboard" class="aim-btn" style="flex: 1; padding: 12px; background: rgba(6,182,212,0.25); border-color: #06b6d4; color: #38bdf8; font-weight: bold; cursor: pointer;">
+              CREATE ONBOARDING LINK ➔
+            </button>
+            <button id="btn-close-onboard" class="aim-btn" style="padding: 12px 16px; background: transparent; border-color: #334155; color: #94a3b8; cursor: pointer;">
+              CANCEL
+            </button>
+          </div>
+        </div>
+      `;
+
+      const nameInput = onboardModal.querySelector('#onboard-name-input');
+      const emailInput = onboardModal.querySelector('#onboard-email-input');
+      const btnSubmit = onboardModal.querySelector('#btn-submit-onboard');
+      const btnClose = onboardModal.querySelector('#btn-close-onboard');
+      const statusMsg = onboardModal.querySelector('#onboard-status-msg');
+
+      btnClose.onclick = () => {
+        playSFX('click');
+        state.onboardingModalActive = false;
+        render();
+      };
+
+      btnSubmit.onclick = async () => {
+        const nameVal = nameInput.value.trim();
+        const emailVal = emailInput.value.trim();
+        if (!nameVal) {
+          statusMsg.textContent = 'Please enter a recipient name or business entity.';
+          statusMsg.style.display = 'block';
+          return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'GENERATING STRIPE LINK...';
+        statusMsg.style.display = 'none';
+
+        try {
+          const resp = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-connect-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: nameVal,
+              email: emailVal,
+              return_url: window.location.href.split('?')[0],
+              refresh_url: window.location.href.split('?')[0]
+            })
+          });
+
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || 'Failed to create connect onboarding link');
+
+          saveDestination(data.accountId, nameVal);
+          state.selectedDestination = data.accountId;
+          state.selectedDestinationName = `${nameVal} [${data.accountId}]`;
+          state.onboardingModalActive = false;
+
+          playSFX('success');
+          // Open onboarding URL in a new window/tab
+          window.open(data.onboardingUrl, '_blank');
+          render();
+        } catch (err) {
+          statusMsg.textContent = err.message;
+          statusMsg.style.display = 'block';
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'CREATE ONBOARDING LINK ➔';
+          playSFX('incorrect');
+        }
+      };
+
+      container.appendChild(onboardModal);
     }
 
     // ─── 7-Day Temporary Feature Countdown Overlay ─────────────────────────
