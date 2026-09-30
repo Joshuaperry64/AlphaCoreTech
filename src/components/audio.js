@@ -1,6 +1,6 @@
 /**
  * Global Audio Manager & Sound FX Engine for AlphaCore
- * Manages background ambient stream (skybeat.mp3) and full UI sound effects.
+ * Manages background ambient stream (skybeat.webm) and full UI sound effects.
  */
 
 let globalAudio = null;
@@ -51,23 +51,14 @@ export function playSFX(type, volume = 0.5) {
   }
 }
 
-// ─── Main Ambient Audio Stream (skybeat.mp3) ─────────────────────────────
+// ─── Main Ambient Audio Stream (skybeat.webm) ─────────────────────────────
 
 export function initGlobalAudio() {
   if (globalAudio) return globalAudio;
 
-  globalAudio = new Audio('/skybeat.mp3');
+  globalAudio = new Audio('/skybeat.webm');
   globalAudio.loop = true;
   globalAudio.volume = 0.25;
-
-  // Seamless MP3 Loop Hack - clips encoder padding gap
-  globalAudio.addEventListener('timeupdate', () => {
-    const gapBuffer = 0.35; 
-    if (globalAudio.duration && globalAudio.currentTime > globalAudio.duration - gapBuffer) {
-      globalAudio.currentTime = 0;
-      globalAudio.play().catch(() => {});
-    }
-  });
 
   globalAudio.addEventListener('play', () => {
     isPlaying = true;
