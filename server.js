@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
+import sanitizeHtml from 'sanitize-html';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = path.dirname(_filename);
@@ -179,8 +180,18 @@ app.get('/api/gazette/:name', async (req, res) => {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
         if (!response.ok) return res.status(response.status).send('Not found');
-        const html = await response.text();
-        res.send(html);
+        let html = await response.text();
+        const cleanHtml = sanitizeHtml(html, {
+            allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'style', 'html', 'head', 'body', 'title', 'meta', 'link' ]),
+            allowedAttributes: {
+                '*': ['class', 'id', 'style'],
+                'a': ['href', 'name', 'target'],
+                'img': ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+                'link': ['href', 'rel', 'type']
+            },
+            allowVulnerableTags: true,
+        });
+        res.send(cleanHtml);
     } catch (e) {
         res.status(500).send(e.message);
     }
@@ -361,9 +372,19 @@ app.get('/api/gazette/:name', async (req, res) => {
     const fetch = (await import('node-fetch')).default;
     const searchUrl = `https://thegeorgiagazette.com/?s=${encodeURIComponent(req.params.name)}`;
     const r = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const html = await r.text();
+    let html = await r.text();
+    const cleanHtml = sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'style', 'html', 'head', 'body', 'title', 'meta', 'link' ]),
+        allowedAttributes: {
+            '*': ['class', 'id', 'style'],
+            'a': ['href', 'name', 'target'],
+            'img': ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+            'link': ['href', 'rel', 'type']
+        },
+        allowVulnerableTags: true,
+    });
     res.setHeader('Content-Type', 'text/html');
-    res.send(html);
+    res.send(cleanHtml);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

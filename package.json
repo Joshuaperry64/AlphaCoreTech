@@ -27,6 +27,7 @@
     "express": "^5.2.1",
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.19.1",
+    "sanitize-html": "^2.17.7",
     "serverless-http": "^4.0.0",
     "vite": "^6.0.0"
   }
