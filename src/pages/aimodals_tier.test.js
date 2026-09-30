@@ -17,7 +17,7 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.img2imgUrl).toContain('eco');
     expect(settings.txt2vidUrl).toContain('eco');
     expect(settings.img2vidUrl).toContain('eco');
-    expect(settings.preprocessorUrl).toContain('eco');
+    expect(settings.preprocessorUrl).toContain('730e5f');
     expect(settings.framepackUrl).toContain('framepack-ec-32daed');
     expect(settings.upscalerUrl).toContain('eco');
     expect(settings.vid2audioUrl).toContain('eco');
@@ -36,7 +36,7 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.img2imgUrl).toContain('eco');
     expect(settings.txt2vidUrl).toContain('eco');
     expect(settings.img2vidUrl).toContain('eco');
-    expect(settings.preprocessorUrl).toContain('eco');
+    expect(settings.preprocessorUrl).toContain('730e5f');
     expect(settings.framepackUrl).toContain('framepack-ec-32daed');
     expect(settings.upscalerUrl).toContain('eco');
     expect(settings.vid2audioUrl).toContain('eco');
@@ -76,7 +76,7 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.img2imgUrl).not.toContain('eco');
     expect(settings.txt2vidUrl).not.toContain('eco');
     expect(settings.img2vidUrl).not.toContain('eco');
-    expect(settings.preprocessorUrl).not.toContain('eco');
+    expect(settings.preprocessorUrl).toContain('11dd7a');
     expect(settings.framepackUrl).not.toContain('eco');
     expect(settings.upscalerUrl).not.toContain('eco');
     expect(settings.vid2audioUrl).not.toContain('eco');
