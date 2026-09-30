@@ -136,6 +136,11 @@ app.post('/api/recon/scan', authenticate, async (req, res) => {
         return res.status(400).json({ status: 'ERROR', message: 'Target identifier is required.' });
     }
 
+    // Validate target to prevent command/argument injection
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9@._-]*$/.test(target)) {
+        return res.status(400).json({ status: 'ERROR', message: 'Invalid target format.' });
+    }
+
     let queryType;
     if (target.includes('@')) {
         queryType = 'email';
