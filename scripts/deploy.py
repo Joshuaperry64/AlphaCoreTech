@@ -69,166 +69,168 @@ sync_image = (
     .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
 )
 
-@app.function(
+@app.cls(
     image=sync_image,
     volumes={CACHE_DIR: cache_volume},
     secrets=_get_secrets(),
     timeout=3600
 )
-def sync_website_models(force: bool = False):
-    """
-    Scans the hf-hub-cache modal volume for all website checkpoints and LoRAs.
-    If any model or LoRA is missing or empty, downloads it directly from CivitAI.
-    """
-    import os
-    import requests
-    from pathlib import Path
-    from tqdm import tqdm
+class AssetSync:
+    @modal.method()
+    def sync_website_models(self, force: bool = False):
+        """
+        Scans the hf-hub-cache modal volume for all website checkpoints and LoRAs.
+        If any model or LoRA is missing or empty, downloads it directly from CivitAI.
+        """
+        import os
+        import requests
+        from pathlib import Path
+        from tqdm import tqdm
 
-    api_key = os.environ.get("CIVITAI_API_KEY", "")
-    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        api_key = os.environ.get("CIVITAI_API_KEY", "")
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
 
-    ckpt_dir = Path(CACHE_DIR) / "checkpoints"
-    lora_dir = Path(CACHE_DIR) / "loras"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    lora_dir.mkdir(parents=True, exist_ok=True)
+        ckpt_dir = Path(CACHE_DIR) / "checkpoints"
+        lora_dir = Path(CACHE_DIR) / "loras"
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        lora_dir.mkdir(parents=True, exist_ok=True)
 
-    try:
-        cache_volume.reload()
-    except Exception as ve:
-        print(f"[DEPLOYMENT] Volume reload note (non-fatal): {ve}")
+        try:
+            cache_volume.reload()
+        except Exception as ve:
+            print(f"[DEPLOYMENT] Volume reload note (non-fatal): {ve}")
 
-    summary = {
-        "checkpoints": {"already_present": [], "downloaded": [], "failed": []},
-        "loras": {"already_present": [], "downloaded": [], "failed": []},
-    }
+        summary = {
+            "checkpoints": {"already_present": [], "downloaded": [], "failed": []},
+            "loras": {"already_present": [], "downloaded": [], "failed": []},
+        }
 
-    def process_item(filename, version_id, target_dir, category_key):
-        dest_path = target_dir / filename
-        category_name = "CHECKPOINT" if category_key == "checkpoints" else "LORA"
+        def process_item(filename, version_id, target_dir, category_key):
+            dest_path = target_dir / filename
+            category_name = "CHECKPOINT" if category_key == "checkpoints" else "LORA"
 
-        if not force and dest_path.exists():
-            size_mb = dest_path.stat().st_size / (1024 * 1024)
-            if size_mb > 1.0:
-                print(f"[{category_name}] {filename} exists ({size_mb:.2f} MB). Skipping.")
-                summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
-                return
+            if not force and dest_path.exists():
+                size_mb = dest_path.stat().st_size / (1024 * 1024)
+                if size_mb > 1.0:
+                    print(f"[{category_name}] {filename} exists ({size_mb:.2f} MB). Skipping.")
+                    summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
+                    return
 
-        # Check for existing variants/aliases (e.g. juggernautXL_ragnarokBy.safetensors)
-        if not force:
-            stem = filename.replace(".safetensors", "")
-            for existing in target_dir.glob(f"{stem}*.safetensors"):
-                if existing.is_file() and existing != dest_path and not existing.name.endswith(".tmp"):
-                    size_mb = existing.stat().st_size / (1024 * 1024)
-                    if size_mb > 1.0:
-                        print(f"[{category_name}] Found existing variant {existing.name} ({size_mb:.2f} MB) for {filename}. Linking...")
-                        try:
-                            os.link(str(existing), str(dest_path))
-                        except Exception:
+            # Check for existing variants/aliases (e.g. juggernautXL_ragnarokBy.safetensors)
+            if not force:
+                stem = filename.replace(".safetensors", "")
+                for existing in target_dir.glob(f"{stem}*.safetensors"):
+                    if existing.is_file() and existing != dest_path and not existing.name.endswith(".tmp"):
+                        size_mb = existing.stat().st_size / (1024 * 1024)
+                        if size_mb > 1.0:
+                            print(f"[{category_name}] Found existing variant {existing.name} ({size_mb:.2f} MB) for {filename}. Linking...")
                             try:
-                                os.symlink(str(existing), str(dest_path))
+                                os.link(str(existing), str(dest_path))
                             except Exception:
-                                import shutil
-                                shutil.copyfile(str(existing), str(dest_path))
-                        cache_volume.commit()
-                        summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
-                        return
+                                try:
+                                    os.symlink(str(existing), str(dest_path))
+                                except Exception:
+                                    import shutil
+                                    shutil.copyfile(str(existing), str(dest_path))
+                            cache_volume.commit()
+                            summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
+                            return
 
-        # Clean stale tmp file if any
-        tmp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
-        if tmp_path.exists():
+            # Clean stale tmp file if any
+            tmp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+
+            print(f"[{category_name}] Missing {filename}! Fetching metadata from CivitAI (ID: {version_id})...")
             try:
-                tmp_path.unlink()
+                meta_url = f"https://civitai.com/api/v1/model-versions/{version_id}"
+                meta_res = requests.get(meta_url, headers=headers, timeout=30)
+                if meta_res.status_code != 200:
+                    err = f"CivitAI API error: HTTP {meta_res.status_code}"
+                    if meta_res.status_code in (401, 403):
+                        err += " (Unauthorized/Forbidden - CIVITAI_API_KEY required for gated/NSFW models)"
+                    print(f"  -> ERROR: {err}")
+                    summary[category_key]["failed"].append({"file": filename, "error": err})
+                    return
+
+                meta_data = meta_res.json()
+                files = meta_data.get("files", [])
+                primary = next((f for f in files if f.get("primary", False)), files[0] if files else None)
+                if not primary or "downloadUrl" not in primary:
+                    err = "No downloadable file found in version metadata"
+                    print(f"  -> ERROR: {err}")
+                    summary[category_key]["failed"].append({"file": filename, "error": err})
+                    return
+
+                dl_url = primary["downloadUrl"]
+                if api_key:
+                    dl_url += f"&token={api_key}" if "?" in dl_url else f"?token={api_key}"
+
+                expected_mb = primary.get("sizeKB", 0) / 1024
+                print(f"  -> Downloading {filename} ({expected_mb:.2f} MB)...")
+
+                tmp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
+                with requests.get(dl_url, headers=headers, stream=True, timeout=60) as r:
+                    r.raise_for_status()
+                    total_size = int(r.headers.get("content-length", 0))
+
+                    with open(tmp_path, "wb") as f, tqdm(
+                        desc=filename,
+                        total=total_size,
+                        unit="iB",
+                        unit_scale=True,
+                        unit_divisor=1024,
+                    ) as bar:
+                        for chunk in r.iter_content(chunk_size=65536):
+                            f.write(chunk)
+                            bar.update(len(chunk))
+
+                tmp_size_mb = tmp_path.stat().st_size / (1024 * 1024)
+                min_mb = 10.0 if category_key == "checkpoints" else 1.0
+                if tmp_size_mb < min_mb:
+                    tmp_path.unlink(missing_ok=True)
+                    err = f"Downloaded file size too small ({tmp_size_mb:.2f} MB), potentially corrupt or HTML error response."
+                    print(f"  -> ERROR: {err}")
+                    summary[category_key]["failed"].append({"file": filename, "error": err})
+                    return
+
+                tmp_path.rename(dest_path)
+                cache_volume.commit()
+                actual_mb = dest_path.stat().st_size / (1024 * 1024)
+                print(f"  -> [SAVED] {dest_path} ({actual_mb:.2f} MB)")
+                summary[category_key]["downloaded"].append({"file": filename, "size_mb": round(actual_mb, 2)})
+
+            except Exception as exc:
+                print(f"  -> FAILED downloading {filename}: {exc}")
+                summary[category_key]["failed"].append({"file": filename, "error": str(exc)})
+
+        print("=" * 60)
+        print("ALPHACORE: SCANNING & SYNCING CHECKPOINTS...")
+        print("=" * 60)
+        for fn, vid in WEBSITE_CHECKPOINTS.items():
+            process_item(fn, vid, ckpt_dir, "checkpoints")
+
+        print("\n" + "=" * 60)
+        print("ALPHACORE: SCANNING & SYNCING LORAS...")
+        print("=" * 60)
+        for fn, vid in WEBSITE_LORAS.items():
+            process_item(fn, vid, lora_dir, "loras")
+
+        for tmp_file in list(ckpt_dir.glob("*.tmp")) + list(lora_dir.glob("*.tmp")):
+            try:
+                tmp_file.unlink()
+                print(f"[CLEANUP] Removed orphan temp file: {tmp_file.name}")
             except Exception:
                 pass
 
-        print(f"[{category_name}] Missing {filename}! Fetching metadata from CivitAI (ID: {version_id})...")
-        try:
-            meta_url = f"https://civitai.com/api/v1/model-versions/{version_id}"
-            meta_res = requests.get(meta_url, headers=headers, timeout=30)
-            if meta_res.status_code != 200:
-                err = f"CivitAI API error: HTTP {meta_res.status_code}"
-                if meta_res.status_code in (401, 403):
-                    err += " (Unauthorized/Forbidden - CIVITAI_API_KEY required for gated/NSFW models)"
-                print(f"  -> ERROR: {err}")
-                summary[category_key]["failed"].append({"file": filename, "error": err})
-                return
-
-            meta_data = meta_res.json()
-            files = meta_data.get("files", [])
-            primary = next((f for f in files if f.get("primary", False)), files[0] if files else None)
-            if not primary or "downloadUrl" not in primary:
-                err = "No downloadable file found in version metadata"
-                print(f"  -> ERROR: {err}")
-                summary[category_key]["failed"].append({"file": filename, "error": err})
-                return
-
-            dl_url = primary["downloadUrl"]
-            if api_key:
-                dl_url += f"&token={api_key}" if "?" in dl_url else f"?token={api_key}"
-
-            expected_mb = primary.get("sizeKB", 0) / 1024
-            print(f"  -> Downloading {filename} ({expected_mb:.2f} MB)...")
-
-            tmp_path = dest_path.with_suffix(dest_path.suffix + ".tmp")
-            with requests.get(dl_url, headers=headers, stream=True, timeout=60) as r:
-                r.raise_for_status()
-                total_size = int(r.headers.get("content-length", 0))
-
-                with open(tmp_path, "wb") as f, tqdm(
-                    desc=filename,
-                    total=total_size,
-                    unit="iB",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                ) as bar:
-                    for chunk in r.iter_content(chunk_size=65536):
-                        f.write(chunk)
-                        bar.update(len(chunk))
-
-            tmp_size_mb = tmp_path.stat().st_size / (1024 * 1024)
-            min_mb = 10.0 if category_key == "checkpoints" else 1.0
-            if tmp_size_mb < min_mb:
-                tmp_path.unlink(missing_ok=True)
-                err = f"Downloaded file size too small ({tmp_size_mb:.2f} MB), potentially corrupt or HTML error response."
-                print(f"  -> ERROR: {err}")
-                summary[category_key]["failed"].append({"file": filename, "error": err})
-                return
-
-            tmp_path.rename(dest_path)
-            cache_volume.commit()
-            actual_mb = dest_path.stat().st_size / (1024 * 1024)
-            print(f"  -> [SAVED] {dest_path} ({actual_mb:.2f} MB)")
-            summary[category_key]["downloaded"].append({"file": filename, "size_mb": round(actual_mb, 2)})
-
-        except Exception as exc:
-            print(f"  -> FAILED downloading {filename}: {exc}")
-            summary[category_key]["failed"].append({"file": filename, "error": str(exc)})
-
-    print("=" * 60)
-    print("ALPHACORE: SCANNING & SYNCING CHECKPOINTS...")
-    print("=" * 60)
-    for fn, vid in WEBSITE_CHECKPOINTS.items():
-        process_item(fn, vid, ckpt_dir, "checkpoints")
-
-    print("\n" + "=" * 60)
-    print("ALPHACORE: SCANNING & SYNCING LORAS...")
-    print("=" * 60)
-    for fn, vid in WEBSITE_LORAS.items():
-        process_item(fn, vid, lora_dir, "loras")
-
-    for tmp_file in list(ckpt_dir.glob("*.tmp")) + list(lora_dir.glob("*.tmp")):
-        try:
-            tmp_file.unlink()
-            print(f"[CLEANUP] Removed orphan temp file: {tmp_file.name}")
-        except Exception:
-            pass
-
-    cache_volume.commit()
-    print("\n" + "=" * 60)
-    print("SYNC OPERATION COMPLETED")
-    print("=" * 60)
-    return summary
+        cache_volume.commit()
+        print("\n" + "=" * 60)
+        print("SYNC OPERATION COMPLETED")
+        print("=" * 60)
+        return summary
 
 # --- PYDANTIC REQUEST SCHEMAS ---
 class MusicRequest(BaseModel):
@@ -405,7 +407,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     @app_instance.post("/api/assets/sync-website-models")
     async def api_sync_website_models(force: bool = False):
         try:
-            call = sync_website_models.spawn(force=force)
+            call = AssetSync().sync_website_models.spawn(force=force)
             return {
                 "status": "sync_initiated",
                 "call_id": call.object_id,
@@ -611,7 +613,7 @@ def scan_and_download(force: bool = False):
         modal run deployment.py --force
     """
     print("🚀 Triggering remote volume scan & download for all website checkpoints and LoRAs...")
-    result = sync_website_models.remote(force=force)
+    result = AssetSync().sync_website_models.remote(force=force)
     print("\n✅ Sync run completed!")
     import json
     print(json.dumps(result, indent=2))
