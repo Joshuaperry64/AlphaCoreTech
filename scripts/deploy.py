@@ -433,7 +433,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_profiles():
         try:
             import asyncio
-            contents = await asyncio.wait_for(cloner.list_volume_contents.remote.aio(), timeout=15.0)
+            contents = await asyncio.wait_for(cloner.VoiceCloner_Storage().list_volume_contents.remote.aio(), timeout=15.0)
             volume_profiles = []
             if isinstance(contents, dict) and "error" not in contents:
                 for path_str in contents.keys():
@@ -468,7 +468,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_convert(req: VoiceConvertRequest):
         try:
             audio_bytes = base64.b64decode(req.audio_b64)
-            fn = cloner.infer_audio_modal_eco if is_eco else cloner.infer_audio_modal
+            fn = cloner.VoiceCloner_Eco().infer_audio_modal_eco if is_eco else cloner.VoiceCloner().infer_audio_modal
             result = await fn.remote.aio(
                 profile_name=req.profile_name,
                 audio_bytes=audio_bytes,
@@ -493,7 +493,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_upload_sample(req: VoiceSampleUpload):
         try:
             file_bytes = base64.b64decode(req.audio_b64)
-            await cloner.upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
+            await cloner.VoiceCloner_Storage().upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
             return {"status": "success", "message": f"Sample {req.filename} saved for {req.profile_name}"}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -504,7 +504,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
         if not target_name:
             raise HTTPException(status_code=400, detail="Missing 'profile_name' parameter")
         try:
-            call = cloner.process_audio_samples.spawn(target_name)
+            call = cloner.VoiceCloner().process_audio_samples.spawn(target_name)
             return {
                 "status": "training_started",
                 "call_id": call.object_id,
