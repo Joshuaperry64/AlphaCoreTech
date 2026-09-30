@@ -1,4 +1,17 @@
-import { createElement } from '../components/utils.js';
+
+function h(tag, props = {}) {
+  const el = document.h(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'className') el.className = v;
+    else if (k === 'textContent') el.textContent = v;
+    else if (k === 'innerHTML') el.innerHTML = v;
+    else if (k === 'type') el.type = v;
+    else if (k === 'placeholder') el.placeholder = v;
+    else if (k === 'id') el.id = v;
+    else el.setAttribute(k, v);
+  }
+  return el;
+}
 import { playSFX } from '../components/audio.js';
 
 // --- Laundromat Audio Engine ---
@@ -23,7 +36,7 @@ class LaundromatAudioEngine {
 }
 
 export default function TransferPage() {
-  const container = createElement('div', { className: 'page-container laundry-page' });
+  const container = h('div', { className: 'page-container laundry-page' });
   container.style.cssText = 'padding: 0; margin: 0 auto; color: #fff; font-family: "Share Tech Mono", monospace; min-height: 80vh; background: #000; position: relative; overflow: hidden;';
 
   const audio = new LaundromatAudioEngine();
@@ -53,15 +66,15 @@ export default function TransferPage() {
   };
 
   // --- Layout Elements ---
-  const topNav = createElement('div', { className: 'laundry-nav' });
+  const topNav = h('div', { className: 'laundry-nav' });
   topNav.style.cssText = 'padding: 15px; background: #111; border-bottom: 2px solid #333; display: flex; justify-content: space-between; align-items: center; z-index: 10; position: relative;';
   
-  const invDisplay = createElement('div', { className: 'inventory-display' });
+  const invDisplay = h('div', { className: 'inventory-display' });
   invDisplay.style.cssText = 'display: flex; gap: 15px; font-size: 1.1rem;';
 
-  const viewControls = createElement('div', { className: 'view-controls' });
+  const viewControls = h('div', { className: 'view-controls' });
   
-  const viewport = createElement('div', { className: 'laundry-viewport' });
+  const viewport = h('div', { className: 'laundry-viewport' });
   viewport.style.cssText = 'padding: 20px; min-height: 70vh; position: relative; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%); transition: all 0.5s;';
 
   container.appendChild(topNav);
@@ -82,7 +95,7 @@ export default function TransferPage() {
     viewControls.innerHTML = '';
     const views = ['LOBBY', 'CHANGER', 'WASHERS', 'DRYERS', 'BATHROOM'];
     views.forEach(v => {
-      const btn = createElement('button', { textContent: v });
+      const btn = h('button', { textContent: v });
       btn.style.cssText = `margin-left: 10px; padding: 5px 10px; background: ${state.view === v ? '#06b6d4' : '#222'}; border: 1px solid #444; color: #fff; cursor: pointer;`;
       btn.onclick = () => setView(v);
       viewControls.appendChild(btn);
@@ -120,10 +133,10 @@ export default function TransferPage() {
   function renderViewport() {
     viewport.innerHTML = '';
     if (state.view === 'LOBBY') {
-      const title = createElement('h1', { textContent: 'THE LAUNDROMAT' });
+      const title = h('h1', { textContent: 'THE LAUNDROMAT' });
       title.style.cssText = 'font-size: 4rem; color: #06b6d4; text-shadow: 0 0 15px rgba(6,182,212,0.5); position: absolute; top: 10%; margin: 0;';
       
-      const instructions = createElement('div', { innerHTML: '<p>1. Get Coins at Changer</p><p>2. Wash Clothes</p><p>3. Dry Clothes</p><p>4. Collect Clean Receipt</p>' });
+      const instructions = h('div', { innerHTML: '<p>1. Get Coins at Changer</p><p>2. Wash Clothes</p><p>3. Dry Clothes</p><p>4. Collect Clean Receipt</p>' });
       instructions.style.cssText = 'color: #aaa; text-align: center; font-size: 1.5rem; margin-top: 60px; line-height: 1.5;';
       
       viewport.appendChild(title);
@@ -139,7 +152,7 @@ export default function TransferPage() {
       renderMachines(state.dryers, 'DRYER', '🧦 Insert Wet Clothes', 'wetClothes', 'cleanClothes', '🧻 Add Dryer Sheet', 'dryerSheets');
     }
     else if (state.view === 'BATHROOM') {
-      const mirror = createElement('div', { textContent: '🪞 You look at yourself in the mirror. It\'s been a long night of money laundering. Time is a flat circle.' });
+      const mirror = h('div', { textContent: '🪞 You look at yourself in the mirror. It\'s been a long night of money laundering. Time is a flat circle.' });
       mirror.style.cssText = 'font-size: 2rem; color: #888; text-align: center; max-width: 600px; line-height: 1.6; padding: 40px; border: 4px dashed #444; border-radius: 20px; background: rgba(0,0,0,0.5);';
       viewport.appendChild(mirror);
     }
@@ -147,23 +160,23 @@ export default function TransferPage() {
 
   // --- Coin Changer (Stripe UI) ---
   function renderCoinChanger() {
-    const changer = createElement('div');
+    const changer = h('div');
     changer.style.cssText = 'background: #222; border: 4px solid #444; border-radius: 10px; padding: 30px; width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.8); z-index: 5;';
     
-    const title = createElement('h2', { textContent: 'COIN CHANGER' });
+    const title = h('h2', { textContent: 'COIN CHANGER' });
     title.style.margin = '0 0 20px 0';
     changer.appendChild(title);
 
-    const inputAmt = createElement('input', { type: 'number', placeholder: 'Amount (USD) - Min $0.50' });
+    const inputAmt = h('input', { type: 'number', placeholder: 'Amount (USD) - Min $0.50' });
     inputAmt.style.cssText = 'width: 90%; padding: 15px; margin: 10px 0; background: #000; color: #0f0; border: 2px solid #0f0; font-family: inherit; text-align: center; font-size: 1.5rem; border-radius: 5px;';
     
-    const inputDest = createElement('input', { type: 'text', placeholder: 'Destination Acct (optional)' });
+    const inputDest = h('input', { type: 'text', placeholder: 'Destination Acct (optional)' });
     inputDest.style.cssText = 'width: 90%; padding: 10px; margin: 10px 0; background: #000; color: #fff; border: 1px solid #444; font-family: inherit; text-align: center; border-radius: 5px;';
 
-    const cardContainer = createElement('div', { id: 'stripe-card-element' });
+    const cardContainer = h('div', { id: 'stripe-card-element' });
     cardContainer.style.cssText = 'background: #111; padding: 20px; margin: 15px 0; border: 1px solid #333; display: none; min-height: 150px;';
 
-    const btnGet = createElement('button', { textContent: 'INSERT CARD' });
+    const btnGet = h('button', { textContent: 'INSERT CARD' });
     btnGet.style.cssText = 'padding: 15px 30px; background: #06b6d4; color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 1.2rem; width: 100%; border-radius: 5px; margin-top: 10px;';
 
     changer.appendChild(inputAmt);
@@ -221,11 +234,11 @@ export default function TransferPage() {
           
           // Animate coins popping out
           changer.innerHTML = '';
-          const successTitle = createElement('h2', { textContent: '🪙 CLINK CLINK CLINK 🪙' });
+          const successTitle = h('h2', { textContent: '🪙 CLINK CLINK CLINK 🪙' });
           successTitle.style.color = '#10b981';
           changer.appendChild(successTitle);
           
-          const coinBtn = createElement('button', { textContent: `Collect ${amt} Coins` });
+          const coinBtn = h('button', { textContent: `Collect ${amt} Coins` });
           coinBtn.style.cssText = 'padding: 20px; background: #10b981; color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 1.5rem; width: 100%; margin-top: 20px; border-radius: 10px; animation: pulse 1s infinite;';
           changer.appendChild(coinBtn);
 
@@ -244,15 +257,15 @@ export default function TransferPage() {
 
   // --- Machines (Washers / Dryers) ---
   function renderMachines(machineList, type, loadActionText, reqInvItem, outputItem, prepActionText, prepInvItem) {
-    const container = createElement('div');
+    const container = h('div');
     container.style.cssText = 'display: flex; gap: 60px;';
 
     machineList.forEach(m => {
-      const machine = createElement('div');
+      const machine = h('div');
       machine.style.cssText = 'background: #ccc; width: 280px; height: 420px; border-radius: 20px; border: 6px solid #888; position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 30px; box-shadow: inset -10px -10px 30px rgba(0,0,0,0.3), 0 20px 50px rgba(0,0,0,0.6);';
 
       // Machine Door / Window
-      const door = createElement('div');
+      const door = h('div');
       const isRunning = m.status === 'RUNNING';
       const isDone = m.status === 'FINISHED';
       
@@ -262,23 +275,23 @@ export default function TransferPage() {
 
       door.style.cssText = `width: 180px; height: 180px; border-radius: 50%; border: 20px solid #ddd; background: ${windowBg}; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);`;
       
-      const clothes = createElement('div', { textContent: m.load > 0 ? (type === 'WASHER' ? '🪙👕' : '🧦👕') : '' });
+      const clothes = h('div', { textContent: m.load > 0 ? (type === 'WASHER' ? '🪙👕' : '🧦👕') : '' });
       clothes.style.cssText = `font-size: 4rem; animation: ${spinAnim}; transition: all 0.5s;`;
       door.appendChild(clothes);
       machine.appendChild(door);
 
       // Status Screen
-      const screen = createElement('div');
+      const screen = h('div');
       screen.style.cssText = 'background: #000; color: #0f0; width: 85%; padding: 10px; text-align: center; border-radius: 5px; margin-bottom: 20px; border: 3px inset #444; font-family: monospace; font-size: 1.1rem;';
       screen.textContent = m.status === 'RUNNING' ? `TIME: ${m.timeRemaining}s` : `STATUS: ${m.status}\nLOAD: ${m.load}`;
       machine.appendChild(screen);
 
       // Controls
-      const controls = createElement('div');
+      const controls = h('div');
       controls.style.cssText = 'display: flex; flex-direction: column; gap: 8px; width: 85%;';
 
       if (m.status === 'IDLE') {
-        const btnLoad = createElement('button', { textContent: loadActionText });
+        const btnLoad = h('button', { textContent: loadActionText });
         btnLoad.style.cssText = 'padding: 8px; font-weight: bold; font-size: 1rem; border-radius: 4px;';
         btnLoad.onclick = () => {
           if (state.inventory[reqInvItem] > 0) {
@@ -291,7 +304,7 @@ export default function TransferPage() {
           }
         };
 
-        const btnPrep = createElement('button', { textContent: prepActionText });
+        const btnPrep = h('button', { textContent: prepActionText });
         btnPrep.style.cssText = 'padding: 8px; font-weight: bold; font-size: 1rem; border-radius: 4px;';
         btnPrep.onclick = () => {
           if (state.inventory[prepInvItem] > 0) {
@@ -304,7 +317,7 @@ export default function TransferPage() {
           }
         };
 
-        const btnStart = createElement('button', { textContent: 'START' });
+        const btnStart = h('button', { textContent: 'START' });
         btnStart.style.cssText = 'background: #10b981; color: #000; font-weight: bold; padding: 10px; font-size: 1.2rem; border-radius: 4px; margin-top: 5px; border: 2px solid #064e3b;';
         btnStart.onclick = () => {
           if (m.load === 0) return alert('Machine is empty!');
@@ -334,7 +347,7 @@ export default function TransferPage() {
         controls.appendChild(btnStart);
       } 
       else if (m.status === 'RUNNING') {
-        const btnTimeTravel = createElement('button', { textContent: '⏳ TIME TRAVEL' });
+        const btnTimeTravel = h('button', { textContent: '⏳ TIME TRAVEL' });
         btnTimeTravel.style.cssText = 'background: #8b5cf6; color: #fff; font-weight: bold; border: none; padding: 15px; border-radius: 5px; font-size: 1.1rem; animation: pulse 2s infinite;';
         btnTimeTravel.onclick = () => {
           m.timeRemaining = 1; // skip to end
@@ -343,7 +356,7 @@ export default function TransferPage() {
         controls.appendChild(btnTimeTravel);
       }
       else if (m.status === 'FINISHED') {
-        const btnCollect = createElement('button', { textContent: `Take ${type === 'WASHER' ? 'Wet' : 'Clean'} Clothes` });
+        const btnCollect = h('button', { textContent: `Take ${type === 'WASHER' ? 'Wet' : 'Clean'} Clothes` });
         btnCollect.style.cssText = 'background: #06b6d4; color: #000; font-weight: bold; padding: 15px; border-radius: 5px; font-size: 1.1rem;';
         btnCollect.onclick = () => {
           state.inventory[outputItem] += m.load;
@@ -369,7 +382,7 @@ export default function TransferPage() {
   }
 
   function showReceipt() {
-    const modal = createElement('div');
+    const modal = h('div');
     modal.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #000; padding: 40px; width: 350px; box-shadow: 0 0 100px rgba(255,255,255,0.8); font-family: monospace; z-index: 100; border-top: 15px solid #ddd; font-size: 1.1rem;';
     
     modal.innerHTML = `
@@ -390,7 +403,7 @@ export default function TransferPage() {
 
   // Global CSS injected once
   if (!document.getElementById('laundry-game-styles')) {
-    const style = document.createElement('style');
+    const style = document.h('style');
     style.id = 'laundry-game-styles';
     style.textContent = `
       @keyframes spin { 100% { transform: rotate(360deg); } }

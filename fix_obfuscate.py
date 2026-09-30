@@ -1,24 +1,9 @@
-/**
- * Port Entry Point: AlphaObfuscate
- * Web-Ported Interactive Component for AlphaCoreTech Subroutines Console.
- */
+import re
 
-// 1. Metadata Exports (PortComponentContract)
-export const id = 'port-alphaobfuscate';
-export const name = 'AlphaObfuscate';
-export const category = 'Reverse Engineering & Security';
-export const version = '1.0.0';
-export const description = 'Python / JS code obfuscator, string encryptor, and AST trans...';
-export const pythonSourcePath = 'AlphaObfuscate/main.py';
+with open('src/ports/alphaobfuscate/index.js', 'r', encoding='utf-8') as f:
+    content = f.read()
 
-let activeInstance = null;
-
-/**
- * Pure JavaScript Domain Logic (Ported from Python original)
- * @param {string} inputData 
- * @returns {Object} Processing results
- */
-
+new_logic = '''
 export function processCoreLogic(inputData) {
   const cleanInput = (inputData || '').trim();
   if (!cleanInput) {
@@ -46,19 +31,9 @@ export function processCoreLogic(inputData) {
     ]
   };
 }
+'''
 
+content = re.sub(r'export function processCoreLogic.*?return \{.*?records: processed.*?\}\n\}', new_logic, content, flags=re.DOTALL)
 
-const portExport = {
-  id,
-  name,
-  category,
-  version,
-  description,
-  pythonSourcePath,
-  render,
-  execute,
-  destroy,
-  processCoreLogic
-};
-
-export default portExport;
+with open('src/ports/alphaobfuscate/index.js', 'w', encoding='utf-8') as f:
+    f.write(content)
