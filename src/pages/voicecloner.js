@@ -555,9 +555,8 @@ export default function VoiceClonerPage() {
         appendLog(`Uploading ${files.length} sample(s) for profile '${profileName}'...`);
 
         try {
-          // Upload each sample as base64
-          for (let i = 0; i < files.length; i++) {
-            const f = files[i];
+          // Upload all samples concurrently
+          const uploadPromises = Array.from(files).map(async (f, i) => {
             appendLog(`Uploading sample ${i+1}/${files.length}: ${f.name}...`);
             const b64 = await fileToBase64(f);
             await fetch(`${MAIN_API_BASE}/api/voice/upload-sample`, {
@@ -565,7 +564,8 @@ export default function VoiceClonerPage() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ profile_name: profileName, filename: f.name, audio_b64: b64 })
             });
-          }
+          });
+          await Promise.all(uploadPromises);
 
           appendLog('All samples staged. Launching Modal A10G training container...');
           const trainRes = await fetch(`${MAIN_API_BASE}/api/voice/train?profile_name=${encodeURIComponent(profileName)}`, {
