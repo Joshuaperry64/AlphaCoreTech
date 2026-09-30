@@ -1,6 +1,6 @@
 
 function h(tag, props = {}) {
-  const el = document.h(tag);
+  const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
     if (k === 'className') el.className = v;
     else if (k === 'textContent') el.textContent = v;
