@@ -1449,7 +1449,7 @@ export default function TransferPage() {
           btnVerifyDest.textContent = 'CHECKING...';
           destVerifyStatus.textContent = 'Querying Stripe network...';
           try {
-            const resp = await fetch(`https://josh627764--alphacore-stripe-fastapi-app.modal.run/get-account-info?account_id=${id}`);
+            const resp = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/get-account-info?account_id=${id}`);
             const data = await resp.json();
             if (!resp.ok) throw new Error(data.detail || 'Account lookup failed');
             state.verifiedCustomInfo = data;
@@ -1548,7 +1548,7 @@ export default function TransferPage() {
         laundromatAudio.playBillWhir();
 
         try {
-          const response = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-payment-intent', {
+          const response = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/create-payment-intent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2237,7 +2237,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
         statusMsg.style.display = 'none';
 
         try {
-          const resp = await fetch('https://josh627764--alphacore-stripe-fastapi-app.modal.run/create-connect-account', {
+          const resp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/create-connect-account', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

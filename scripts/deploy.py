@@ -576,11 +576,11 @@ web_app_eco = create_aio_api(is_eco=True)
 # 4. Expose the FastAPI apps to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
+    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "stripe")
+    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio", "stripe_transfer")
 )
 
-@app.function(image=router_image, scaledown_window=120)
+@app.function(image=router_image, scaledown_window=120, secrets=_get_secrets())
 @modal.asgi_app()
 def AlphaCore_Main_API():
     """Universal Main API mapping /architect and /eco to respective routers."""
@@ -602,6 +602,9 @@ def AlphaCore_Main_API():
         
     master_app.mount("/architect", web_app)
     master_app.mount("/eco", web_app_eco)
+    
+    import stripe_transfer
+    master_app.mount("/stripe", stripe_transfer.StripeAPI())
     
     return master_app
 
