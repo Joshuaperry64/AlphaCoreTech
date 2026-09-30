@@ -1,4 +1,5 @@
-import { createElement } from '../components/utils.js';
+const fs = require('fs');
+const gameCode = `import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
 
 // --- Laundromat Audio Engine ---
@@ -72,18 +73,18 @@ export default function TransferPage() {
 
   // --- Update UI ---
   function updateNav() {
-    invDisplay.innerHTML = `
-      <span>🪙 Coins: ${state.inventory.coins}</span>
-      <span>💧 Detergent: ${state.inventory.detergent}</span>
-      <span>🧦 Wet Clothes: ${state.inventory.wetClothes}</span>
-      <span>🧺 Clean Clothes: ${state.inventory.cleanClothes}</span>
-    `;
+    invDisplay.innerHTML = \`
+      <span>?? Coins: \${state.inventory.coins}</span>
+      <span>?? Detergent: \${state.inventory.detergent}</span>
+      <span>?? Wet Clothes: \${state.inventory.wetClothes}</span>
+      <span>?? Clean Clothes: \${state.inventory.cleanClothes}</span>
+    \`;
 
     viewControls.innerHTML = '';
     const views = ['LOBBY', 'CHANGER', 'WASHERS', 'DRYERS', 'BATHROOM'];
     views.forEach(v => {
       const btn = createElement('button', { textContent: v });
-      btn.style.cssText = `margin-left: 10px; padding: 5px 10px; background: ${state.view === v ? '#06b6d4' : '#222'}; border: 1px solid #444; color: #fff; cursor: pointer;`;
+      btn.style.cssText = \`margin-left: 10px; padding: 5px 10px; background: \${state.view === v ? '#06b6d4' : '#222'}; border: 1px solid #444; color: #fff; cursor: pointer;\`;
       btn.onclick = () => setView(v);
       viewControls.appendChild(btn);
     });
@@ -133,13 +134,13 @@ export default function TransferPage() {
       renderCoinChanger();
     }
     else if (state.view === 'WASHERS') {
-      renderMachines(state.washers, 'WASHER', '🪙 Insert Coins', 'coins', 'wetClothes', '💧 Add Detergent', 'detergent');
+      renderMachines(state.washers, 'WASHER', '?? Insert Coins', 'coins', 'wetClothes', '?? Add Detergent', 'detergent');
     }
     else if (state.view === 'DRYERS') {
-      renderMachines(state.dryers, 'DRYER', '🧦 Insert Wet Clothes', 'wetClothes', 'cleanClothes', '🧻 Add Dryer Sheet', 'dryerSheets');
+      renderMachines(state.dryers, 'DRYER', '?? Insert Wet Clothes', 'wetClothes', 'cleanClothes', '?? Add Dryer Sheet', 'dryerSheets');
     }
     else if (state.view === 'BATHROOM') {
-      const mirror = createElement('div', { textContent: '🪞 You look at yourself in the mirror. It\'s been a long night of money laundering. Time is a flat circle.' });
+      const mirror = createElement('div', { textContent: '?? You look at yourself in the mirror. It\\'s been a long night of money laundering. Time is a flat circle.' });
       mirror.style.cssText = 'font-size: 2rem; color: #888; text-align: center; max-width: 600px; line-height: 1.6; padding: 40px; border: 4px dashed #444; border-radius: 20px; background: rgba(0,0,0,0.5);';
       viewport.appendChild(mirror);
     }
@@ -221,11 +222,11 @@ export default function TransferPage() {
           
           // Animate coins popping out
           changer.innerHTML = '';
-          const successTitle = createElement('h2', { textContent: '🪙 CLINK CLINK CLINK 🪙' });
+          const successTitle = createElement('h2', { textContent: '?? CLINK CLINK CLINK ??' });
           successTitle.style.color = '#10b981';
           changer.appendChild(successTitle);
           
-          const coinBtn = createElement('button', { textContent: `Collect ${amt} Coins` });
+          const coinBtn = createElement('button', { textContent: `Collect \${amt} Coins` });
           coinBtn.style.cssText = 'padding: 20px; background: #10b981; color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 1.5rem; width: 100%; margin-top: 20px; border-radius: 10px; animation: pulse 1s infinite;';
           changer.appendChild(coinBtn);
 
@@ -260,17 +261,17 @@ export default function TransferPage() {
       let windowBg = isRunning ? '#1e3a8a' : (isDone ? '#064e3b' : '#111');
       if (type === 'DRYER' && isRunning) windowBg = '#9a3412';
 
-      door.style.cssText = `width: 180px; height: 180px; border-radius: 50%; border: 20px solid #ddd; background: ${windowBg}; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);`;
+      door.style.cssText = \`width: 180px; height: 180px; border-radius: 50%; border: 20px solid #ddd; background: \${windowBg}; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);\`;
       
-      const clothes = createElement('div', { textContent: m.load > 0 ? (type === 'WASHER' ? '🪙👕' : '🧦👕') : '' });
-      clothes.style.cssText = `font-size: 4rem; animation: ${spinAnim}; transition: all 0.5s;`;
+      const clothes = createElement('div', { textContent: m.load > 0 ? (type === 'WASHER' ? '????' : '????') : '' });
+      clothes.style.cssText = \`font-size: 4rem; animation: \${spinAnim}; transition: all 0.5s;\`;
       door.appendChild(clothes);
       machine.appendChild(door);
 
       // Status Screen
       const screen = createElement('div');
       screen.style.cssText = 'background: #000; color: #0f0; width: 85%; padding: 10px; text-align: center; border-radius: 5px; margin-bottom: 20px; border: 3px inset #444; font-family: monospace; font-size: 1.1rem;';
-      screen.textContent = m.status === 'RUNNING' ? `TIME: ${m.timeRemaining}s` : `STATUS: ${m.status}\nLOAD: ${m.load}`;
+      screen.textContent = m.status === 'RUNNING' ? \`TIME: \${m.timeRemaining}s\` : \`STATUS: \${m.status}\\nLOAD: \${m.load}\`;
       machine.appendChild(screen);
 
       // Controls
@@ -334,7 +335,7 @@ export default function TransferPage() {
         controls.appendChild(btnStart);
       } 
       else if (m.status === 'RUNNING') {
-        const btnTimeTravel = createElement('button', { textContent: '⏳ TIME TRAVEL' });
+        const btnTimeTravel = createElement('button', { textContent: '? TIME TRAVEL' });
         btnTimeTravel.style.cssText = 'background: #8b5cf6; color: #fff; font-weight: bold; border: none; padding: 15px; border-radius: 5px; font-size: 1.1rem; animation: pulse 2s infinite;';
         btnTimeTravel.onclick = () => {
           m.timeRemaining = 1; // skip to end
@@ -372,14 +373,14 @@ export default function TransferPage() {
     const modal = createElement('div');
     modal.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #000; padding: 40px; width: 350px; box-shadow: 0 0 100px rgba(255,255,255,0.8); font-family: monospace; z-index: 100; border-top: 15px solid #ddd; font-size: 1.1rem;';
     
-    modal.innerHTML = `
+    modal.innerHTML = \`
       <h2 style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; font-size: 2rem; margin-top: 0;">RECEIPT</h2>
       <p><b>Laundromat:</b> AlphaCore</p>
-      <p><b>Destination:</b> ${state.receiptData ? state.receiptData.destination : 'N/A'}</p>
+      <p><b>Destination:</b> \${state.receiptData ? state.receiptData.destination : 'N/A'}</p>
       <p><b>Status:</b> WASHED & DRIED</p>
       <p style="text-align: center; margin-top: 30px; font-style: italic;">Thank you for doing laundry.</p>
       <button id="close-receipt" style="margin-top: 30px; width: 100%; padding: 15px; background: #000; color: #fff; cursor: pointer; font-weight: bold; font-size: 1.2rem; border-radius: 5px;">TAKE RECEIPT</button>
-    `;
+    \`;
     
     viewport.appendChild(modal);
     
@@ -392,13 +393,13 @@ export default function TransferPage() {
   if (!document.getElementById('laundry-game-styles')) {
     const style = document.createElement('style');
     style.id = 'laundry-game-styles';
-    style.textContent = `
+    style.textContent = \`
       @keyframes spin { 100% { transform: rotate(360deg); } }
       @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
       .laundry-viewport button { font-family: "Share Tech Mono", monospace; cursor: pointer; transition: all 0.2s; }
       .laundry-viewport button:hover { filter: brightness(1.2); }
       .laundry-page * { box-sizing: border-box; }
-    `;
+    \`;
     document.head.appendChild(style);
   }
 
@@ -408,3 +409,6 @@ export default function TransferPage() {
 
   return container;
 }
+`;
+fs.writeFileSync('src/pages/transfer.js', gameCode, 'utf-8');
+console.log('Game code generated!');
