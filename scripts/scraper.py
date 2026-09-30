@@ -162,7 +162,7 @@ def fetch_mugshots():
 
 @app.function(image=image, timeout=120)
 @modal.asgi_app()
-def Fannin_Scraper_API():
+def Mugshots():
     return web_app
 
 

@@ -27,7 +27,7 @@ class PreprocessRequest(BaseModel):
     processor_type: str  # 'canny', 'openpose', 'depth'
 
 @app.cls(image=image, gpu="A10G")
-class ControlNet_Map_Extractor:
+class ControlNet:
     @modal.enter()
     def setup(self):
         self.processors = {}
@@ -81,7 +81,7 @@ class ControlNet_Map_Extractor:
 
 
 @app.cls(image=image, gpu="T4", scaledown_window=60, max_containers=1)
-class ControlNet_Map_Extractor_Eco(ControlNet_Map_Extractor._get_user_cls()):
+class ControlNet_Eco(ControlNet._get_user_cls()):
     """Economy tier endpoint for public/standard users. Cost-optimized on T4 with 60s scaledown."""
     pass
 

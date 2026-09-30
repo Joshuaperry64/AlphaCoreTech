@@ -33,7 +33,6 @@ import AssetManagerPage from './pages/assets.js';
 import ReconPage from './pages/recon.js';
 import VoiceClonerPage from './pages/voicecloner.js';
 import ChangelogPage from './pages/changelog.js';
-import NetworkMatrixPage from './pages/network.js';
 import MugshotsPage from './pages/mugshots.js';
 import TheLabPage from './pages/thelab.js';
 import TransferPage from './pages/transfer.js';
@@ -68,7 +67,6 @@ const routes = {
   '/music': MusicPage,
   '/assets': AssetManagerPage,
   '/changelog': ChangelogPage,
-  '/network': NetworkMatrixPage,
   '/mugshots': MugshotsPage,
 };
 

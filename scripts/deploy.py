@@ -387,7 +387,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     @app_instance.post("/api/assets/download")
     async def api_download_asset(req: DownloadRequest):
         try:
-            result = await web_loader.AssetManager().download_asset.remote.aio(req.source, req.params)
+            result = await web_loader.Model_Downloader().download_asset.remote.aio(req.source, req.params)
             if result.get("error"):
                 raise HTTPException(status_code=400, detail=result["error"])
             return result
@@ -397,7 +397,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     @app_instance.get("/api/assets/list")
     async def api_list_assets(subfolder: str = "checkpoints"):
         try:
-            files = await web_loader.AssetManager().list_assets.remote.aio(subfolder)
+            files = await web_loader.Model_Downloader().list_assets.remote.aio(subfolder)
             return {"files": files}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -578,17 +578,30 @@ router_image = (
     .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
 )
 
-@app.function(image=router_image)
+@app.function(image=router_image, scaledown_window=120)
 @modal.asgi_app()
 def AlphaCore_Main_API():
-    """Architect priority endpoint."""
-    return web_app
-
-@app.function(image=router_image, scaledown_window=60, max_containers=1)
-@modal.asgi_app()
-def AlphaCore_Main_API_Eco():
-    """Economy tier endpoint for standard users. Scaledown 60s, max 1 container."""
-    return web_app_eco
+    """Universal Main API mapping /architect and /eco to respective routers."""
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    
+    master_app = FastAPI(title="AlphaCore Universal Main API")
+    master_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    @master_app.get("/")
+    def root():
+        return {"status": "AlphaCore Universal Main API Online", "endpoints": ["/architect", "/eco"]}
+        
+    master_app.mount("/architect", web_app)
+    master_app.mount("/eco", web_app_eco)
+    
+    return master_app
 
 @app.local_entrypoint()
 def scan_and_download(force: bool = False):

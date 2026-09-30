@@ -22,11 +22,14 @@ try {
 }
 
 // Fallback for Node ESM or environment where import.meta.glob wasn't evaluated
-if (!candidatePorts.length) {
+if (!candidatePorts.length && typeof process !== 'undefined' && process.versions && process.versions.node) {
   try {
-    const fs = await import(/* @vite-ignore */ 'fs');
-    const path = await import(/* @vite-ignore */ 'path');
-    const { fileURLToPath } = await import(/* @vite-ignore */ 'url');
+    const fsName = 'fs';
+    const pathName = 'path';
+    const urlName = 'url';
+    const fs = await import(/* @vite-ignore */ fsName);
+    const path = await import(/* @vite-ignore */ pathName);
+    const { fileURLToPath } = await import(/* @vite-ignore */ urlName);
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const entries = fs.readdirSync(__dirname, { withFileTypes: true });

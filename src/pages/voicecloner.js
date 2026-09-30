@@ -22,8 +22,8 @@ export default function VoiceClonerPage() {
   const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
   const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
   const defaultApiBase = isArchitect
-    ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
-    : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';
+    ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/architect'
+    : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/eco';
 
   const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
   const MAIN_API_BASE = isArchitect ? (settings.main_api_url || defaultApiBase) : defaultApiBase;

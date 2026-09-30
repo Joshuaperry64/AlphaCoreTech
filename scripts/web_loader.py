@@ -19,7 +19,7 @@ def _get_secrets():
 
 image = image.add_local_python_source("shared_app")
 @app.cls(image=image, volumes={CACHE_DIR: cache_volume}, secrets=_get_secrets())
-class AssetManager:
+class Model_Downloader:
     @modal.method()
     def download_asset(self, source: str, params: dict):
         import os
