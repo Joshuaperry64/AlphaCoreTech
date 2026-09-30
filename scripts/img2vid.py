@@ -113,13 +113,12 @@ class Img2Vid:
         negative_prompt: str = "bad quality, worse quality, artifacts, watermark",
         resolution: str = "480p", # "480p" or "720p"
         num_frames: int = 81,
-        guidance_scale: str = "5.0", # String bypasses Modal UI float bug
+        guidance_scale: float = 5.0,
         num_inference_steps: int = 30,
         seed: int = -1,
         fps: int = 16,
     ) -> bytes:
         self._load_model(resolution)
-        guidance_scale_f = float(guidance_scale)
 
         if seed < 0:
             seed = random.randint(0, 2**32 - 1)
@@ -139,7 +138,7 @@ class Img2Vid:
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 num_frames=num_frames,
-                guidance_scale=guidance_scale_f,
+                guidance_scale=guidance_scale,
                 num_inference_steps=num_inference_steps,
                 generator=generator,
             ).frames[0]
