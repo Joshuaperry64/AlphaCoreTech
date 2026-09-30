@@ -589,10 +589,10 @@ export default function MugshotsPage() {
 
         // --- GAZETTE AUGMENTATION PROTOCOL ---
         syncStatus.textContent = 'CROSS-REFERENCING THE GEORGIA GAZETTE...';
-        for (let i = 0; i < parsed.length; i++) {
-          if (parsed[i].charges.includes('PENDING REVIEW')) {
+        const gazettePromises = parsed.map(async (item, i) => {
+          if (item.charges.includes('PENDING REVIEW')) {
             try {
-              const fName = parsed[i].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+              const fName = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
               const res = await fetch(apiUrl(`/api/gazette/${fName}`));
               if (res.ok) {
                 const html = await res.text();
@@ -604,10 +604,11 @@ export default function MugshotsPage() {
                 }
               }
             } catch (e) {
-              console.warn("Gazette augmentation failed for", parsed[i].name, e);
+              console.warn("Gazette augmentation failed for", item.name, e);
             }
           }
-        }
+        });
+        await Promise.all(gazettePromises);
 
         if (fetchError && rawPosts.length === 0) {
           syncStatus.textContent = `SYNC FAILED: ${fetchError}`;
