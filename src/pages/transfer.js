@@ -403,7 +403,7 @@ export default function TransferPage() {
 
   // Global CSS injected once
   if (!document.getElementById('laundry-game-styles')) {
-    const style = document.h('style');
+    const style = document.createElement('style');
     style.id = 'laundry-game-styles';
     style.textContent = `
       @keyframes spin { 100% { transform: rotate(360deg); } }
