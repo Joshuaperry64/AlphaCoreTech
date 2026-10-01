@@ -210,24 +210,24 @@ export default function Overview() {
                 </div>
               </div>
 
-              <!-- Prop 6: Mini Tactical CRT Terminal (Prompt Lab & Cognitive) -->
-              <div class="desk-prop-card" data-route="/promptlab" id="prop-promptlab">
+              <!-- Prop 6: Mini Tactical CRT Terminal (Cognitive Core & Subroutines) -->
+              <div class="desk-prop-card" data-route="/cognitive" id="prop-cognitive">
                 <div class="prop-visual-wrap">
                   <div class="prop-crt">
                     <div class="crt-screen">
-                      <div>// PROMPT_LAB</div>
-                      <div style="color:#38bdf8;">> MATRIX READY</div>
-                      <div>> INJECT<span class="crt-cursor">_</span></div>
+                      <div>// COGNITIVE_CORE</div>
+                      <div style="color:#38bdf8;">> NEURAL UPLINK OK</div>
+                      <div>> SENTIENCE<span class="crt-cursor">_</span></div>
                     </div>
                   </div>
                 </div>
                 <div class="prop-meta">
-                  <span class="prop-badge">PROMPT FORGE</span>
-                  <div class="prop-title">📟 Mini CRT Terminal</div>
-                  <div class="prop-desc">Jailbreak matrices, cognitive heuristics, persona anchors, and autonomous prompt engineering lab.</div>
+                  <span class="prop-badge">COGNITIVE MATRIX</span>
+                  <div class="prop-title">📟 Tactical CRT Terminal</div>
+                  <div class="prop-desc">Live cognitive neural substrate, autonomous heuristic adaptation, multi-threaded reasoning, and sentience uplink.</div>
                   <div class="prop-actions">
-                    <a href="#/promptlab" class="prop-btn">🧪 PROMPT LAB</a>
-                    <a href="#/cognitive" class="prop-btn prop-btn-secondary">COGNITIVE</a>
+                    <a href="#/cognitive" class="prop-btn">⟁ COGNITIVE CORE</a>
+                    <a href="#/subroutines" class="prop-btn prop-btn-secondary">SUBROUTINES</a>
                   </div>
                 </div>
               </div>

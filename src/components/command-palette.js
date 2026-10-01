@@ -11,7 +11,6 @@ const COMMANDS = [
   { icon: '⎔', title: 'Go to Overview', path: '#/' },
   { icon: '🔬', title: 'Go to The Lab', path: '#/thelab' },
   { icon: '⟁', title: 'Go to Cognitive Core', path: '#/cognitive' },
-  { icon: '🧪', title: 'Go to Prompt Lab', path: '#/promptlab' },
   { icon: '🧺', title: 'Go to Laundro-mat', path: '#/laundry' },
   { icon: '⚡', title: 'Go to Subroutines Console', path: '#/subroutines' },
   { icon: '💻', title: 'Go to CLI Shell Terminal', path: '#/terminal' },

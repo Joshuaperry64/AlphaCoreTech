@@ -27,7 +27,6 @@ import Research from './pages/research.js';
 import VisionProcessor from './pages/vision.js';
 import LogsPage from './pages/logs.js';
 import SubroutinesPage from './pages/subroutines.js';
-import PromptLabPage from './pages/promptlab.js';
 import MusicPage from './pages/music.js';
 import AssetManagerPage from './pages/assets.js';
 import ReconPage from './pages/recon.js';
@@ -68,7 +67,7 @@ const routes = {
   '/vision': VisionProcessor,
   '/logs': LogsPage,
   '/subroutines': SubroutinesPage,
-  '/promptlab': PromptLabPage,
+  '/promptlab': CognitiveUplink,
   '/recon': ReconPage,
   '/voice': VoiceClonerPage,
   '/music': MusicPage,

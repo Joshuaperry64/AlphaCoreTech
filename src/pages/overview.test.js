@@ -43,9 +43,9 @@ describe('Overview Page & 2D Interactive Cyber-Desk', () => {
     expect(audio).toBeTruthy();
     expect(audio.getAttribute('data-route')).toBe('/voice');
 
-    const terminal = el.querySelector('#prop-promptlab');
+    const terminal = el.querySelector('#prop-cognitive');
     expect(terminal).toBeTruthy();
-    expect(terminal.getAttribute('data-route')).toBe('/promptlab');
+    expect(terminal.getAttribute('data-route')).toBe('/cognitive');
 
     const vault = el.querySelector('#prop-vault');
     expect(vault).toBeTruthy();
