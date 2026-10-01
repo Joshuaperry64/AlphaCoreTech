@@ -257,6 +257,134 @@ html, body {
   transition: opacity 0.2s, height 0.3s;
 }
 
+/* ====== SIDEBAR ACCORDION & SUB-NAV ====== */
+.nav-group {
+  margin-bottom: 2px;
+}
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.nav-item-parent {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.nav-badge-pill {
+  font-size: 0.55rem;
+  font-family: var(--font-hud);
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: var(--accent, #06b6d4);
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.8px;
+  margin-left: auto;
+  margin-right: 2px;
+  font-weight: bold;
+}
+.nav-sub-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--blue-dim);
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  border-radius: var(--radius);
+}
+.nav-sub-toggle-btn:hover {
+  color: var(--accent, #06b6d4);
+  background: rgba(6, 182, 212, 0.12);
+}
+.toggle-arrow {
+  font-size: 0.8rem;
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(-90deg);
+}
+.nav-group.open .toggle-arrow {
+  transform: rotate(0deg);
+  color: var(--accent, #06b6d4);
+}
+.nav-sub-items {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin 0.25s ease;
+  padding-left: 8px;
+  margin-left: 14px;
+  border-left: 1px dashed rgba(6, 182, 212, 0.25);
+}
+.nav-group.open .nav-sub-items {
+  max-height: 520px;
+  opacity: 1;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+.nav-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  margin: 2px 0;
+  color: #8da4be;
+  font-family: var(--font-hud);
+  font-size: 0.73rem;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.nav-sub-item .sub-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.35);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.nav-sub-item .sub-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+  width: 14px;
+  text-align: center;
+}
+.nav-sub-item .sub-label {
+  flex: 1;
+}
+.nav-sub-item:hover {
+  color: #fff;
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.25);
+  transform: translateX(3px);
+}
+.nav-sub-item:hover .sub-dot {
+  background: var(--accent, #06b6d4);
+  box-shadow: 0 0 8px var(--accent, #06b6d4);
+}
+.nav-sub-item.active {
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  box-shadow: inset 2px 0 0 #00f0ff, 0 0 10px rgba(0, 240, 255, 0.12);
+  font-weight: bold;
+}
+.nav-sub-item.active .sub-dot {
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+.sidebar--collapsed .nav-sub-items,
+.sidebar--collapsed .nav-sub-toggle-btn,
+.sidebar--collapsed .nav-badge-pill {
+  display: none !important;
+}
+
 /* ====== SIDEBAR COLLAPSE BUTTON ====== */
 .sidebar-collapse-btn {
   display: flex;
@@ -3465,4 +3593,691 @@ body.eco-mode .glitch {
 .sidebar-footer .status-row:hover .s-val {
   animation: sidebar-text-glitch 0.3s steps(2, start) infinite;
   color: #00f0ff;
+}
+
+/* ==========================================================================
+   2D INTERACTIVE CYBER-DESK WORKSTATION (OVERVIEW DASHBOARD)
+   Tactile 2D workstation with physical desk props, holographic HUD inspection,
+   audio feedback, and direct navigation links.
+   ========================================================================== */
+
+.cyber-desk-wrapper {
+  margin-bottom: 25px;
+  background: radial-gradient(circle at 50% 25%, #0d1726, #050a12 85%);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), inset 0 0 60px rgba(6, 182, 212, 0.05);
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font-hud, 'Orbitron', sans-serif);
+}
+
+/* Desk Control Header */
+.cyber-desk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  background: rgba(10, 16, 28, 0.95);
+  border-bottom: 1px solid rgba(6, 182, 212, 0.25);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.desk-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  color: var(--accent, #06b6d4);
+  font-weight: 700;
+}
+.desk-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse-dot 1.8s infinite ease-in-out;
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+.desk-view-switchers {
+  display: flex;
+  gap: 6px;
+}
+.desk-view-btn {
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #94a3b8;
+  padding: 5px 12px;
+  font-family: var(--font-hud);
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.desk-view-btn:hover {
+  color: #fff;
+  background: rgba(6, 182, 212, 0.2);
+  border-color: var(--accent, #06b6d4);
+}
+.desk-view-btn.active {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+  font-weight: bold;
+}
+
+/* Desk Surface / Tactical Mat */
+.cyber-desk-surface {
+  position: relative;
+  padding: 24px 20px 28px;
+  background: 
+    radial-gradient(ellipse at 50% 15%, rgba(6, 182, 212, 0.12), transparent 70%),
+    linear-gradient(rgba(10, 15, 26, 0.95), rgba(5, 8, 14, 0.98)),
+    repeating-linear-gradient(45deg, rgba(6, 182, 212, 0.02) 0px, rgba(6, 182, 212, 0.02) 1px, transparent 1px, transparent 8px);
+  min-height: 480px;
+}
+
+/* Tactical Desk Mat Framing */
+.tactical-desk-mat {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(14, 22, 36, 0.7);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+.tactical-mat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  color: rgba(6, 182, 212, 0.7);
+  letter-spacing: 1px;
+}
+.mat-serial {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Props Grid Layout */
+.desk-props-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+@media (max-width: 1024px) {
+  .desk-props-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .desk-props-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Individual Physical Desk Prop Card */
+.desk-prop-card {
+  position: relative;
+  background: rgba(10, 16, 26, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+}
+.desk-prop-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(6, 182, 212, 0.6);
+  background: rgba(14, 25, 42, 0.85);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(6, 182, 212, 0.2);
+}
+.desk-prop-card.active-focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+}
+
+/* Prop Visual Container */
+.prop-visual-wrap {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 12px;
+  perspective: 600px;
+}
+
+/* Prop Visual Objects */
+/* 1. Polaroid + Stylus */
+.prop-polaroid {
+  width: 90px;
+  height: 105px;
+  background: #f8fafc;
+  border-radius: 3px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+  padding: 7px 7px 20px 7px;
+  transform: rotate(-4deg);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+.desk-prop-card:hover .prop-polaroid {
+  transform: rotate(-1deg) scale(1.06);
+}
+.polaroid-photo {
+  width: 100%;
+  height: 72px;
+  background: linear-gradient(135deg, #090e17, #1e293b);
+  border: 1px solid #cbd5e1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.polaroid-art {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 60% 40%, rgba(6, 182, 212, 0.6), rgba(168, 85, 247, 0.6), #090e17 80%);
+  position: relative;
+}
+.polaroid-art::after {
+  content: '✨ AI IMG';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.polaroid-stylus {
+  position: absolute;
+  width: 110px;
+  height: 7px;
+  background: linear-gradient(90deg, #1e293b, #475569, #00f0ff);
+  border-radius: 4px;
+  bottom: 8px;
+  right: -20px;
+  transform: rotate(35deg);
+  box-shadow: 2px 5px 8px rgba(0,0,0,0.6);
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .polaroid-stylus {
+  transform: rotate(30deg) translate(-2px, -3px);
+}
+.polaroid-stylus::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+/* 2. Camcorder & Film Reel */
+.prop-camcorder {
+  width: 95px;
+  height: 75px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.7);
+  transform: rotate(3deg);
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-camcorder {
+  transform: rotate(0deg) scale(1.05);
+}
+.cam-lens {
+  position: absolute;
+  left: -12px;
+  width: 24px;
+  height: 38px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #475569, #0f172a);
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  box-shadow: inset 0 0 8px #00f0ff;
+}
+.cam-tally {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff003c;
+  box-shadow: 0 0 8px #ff003c;
+  animation: pulse-dot 1.2s infinite;
+}
+.cam-screen {
+  position: absolute;
+  right: -16px;
+  top: 10px;
+  width: 32px;
+  height: 24px;
+  background: #000;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+}
+.cam-screen span {
+  font-size: 0.5rem;
+  color: #00f0ff;
+  font-family: 'Share Tech Mono', monospace;
+}
+.cam-reel {
+  position: absolute;
+  bottom: -10px;
+  left: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px dashed rgba(6, 182, 212, 0.6);
+  background: rgba(15, 23, 42, 0.9);
+  animation: spin-reel 8s linear infinite;
+}
+@keyframes spin-reel {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 3. Tactical Optical Loupe (Upscaler) */
+.prop-loupe {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(15, 23, 42, 0.9) 70%);
+  border: 4px solid #64748b;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(0, 240, 255, 0.3);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-loupe {
+  transform: scale(1.1) rotate(5deg);
+  border-color: #00f0ff;
+}
+.loupe-handle {
+  position: absolute;
+  bottom: -22px;
+  right: -15px;
+  width: 12px;
+  height: 38px;
+  background: linear-gradient(135deg, #334155, #0f172a);
+  border: 1px solid #64748b;
+  border-radius: 4px;
+  transform: rotate(-45deg);
+  box-shadow: 3px 6px 10px rgba(0,0,0,0.6);
+}
+.loupe-reticle {
+  width: 44px;
+  height: 44px;
+  border: 1px dashed rgba(0, 240, 255, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loupe-reticle span {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: #00f0ff;
+  text-shadow: 0 0 6px #00f0ff;
+}
+
+/* 4. ControlNet Blueprint Card */
+.prop-cnet-card {
+  width: 85px;
+  height: 100px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.5);
+  border-radius: 4px;
+  position: relative;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-2deg);
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-cnet-card {
+  transform: rotate(0deg) scale(1.06);
+  border-color: #00f0ff;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+}
+.cnet-rig-svg {
+  width: 50px;
+  height: 65px;
+}
+
+/* 5. Vintage Condenser Mic & Tape */
+.prop-audio-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.prop-mic {
+  width: 32px;
+  height: 52px;
+  background: linear-gradient(180deg, #475569, #1e293b);
+  border: 1px solid #94a3b8;
+  border-radius: 16px 16px 6px 6px;
+  position: relative;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 6px;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-mic {
+  transform: translateY(-4px);
+}
+.mic-grille {
+  width: 20px;
+  height: 24px;
+  background: repeating-linear-gradient(0deg, #0f172a, #0f172a 2px, #334155 2px, #334155 4px);
+  border-radius: 10px;
+  border: 1px solid #64748b;
+}
+.mic-vu {
+  margin-top: 4px;
+  display: flex;
+  gap: 2px;
+}
+.vu-bar {
+  width: 3px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 1px;
+}
+.vu-bar:nth-child(2) { height: 11px; background: #00f0ff; }
+.vu-bar:nth-child(3) { height: 6px; background: #f59e0b; }
+.prop-tape {
+  position: absolute;
+  right: -10px;
+  bottom: -2px;
+  width: 55px;
+  height: 36px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  border-radius: 3px;
+  transform: rotate(15deg);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 4px;
+}
+.tape-reel {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #f59e0b;
+  background: #0f172a;
+}
+
+/* 6. Mini Tactical CRT Terminal */
+.prop-crt {
+  width: 90px;
+  height: 75px;
+  background: linear-gradient(135deg, #2a3328, #161e15);
+  border: 2px solid #3d4d3a;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-crt {
+  transform: scale(1.05);
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+}
+.crt-screen {
+  flex: 1;
+  background: #061108;
+  border: 1px solid #10b981;
+  border-radius: 4px;
+  padding: 4px;
+  overflow: hidden;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.52rem;
+  color: #10b981;
+  line-height: 1.2;
+  box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.4);
+}
+.crt-cursor {
+  animation: crt-blink 0.8s infinite;
+}
+@keyframes crt-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* 7. Classified Manila Dossier Folder */
+.prop-folder {
+  width: 96px;
+  height: 76px;
+  background: linear-gradient(135deg, #b48c54, #8b6b3e);
+  border: 1px solid #d4a76a;
+  border-radius: 2px 14px 2px 2px;
+  position: relative;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.7);
+  padding: 8px;
+  transform: rotate(-3deg);
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-folder {
+  transform: rotate(0deg) scale(1.06);
+}
+.folder-paper {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  width: 72px;
+  height: 20px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  z-index: 1;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.45rem;
+  color: #334155;
+  padding: 2px 4px;
+}
+.folder-stamp {
+  position: absolute;
+  bottom: 8px;
+  right: 6px;
+  border: 1.5px solid #dc2626;
+  color: #dc2626;
+  font-family: var(--font-hud);
+  font-size: 0.52rem;
+  font-weight: bold;
+  padding: 2px 4px;
+  transform: rotate(-12deg);
+  letter-spacing: 0.8px;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+/* 8. Ceramic Operative Coffee Mug */
+.prop-mug-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.prop-mug {
+  width: 52px;
+  height: 56px;
+  background: linear-gradient(180deg, #1e293b, #090e17);
+  border: 2px solid #334155;
+  border-radius: 4px 4px 12px 12px;
+  position: relative;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .prop-mug {
+  transform: scale(1.08) rotate(3deg);
+  border-color: #00f0ff;
+}
+.mug-handle {
+  position: absolute;
+  right: -13px;
+  top: 10px;
+  width: 14px;
+  height: 28px;
+  border: 3px solid #334155;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+}
+.mug-logo {
+  font-size: 0.65rem;
+  color: #00f0ff;
+  text-shadow: 0 0 6px #00f0ff;
+  font-weight: bold;
+}
+.mug-steam {
+  position: absolute;
+  top: -16px;
+  width: 4px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  filter: blur(1.5px);
+  animation: steam-float 2.2s infinite ease-out;
+}
+.mug-steam.s2 {
+  left: 28px;
+  animation-delay: 0.7s;
+}
+.mug-steam.s3 {
+  left: 44px;
+  animation-delay: 1.4s;
+}
+@keyframes steam-float {
+  0% { transform: translateY(4px) scaleX(0.8); opacity: 0; }
+  50% { opacity: 0.7; }
+  100% { transform: translateY(-16px) scaleX(1.8); opacity: 0; }
+}
+
+/* Card Content / Meta */
+.prop-meta {
+  margin-top: auto;
+}
+.prop-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  color: var(--accent, #06b6d4);
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.8px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.prop-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  transition: color 0.2s;
+}
+.desk-prop-card:hover .prop-title {
+  color: #00f0ff;
+}
+.prop-desc {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.35;
+  margin-bottom: 12px;
+}
+.prop-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.prop-btn {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid var(--accent, #06b6d4);
+  color: var(--accent, #06b6d4);
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-family: var(--font-hud);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.prop-btn:hover {
+  background: var(--accent, #06b6d4);
+  color: #000;
+  box-shadow: 0 0 10px var(--accent, #06b6d4);
+}
+.prop-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+}
+.prop-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255,255,255,0.2);
 }

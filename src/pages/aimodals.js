@@ -3422,51 +3422,87 @@ function buildMainUI() {
   let currentPanel = buildTxt2Img();
   content.appendChild(currentPanel);
 
+  function switchTab(targetTabName, updateUrl = true) {
+    const tabBtn = root.querySelector(`.aim-tab[data-tab="${targetTabName}"]`);
+    if (!tabBtn) return;
+    tabs.forEach(t => t.classList.remove('active'));
+    tabBtn.classList.add('active');
+    content.innerHTML = '';
+    switch (targetTabName) {
+      case 'txt2img': currentPanel = buildTxt2Img(); break;
+      case 'img2img': currentPanel = buildImg2Img(); break;
+      case 'omnigen': currentPanel = buildOmniGen(); break;
+      case 'upscaler': currentPanel = buildUpscaler(); break;
+      case 'txt2vid': currentPanel = buildTxt2Vid(); break;
+      case 'controlnet': currentPanel = buildControlNetForge(); break;
+      case 'img2vid': currentPanel = buildImg2Vid(); break;
+      case 'vid2audio': currentPanel = buildVid2Audio(); break;
+      case 'framepack': currentPanel = buildFramepack(); break;
+      default: currentPanel = buildTxt2Img(); break;
+    }
+    content.appendChild(currentPanel);
+    if (updateUrl) {
+      const currentUrl = (window.location.hash || '').split('?')[0];
+      if (currentUrl.includes('aimodals') || currentUrl.includes('upscaler') || currentUrl.includes('vid2audio')) {
+        window.history.replaceState(null, '', `#/aimodals?tab=${targetTabName}`);
+      }
+      window.dispatchEvent(new CustomEvent('alphacore-aimodal-tab', { detail: { tab: targetTabName } }));
+    }
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      content.innerHTML = '';
-      if (tab.dataset.tab === 'txt2img') {
-        currentPanel = buildTxt2Img();
-      } else if (tab.dataset.tab === 'img2img') {
-        currentPanel = buildImg2Img();
-      } else if (tab.dataset.tab === 'omnigen') {
-        currentPanel = buildOmniGen();
-      } else if (tab.dataset.tab === 'upscaler') {
-        currentPanel = buildUpscaler();
-      } else if (tab.dataset.tab === 'txt2vid') {
-        currentPanel = buildTxt2Vid();
-      } else if (tab.dataset.tab === 'controlnet') {
-        currentPanel = buildControlNetForge();
-      } else if (tab.dataset.tab === 'img2vid') {
-        currentPanel = buildImg2Vid();
-      } else if (tab.dataset.tab === 'vid2audio') {
-        currentPanel = buildVid2Audio();
-      } else {
-        currentPanel = buildFramepack();
-      }
-      content.appendChild(currentPanel);
+      switchTab(tab.dataset.tab, true);
     });
   });
 
   const hash = window.location.hash || '';
-  if (hash.includes('upscaler') || window._pending_upscale_image) {
-    const upTab = root.querySelector('#aim-tab-upscale');
-    if (upTab) {
-      setTimeout(() => upTab.click(), 50);
-    }
+  const searchParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
+  const urlTab = searchParams.get('tab');
+
+  if (urlTab) {
+    setTimeout(() => switchTab(urlTab, false), 50);
+  } else if (hash.includes('upscaler') || window._pending_upscale_image) {
+    setTimeout(() => switchTab('upscaler', true), 50);
   } else if (hash.includes('omnigen')) {
-    const omniTab = root.querySelector('#aim-tab-omnigen');
-    if (omniTab) {
-      setTimeout(() => omniTab.click(), 50);
-    }
-  } else if (hash.includes('vid2audio') || window._pending_vid2audio_video) {
-    const v2aTab = root.querySelector('#aim-tab-v2a');
-    if (v2aTab) {
-      setTimeout(() => v2aTab.click(), 50);
-    }
+    setTimeout(() => switchTab('omnigen', true), 50);
+  } else if (hash.includes('vid2audio') || hash.includes('v2a') || window._pending_vid2audio_video) {
+    setTimeout(() => switchTab('vid2audio', true), 50);
+  } else if (hash.includes('txt2vid')) {
+    setTimeout(() => switchTab('txt2vid', true), 50);
+  } else if (hash.includes('img2vid')) {
+    setTimeout(() => switchTab('img2vid', true), 50);
+  } else if (hash.includes('controlnet') || hash.includes('cnet')) {
+    setTimeout(() => switchTab('controlnet', true), 50);
+  } else if (hash.includes('framepack')) {
+    setTimeout(() => switchTab('framepack', true), 50);
+  } else if (hash.includes('img2img')) {
+    setTimeout(() => switchTab('img2img', true), 50);
   }
+
+  const onExternalTabSelect = (e) => {
+    if (!document.body.contains(root)) {
+      window.removeEventListener('alphacore-aimodal-tab', onExternalTabSelect);
+      return;
+    }
+    const target = e.detail?.tab;
+    if (target) switchTab(target, false);
+  };
+  window.addEventListener('alphacore-aimodal-tab', onExternalTabSelect);
+
+  const onHashChange = () => {
+    if (!document.body.contains(root)) {
+      window.removeEventListener('hashchange', onHashChange);
+      return;
+    }
+    const currentHash = window.location.hash || '';
+    if (currentHash.startsWith('#/aimodals')) {
+      const qParams = new URLSearchParams(currentHash.includes('?') ? currentHash.split('?')[1] : '');
+      const t = qParams.get('tab');
+      if (t) switchTab(t, false);
+    }
+  };
+  window.addEventListener('hashchange', onHashChange);
 
   root.querySelector('#aim-doc-btn').addEventListener('click', showDocsModal);
 

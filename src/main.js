@@ -56,6 +56,13 @@ const routes = {
   '/upscaler': AiModals,
   '/vid2audio': AiModals,
   '/v2a': AiModals,
+  '/txt2img': AiModals,
+  '/img2img': AiModals,
+  '/omnigen': AiModals,
+  '/txt2vid': AiModals,
+  '/img2vid': AiModals,
+  '/controlnet': AiModals,
+  '/framepack': AiModals,
   '/vault': VaultPage,
   '/research': Research,
   '/vision': VisionProcessor,
@@ -71,12 +78,48 @@ const routes = {
 };
 
 function updateActiveNav(hash) {
+  const cleanPath = (hash || '').split('?')[0];
+  const query = hash && hash.includes('?') ? hash.split('?')[1] : '';
+  const searchParams = new URLSearchParams(query);
+  const activeTab = searchParams.get('tab');
+
+  // Update primary nav items
   document.querySelectorAll('#sidebar-nav .nav-item').forEach(item => {
     const route = item.getAttribute('data-route');
-    const isMatch = route === hash || ((hash === '/laundry' || hash === '/transfer') && (route === '/laundry' || route === '/transfer'));
+    const isMatch = route === cleanPath || 
+      ((cleanPath === '/laundry' || cleanPath === '/transfer') && (route === '/laundry' || route === '/transfer')) ||
+      (cleanPath === '/aimodals' && route === '/aimodals');
     item.classList.toggle('active', isMatch);
   });
+
+  // Update sub-items inside accordion
+  document.querySelectorAll('#sidebar-nav .nav-sub-item').forEach(subItem => {
+    const subRoute = subItem.getAttribute('data-route');
+    const subTab = subItem.getAttribute('data-tab');
+    let isSubMatch = false;
+    if (subRoute && subRoute === cleanPath) {
+      isSubMatch = true;
+    } else if (cleanPath === '/aimodals' && subTab && activeTab === subTab) {
+      isSubMatch = true;
+    }
+    subItem.classList.toggle('active', isSubMatch);
+  });
+
+  // Auto-expand accordion if on an aimodals or director route
+  const synthGroup = document.getElementById('nav-group-synthesis');
+  if (synthGroup && (cleanPath === '/aimodals' || cleanPath === '/director')) {
+    synthGroup.classList.add('open');
+  }
 }
+
+window.addEventListener('alphacore-aimodal-tab', (e) => {
+  const tab = e.detail?.tab;
+  if (tab) {
+    document.querySelectorAll('#sidebar-nav .nav-sub-item').forEach(subItem => {
+      subItem.classList.toggle('active', subItem.getAttribute('data-tab') === tab);
+    });
+  }
+});
 
 async function renderRoute() {
   const currentProfile = sessionStorage.getItem('current_profile');
@@ -138,7 +181,8 @@ async function renderRoute() {
   }
 
   const rawHash = location.hash.replace(/^#/, '') || '/overview';
-  const hash = rawHash === '/' ? '/overview' : rawHash;
+  const cleanPath = rawHash.split('?')[0];
+  const hash = cleanPath === '/' ? '/overview' : cleanPath;
 
   const app = document.getElementById('app');
   app.innerHTML = '';
@@ -178,7 +222,7 @@ async function renderRoute() {
           <p style="font-family:'Share Tech Mono',monospace;">RECON & CUSTODY MODULES ARE CLASSIFIED. PLEASE AUTHENTICATE.</p>
         </div>
       `;
-      updateActiveNav(hash);
+      updateActiveNav(rawHash);
       return;
   }
 
@@ -239,7 +283,7 @@ async function renderRoute() {
   }
 
   app.appendChild(pageElement);
-  updateActiveNav(hash);
+  updateActiveNav(rawHash);
 }
 
 window.addEventListener('hashchange', () => {

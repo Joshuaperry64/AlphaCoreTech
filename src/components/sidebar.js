@@ -3,6 +3,7 @@
  * Initialized once globally.
  */
 import { getPins } from './pinpad.js';
+import { playSFX } from './audio.js';
 
 let clockInterval = null;
 let uptimeInterval = null;
@@ -130,4 +131,35 @@ export function initSidebar() {
       localStorage.setItem('alphacore_sidebar_collapsed', collapsed ? '1' : '0');
     });
   }
+
+  // Neural Synthesis Accordion Toggle
+  const synthGroup = document.getElementById('nav-group-synthesis');
+  const synthToggleBtn = document.getElementById('toggle-synthesis-sub');
+  if (synthGroup && synthToggleBtn) {
+    // Restore state if saved, default to open
+    const savedState = localStorage.getItem('alphacore_synth_accordion');
+    if (savedState === 'closed') {
+      synthGroup.classList.remove('open');
+    } else {
+      synthGroup.classList.add('open');
+    }
+
+    synthToggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = synthGroup.classList.toggle('open');
+      localStorage.setItem('alphacore_synth_accordion', isOpen ? 'open' : 'closed');
+      playSFX('click', 0.4);
+    });
+  }
+
+  // Sub-items click handling
+  document.querySelectorAll('#synthesis-sub-items .nav-sub-item').forEach(item => {
+    item.addEventListener('click', () => {
+      playSFX('click', 0.4);
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    });
+  });
 }

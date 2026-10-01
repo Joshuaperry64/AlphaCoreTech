@@ -21,7 +21,7 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.framepackUrl).toContain('framepack-ec-32daed');
     expect(settings.upscalerUrl).toContain('eco');
     expect(settings.vid2audioUrl).toContain('eco');
-    expect(settings.music_url).toContain('alphacore-ma-9b0731');
+    expect(settings.music_url).toContain('/eco');
   });
 
   it('DoeBoy profile (even with admin_authenticated) strictly points to economy endpoints', () => {
@@ -40,7 +40,7 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.framepackUrl).toContain('framepack-ec-32daed');
     expect(settings.upscalerUrl).toContain('eco');
     expect(settings.vid2audioUrl).toContain('eco');
-    expect(settings.music_url).toContain('alphacore-ma-9b0731');
+    expect(settings.music_url).toContain('/eco');
   });
 
   it('Fisherman profile strictly points to economy endpoints', () => {
@@ -80,6 +80,6 @@ describe('AI Modals Profile Endpoint Routing', () => {
     expect(settings.framepackUrl).not.toContain('eco');
     expect(settings.upscalerUrl).not.toContain('eco');
     expect(settings.vid2audioUrl).not.toContain('eco');
-    expect(settings.music_url).toBe('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run');
+    expect(settings.music_url).toContain('/architect');
   });
 });
