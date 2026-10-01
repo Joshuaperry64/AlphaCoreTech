@@ -3,6 +3,18 @@
  * SPA bootstrap: matrix rain, sidebar, modal, router, intro sequence.
  */
 import './style.css';
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      console.log('SW registered: ', registration);
+    }).catch(registrationError => {
+      console.log('SW registration failed: ', registrationError);
+    });
+  });
+}
+
 import { initMatrixRain, toggleEcoMode, getEcoMode } from './components/matrix-rain.js';
 import { initSidebar } from './components/sidebar.js';
 import { initModal } from './components/modal.js';
