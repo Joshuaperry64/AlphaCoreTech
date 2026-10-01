@@ -491,16 +491,18 @@ export default function MugshotsPage() {
       try {
         let rawPosts = [];
 
-        const defaultScraperEndpoint = 'https://alphacoreprogramming--alphacore-aio-backend-fannin-scraper-api.modal.run/api/mugshots';
+        const defaultScraperEndpoint = 'https://alphacoreprogramming--alphacore-aio-backend-mugshots.modal.run/api/mugshots';
         let scraperEndpoint = defaultScraperEndpoint;
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');
           if (customStr) {
             const custom = JSON.parse(customStr);
-            if (custom.fanninCrimeUrl && custom.fanninCrimeUrl.includes('alphacoreprogramming')) {
+            if (custom.fanninCrimeUrl && custom.fanninCrimeUrl.includes('alphacoreprogramming') && !custom.fanninCrimeUrl.includes('fannin-scraper-api')) {
               scraperEndpoint = custom.fanninCrimeUrl;
             } else {
               scraperEndpoint = defaultScraperEndpoint;
+              custom.fanninCrimeUrl = defaultScraperEndpoint;
+              localStorage.setItem('alphacore_modal_settings', JSON.stringify(custom));
             }
           }
         } catch(e) {

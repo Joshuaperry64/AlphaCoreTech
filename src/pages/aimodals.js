@@ -106,7 +106,7 @@ export function getModalSettings() {
       if (custom.music_url && !custom.music_url.includes('alphacoreprogramming')) custom.music_url = defaults.music_url;
       if (custom.upscalerUrl && (!custom.upscalerUrl.includes('alphacoreprogramming') || custom.upscalerUrl.includes('alphacore-main-api'))) custom.upscalerUrl = defaults.upscalerUrl;
       if (custom.vid2audioUrl && !custom.vid2audioUrl.includes('alphacoreprogramming')) custom.vid2audioUrl = defaults.vid2audioUrl;
-      if (custom.fanninCrimeUrl && !custom.fanninCrimeUrl.includes('alphacoreprogramming')) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
+      if (custom.fanninCrimeUrl && (!custom.fanninCrimeUrl.includes('alphacoreprogramming') || custom.fanninCrimeUrl.includes('fannin-scraper-api'))) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
 
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;

@@ -132,7 +132,6 @@ export default function ReconPage() {
     }
 
     btn.addEventListener('click', handleScan);
-    btn.addEventListener('click', handleScan);
     
     // Append Local Custody / Mugshots below
     const mugshots = MugshotsPage();
