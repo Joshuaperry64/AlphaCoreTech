@@ -903,5 +903,41 @@ export default function CyberDirectorPage() {
   btnRun5?.addEventListener('click', runStage5);
   btnIgniteAll?.addEventListener('click', igniteFullPipeline);
 
+  // --- CROSS-MODAL VIDEO INJECTION (HANDOFF FROM WAN-14B / T2V / I2V) ---
+  const pendingDirVideo = window._pending_director_video || sessionStorage.getItem('alphacore_director_injected_video');
+  if (pendingDirVideo) {
+    window._pending_director_video = null;
+    sessionStorage.removeItem('alphacore_director_injected_video');
+    if (preview2) {
+      preview2.innerHTML = `
+        <video src="${pendingDirVideo}" autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; border-radius:4px;"></video>
+      `;
+    }
+    if (badge2) {
+      badge2.textContent = 'INJECTED';
+      badge2.style.color = '#4ade80';
+    }
+    if (badge3) {
+      badge3.textContent = 'READY';
+      badge3.style.color = '#eab308';
+    }
+    if (pendingDirVideo.startsWith('data:video/mp4;base64,')) {
+      stageState.videoB64 = pendingDirVideo.replace('data:video/mp4;base64,', '');
+    } else {
+      fetch(pendingDirVideo)
+        .then(r => r.blob())
+        .then(b => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const res = reader.result;
+            if (res && res.includes(',')) stageState.videoB64 = res.split(',')[1];
+          };
+          reader.readAsDataURL(b);
+        })
+        .catch(console.warn);
+    }
+    showToast('DIRECTOR LINK', 'Injected video sequence staged as active Camera Motion reel.');
+  }
+
   return container;
 }

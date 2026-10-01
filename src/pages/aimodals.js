@@ -7,6 +7,7 @@ import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { saveImageToGallery, getAllGalleryImages } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
+import { showToast } from '../components/toast.js';
 
 const LORA_OPTIONS = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
@@ -194,7 +195,7 @@ function updateProgress(loader, step, maxSteps, extraText = '') {
 }
 
 /* ─── RESULT PANEL ──────────────────────────────────────────── */
-function buildResult(urls = []) {
+export function buildResult(urls = []) {
   const el = document.createElement('div');
   el.className = 'aim-result hidden';
   if (!Array.isArray(urls)) urls = [urls];
@@ -219,10 +220,13 @@ function buildResult(urls = []) {
           <button class="aim-btn aim-btn-dl" id="aim-slideshow-btn" title="Toggle Auto Slideshow">▶ AUTO</button>
           <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-          <button class="aim-btn aim-btn-dl" id="aim-upscale-btn" style="border-color:#38bdf8; color:#38bdf8;">🔍 UPSCALE</button>
-          <button class="aim-btn aim-btn-dl" id="aim-cnet-btn" style="border-color:#06b6d4; color:#06b6d4;">⚙ CONTROLNET</button>
-          <button class="aim-btn aim-btn-dl" id="aim-vault-btn" style="border-color:#f59e0b; color:#f59e0b;">💾 MOVE IMAGE(S) TO VAULT</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
+          <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:4px;">// SYNTHESIS CHAIN:</span>
+          <button class="aim-btn aim-btn-dl" id="aim-animate-btn" style="border-color:#a855f7; color:#a855f7;" title="Handoff image to Wan-14B Image-to-Video Engine">🎬 ANIMATE (IMG2VID)</button>
+          <button class="aim-btn aim-btn-dl" id="aim-upscale-btn" style="border-color:#38bdf8; color:#38bdf8;" title="Handoff image to 4x Ultra-Sharp Neural Upscaler">🔍 UPSCALE 4K</button>
+          <button class="aim-btn aim-btn-dl" id="aim-cnet-btn" style="border-color:#06b6d4; color:#06b6d4;" title="Extract skeleton/pose to ControlNet Forge">🦾 EXTRACT POSE (CN)</button>
+          <button class="aim-btn aim-btn-dl" id="aim-omnigen-btn" style="border-color:#10b981; color:#10b981;" title="Load image into OmniGen Slot 1 as conditioning reference">🧬 OMNIGEN REF</button>
+          <button class="aim-btn aim-btn-dl" id="aim-vault-btn" style="border-color:#f59e0b; color:#f59e0b;">💾 MOVE TO VAULT</button>
           ${urls.length > 1 ? `<button class="aim-btn aim-btn-dl" id="aim-dl-all-btn">⬇ DOWN ALL</button>` : ''}
           <button class="aim-btn aim-btn-dl" id="aim-dl-btn">⬇ DOWNLOAD</button>
         </div>
@@ -348,6 +352,21 @@ function buildResult(urls = []) {
     a.click();
   };
 
+  const animateBtn = el.querySelector('#aim-animate-btn');
+  if (animateBtn) {
+    animateBtn.onclick = () => {
+      window._pending_img2vid_image = urls[currentIdx];
+      const i2vTab = document.querySelector('#aim-tab-i2v');
+      if (i2vTab) {
+        i2vTab.click();
+      } else {
+        window.location.hash = '#/aimodals?tab=img2vid';
+      }
+      playSFX('navigate', 0.5);
+      showToast('SYNTHESIS CHAIN', 'Image handed off to Wan-14B Image-to-Video Engine.');
+    };
+  }
+
   const upscaleBtn = el.querySelector('#aim-upscale-btn');
   if (upscaleBtn) {
     upscaleBtn.onclick = () => {
@@ -356,18 +375,37 @@ function buildResult(urls = []) {
       if (upTab) {
         upTab.click();
       } else {
-        window.location.hash = '#/upscaler';
+        window.location.hash = '#/aimodals?tab=upscaler';
       }
+      playSFX('navigate', 0.5);
+      showToast('SYNTHESIS CHAIN', 'Image handed off to 4x Ultra-Sharp Neural Upscaler.');
     };
   }
 
   const cnetBtn = el.querySelector('#aim-cnet-btn');
   if (cnetBtn) {
     cnetBtn.onclick = () => {
-      setGlobalControlNet(urls[currentIdx], 'canny');
+      setGlobalControlNet(urls[currentIdx], 'openpose');
       const cnTab = document.querySelector('#aim-tab-cnet');
       if (cnTab) cnTab.click();
+      else window.location.hash = '#/aimodals?tab=controlnet';
       playSFX('pop', 0.8);
+      showToast('CONTROLNET', 'Pose conditioning extracted and routed to ControlNet Forge.');
+    };
+  }
+
+  const omnigenBtn = el.querySelector('#aim-omnigen-btn');
+  if (omnigenBtn) {
+    omnigenBtn.onclick = () => {
+      window._pending_omnigen_image = urls[currentIdx];
+      const omniTab = document.querySelector('#aim-tab-omnigen');
+      if (omniTab) {
+        omniTab.click();
+      } else {
+        window.location.hash = '#/aimodals?tab=omnigen';
+      }
+      playSFX('navigate', 0.5);
+      showToast('OMNIGEN', 'Conditioning reference loaded into OmniGen Slot 1.');
     };
   }
 
@@ -2427,6 +2465,30 @@ function buildOmniGen() {
     });
   }
 
+  // Pending Cross-Modal Image Handoff
+  if (window._pending_omnigen_image) {
+    const pendingImg = window._pending_omnigen_image;
+    window._pending_omnigen_image = null;
+    fetch(pendingImg)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'omni_seed_ref.png', { type: blob.type || 'image/png' });
+        const slotCard = wrap.querySelector('#omni-slot-0');
+        const dzInner = wrap.querySelector('#omni-dz-0');
+        const preview = wrap.querySelector('#omni-preview-0');
+        const removeBtn = wrap.querySelector('#omni-remove-0');
+        slotFiles[0] = file;
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.classList.remove('hidden');
+        dzInner.classList.add('hidden');
+        removeBtn.classList.remove('hidden');
+        slotCard.classList.add('has-image');
+        setStatus(wrap, '#omni-status', 'Reference Image #1 injected via Cross-Modal Synthesis Chain.', 'ok');
+      })
+      .catch(console.warn);
+  }
+
   // Token Insert Pills
   const promptInput = wrap.querySelector('#omni-prompt');
   wrap.querySelectorAll('.omnigen-token-pill').forEach(pill => {
@@ -3739,8 +3801,12 @@ function buildTxt2Vid() {
         <div class="aim-result-frame">
           <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
-        <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
-          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
+        <div class="aim-result-actions" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center;">
+          <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:auto;">// VIDEO SYNTHESIS CHAIN:</span>
+          <button class="aim-btn aim-btn-dl" id="t2v-to-audio-btn" style="border-color:#eab308; color:#eab308;" title="Send video to Foley synthesis engine">🔊 GENERATE AUDIO (VID2AUDIO)</button>
+          <button class="aim-btn aim-btn-dl" id="t2v-to-fp-btn" style="border-color:#06b6d4; color:#06b6d4;" title="Send video to Framepack neural interpolation">🎞️ INTERPOLATE (FRAMEPACK)</button>
+          <button class="aim-btn aim-btn-dl" id="t2v-to-dir-btn" style="border-color:#ec4899; color:#ec4899;" title="Transfer video sequence to Cyber-Director timeline">🎬 SEND TO DIRECTOR</button>
+          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn">💾 SAVE VIDEO</button>
         </div>
       `;
 
@@ -3749,6 +3815,32 @@ function buildTxt2Vid() {
         a.href = url;
         a.download = `alphacore_video_${Date.now()}.mp4`;
         a.click();
+      };
+
+      resultEl.querySelector('#t2v-to-audio-btn').onclick = () => {
+        window._pending_vid2audio_video = url;
+        const v2aTab = document.querySelector('#aim-tab-v2a');
+        if (v2aTab) v2aTab.click();
+        else window.location.hash = '#/aimodals?tab=vid2audio';
+        playSFX('navigate', 0.5);
+        showToast('SYNTHESIS CHAIN', 'Video handed off to Vid2Audio Foley synthesis engine.');
+      };
+
+      resultEl.querySelector('#t2v-to-fp-btn').onclick = () => {
+        window._pending_framepack_video = url;
+        const fpTab = document.querySelector('#aim-tab-fp');
+        if (fpTab) fpTab.click();
+        else window.location.hash = '#/aimodals?tab=framepack';
+        playSFX('navigate', 0.5);
+        showToast('SYNTHESIS CHAIN', 'Video handed off to Framepack neural interpolation.');
+      };
+
+      resultEl.querySelector('#t2v-to-dir-btn').onclick = () => {
+        window._pending_director_video = url;
+        sessionStorage.setItem('alphacore_director_injected_video', url);
+        window.location.hash = '#/director';
+        playSFX('navigate', 0.5);
+        showToast('CYBER-DIRECTOR', 'Video imported into Cyber-Director Track 2 (Camera Motion).');
       };
 
       resultSlot.innerHTML = '';
@@ -4065,8 +4157,12 @@ function buildImg2Vid() {
         <div class="aim-result-frame">
           <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
         </div>
-        <div class="aim-result-actions" style="margin-top:10px; display:flex; gap:10px;">
-          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn" style="flex:1;">💾 SAVE VIDEO</button>
+        <div class="aim-result-actions" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center;">
+          <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:auto;">// VIDEO SYNTHESIS CHAIN:</span>
+          <button class="aim-btn aim-btn-dl" id="i2v-to-audio-btn" style="border-color:#eab308; color:#eab308;" title="Send video to Foley synthesis engine">🔊 GENERATE AUDIO (VID2AUDIO)</button>
+          <button class="aim-btn aim-btn-dl" id="i2v-to-fp-btn" style="border-color:#06b6d4; color:#06b6d4;" title="Send video to Framepack neural interpolation">🎞️ INTERPOLATE (FRAMEPACK)</button>
+          <button class="aim-btn aim-btn-dl" id="i2v-to-dir-btn" style="border-color:#ec4899; color:#ec4899;" title="Transfer video sequence to Cyber-Director timeline">🎬 SEND TO DIRECTOR</button>
+          <button class="aim-btn aim-btn-accept" id="aim-dl-vid-btn">💾 SAVE VIDEO</button>
         </div>
       `;
 
@@ -4075,6 +4171,32 @@ function buildImg2Vid() {
         a.href = url;
         a.download = `alphacore_video_${Date.now()}.mp4`;
         a.click();
+      };
+
+      resultEl.querySelector('#i2v-to-audio-btn').onclick = () => {
+        window._pending_vid2audio_video = url;
+        const v2aTab = document.querySelector('#aim-tab-v2a');
+        if (v2aTab) v2aTab.click();
+        else window.location.hash = '#/aimodals?tab=vid2audio';
+        playSFX('navigate', 0.5);
+        showToast('SYNTHESIS CHAIN', 'Video handed off to Vid2Audio Foley synthesis engine.');
+      };
+
+      resultEl.querySelector('#i2v-to-fp-btn').onclick = () => {
+        window._pending_framepack_video = url;
+        const fpTab = document.querySelector('#aim-tab-fp');
+        if (fpTab) fpTab.click();
+        else window.location.hash = '#/aimodals?tab=framepack';
+        playSFX('navigate', 0.5);
+        showToast('SYNTHESIS CHAIN', 'Video handed off to Framepack neural interpolation.');
+      };
+
+      resultEl.querySelector('#i2v-to-dir-btn').onclick = () => {
+        window._pending_director_video = url;
+        sessionStorage.setItem('alphacore_director_injected_video', url);
+        window.location.hash = '#/director';
+        playSFX('navigate', 0.5);
+        showToast('CYBER-DIRECTOR', 'Video imported into Cyber-Director Track 2 (Camera Motion).');
       };
 
       resultSlot.innerHTML = '';

@@ -88,4 +88,19 @@ describe('CyberDirectorPage', () => {
     const visualPrompt = el.querySelector('#dir-visual-prompt');
     expect(visualPrompt.value).toContain('cybernetic operative');
   });
+
+  it('stages cross-modal injected video into Track 2 on mount', () => {
+    window._pending_director_video = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJtcDQx';
+    const el = CyberDirectorPage();
+    document.body.appendChild(el);
+
+    const badge2 = el.querySelector('#badge-stage-2');
+    const badge3 = el.querySelector('#badge-stage-3');
+    const preview2 = el.querySelector('#preview-stage-2');
+
+    expect(badge2.textContent).toBe('INJECTED');
+    expect(badge3.textContent).toBe('READY');
+    expect(preview2.querySelector('video')).not.toBeNull();
+    expect(window._pending_director_video).toBeNull();
+  });
 });

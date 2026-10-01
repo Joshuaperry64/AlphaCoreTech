@@ -24,6 +24,7 @@ function initVisionDB() {
 }
 
 export async function saveImageToGallery(profile, prompt, source, data) {
+  if (typeof indexedDB === 'undefined') return;
   try {
     const db = await initVisionDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -41,6 +42,7 @@ export async function saveImageToGallery(profile, prompt, source, data) {
 }
 
 export async function getAllGalleryImages() {
+  if (typeof indexedDB === 'undefined') return [];
   return new Promise(async (resolve, reject) => {
     try {
       const db = await initVisionDB();

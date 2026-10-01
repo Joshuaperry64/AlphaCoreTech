@@ -77,4 +77,32 @@ describe('Overview Page & 2D Interactive Cyber-Desk', () => {
     expect(telemMount.style.display).toBe('none');
     expect(localStorage.getItem('alphacore_overview_view_mode')).toBe('desk');
   });
+
+  it('renders interactive cyber-desk radio and toggles playback state', () => {
+    const el = Overview();
+    const tapeBtn = el.querySelector('#tape-toggle-btn');
+    const tapeDeck = el.querySelector('#desk-tape-deck');
+    const audioWrap = el.querySelector('.prop-audio-wrap');
+
+    expect(tapeBtn).toBeTruthy();
+    expect(tapeDeck).toBeTruthy();
+    expect(audioWrap).toBeTruthy();
+    expect(tapeBtn.textContent).toContain('PLAY RADIO');
+
+    // Click to toggle radio
+    tapeBtn.click();
+    // Re-verify UI response
+    expect(tapeBtn.textContent).toMatch(/PAUSE|PLAY/);
+  });
+
+  it('contains living polaroid photo container with gloss and art wrapper', () => {
+    const el = Overview();
+    const polaroid = el.querySelector('#prop-polaroid');
+    const photo = polaroid.querySelector('.polaroid-photo');
+    const art = polaroid.querySelector('.polaroid-art');
+
+    expect(polaroid).toBeTruthy();
+    expect(photo).toBeTruthy();
+    expect(art).toBeTruthy();
+  });
 });

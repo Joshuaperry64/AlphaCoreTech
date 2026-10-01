@@ -86,13 +86,16 @@ export function initGlobalAudio() {
         if (globalAudio.readyState === 0) {
           globalAudio.load();
         }
-        globalAudio.play().then(() => {
-          if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
-        }).catch((e) => {
-          console.warn("Autoplay block (iOS/Safari) handled:", e);
-        });
+        const playPromise = globalAudio.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.then(() => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+              audioCtx.resume();
+            }
+          }).catch((e) => {
+            console.warn("Autoplay block (iOS/Safari) handled:", e);
+          });
+        }
       }
       // Clean up all possible interaction vectors
       document.removeEventListener('click', unlockAudio);
@@ -145,13 +148,16 @@ export function toggleAudio() {
     if (globalAudio.readyState === 0) {
       globalAudio.load();
     }
-    globalAudio.play().then(() => {
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }).catch((e) => {
-      console.warn("Audio play prevented:", e);
-    });
+    const playPromise = globalAudio.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(() => {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }).catch((e) => {
+        console.warn("Audio play prevented:", e);
+      });
+    }
   }
 
   return !globalAudio.paused;
