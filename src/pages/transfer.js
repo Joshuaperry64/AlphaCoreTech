@@ -1324,7 +1324,7 @@ export default function TransferPage() {
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${[1, 5, 10, 25, 50, 100].map(val => `
                   <button class="aim-btn btn-preset" data-val="${val}" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border-color: #334155; color: #cbd5e1; cursor: pointer;">
-                    ${val}.00
+                    $${val}.00
                   </button>
                 `).join('')}
               </div>
@@ -1340,19 +1340,19 @@ export default function TransferPage() {
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #888; font-size: 0.82rem;">
                 <span>Water & Machine Capture (Stripe 2.9% + $0.30):</span>
-                <span id="fee-capture" style="color:#cbd5e1;">-${activeFeeData.captureFee.toFixed(2)}</span>
+                <span id="fee-capture" style="color:#cbd5e1;">-$${activeFeeData.captureFee.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: ${feeConfig.isExempt ? '#10b981' : '#888'};">
                 <span id="fee-alpha-label">${feeConfig.detergentLabel || feeConfig.label}:</span>
-                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-${activeFeeData.platformFee.toFixed(2)}`}</span>
+                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${activeFeeData.platformFee.toFixed(2)}`}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #888; font-size: 0.82rem; border-bottom: 1px dashed #1e293b; padding-bottom: 6px;">
                 <span>Direct Express Wash Routing (Stripe Connect):</span>
-                <span id="fee-connect" style="color:#cbd5e1;">-${activeFeeData.connectFee.toFixed(2)}</span>
+                <span id="fee-connect" style="color:#cbd5e1;">-$${activeFeeData.connectFee.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 1rem; color: #fff;">
                 <strong>NET CLEAN PAYOUT AVAILABLE:</strong>
-                <strong id="final-payout" style="color: #10b981;">${activeFeeData.payout.toFixed(2)}</strong>
+                <strong id="final-payout" style="color: #10b981;">$${activeFeeData.payout.toFixed(2)}</strong>
               </div>
             </div>
 
@@ -1371,7 +1371,7 @@ export default function TransferPage() {
           <!-- Action Buttons Area -->
           <div style="margin-bottom: 16px;">
             <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
-              💳 INSERT CARD & DEPOSIT ${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
+              💳 INSERT CARD & DEPOSIT $${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
             </button>
 
             <!-- Stripe Card Element Mount Container -->
@@ -1425,7 +1425,7 @@ export default function TransferPage() {
             </div>
 
             <button id="btn-execute-push-payout" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; background: rgba(6,182,212,0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer; border-radius: 4px;">
-              ⚡ EXECUTE INSTANT PAYOUT (${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
+              ⚡ EXECUTE INSTANT PAYOUT ($${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
             </button>
             <div id="payout-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
           </div>
@@ -1514,13 +1514,13 @@ export default function TransferPage() {
             return;
           }
           tokenDisplay.textContent = `🪙 ${calc.tokens} HARD TOKENS`;
-          elCapture.textContent = `-${calc.captureFee.toFixed(2)}`;
-          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-${calc.platformFee.toFixed(2)}`;
-          elConnect.textContent = `-${calc.connectFee.toFixed(2)}`;
-          elPayout.textContent = `${calc.payout.toFixed(2)}`;
+          elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
+          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${calc.platformFee.toFixed(2)}`;
+          elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
+          elPayout.textContent = `$${calc.payout.toFixed(2)}`;
           elPayout.style.color = '#10b981';
           btnDeposit.disabled = false;
-          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT ${Number(val).toFixed(2)}`;
+          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT $${Number(val).toFixed(2)}`;
         };
       }
 
@@ -1729,7 +1729,7 @@ export default function TransferPage() {
             if (payoutStatusMsg) {
               payoutStatusMsg.style.display = 'block';
               payoutStatusMsg.style.color = '#10b981';
-              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> ${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
+              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> $${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
             }
             btnPushPayout.textContent = '✅ PAYOUT DISPATCHED TO DEBIT CARD';
           } catch (err) {
