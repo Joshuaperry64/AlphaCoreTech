@@ -1051,6 +1051,107 @@ export default function TransferPage() {
     }
 
     /* ─── High Immersion Mobile Responsive Overrides ─── */
+    
+    .laundry-station-card {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .laundry-station-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(6, 182, 212, 0.25);
+      border-color: #38bdf8 !important;
+    }
+    .atm-cabinet {
+      background: linear-gradient(180deg, #111827 0%, #030712 100%);
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .atm-marquee {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #090e17;
+      border: 1px solid #1e293b;
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .atm-crt-screen {
+      background: radial-gradient(circle at center, #021a24 0%, #010810 100%);
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 25px rgba(6,182,212,0.25);
+      margin-bottom: 16px;
+    }
+    .atm-card-slot-wrap {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      margin-top: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .atm-card-slot {
+      width: 140px;
+      height: 12px;
+      background: #000;
+      border: 2px solid #06b6d4;
+      border-radius: 6px;
+      margin: 10px auto;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.9), 0 0 10px rgba(6,182,212,0.4);
+      position: relative;
+    }
+    .animated-credit-card {
+      width: 80px;
+      height: 48px;
+      background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+      border-radius: 4px;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .card-inserting {
+      animation: card-insert 1.2s ease-in-out forwards;
+    }
+    @keyframes card-insert {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(18px) scale(0.95); opacity: 0.9; }
+      100% { transform: translateY(35px) scale(0.9); opacity: 0; }
+    }
+    .atm-dispenser-tray {
+      background: #080c14;
+      border: 2px inset #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+      text-align: center;
+      box-shadow: inset 0 3px 12px rgba(0,0,0,0.8);
+    }
+    .coin-dispensing {
+      animation: coin-drop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes coin-drop {
+      0% { transform: translateY(-25px) scale(0.4); opacity: 0; }
+      70% { transform: translateY(6px) scale(1.15); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
     @media (max-width: 640px) {
       .laundry-page {
         padding-left: 0px !important;
@@ -1242,123 +1343,124 @@ export default function TransferPage() {
     // ────────────────────────────────────────────────────────────────────────
     if (state.stage === 'wash_laundry') {
       bodyBox.innerHTML = `
-        <div style="text-align: center; padding: 12px 4px;">
-          <div style="font-size: 3rem; filter: drop-shadow(0 0 15px rgba(16,185,129,0.3)); margin-bottom: 6px;">??</div>
-          <div style="color: #06b6d4; font-size: 0.78rem; letter-spacing: 2px; font-weight: bold; margin-bottom: 4px;">
-            // 4-STEP REVOLVING LAUNDRY CYCLES
+        <div style="text-align: center; padding: 15px 10px;">
+          <div style="font-size: 3rem; filter: drop-shadow(0 0 15px rgba(16,185,129,0.3)); margin-bottom: 6px;">🧺</div>
+          <div style="color: #06b6d4; font-size: 0.8rem; letter-spacing: 2px; font-weight: bold; margin-bottom: 4px;">
+            // SECTOR 7 CYBER-SPIN COIN-OP // IMMERSIVE WALKTHROUGH
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 10px 0; font-size: clamp(1.2rem, 3.8vw, 1.45rem);">
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 8px 0; font-size: clamp(1.2rem, 3.5vw, 1.45rem);">
             THE LAUNDRO-MAT RUN-THROUGH
           </h2>
-          <p style="color: #94a3b8; font-size: 0.92rem; max-width: 540px; margin: 0 auto 20px auto; line-height: 1.5;">
-            Choose a station below to jump directly into action, or launch the automated run-through from the Cyber-ATM to freshly pressed clean receipts.
+          <p style="color: #94a3b8; font-size: 0.9rem; max-width: 520px; margin: 0 auto 18px auto; line-height: 1.5;">
+            Execute any station directly using the interactive console cards below, or trigger the full automated run-through from ATM deposit to verified clean payout.
           </p>
 
           <!-- 4 Interactive Station Cards / Buttons -->
-          <div class="laundry-station-grid">
-            <!-- 1. ATM / Coin Changer -->
-            <div id="btn-card-atm" class="laundry-station-card" style="border-color: #06b6d4;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size: 1.6rem;">??</span>
-                <span style="font-size: 0.7rem; background: rgba(6,182,212,0.2); color: #38bdf8; padding: 2px 7px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(6,182,212,0.4);">STEP 01</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 20px; text-align: left;">
+            
+            <!-- 1. ATM / Coin Changer Button -->
+            <div id="btn-station-atm" class="laundry-station-card" style="background: rgba(6,182,212,0.08); border: 1px solid #06b6d4; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🏧</span>
+                <span style="font-size: 0.7rem; background: rgba(6,182,212,0.2); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 01</span>
               </div>
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #fff; font-weight: bold; margin-bottom: 6px;">
-                ATM & COIN CHANGER
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                ATM & HARD CASH TERMINAL
               </div>
-              <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; margin-bottom: 12px;">
-                Deposit card or cash into the Cyber-ATM. Auto-calculates fees and mints physical tokens for washers.
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Instant card deposit, decoupled destination routing, real-time fee calculator, and animated coin dispenser.
               </div>
-              <button class="aim-btn" style="width: 100%; padding: 8px; font-size: 0.82rem; background: rgba(6,182,212,0.18); border-color: #06b6d4; color: #38bdf8; font-weight: bold; pointer-events: none;">
-                ? ENTER ATM TERMINAL
-              </button>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #06b6d4; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ ACCESS ATM CHANGER</span>
+              </div>
             </div>
 
-            <!-- 2. High-Speed Washers -->
-            <div id="btn-card-washers" class="laundry-station-card" style="border-color: #10b981;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size: 1.6rem;">??</span>
-                <span style="font-size: 0.7rem; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 7px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(16,185,129,0.4);">STEP 02</span>
+            <!-- 2. High-Speed Washers Button -->
+            <div id="btn-station-washers" class="laundry-station-card" style="background: rgba(16,185,129,0.08); border: 1px solid #10b981; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🌀</span>
+                <span style="font-size: 0.7rem; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 02</span>
               </div>
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #fff; font-weight: bold; margin-bottom: 6px;">
-                VORTEX WASHERS
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                COMMERCIAL VORTEX WASHERS
               </div>
-              <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; margin-bottom: 12px;">
-                Drop in soiled load & detergent pods. High-speed 1400 RPM extraction with 1-hr Time-Travel warp.
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Insert hard tokens + detergent pod. High-pressure 1400 RPM vortex cycle with 1-hr Chrono-Warp skip.
               </div>
-              <button class="aim-btn" style="width: 100%; padding: 8px; font-size: 0.82rem; background: rgba(16,185,129,0.18); border-color: #10b981; color: #34d399; font-weight: bold; pointer-events: none;">
-                ? ACCESS WASHERS
-              </button>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ GO TO WASHERS</span>
+              </div>
             </div>
 
-            <!-- 3. Heated Dryers -->
-            <div id="btn-card-dryers" class="laundry-station-card" style="border-color: #f59e0b;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size: 1.6rem;">??</span>
-                <span style="font-size: 0.7rem; background: rgba(245,158,11,0.2); color: #fbbf24; padding: 2px 7px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(245,158,11,0.4);">STEP 03</span>
+            <!-- 3. Heated Dryers Button -->
+            <div id="btn-station-dryers" class="laundry-station-card" style="background: rgba(245,158,11,0.08); border: 1px solid #f59e0b; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">♨️</span>
+                <span style="font-size: 0.7rem; background: rgba(245,158,11,0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 03</span>
               </div>
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #fff; font-weight: bold; margin-bottom: 6px;">
-                HEATED DRYERS
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                HEATED TUMBLE DRYERS
               </div>
-              <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; margin-bottom: 12px;">
-                Transfer dripping load, insert anti-static dryer sheet, and tumble dry with chrono-warp skip.
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Transfer dripping garments, insert anti-static dryer sheets, and run heated spin with instant time skip.
               </div>
-              <button class="aim-btn" style="width: 100%; padding: 8px; font-size: 0.82rem; background: rgba(245,158,11,0.18); border-color: #f59e0b; color: #fbbf24; font-weight: bold; pointer-events: none;">
-                ? ACCESS DRYERS
-              </button>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #f59e0b; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ GO TO DRYERS</span>
+              </div>
             </div>
 
-            <!-- 4. Clean Pickup & Receipt -->
-            <div id="btn-card-pickup" class="laundry-station-card" style="border-color: #a855f7;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size: 1.6rem;">??</span>
-                <span style="font-size: 0.7rem; background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 7px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(168,85,247,0.4);">STEP 04</span>
+            <!-- 4. Clean Pickup & Receipt Button -->
+            <div id="btn-station-pickup" class="laundry-station-card" style="background: rgba(168,85,247,0.08); border: 1px solid #a855f7; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🧾</span>
+                <span style="font-size: 0.7rem; background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 04</span>
               </div>
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: #fff; font-weight: bold; margin-bottom: 6px;">
-                CLEAN PICKUP & RECEIPT
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                CLEAN LAUNDRY & RECEIPT
               </div>
-              <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4; margin-bottom: 12px;">
-                Collect verified clean assets routed to destination vault. Inspect audit ledger & print receipt.
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Collect clean payout into destination account, inspect financial audit ledger, and print thermal receipt.
               </div>
-              <button class="aim-btn" style="width: 100%; padding: 8px; font-size: 0.82rem; background: rgba(168,85,247,0.18); border-color: #a855f7; color: #c084fc; font-weight: bold; pointer-events: none;">
-                ? VIEW FINAL RECEIPT
-              </button>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #c084fc; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ VIEW FINAL RECEIPT</span>
+              </div>
             </div>
+
           </div>
 
-          <!-- Primary Guided Action Button -->
-          <button id="btn-start-walkthrough" class="aim-btn" style="width: 100%; max-width: 540px; margin: 0 auto; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px; box-shadow: 0 0 20px rgba(16,185,129,0.2);">
-            <span>?? INITIATE ANIMATED LAUNDRY RUN-THROUGH</span> <span>?</span>
+          <!-- Primary Animated Walkthrough Action Button -->
+          <button id="btn-launch-runthrough" class="aim-btn" style="width: 100%; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px; box-shadow: 0 0 20px rgba(16,185,129,0.2);">
+            <span>🚀 INITIATE ANIMATED LAUNDRY RUN-THROUGH</span> <span>➔</span>
           </button>
         </div>
       `;
 
-      bodyBox.querySelector('#btn-card-atm').onclick = () => {
+      bodyBox.querySelector('#btn-station-atm').onclick = () => {
         laundromatAudio.init();
-        laundromatAudio.playDoorChime();
-        laundromatAudio.startMusic();
+        laundromatAudio.playCoinClink();
         playSFX('navigate');
         state.stage = 'cash_to_coin';
         render();
       };
-      bodyBox.querySelector('#btn-card-washers').onclick = () => {
+      bodyBox.querySelector('#btn-station-washers').onclick = () => {
         laundromatAudio.init();
-        playSFX('click');
+        playSFX('navigate');
         state.stage = 'washing_machines';
         render();
       };
-      bodyBox.querySelector('#btn-card-dryers').onclick = () => {
+      bodyBox.querySelector('#btn-station-dryers').onclick = () => {
         laundromatAudio.init();
-        playSFX('click');
+        playSFX('navigate');
         state.stage = 'dryer_machines';
         render();
       };
-      bodyBox.querySelector('#btn-card-pickup').onclick = () => {
+      bodyBox.querySelector('#btn-station-pickup').onclick = () => {
         laundromatAudio.init();
-        playSFX('click');
+        playSFX('navigate');
         state.stage = 'receive_laundry';
         render();
       };
-      bodyBox.querySelector('#btn-start-walkthrough').onclick = () => {
+      bodyBox.querySelector('#btn-launch-runthrough').onclick = () => {
         laundromatAudio.init();
         laundromatAudio.playDoorChime();
         laundromatAudio.startMusic();
@@ -1455,444 +1557,496 @@ export default function TransferPage() {
         tokens: 0
       };
 
-      const savedDests = getSavedDestinations();
+      const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
+      const isGuest = rawProfile.toLowerCase() === 'guest';
 
       bodyBox.innerHTML = `
-        <!-- Visual Cyber-ATM Cabinet -->
+        <!-- Cyber-ATM 9000 Hardware Cabinet -->
         <div class="atm-cabinet">
           <!-- ATM Marquee Header -->
           <div class="atm-marquee">
             <div>
-              <span style="font-size: 0.72rem; color: #06b6d4; font-weight: bold; letter-spacing: 1px;">// HARDWARE CHANGER #C-9000 // SECTOR 07</span>
-              <h3 style="font-family: 'Orbitron', sans-serif; margin: 2px 0 0 0; color: #fff; font-size: clamp(1.1rem, 3.5vw, 1.25rem); display: flex; align-items: center; gap: 8px;">
-                <span>🏧</span> CYBER-ATM & TOKEN CHANGER
+              <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; letter-spacing: 2px;">// SECTOR 07 HARDWARE CHANGER</span>
+              <h3 style="font-family: 'Orbitron', sans-serif; margin: 4px 0 0 0; color: #fff; font-size: clamp(1.1rem, 3.5vw, 1.35rem); display: flex; align-items: center; gap: 8px;">
+                <span>🏧</span> ALPHA-ATM 9000 & COIN TERMINAL
               </h3>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <span style="display: inline-block; font-size: 0.72rem; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 3px 8px; border-radius: 4px;">
-                ● ATM ONLINE
+            <div style="text-align: right;">
+              <span style="display: inline-block; font-size: 0.75rem; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 3px 8px; border-radius: 4px;">
+                ● DIRECT STRIPE UPLINK ONLINE
               </span>
-              <span style="font-size: 0.78rem; color: #f59e0b; font-weight: bold;">RATE: $1.00 = 4 TOKENS</span>
             </div>
           </div>
 
-          <!-- CRT Screen Viewport -->
+          <!-- CRT Display Terminal Screen -->
           <div class="atm-crt-screen">
-            <!-- [1] Source & Destination Matrix (High Visibility) -->
-            <div style="background: rgba(15,23,42,0.85); border: 1px solid #0284c7; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
-              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: #38bdf8; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(56,189,248,0.25); padding-bottom: 6px;">
-                <span style="display: flex; align-items: center; gap: 6px;"><span>🔒</span> SOURCE & DESTINATION MATRIX</span>
-                <span style="font-size: 0.68rem; color: #10b981; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 3px;">DIRECT ROUTING</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 14px;">
+              <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">[TERMINAL STATUS: READY FOR INSERTION]</span>
+              <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">EXCHANGE RATE: $1.00 = 4 HARD TOKENS</span>
+            </div>
+
+            <!-- SOURCE & DESTINATION MATRIX (High Visibility) -->
+            <div style="background: rgba(0,0,0,0.6); border: 1px solid rgba(6,182,212,0.3); border-radius: 6px; padding: 14px; margin-bottom: 16px;">
+              <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">
+                // SOURCE & DESTINATION ROUTING MATRIX
               </div>
-              
+
               <!-- Source -->
-              <div style="margin-bottom: 12px;">
-                <div style="font-size: 0.72rem; color: #94a3b8; font-weight: bold; margin-bottom: 4px; letter-spacing: 0.5px;">SOURCE (FUNDING INSTRUMENT):</div>
-                <div style="display: flex; align-items: center; gap: 8px; background: #020617; border: 1px solid #334155; padding: 8px 12px; border-radius: 4px; font-size: 0.84rem; color: #f8fafc;">
-                  <span style="font-size: 1.1rem;">💳</span>
-                  <div>
-                    <strong style="color: #38bdf8;">Encrypted Card / Bank Direct</strong>
-                    <span style="color: #64748b; font-size: 0.75rem; margin-left: 6px;">(Stripe PCI-DSS Level 1 // 256-bit AES)</span>
-                  </div>
-                </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 6px;">
+                <span style="color: #94a3b8;">SOURCE (FUNDING INSTRUMENT):</span>
+                <span style="color: #fff; font-weight: bold;">💳 Card / Cash App (Instant Capture)</span>
               </div>
 
-              <!-- Destination -->
-              <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
-                  <span style="font-size: 0.72rem; color: #38bdf8; font-weight: bold; letter-spacing: 0.5px;">DESTINATION (PAYOUT RECIPIENT VAULT):</span>
-                  <button id="btn-open-onboard" class="aim-btn" style="padding: 3px 8px; font-size: 0.72rem; border-color: #06b6d4; color: #38bdf8; cursor: pointer; min-height: 28px;">
-                    + ONBOARD RECIPIENT
+              <!-- Destination Routing Choice -->
+              <div style="font-size: 0.85rem; margin-top: 10px;">
+                <div style="color: #94a3b8; margin-bottom: 6px;">DESTINATION (PAYOUT RECIPIENT):</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+                  <button id="dest-mode-vault" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#10b981' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
+                    <div style="font-weight: bold; color: #10b981;">🏦 AlphaCore Sutton Vault</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Bypasses 7-Day Platform Hold</div>
+                  </button>
+                  <button id="dest-mode-pushtocard" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? '#06b6d4' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
+                    <div style="font-weight: bold; color: #06b6d4;">💳 Instant Push-to-Card</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Direct Debit Card Payout (No Acct #)</div>
                   </button>
                 </div>
-                <select id="destination-select" style="width: 100%; min-height: 42px; background: #000; border: 1px solid #06b6d4; color: #38bdf8; padding: 8px 10px; font-size: 0.86rem; font-family: 'Share Tech Mono', monospace; border-radius: 4px; outline: none; box-sizing: border-box;">
-                  <option value="${DONATION_ACCOUNT_ID}" ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'selected' : ''}>
-                    🏦 AlphaCore Sutton Bank Vault (acct_1UKrOjHx3NuZf8IK) [RECOMMENDED // BYPASSES 7-DAY HOLD]
-                  </option>
-                  ${savedDests.map(d => `<option value="${d.id}" ${state.selectedDestination === d.id ? 'selected' : ''}>👤 ${d.name} [${d.id}]</option>`).join('')}
-                  <option value="custom" ${state.selectedDestination === 'custom' || (state.selectedDestination && state.selectedDestination !== DONATION_ACCOUNT_ID && !savedDests.some(d => d.id === state.selectedDestination)) ? 'selected' : ''}>
-                    ⚙️ Enter Custom Connect Account ID...
-                  </option>
-                </select>
-              </div>
-
-              <!-- Custom Destination Box -->
-              <div id="custom-destination-box" style="display: ${state.selectedDestination === 'custom' || (state.selectedDestination && state.selectedDestination !== DONATION_ACCOUNT_ID && !savedDests.some(d => d.id === state.selectedDestination)) ? 'block' : 'none'}; margin-top: 10px; background: #020617; border: 1px dashed #06b6d4; padding: 10px; border-radius: 4px;">
-                <label style="color: #94a3b8; font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 4px;">ENTER STRIPE CONNECT ID ('acct_...'):</label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <input type="text" id="custom-dest-input" value="${state.customDestinationId || ''}" placeholder="acct_1XXXXXXXXXXXXXXX" style="flex: 1; min-width: 180px; min-height: 38px; background: #000; border: 1px solid #334155; color: #fff; padding: 8px; font-family: monospace; font-size: 0.85rem; border-radius: 4px; box-sizing: border-box;">
-                  <button id="btn-verify-dest" class="aim-btn" style="padding: 8px 14px; font-size: 0.75rem; border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer; min-height: 38px;">
-                    VERIFY
-                  </button>
-                </div>
-                <div id="dest-verify-status" style="font-size: 0.75rem; margin-top: 6px;"></div>
               </div>
             </div>
 
-            <!-- [2] Cash Deposit Input & Quick Preset Chips -->
+            <!-- ATM Cash Deposit Input & Token Yield -->
             <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 6px; margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-                <label style="color: #94a3b8; font-size: 0.82rem; font-weight: bold;">ENTER TRANSFER AMOUNT (USD) [MIN $0.50]:</label>
-                <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.9rem;">
-                  🪙 ${activeFeeData.tokens} HARD TOKENS MINTED
+              <div style="display:flex; justify-content:space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER CASH DEPOSIT AMOUNT (USD) [MIN $0.50]:</label>
+                <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.95rem;">
+                  🪙 ${activeFeeData.tokens} HARD TOKENS
                 </span>
               </div>
               <div style="position: relative; margin-bottom: 10px;">
-                <span style="position: absolute; left: 14px; top: 10px; font-size: 1.4rem; color: #10b981;">$</span>
-                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="0.50" min="0.50" step="0.01"
-                  style="width: 100%; min-height: 48px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 10px 12px 10px 34px; font-size: 1.4rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
+                <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
+                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="25.00" min="0.50" step="0.01"
+                  style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
               </div>
+              <!-- Quick Presets -->
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="preset-chip ${state.amount === 1 ? 'active' : ''}" data-val="1.00">$1.00</button>
-                <button class="preset-chip ${state.amount === 5 ? 'active' : ''}" data-val="5.00">$5.00</button>
-                <button class="preset-chip ${state.amount === 10 ? 'active' : ''}" data-val="10.00">$10.00</button>
-                <button class="preset-chip ${state.amount === 25 ? 'active' : ''}" data-val="25.00">$25.00</button>
-                <button class="preset-chip ${state.amount === 50 ? 'active' : ''}" data-val="50.00">$50.00</button>
-                <button class="preset-chip ${state.amount === 100 ? 'active' : ''}" data-val="100.00">$100.00</button>
+                ${[1, 5, 10, 25, 50, 100].map(val => `
+                  <button class="aim-btn btn-preset" data-val="${val}" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border-color: #334155; color: #cbd5e1; cursor: pointer;">
+                    $${val}.00
+                  </button>
+                `).join('')}
               </div>
             </div>
 
-            <!-- [3] Thematic Laundromat Fee Breakdown Table -->
-            <div style="background: #050912; border: 1px solid #1e293b; padding: 14px; border-radius: 6px; margin-bottom: 16px;">
+            <!-- Thematic Laundromat Fee Breakdown Table -->
+            <div style="background: rgba(0,0,0,0.5); border: 1px solid #1e293b; padding: 14px; border-radius: 6px; margin-bottom: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #1f293d; padding-bottom: 6px;">
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: #06b6d4; font-weight: bold;">
-                  LAUNDROMAT CYCLE & ROUTING FEES
+                  THEMATIC LAUNDRO-MAT FEES & VALUE LEDGER
                 </span>
-                <span style="font-size: 0.72rem; color: ${feeConfig.badgeColor};">${feeConfig.badge}</span>
+                <span style="font-size: 0.75rem; color: ${feeConfig.badgeColor};">${feeConfig.badge}</span>
               </div>
-
-              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #94a3b8; font-size: 0.82rem;">
-                <span>Water & Machine Capture (2.9% + $0.30):</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #888; font-size: 0.82rem;">
+                <span>Water & Machine Capture (Stripe 2.9% + $0.30):</span>
                 <span id="fee-capture" style="color:#cbd5e1;">-$${activeFeeData.captureFee.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: ${feeConfig.isExempt ? '#10b981' : (feeConfig.rate === 0.07 ? '#06b6d4' : '#94a3b8')};">
-                <span id="fee-alpha-label">${feeConfig.label}</span>
-                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (WAIVED)' : `-$${activeFeeData.platformFee.toFixed(2)}`}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: ${feeConfig.isExempt ? '#10b981' : '#888'};">
+                <span id="fee-alpha-label">${feeConfig.detergentLabel || feeConfig.label}:</span>
+                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${activeFeeData.platformFee.toFixed(2)}`}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #94a3b8; font-size: 0.82rem;">
-                <span>Express Wash Routing (0.25% + $0.25):</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #888; font-size: 0.82rem; border-bottom: 1px dashed #1e293b; padding-bottom: 6px;">
+                <span>Direct Express Wash Routing (Stripe Connect):</span>
                 <span id="fee-connect" style="color:#cbd5e1;">-$${activeFeeData.connectFee.toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #94a3b8; border-bottom: 1px dashed #1e293b; padding-bottom: 8px; font-size: 0.82rem;">
-                <span>Instant Payout Chrono-Fee:</span>
-                <span id="fee-instant" style="color:#cbd5e1;">-$${activeFeeData.instantFee.toFixed(2)}</span>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 1rem; color: #fff; border-top: 1px solid #1e293b; padding-top: 8px;">
-                <div>
-                  <strong>NET CLEAN ASSETS RECEIVABLE:</strong>
-                  <div style="font-size: 0.72rem; color: #38bdf8; font-weight: normal;" id="dest-target-label">
-                    TARGET: ${state.selectedDestinationName || '🏦 AlphaCore Vault'}
-                  </div>
-                </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 1rem; color: #fff;">
+                <strong>NET CLEAN PAYOUT AVAILABLE:</strong>
                 <strong id="final-payout" style="color: #10b981;">$${activeFeeData.payout.toFixed(2)}</strong>
               </div>
             </div>
 
-            <!-- [4] Animated Card Reader Slot & Payment Trigger -->
+            <!-- Animated Card Insertion Slot Area -->
             <div class="atm-card-slot-wrap">
-              <div style="font-size: 0.75rem; color: #38bdf8; font-weight: bold; margin-bottom: 8px;">
-                ▼ ATM CARD ENTRY SLOT
+              <div id="card-graphic" class="animated-credit-card ${state.cardInserting ? 'card-inserting' : ''}">
+                <span>CHIP // VISA</span>
               </div>
-              <div class="atm-card-slot" id="atm-card-slot-ui">
-                <div id="card-indicator-light" style="width: 8px; height: 8px; border-radius: 50%; background: #64748b; margin: 0 auto;"></div>
+              <div class="atm-card-slot"></div>
+              <div style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; margin-top: 6px;">
+                ${state.cardInserting ? '⚡ READING CARD DATA & ENCRYPTING...' : '▼ CARD INSERTION SLOT ▼'}
               </div>
-              <div id="atm-card-sprite" class="atm-card-graphic">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 0.6rem; color: #e0f2fe; font-weight: bold;">ALPHA VISA</span>
-                  <span style="font-size: 0.7rem;">📶</span>
-                </div>
-                <div style="font-family: monospace; font-size: 0.65rem; color: #fff; letter-spacing: 1px;">•••• •••• •••• 4242</div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.55rem; color: #bae6fd;">
-                  <span>VAL: 12/28</span> <span>STRIPE DIRECT</span>
-                </div>
-              </div>
-
-              <button id="btn-initiate-payment" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; font-size: 1rem; background: rgba(6, 182, 212, 0.2); border-color: #06b6d4; color: #38bdf8; font-weight: bold; cursor: pointer; border-radius: 6px;" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
-                💳 INSERT CARD & AUTHORIZE VIA STRIPE
-              </button>
-
-              <!-- Stripe Elements Mount Container -->
-              <div id="stripe-ui-container" style="display: none; margin-top: 14px; background: #020617; border: 1px solid #06b6d4; padding: 16px; border-radius: 6px; text-align: left;">
-                <div style="color: #06b6d4; font-size: 0.82rem; font-weight: bold; margin-bottom: 10px;">// ENTER CARD DETAILS (STRIPE ENCRYPTED UPLINK):</div>
-                <div id="payment-element"></div>
-                <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 46px; margin-top: 14px; padding: 12px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer;">
-                  CONFIRM PAYMENT & DISPENSE TOKENS
-                </button>
-                <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
-              </div>
-            </div>
-
-            <!-- [5] Animated Coin Dispenser Tray -->
-            <div class="atm-dispenser-tray">
-              <div style="font-size: 0.75rem; color: #f59e0b; font-weight: bold; margin-bottom: 6px;">
-                ▼ HARD TOKEN & CASH DISPENSER TRAY
-              </div>
-              <div id="dispenser-tray-interior" style="min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.82rem; color: #64748b;">[TRAY READY // AWAITING TRANSACTION EXECUTION]</span>
-              </div>
-              <button id="btn-continue-minigame" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 12px; padding: 12px; background: rgba(16, 185, 129, 0.25); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 1rem; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.3); display: none;">
-                🪙 COLLECT TOKENS & ADVANCE TO WASHERS ➔
-              </button>
             </div>
           </div>
+
+          <!-- Action Buttons Area -->
+          <div style="margin-bottom: 16px;">
+            <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
+              💳 INSERT CARD & DEPOSIT $${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
+            </button>
+
+            <!-- Stripe Card Element Mount Container -->
+            <div id="stripe-ui-container" style="display: none; margin-top: 14px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 8px;">
+              <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// ENTER SOURCE PAYMENT CARD DETAILS:</div>
+              <div id="payment-element"></div>
+              <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer; border-radius: 4px;">
+                CONFIRM DEPOSIT & DISPENSE TOKENS
+              </button>
+              <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
+            </div>
+          </div>
+
+          <!-- Animated Coin Dispenser Tray -->
+          <div class="atm-dispenser-tray">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">
+              HARD COIN TOKEN DISPENSER TRAY
+            </div>
+            <div id="dispenser-coins" style="font-size: 2.2rem; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              ${state.tokensHeld > 0 ? '<span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span>' : '<span style="font-size:0.85rem; color:#475569;">[TRAY EMPTY // AWAITING DEPOSIT]</span>'}
+            </div>
+            ${state.tokensHeld > 0 ? `
+              <button id="btn-collect-proceed" class="aim-btn" style="margin-top: 10px; padding: 10px 20px; background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; cursor: pointer; border-radius: 4px;">
+                🪙 COLLECT ${state.tokensHeld} TOKENS & PROCEED TO WASHERS ➔
+              </button>
+            ` : ''}
+          </div>
+
+          <!-- Push-to-Card Instant Payout Direct Gateway (The Coin Changer Cash-Out) -->
+          <div style="margin-top: 20px; background: #050912; border: 1px solid #1e293b; padding: 18px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+              <div>
+                <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold;">// COIN CHANGER & CASH-OUT</span>
+                <h4 style="font-family: 'Orbitron', sans-serif; margin: 2px 0 0 0; color: #fff; font-size: 1rem;">
+                  INSTANT PUSH-TO-CARD DEBIT PAYOUT
+                </h4>
+              </div>
+              <span style="font-size: 0.78rem; color: #10b981; font-weight: bold;">NO STRIPE ACCOUNT REQUIRED</span>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 14px 0; line-height: 1.4;">
+              Ready to cash out clean laundry? Enter any Visa or Mastercard debit card (including Cash App Cash Card or Chime). Funds arrive in under 60 seconds.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 12px;" class="mobile-stack-columns">
+              <input type="text" id="payout-card-num" placeholder="Debit Card Number (16 Digits)" maxlength="19"
+                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
+              <input type="text" id="payout-card-exp" placeholder="MM/YY" maxlength="5"
+                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
+              <input type="text" id="payout-card-cvc" placeholder="CVC" maxlength="4"
+                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
+            </div>
+
+            <button id="btn-execute-push-payout" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; background: rgba(6,182,212,0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer; border-radius: 4px;">
+              ⚡ EXECUTE INSTANT PAYOUT ($${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
+            </button>
+            <div id="payout-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
+          </div>
         </div>
+
+        <!-- Guest Session Security Warning Intercept Modal -->
+        ${state.guestWarningModalActive ? `
+          <div class="laundry-modal-overlay">
+            <div class="laundry-modal-box" style="border-color: #f59e0b; box-shadow: 0 0 40px rgba(245,158,11,0.3);">
+              <div style="font-size: 3rem; margin-bottom: 8px;">⚠️</div>
+              <h3 style="font-family: 'Orbitron', sans-serif; color: #fbbf24; margin: 0 0 10px 0; font-size: 1.2rem;">
+                GUEST PROFILE ESCROW WARNING
+              </h3>
+              <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6; text-align: left; background: rgba(0,0,0,0.5); padding: 14px; border-radius: 6px; border: 1px solid #475569; margin-bottom: 14px;">
+                You are currently depositing on an anonymous <strong>Guest Profile</strong>.
+                <br><br>
+                • <strong>Holding Tank:</strong> If you close or refresh this page before completing your payout at the Coin Changer, unclaimed funds will be held in temporary escrow for <strong>24 hours</strong>.
+                <br><br>
+                • <strong>Auto-Refund Safety:</strong> After 24 hours, the system will automatically refund your deposit back to the source card.
+                <br><br>
+                • <strong>Non-Refundable Fees:</strong> External network transaction processing fees ($0.30 + 2.9%) cannot be refunded.
+                <br><br>
+                • <strong>Recommended:</strong> Authenticate with your User PIN to permanently hold balances across visits.
+              </p>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btn-guest-cancel" class="aim-btn" style="flex: 1; padding: 12px; border-color: #64748b; color: #94a3b8; cursor: pointer;">
+                  CANCEL
+                </button>
+                <button id="btn-guest-proceed" class="aim-btn" style="flex: 2; padding: 12px; background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; cursor: pointer;">
+                  I UNDERSTAND // PROCEED AS GUEST
+                </button>
+              </div>
+            </div>
+          </div>
+        ` : ''}
       `;
 
+      // Wire Up Destination Selection
+      const btnDestVault = bodyBox.querySelector('#dest-mode-vault');
+      const btnDestCard = bodyBox.querySelector('#dest-mode-pushtocard');
+      if (btnDestVault) {
+        btnDestVault.onclick = () => {
+          playSFX('click');
+          state.selectedDestination = DONATION_ACCOUNT_ID;
+          render();
+        };
+      }
+      if (btnDestCard) {
+        btnDestCard.onclick = () => {
+          playSFX('click');
+          state.selectedDestination = 'pushtocard';
+          render();
+        };
+      }
+
+      // Wire Up Cash Input & Presets
       const cashInput = bodyBox.querySelector('#cash-amount-input');
       const tokenDisplay = bodyBox.querySelector('#token-count-display');
       const elCapture = bodyBox.querySelector('#fee-capture');
       const elAlpha = bodyBox.querySelector('#fee-alpha');
       const elConnect = bodyBox.querySelector('#fee-connect');
-      const elInstant = bodyBox.querySelector('#fee-instant');
       const elPayout = bodyBox.querySelector('#final-payout');
-      const btnPay = bodyBox.querySelector('#btn-initiate-payment');
-      const btnContinue = bodyBox.querySelector('#btn-continue-minigame');
-      const stripeBox = bodyBox.querySelector('#stripe-ui-container');
-      const submitPayBtn = bodyBox.querySelector('#submit-payment-btn');
-      const payMsgEl = bodyBox.querySelector('#payment-message');
-      const destSelect = bodyBox.querySelector('#destination-select');
-      const customDestBox = bodyBox.querySelector('#custom-destination-box');
-      const customDestInput = bodyBox.querySelector('#custom-dest-input');
-      const btnVerifyDest = bodyBox.querySelector('#btn-verify-dest');
-      const destVerifyStatus = bodyBox.querySelector('#dest-verify-status');
-      const btnOpenOnboard = bodyBox.querySelector('#btn-open-onboard');
-      const cardSlotUI = bodyBox.querySelector('#atm-card-slot-ui');
-      const cardSprite = bodyBox.querySelector('#atm-card-sprite');
-      const cardIndicator = bodyBox.querySelector('#card-indicator-light');
-      const trayInterior = bodyBox.querySelector('#dispenser-tray-interior');
+      const btnDeposit = bodyBox.querySelector('#btn-initiate-deposit');
 
-      // Preset buttons handler
-      bodyBox.querySelectorAll('.preset-chip').forEach(btn => {
+      bodyBox.querySelectorAll('.btn-preset').forEach(btn => {
         btn.onclick = () => {
           playSFX('click');
-          const val = parseFloat(btn.dataset.val);
-          state.amount = val;
-          cashInput.value = val.toFixed(2);
-          cashInput.dispatchEvent(new Event('input'));
-          bodyBox.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
-          btn.classList.add('active');
+          state.amount = parseFloat(btn.getAttribute('data-val'));
+          render();
         };
       });
 
-      if (destSelect) {
-        destSelect.onchange = (e) => {
+      if (cashInput) {
+        cashInput.oninput = (e) => {
           const val = e.target.value;
-          if (val === DONATION_ACCOUNT_ID) {
-            playSFX('modal');
-            state.donationConfirmModalActive = true;
+          state.amount = val;
+          const calc = calculateFees(val, feeConfig.rate);
+          if (!calc) {
+            tokenDisplay.textContent = '🪙 0 TOKENS';
+            elCapture.textContent = '-$0.00';
+            elAlpha.textContent = feeConfig.isExempt ? '$0.00' : '-$0.00';
+            elConnect.textContent = '-$0.00';
+            elPayout.textContent = '$0.00';
+            elPayout.style.color = '#ef4444';
+            btnDeposit.disabled = true;
+            return;
+          }
+          tokenDisplay.textContent = `🪙 ${calc.tokens} HARD TOKENS`;
+          elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
+          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${calc.platformFee.toFixed(2)}`;
+          elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
+          elPayout.textContent = `$${calc.payout.toFixed(2)}`;
+          elPayout.style.color = '#10b981';
+          btnDeposit.disabled = false;
+          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT $${Number(val).toFixed(2)}`;
+        };
+      }
+
+      // Wire Up Deposit Initiation & Guest Intercept
+      if (btnDeposit) {
+        btnDeposit.onclick = () => {
+          if (isGuest && !state.guestWarningModalActive) {
+            playSFX('alert');
+            state.guestWarningModalActive = true;
             render();
             return;
           }
-
-          state.donationConfirmed = false;
-          state.selectedDestination = val;
-          if (val === 'custom') {
-            customDestBox.style.display = 'block';
-            state.selectedDestinationName = state.customDestinationId || 'Custom Account';
-          } else if (!val) {
-            customDestBox.style.display = 'none';
-            state.selectedDestinationName = '';
-          } else {
-            customDestBox.style.display = 'none';
-            state.selectedDestinationName = e.target.options[e.target.selectedIndex].text;
-          }
-          const targetLbl = bodyBox.querySelector('#dest-target-label');
-          if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName || '🏦 AlphaCore Vault'}`;
+          triggerCardInsertion();
         };
       }
 
-      if (btnVerifyDest) {
-        btnVerifyDest.onclick = async () => {
-          const id = customDestInput.value.trim();
-          if (!id || !id.startsWith('acct_')) {
-            destVerifyStatus.innerHTML = '<span style="color:#ef4444;">[!] Error: ID must start with acct_</span>';
-            return;
+      // Wire Up Guest Warning Modal Buttons
+      const btnGuestCancel = bodyBox.querySelector('#btn-guest-cancel');
+      const btnGuestProceed = bodyBox.querySelector('#btn-guest-proceed');
+      if (btnGuestCancel) {
+        btnGuestCancel.onclick = () => {
+          playSFX('click');
+          state.guestWarningModalActive = false;
+          render();
+        };
+      }
+      if (btnGuestProceed) {
+        btnGuestProceed.onclick = () => {
+          playSFX('click');
+          state.guestWarningModalActive = false;
+          triggerCardInsertion();
+        };
+      }
+
+      // Card Insertion & Stripe Elements Execution
+      async function triggerCardInsertion() {
+        state.cardInserting = true;
+        laundromatAudio.init();
+        laundromatAudio.playBillWhir();
+        playSFX('transition');
+        const cardGfx = bodyBox.querySelector('#card-graphic');
+        if (cardGfx) cardGfx.classList.add('card-inserting');
+
+        const stripeBox = bodyBox.querySelector('#stripe-ui-container');
+        if (stripeBox) stripeBox.style.display = 'block';
+
+        btnDeposit.disabled = true;
+        btnDeposit.textContent = '⚡ ESTABLISHING SECURE STRIPE UPLINK...';
+
+        try {
+          const resp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/atm-deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: state.amount,
+              profile: rawProfile,
+              is_guest: isGuest
+            })
+          });
+
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || 'ATM Deposit rejected by backend.');
+
+          state.depositId = data.depositId;
+
+          if (data.clientSecret && window.Stripe) {
+            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
+            elementsInstance = stripeInstance.elements({
+              clientSecret: data.clientSecret,
+              appearance: { theme: 'night' }
+            });
+            const paymentElement = elementsInstance.create('payment');
+            paymentElement.mount('#payment-element');
+            btnDeposit.textContent = '💳 PAYMENT CARD INSERTED // COMPLETE BELOW';
           }
-          btnVerifyDest.disabled = true;
-          btnVerifyDest.textContent = 'CHECKING...';
-          destVerifyStatus.textContent = 'Querying Stripe network...';
-          try {
-            const resp = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/get-account-info?account_id=${id}`);
-            const data = await resp.json();
-            if (!resp.ok) throw new Error(data.detail || 'Account lookup failed');
-            state.verifiedCustomInfo = data;
-            state.customDestinationId = id;
-            saveDestination(id, data.name || `Account (${id.slice(-6)})`);
-            destVerifyStatus.innerHTML = `<span style="color:#10b981;">✓ Verified: ${data.name} (Bank: ${data.bank_name} ••••${data.last4})</span>`;
-            state.selectedDestinationName = `${data.name} [${id}]`;
-            const targetLbl = bodyBox.querySelector('#dest-target-label');
-            if (targetLbl) targetLbl.textContent = `TARGET: ${state.selectedDestinationName}`;
-            playSFX('success');
-          } catch (err) {
-            destVerifyStatus.innerHTML = `<span style="color:#ef4444;">[!] ${err.message}</span>`;
+        } catch (err) {
+          btnDeposit.disabled = false;
+          btnDeposit.textContent = `❌ ERROR: ${err.message}`;
+          playSFX('incorrect');
+        }
+      }
+
+      // Wire Up Payment Submission
+      const submitPayBtn = bodyBox.querySelector('#submit-payment-btn');
+      const payMsgEl = bodyBox.querySelector('#payment-message');
+      if (submitPayBtn) {
+        submitPayBtn.onclick = async () => {
+          if (!stripeInstance || !elementsInstance) return;
+          submitPayBtn.disabled = true;
+          submitPayBtn.textContent = 'AUTHORIZING DIRECT TRANSACTION...';
+          laundromatAudio.playBillWhir();
+
+          const { error, paymentIntent } = await stripeInstance.confirmPayment({
+            elements: elementsInstance,
+            redirect: 'if_required'
+          });
+
+          if (error) {
+            submitPayBtn.disabled = false;
+            submitPayBtn.textContent = 'RETRY PAYMENT';
+            if (payMsgEl) {
+              payMsgEl.textContent = `[!] ${error.message}`;
+              payMsgEl.style.display = 'block';
+            }
             playSFX('incorrect');
-          } finally {
-            btnVerifyDest.disabled = false;
-            btnVerifyDest.textContent = 'VERIFY';
+          } else {
+            // Confirm deposit on backend
+            try {
+              await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/confirm-atm-deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paymentIntentId: paymentIntent.id,
+                  depositId: state.depositId,
+                  profile: rawProfile,
+                  is_guest: isGuest,
+                  amount: state.amount
+                })
+              });
+            } catch (e) {
+              console.warn('Backend confirmation note:', e);
+            }
+
+            state.paymentAuthorized = true;
+            state.tokensHeld += maxTokens(state.amount);
+            laundromatAudio.playCoinClink();
+            playSFX('success');
+            render();
           }
         };
       }
 
-      if (btnOpenOnboard) {
-        btnOpenOnboard.onclick = () => {
-          playSFX('modal');
-          state.onboardingModalActive = true;
+      // Helper function for max tokens
+      function maxTokens(amt) {
+        return Math.max(1, Math.floor(Number(amt) * 4));
+      }
+
+      // Wire Up Collect Tokens Button
+      const btnCollectProceed = bodyBox.querySelector('#btn-collect-proceed');
+      if (btnCollectProceed) {
+        btnCollectProceed.onclick = () => {
+          laundromatAudio.playCoinClink();
+          playSFX('navigate');
+          state.stage = 'washing_machines';
           render();
         };
       }
 
-      // Real-time calculation updater
-      cashInput.oninput = (e) => {
-        const val = e.target.value;
-        state.amount = parseFloat(val) || 0;
+      // Wire Up Push-to-Card Instant Payout
+      const btnPushPayout = bodyBox.querySelector('#btn-execute-push-payout');
+      const cardNumInput = bodyBox.querySelector('#payout-card-num');
+      const cardExpInput = bodyBox.querySelector('#payout-card-exp');
+      const cardCvcInput = bodyBox.querySelector('#payout-card-cvc');
+      const payoutStatusMsg = bodyBox.querySelector('#payout-status-msg');
 
-        const calc = calculateFees(val, feeConfig.rate);
-        if (!calc) {
-          tokenDisplay.textContent = '🪙 0 TOKENS';
-          elCapture.textContent = '-$0.00';
-          elAlpha.textContent = feeConfig.isExempt ? '$0.00' : '-$0.00';
-          elConnect.textContent = '-$0.00';
-          elInstant.textContent = '-$0.00';
-          elPayout.textContent = '$0.00';
-          elPayout.style.color = '#ef4444';
-          btnPay.disabled = true;
-          return;
-        }
+      if (btnPushPayout) {
+        btnPushPayout.onclick = async () => {
+          const cardNum = (cardNumInput?.value || '').replace(/\s+/g, '');
+          const cardExp = (cardExpInput?.value || '').trim();
+          const cardCvc = (cardCvcInput?.value || '').trim();
 
-        tokenDisplay.textContent = `🪙 ${calc.tokens} HARD TOKENS MINTED`;
-        elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
-        elAlpha.textContent = feeConfig.isExempt ? '$0.00 (WAIVED)' : `-$${calc.platformFee.toFixed(2)}`;
-        elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
-        elInstant.textContent = `-$${calc.instantFee.toFixed(2)}`;
-        elPayout.textContent = `$${calc.payout.toFixed(2)}`;
-        elPayout.style.color = '#10b981';
-        btnPay.disabled = false;
-      };
-
-      // Proceed to washing machines
-      btnContinue.onclick = () => {
-        laundromatAudio.playCoinClink();
-        playSFX('navigate');
-        state.stage = 'washing_machines';
-        render();
-      };
-
-      // Initiate Stripe Payment + Card Slot Animation
-      btnPay.onclick = async () => {
-        const val = parseFloat(cashInput.value);
-        if (isNaN(val) || val < 0.50) {
-          alert('Minimum transaction amount is $0.50 USD.');
-          return;
-        }
-
-        // Animate card sliding in
-        if (cardSprite && cardSlotUI) {
-          cardSprite.classList.add('card-inserted');
-          cardSlotUI.classList.add('slot-active');
-          if (cardIndicator) {
-            cardIndicator.style.background = '#10b981';
-            cardIndicator.style.boxShadow = '0 0 8px #10b981';
-          }
-        }
-
-        btnPay.textContent = 'CONNECTING TO STRIPE ENCRYPTED GATEWAY...';
-        btnPay.disabled = true;
-        laundromatAudio.playBillWhir();
-
-        try {
-          const targetDest = state.selectedDestination || DONATION_ACCOUNT_ID;
-          const response = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/create-payment-intent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: val,
-              profile: feeConfig.profileName,
-              fee_rate: feeConfig.rate,
-              destination: targetDest
-            })
-          });
-
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.detail || 'Transfer API rejected request');
+          if (cardNum.length < 15 || !cardExp.includes('/') || cardCvc.length < 3) {
+            alert('Please enter a valid 16-digit debit card number, MM/YY expiration, and 3-digit CVC.');
+            return;
           }
 
-          if (data.clientSecret && window.Stripe) {
-            const stripeOptions = data.chargeType === 'direct' ? { stripeAccount: data.destination } : {};
-            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd', stripeOptions);
-            elementsInstance = stripeInstance.elements({
-              appearance: { theme: 'night' },
-              clientSecret: data.clientSecret
+          const [expMonth, expYear] = cardExp.split('/');
+          btnPushPayout.disabled = true;
+          btnPushPayout.textContent = '⚡ TOKENIZING DEBIT CARD & PUSHING FUNDS...';
+          laundromatAudio.playBillWhir();
+
+          try {
+            if (!window.Stripe) throw new Error('Stripe.js not loaded');
+            const stripeTemp = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
+
+            const tokenResult = await stripeTemp.createToken('card', {
+              number: cardNum,
+              exp_month: parseInt(expMonth, 10),
+              exp_year: parseInt(expYear.length === 2 ? `20${expYear}` : expYear, 10),
+              cvc: cardCvc
             });
 
-            const paymentElement = elementsInstance.create('payment');
-            paymentElement.mount('#payment-element');
+            if (tokenResult.error) throw new Error(tokenResult.error.message);
 
-            stripeBox.style.display = 'block';
-            btnPay.style.display = 'none';
-          } else {
-            throw new Error('Stripe.js SDK failed to load client secret');
-          }
-        } catch (err) {
-          alert('Gateway Error: ' + err.message);
-          btnPay.disabled = false;
-          btnPay.textContent = '💳 INSERT CARD & AUTHORIZE VIA STRIPE';
-          if (cardSprite) cardSprite.classList.remove('card-inserted');
-          playSFX('incorrect');
-        }
-      };
+            const payoutResp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/changer-payout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                amount: activeFeeData.payout,
+                profile: rawProfile,
+                depositId: state.depositId,
+                cardToken: tokenResult.token.id
+              })
+            });
 
-      // Confirm & Execute Stripe Payment + Dispense Coins
-      submitPayBtn.onclick = async () => {
-        submitPayBtn.disabled = true;
-        submitPayBtn.textContent = 'PROCESSING SECURE AUTHORIZATION...';
-        laundromatAudio.playBillWhir();
+            const payoutData = await payoutResp.json();
+            if (!payoutResp.ok) throw new Error(payoutData.detail || 'Push-to-card payout failed.');
 
-        const { error } = await stripeInstance.confirmPayment({
-          elements: elementsInstance,
-          confirmParams: {
-            return_url: window.location.href
-          },
-          redirect: 'if_required'
-        });
+            laundromatAudio.playCleanSparkle();
+            laundromatAudio.playReceiptPrinter();
+            playSFX('login');
 
-        if (error) {
-          payMsgEl.textContent = error.message;
-          payMsgEl.style.display = 'block';
-          submitPayBtn.disabled = false;
-          submitPayBtn.textContent = 'CONFIRM PAYMENT & DISPENSE TOKENS';
-          playSFX('incorrect');
-        } else {
-          state.paymentAuthorized = true;
-          stripeBox.style.display = 'none';
-          
-          // Animate tokens dropping into the tray!
-          const calc = calculateFees(state.amount, feeConfig.rate) || { tokens: 12 };
-          laundromatAudio.playCoinClink();
-          playSFX('success');
-
-          if (trayInterior) {
-            trayInterior.innerHTML = '';
-            for (let i = 0; i < Math.min(8, calc.tokens); i++) {
-              const coinSpan = document.createElement('span');
-              coinSpan.className = 'coin-token-drop';
-              coinSpan.style.animationDelay = (i * 0.1) + 's';
-              coinSpan.textContent = '🪙';
-              trayInterior.appendChild(coinSpan);
+            if (payoutStatusMsg) {
+              payoutStatusMsg.style.display = 'block';
+              payoutStatusMsg.style.color = '#10b981';
+              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> $${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
             }
-            const infoText = document.createElement('div');
-            infoText.style.cssText = 'width: 100%; color: #10b981; font-weight: bold; font-size: 0.95rem; margin-top: 6px;';
-            infoText.textContent = `✓ SUCCESS! ${calc.tokens} HARD TOKENS DISPENSED INTO TRAY`;
-            trayInterior.appendChild(infoText);
+            btnPushPayout.textContent = '✅ PAYOUT DISPATCHED TO DEBIT CARD';
+          } catch (err) {
+            btnPushPayout.disabled = false;
+            btnPushPayout.textContent = '⚡ RETRY PUSH-TO-CARD PAYOUT';
+            if (payoutStatusMsg) {
+              payoutStatusMsg.style.display = 'block';
+              payoutStatusMsg.style.color = '#ef4444';
+              payoutStatusMsg.textContent = `❌ ${err.message}`;
+            }
+            playSFX('incorrect');
           }
-
-          if (btnContinue) {
-            btnContinue.style.display = 'block';
-            btnContinue.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }
-      };
+        };
+      }
     }
 
     else if (state.stage === 'washing_machines') {

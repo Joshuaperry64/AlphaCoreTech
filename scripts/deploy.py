@@ -580,7 +580,7 @@ router_image = (
     .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio", "stripe_transfer")
 )
 
-@app.function(image=router_image, scaledown_window=120, secrets=_get_secrets())
+@app.function(image=router_image, volumes={CACHE_DIR: cache_volume}, scaledown_window=120, secrets=_get_secrets())
 @modal.asgi_app()
 def AlphaCore_Main_API():
     """Universal Main API mapping /architect and /eco to respective routers."""
