@@ -66,7 +66,7 @@ export default function VoiceClonerPage() {
     { name: 'CyberSynth-V1', label: 'CYBERSYNTH V1', desc: 'Robotic vocoder with analog distortion and overdrive timbre', icon: '⚡' },
     { name: 'GlitchCore-X', label: 'GLITCHCORE X', desc: 'High-energy cyberpunk neural broadcast modulation', icon: '🧬' }
   ];
-  const voiceProfiles = PRESET_VOICES;
+  let voiceProfiles = PRESET_VOICES;
 
   function render() {
     const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
