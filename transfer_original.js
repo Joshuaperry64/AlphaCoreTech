@@ -565,35 +565,6 @@ class LaundromatAudioEngine {
 
 // Global Singleton for the Laundromat Session
 const laundromatAudio = new LaundromatAudioEngine();
-  // ─── Gamified Audio Methods ───────────────────────────────────────────────
-  const playMachineStart = () => {
-    try {
-      const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='); // Dummy fast beep
-      audio.volume = 0.5;
-      audio.play().catch(e => console.warn(e));
-    } catch(e) {}
-  };
-  
-  const playTimeTravel = () => {
-    try {
-      const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='); // Dummy swoosh
-      audio.volume = 0.5;
-      audio.play().catch(e => console.warn(e));
-    } catch(e) {}
-  };
-  
-  const playCoinDrop = () => {
-    try {
-      const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='); // Dummy coin
-      audio.volume = 0.5;
-      audio.play().catch(e => console.warn(e));
-    } catch(e) {}
-  };
-
-  laundromatAudio.playMachineStart = playMachineStart;
-  laundromatAudio.playTimeTravel = playTimeTravel;
-  laundromatAudio.playCoinDrop = playCoinDrop;
-
 
 export default function TransferPage() {
   const container = createElement('div', { className: 'page-container laundry-page' });
@@ -891,6 +862,157 @@ export default function TransferPage() {
       50% { opacity: 1; transform: scale(1.02); filter: blur(0px); }
       100% { opacity: 0; transform: scale(1); pointer-events: none; }
     }
+    
+    /* 4-Step Station Cards */
+    .laundry-station-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+      text-align: left;
+    }
+    .laundry-station-card {
+      background: #091220;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 140px;
+    }
+    .laundry-station-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(6, 182, 212, 0.25);
+      border-color: #06b6d4 !important;
+    }
+    /* ATM Machine Visual Styles */
+    .atm-cabinet {
+      background: linear-gradient(180deg, #0e1726 0%, #030712 100%);
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .atm-marquee {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .atm-crt-screen {
+      background: radial-gradient(circle at center, #021a24 0%, #010810 100%);
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(6,182,212,0.25);
+      margin-bottom: 16px;
+    }
+    .atm-crt-screen::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+    .atm-card-slot-wrap {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 16px 0;
+      text-align: center;
+      position: relative;
+    }
+    .atm-card-slot {
+      height: 14px;
+      max-width: 260px;
+      margin: 10px auto;
+      background: #000;
+      border: 2px solid #475569;
+      border-radius: 7px;
+      position: relative;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.9);
+      transition: all 0.3s ease;
+    }
+    .atm-card-slot.slot-active {
+      border-color: #10b981;
+      box-shadow: 0 0 14px rgba(16,185,129,0.6), inset 0 2px 6px rgba(0,0,0,0.9);
+    }
+    .atm-card-graphic {
+      width: 130px;
+      height: 75px;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      border: 1px solid #38bdf8;
+      border-radius: 6px;
+      margin: 0 auto 12px auto;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px;
+      box-sizing: border-box;
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .atm-card-graphic.card-inserted {
+      transform: translateY(35px) scale(0.4);
+      opacity: 0;
+    }
+    .atm-dispenser-tray {
+      background: #060b13;
+      border: 2px inset #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 18px;
+      text-align: center;
+      box-shadow: inset 0 3px 12px rgba(0,0,0,0.9);
+      position: relative;
+    }
+    .coin-token-drop {
+      display: inline-block;
+      font-size: 2rem;
+      animation: coin-bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes coin-bounce {
+      0% { transform: translateY(-30px) scale(0.3); opacity: 0; }
+      60% { transform: translateY(6px) scale(1.2); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .preset-chip {
+      padding: 8px 14px;
+      background: #091220;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+    .preset-chip:hover, .preset-chip.active {
+      background: rgba(6,182,212,0.15);
+      border-color: #06b6d4;
+      color: #06b6d4;
+      font-weight: bold;
+    }
+
     .thermal-receipt {
       background: #0f172a;
       border: 1px dashed #38bdf8;
@@ -929,6 +1051,107 @@ export default function TransferPage() {
     }
 
     /* ─── High Immersion Mobile Responsive Overrides ─── */
+    
+    .laundry-station-card {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .laundry-station-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(6, 182, 212, 0.25);
+      border-color: #38bdf8 !important;
+    }
+    .atm-cabinet {
+      background: linear-gradient(180deg, #111827 0%, #030712 100%);
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .atm-marquee {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #090e17;
+      border: 1px solid #1e293b;
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .atm-crt-screen {
+      background: radial-gradient(circle at center, #021a24 0%, #010810 100%);
+      border: 2px solid #06b6d4;
+      border-radius: 8px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 25px rgba(6,182,212,0.25);
+      margin-bottom: 16px;
+    }
+    .atm-card-slot-wrap {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      margin-top: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .atm-card-slot {
+      width: 140px;
+      height: 12px;
+      background: #000;
+      border: 2px solid #06b6d4;
+      border-radius: 6px;
+      margin: 10px auto;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.9), 0 0 10px rgba(6,182,212,0.4);
+      position: relative;
+    }
+    .animated-credit-card {
+      width: 80px;
+      height: 48px;
+      background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+      border-radius: 4px;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .card-inserting {
+      animation: card-insert 1.2s ease-in-out forwards;
+    }
+    @keyframes card-insert {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(18px) scale(0.95); opacity: 0.9; }
+      100% { transform: translateY(35px) scale(0.9); opacity: 0; }
+    }
+    .atm-dispenser-tray {
+      background: #080c14;
+      border: 2px inset #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 16px;
+      text-align: center;
+      box-shadow: inset 0 3px 12px rgba(0,0,0,0.8);
+    }
+    .coin-dispensing {
+      animation: coin-drop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes coin-drop {
+      0% { transform: translateY(-25px) scale(0.4); opacity: 0; }
+      70% { transform: translateY(6px) scale(1.15); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
     @media (max-width: 640px) {
       .laundry-page {
         padding-left: 0px !important;
@@ -1120,50 +1343,133 @@ export default function TransferPage() {
     // ────────────────────────────────────────────────────────────────────────
     if (state.stage === 'wash_laundry') {
       bodyBox.innerHTML = `
-        <div style="text-align: center; padding: 20px 10px;">
-          <div style="font-size: 4rem; filter: drop-shadow(0 0 15px rgba(16,185,129,0.3)); margin-bottom: 10px;">🧺</div>
-          <div style="color: #ef4444; font-size: 0.85rem; letter-spacing: 1px; font-weight: bold; margin-bottom: 8px;">
-            [!] SOIL DETECTED // STREET DATA RESIDUE CRITICAL
+        <div style="text-align: center; padding: 15px 10px;">
+          <div style="font-size: 3rem; filter: drop-shadow(0 0 15px rgba(16,185,129,0.3)); margin-bottom: 6px;">🧺</div>
+          <div style="color: #06b6d4; font-size: 0.8rem; letter-spacing: 2px; font-weight: bold; margin-bottom: 4px;">
+            // SECTOR 7 CYBER-SPIN COIN-OP // IMMERSIVE WALKTHROUGH
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 12px 0; font-size: clamp(1.15rem, 3.5vw, 1.35rem);">
-            WASH LAUNDRY: STEP 01
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 8px 0; font-size: clamp(1.2rem, 3.5vw, 1.45rem);">
+            THE LAUNDRO-MAT RUN-THROUGH
           </h2>
-          <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 24px auto; line-height: 1.6;">
-            Your cyber-threads, ledger tracks, and digital garments are heavily soiled. Grab your bulging dirty load firmly with both hands and head over to the 24/7 coin-op laundro-mat.
+          <p style="color: #94a3b8; font-size: 0.9rem; max-width: 520px; margin: 0 auto 18px auto; line-height: 1.5;">
+            Execute any station directly using the interactive console cards below, or trigger the full automated run-through from ATM deposit to verified clean payout.
           </p>
-          
-          <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 15px; max-width: 450px; margin: 0 auto 24px auto; text-align: left; font-size: 0.85rem;">
-            <div style="color: #10b981; font-weight: bold; margin-bottom: 6px;">📋 LAUNDRY HAMPER INVENTORY:</div>
-            <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Soiled Operative Overcoat:</span> <span style="color:#ef4444;">BULGING LOAD (100%)</span>
+
+          <!-- 4 Interactive Station Cards / Buttons -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 20px; text-align: left;">
+            
+            <!-- 1. ATM / Coin Changer Button -->
+            <div id="btn-station-atm" class="laundry-station-card" style="background: rgba(6,182,212,0.08); border: 1px solid #06b6d4; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🏧</span>
+                <span style="font-size: 0.7rem; background: rgba(6,182,212,0.2); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 01</span>
+              </div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                ATM & HARD CASH TERMINAL
+              </div>
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Instant card deposit, decoupled destination routing, real-time fee calculator, and animated coin dispenser.
+              </div>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #06b6d4; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ ACCESS ATM CHANGER</span>
+              </div>
             </div>
-            <div style="color: #cbd5e1; display:flex; justify-content:space-between; margin-bottom:4px;">
-              <span>• Telemetry-Laced Jeans:</span> <span style="color:#ef4444;">SWEATY & STAINED</span>
+
+            <!-- 2. High-Speed Washers Button -->
+            <div id="btn-station-washers" class="laundry-station-card" style="background: rgba(16,185,129,0.08); border: 1px solid #10b981; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🌀</span>
+                <span style="font-size: 0.7rem; background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 02</span>
+              </div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                COMMERCIAL VORTEX WASHERS
+              </div>
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Insert hard tokens + detergent pod. High-pressure 1400 RPM vortex cycle with 1-hr Chrono-Warp skip.
+              </div>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ GO TO WASHERS</span>
+              </div>
             </div>
-            <div style="color: #cbd5e1; display:flex; justify-content:space-between;">
-              <span>• Untracked Digital Stash:</span> <span style="color:#f59e0b;">READY FOR PENETRATION</span>
+
+            <!-- 3. Heated Dryers Button -->
+            <div id="btn-station-dryers" class="laundry-station-card" style="background: rgba(245,158,11,0.08); border: 1px solid #f59e0b; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">♨️</span>
+                <span style="font-size: 0.7rem; background: rgba(245,158,11,0.2); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 03</span>
+              </div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                HEATED TUMBLE DRYERS
+              </div>
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Transfer dripping garments, insert anti-static dryer sheets, and run heated spin with instant time skip.
+              </div>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #f59e0b; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ GO TO DRYERS</span>
+              </div>
             </div>
+
+            <!-- 4. Clean Pickup & Receipt Button -->
+            <div id="btn-station-pickup" class="laundry-station-card" style="background: rgba(168,85,247,0.08); border: 1px solid #a855f7; padding: 14px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size: 1.6rem;">🧾</span>
+                <span style="font-size: 0.7rem; background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-weight: bold;">STATION 04</span>
+              </div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 0.92rem; color: #fff; font-weight: bold; margin-bottom: 4px;">
+                CLEAN LAUNDRY & RECEIPT
+              </div>
+              <div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4;">
+                Collect clean payout into destination account, inspect financial audit ledger, and print thermal receipt.
+              </div>
+              <div style="margin-top: 10px; font-size: 0.78rem; color: #c084fc; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                <span>▶ VIEW FINAL RECEIPT</span>
+              </div>
+            </div>
+
           </div>
 
-          <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 48px;">
-            🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDRO-MAT ➔
+          <!-- Primary Animated Walkthrough Action Button -->
+          <button id="btn-launch-runthrough" class="aim-btn" style="width: 100%; padding: 16px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px; box-shadow: 0 0 20px rgba(16,185,129,0.2);">
+            <span>🚀 INITIATE ANIMATED LAUNDRY RUN-THROUGH</span> <span>➔</span>
           </button>
         </div>
       `;
 
-      bodyBox.querySelector('#btn-goto-laundromat').onclick = () => {
+      bodyBox.querySelector('#btn-station-atm').onclick = () => {
+        laundromatAudio.init();
+        laundromatAudio.playCoinClink();
+        playSFX('navigate');
+        state.stage = 'cash_to_coin';
+        render();
+      };
+      bodyBox.querySelector('#btn-station-washers').onclick = () => {
+        laundromatAudio.init();
+        playSFX('navigate');
+        state.stage = 'washing_machines';
+        render();
+      };
+      bodyBox.querySelector('#btn-station-dryers').onclick = () => {
+        laundromatAudio.init();
+        playSFX('navigate');
+        state.stage = 'dryer_machines';
+        render();
+      };
+      bodyBox.querySelector('#btn-station-pickup').onclick = () => {
+        laundromatAudio.init();
+        playSFX('navigate');
+        state.stage = 'receive_laundry';
+        render();
+      };
+      bodyBox.querySelector('#btn-launch-runthrough').onclick = () => {
         laundromatAudio.init();
         laundromatAudio.playDoorChime();
         laundromatAudio.startMusic();
         playSFX('navigate');
-        state.stage = 'laundromat_hub';
+        state.stage = 'cash_to_coin';
         render();
       };
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // STAGE 2: GOTO LAUNDROMAT (Arrive at Laundro-mat Hub)
-    // ────────────────────────────────────────────────────────────────────────
     else if (state.stage === 'laundromat_hub') {
       bodyBox.innerHTML = `
         <div style="text-align: center; padding: 15px 10px;">
@@ -1317,14 +1623,14 @@ export default function TransferPage() {
               </div>
               <div style="position: relative; margin-bottom: 10px;">
                 <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
-                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="0.50" min="0.50" step="0.01"
+                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="25.00" min="0.50" step="0.01"
                   style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
               </div>
               <!-- Quick Presets -->
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                 ${[1, 5, 10, 25, 50, 100].map(val => `
                   <button class="aim-btn btn-preset" data-val="${val}" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border-color: #334155; color: #cbd5e1; cursor: pointer;">
-                    ${val}.00
+                    $${val}.00
                   </button>
                 `).join('')}
               </div>
@@ -1340,19 +1646,19 @@ export default function TransferPage() {
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #888; font-size: 0.82rem;">
                 <span>Water & Machine Capture (Stripe 2.9% + $0.30):</span>
-                <span id="fee-capture" style="color:#cbd5e1;">-${activeFeeData.captureFee.toFixed(2)}</span>
+                <span id="fee-capture" style="color:#cbd5e1;">-$${activeFeeData.captureFee.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: ${feeConfig.isExempt ? '#10b981' : '#888'};">
                 <span id="fee-alpha-label">${feeConfig.detergentLabel || feeConfig.label}:</span>
-                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-${activeFeeData.platformFee.toFixed(2)}`}</span>
+                <span id="fee-alpha">${feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${activeFeeData.platformFee.toFixed(2)}`}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #888; font-size: 0.82rem; border-bottom: 1px dashed #1e293b; padding-bottom: 6px;">
                 <span>Direct Express Wash Routing (Stripe Connect):</span>
-                <span id="fee-connect" style="color:#cbd5e1;">-${activeFeeData.connectFee.toFixed(2)}</span>
+                <span id="fee-connect" style="color:#cbd5e1;">-$${activeFeeData.connectFee.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 1rem; color: #fff;">
                 <strong>NET CLEAN PAYOUT AVAILABLE:</strong>
-                <strong id="final-payout" style="color: #10b981;">${activeFeeData.payout.toFixed(2)}</strong>
+                <strong id="final-payout" style="color: #10b981;">$${activeFeeData.payout.toFixed(2)}</strong>
               </div>
             </div>
 
@@ -1371,7 +1677,7 @@ export default function TransferPage() {
           <!-- Action Buttons Area -->
           <div style="margin-bottom: 16px;">
             <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
-              💳 INSERT CARD & DEPOSIT ${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
+              💳 INSERT CARD & DEPOSIT $${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
             </button>
 
             <!-- Stripe Card Element Mount Container -->
@@ -1425,7 +1731,7 @@ export default function TransferPage() {
             </div>
 
             <button id="btn-execute-push-payout" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; background: rgba(6,182,212,0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer; border-radius: 4px;">
-              ⚡ EXECUTE INSTANT PAYOUT (${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
+              ⚡ EXECUTE INSTANT PAYOUT ($${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
             </button>
             <div id="payout-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
           </div>
@@ -1514,13 +1820,13 @@ export default function TransferPage() {
             return;
           }
           tokenDisplay.textContent = `🪙 ${calc.tokens} HARD TOKENS`;
-          elCapture.textContent = `-${calc.captureFee.toFixed(2)}`;
-          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-${calc.platformFee.toFixed(2)}`;
-          elConnect.textContent = `-${calc.connectFee.toFixed(2)}`;
-          elPayout.textContent = `${calc.payout.toFixed(2)}`;
+          elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
+          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${calc.platformFee.toFixed(2)}`;
+          elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
+          elPayout.textContent = `$${calc.payout.toFixed(2)}`;
           elPayout.style.color = '#10b981';
           btnDeposit.disabled = false;
-          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT ${Number(val).toFixed(2)}`;
+          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT $${Number(val).toFixed(2)}`;
         };
       }
 
@@ -1646,9 +1952,6 @@ export default function TransferPage() {
 
             state.paymentAuthorized = true;
             state.tokensHeld += maxTokens(state.amount);
-            if (state.inventory) {
-                state.inventory.coins += maxTokens(state.amount);
-            }
             laundromatAudio.playCoinClink();
             playSFX('success');
             render();
@@ -1729,7 +2032,7 @@ export default function TransferPage() {
             if (payoutStatusMsg) {
               payoutStatusMsg.style.display = 'block';
               payoutStatusMsg.style.color = '#10b981';
-              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> ${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
+              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> $${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
             }
             btnPushPayout.textContent = '✅ PAYOUT DISPATCHED TO DEBIT CARD';
           } catch (err) {

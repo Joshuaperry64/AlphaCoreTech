@@ -84,7 +84,7 @@ describe('TransferPage (Laundro-mat)', () => {
     expect(cashInput.getAttribute('min')).toBe('0.50');
     expect(cashInput.getAttribute('placeholder')).toBe('0.50');
 
-    const btnPay = el.querySelector('#btn-initiate-payment');
+    const btnPay = el.querySelector('#btn-initiate-deposit');
     expect(btnPay).toBeTruthy();
     expect(btnPay.disabled).toBe(false);
   });
