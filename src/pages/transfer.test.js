@@ -64,28 +64,51 @@ describe('TransferPage (Laundro-mat)', () => {
     expect(el.innerHTML).toContain('ARCHITECT');
   });
 
-  it('navigates through to the coin changer stage with $0.50 min input', () => {
+  it('renders operative laundry smartcard and account balance button in the header', () => {
+    sessionStorage.setItem('current_profile', 'DoeBoy');
+    sessionStorage.setItem('current_pin', '6969');
+    const el = TransferPage();
+
+    const btnHeaderWallet = el.querySelector('#btn-header-wallet');
+    expect(btnHeaderWallet).toBeTruthy();
+    expect(btnHeaderWallet.innerHTML).toContain('AC-CARD-6969');
+    expect(btnHeaderWallet.innerHTML).toContain('$45.00');
+    expect(btnHeaderWallet.innerHTML).toContain('🪙 8');
+  });
+
+  it('renders full smartcard with live balance and token sack in Stage 2 (laundromat_hub)', () => {
     sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
     const el = TransferPage();
 
     // Stage 1 -> Stage 2
     const btnGotoLaundromat = el.querySelector('#btn-goto-laundromat');
-    expect(btnGotoLaundromat).toBeTruthy();
     btnGotoLaundromat.click();
 
-    // Stage 2 -> Stage 3
-    const btnGotoChanger = el.querySelector('#btn-goto-changer');
-    expect(btnGotoChanger).toBeTruthy();
-    btnGotoChanger.click();
+    // Stage 2 Hub
+    expect(el.innerHTML).toContain('THE LAUNDRO-MAT MAIN FLOOR');
+    const walletMount = el.querySelector('#laundromat-wallet-mount');
+    expect(walletMount).toBeTruthy();
+    expect(walletMount.innerHTML).toContain('AC-CARD-9901');
+    expect(walletMount.innerHTML).toContain('$150.00');
+    expect(walletMount.innerHTML).toContain('🪙 20');
+    expect(walletMount.innerHTML).toContain('🫧 12');
+  });
 
-    // Stage 3: verify cash-to-coin elements
-    const cashInput = el.querySelector('#cash-amount-input');
-    expect(cashInput).toBeTruthy();
-    expect(cashInput.getAttribute('min')).toBe('0.50');
-    expect(cashInput.getAttribute('placeholder')).toBe('0.50');
+  it('displays docked smartcard and stored balance in Stage 3 (Cyber-ATM)', () => {
+    sessionStorage.setItem('current_profile', 'Fisherman');
+    sessionStorage.setItem('current_pin', '1990');
+    const el = TransferPage();
 
-    const btnPay = el.querySelector('#btn-initiate-deposit');
-    expect(btnPay).toBeTruthy();
-    expect(btnPay.disabled).toBe(false);
+    // Go to Stage 2 then Stage 3
+    el.querySelector('#btn-goto-laundromat').click();
+    el.querySelector('#btn-goto-changer').click();
+
+    // Stage 3 ATM
+    expect(el.innerHTML).toContain('DOCKED OPERATIVE LAUNDRY SMARTCARD');
+    expect(el.innerHTML).toContain('AC-CARD-1990');
+    expect(el.innerHTML).toContain('FISHERMAN');
+    expect(el.innerHTML).toContain('$20.00');
+    expect(el.innerHTML).toContain('🪙 4 Hard Tokens');
   });
 });

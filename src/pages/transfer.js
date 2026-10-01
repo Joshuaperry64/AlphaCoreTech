@@ -1,5 +1,13 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
+import {
+  getProfileWallet,
+  creditWallet,
+  debitWallet,
+  renderLaundromatWallet,
+  openWalletInspectorModal,
+  canonicalProfileName
+} from '../components/laundromat_wallet.js';
 
 // ─── Procedural Laundromat Audio & Music Synthesizer Engine ──────────────────
 class LaundromatAudioEngine {
@@ -724,11 +732,22 @@ export default function TransferPage() {
   const initialSaved = getSavedDestinations();
   const initialDest = initialSaved.length > 0 ? initialSaved[0].id : '';
   const initialDestName = initialSaved.length > 0 ? `👤 ${initialSaved[0].name} [${initialSaved[0].id}]` : '';
+  const activeProfile = canonicalProfileName(sessionStorage.getItem('current_profile') || 'Guest');
+  const initialWallet = getProfileWallet(activeProfile);
 
   let state = {
     stage: 'wash_laundry', // 'wash_laundry' | 'laundromat_hub' | 'cash_to_coin' | 'washing_machines' | 'dryer_machines' | 'receive_laundry'
     amount: 25.00,
     paymentAuthorized: false,
+    tokensHeld: 0,
+    inventory: {
+      coins: initialWallet.tokens || 0,
+      laundry_load: 1,
+      detergent: initialWallet.detergentPods || 1,
+      dryer_sheets: initialWallet.dryerSheets || 1,
+      clean_laundry: initialWallet.cleanLoads || 0
+    },
+    cleanCreditGiven: false,
     washerLoaded: false,
     washerTraveled: false,
     dryerLoaded: false,
@@ -987,8 +1006,11 @@ export default function TransferPage() {
     container.innerHTML = '';
     container.appendChild(styleEl);
 
+    const curProfile = canonicalProfileName(sessionStorage.getItem('current_profile') || 'Guest');
+    const curWallet = getProfileWallet(curProfile);
+
     // ─── Top Header ─────────────────────────────────────────────────────────
-    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px; flex-wrap:wrap; gap:8px;' });
+    const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px; flex-wrap:wrap; gap:8px;' });
     headerEl.innerHTML = `
       <div>
         <div style="font-size:0.75rem; color:#06b6d4; letter-spacing:2px; font-weight:bold;">// SECTOR 7 COIN-OP PROTOCOL</div>
@@ -996,12 +1018,27 @@ export default function TransferPage() {
           <span>🧺</span> THE LAUNDRO-MAT
         </h1>
       </div>
-      <div style="text-align:right;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <button id="btn-header-wallet" class="aim-btn" style="display:flex; align-items:center; gap:6px; background:#070d17; border:1px solid ${curWallet.accentColor}; padding:6px 12px; border-radius:4px; font-size:0.75rem; cursor:pointer;" title="Inspect Account Wallets">
+          <span style="font-size:0.95rem;">💳</span>
+          <span style="color:${curWallet.accentColor}; font-weight:bold; font-family:'Orbitron',sans-serif;">${curWallet.cardId}</span>
+          <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)}</span>
+          <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens}</span>
+          <span style="color:#06b6d4; font-size:0.68rem; margin-left:2px;">ACCOUNTS ▾</span>
+        </button>
         <span style="display:inline-block; font-size:0.75rem; padding:4px 10px; border-radius:3px; font-weight:bold; border:1px solid ${feeConfig.badgeColor}; color:${feeConfig.badgeColor}; background:${feeConfig.badgeColor}15;">
           ${feeConfig.badge}
         </span>
       </div>
     `;
+
+    const btnHdrWallet = headerEl.querySelector('#btn-header-wallet');
+    if (btnHdrWallet) {
+      btnHdrWallet.onclick = () => {
+        playSFX('click');
+        openWalletInspectorModal({ onProfileSwitched: () => render() });
+      };
+    }
     container.appendChild(headerEl);
 
     // ─── 7-Day Countdown Header Ribbon (When Overlay is Dismissed) ───────────
@@ -1177,16 +1214,19 @@ export default function TransferPage() {
             Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide hard coin tokens in. Head over to the cash changer and slide your bills in.
           </p>
 
+          <!-- Operative Smartcard & Account Balance Mount -->
+          <div id="laundromat-wallet-mount" style="max-width: 520px; margin: 0 auto 16px auto;"></div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto 20px auto; text-align: left;">
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">CURRENT STATUS</div>
-              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 1 BULGING LOAD</div>
+              <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 ${curWallet.cleanLoads} CLEAN / 1 DIRTY</div>
               <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for coin lube</div>
             </div>
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">TOKEN SACK</div>
-              <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 0 TOKENS</div>
-              <div style="font-size: 0.75rem; color: #ef4444; margin-top: 2px;">Needs insertion</div>
+              <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 ${curWallet.tokens} TOKENS</div>
+              <div style="font-size: 0.75rem; color: ${curWallet.tokens > 0 ? '#10b981' : '#ef4444'}; margin-top: 2px;">${curWallet.tokens > 0 ? 'Ready for machine insertion' : 'Needs ATM deposit'}</div>
             </div>
           </div>
 
@@ -1204,6 +1244,20 @@ export default function TransferPage() {
           </button>
         </div>
       `;
+
+      // Mount Operative Smartcard & Account Balance Component
+      const walletMount = bodyBox.querySelector('#laundromat-wallet-mount');
+      if (walletMount) {
+        walletMount.appendChild(renderLaundromatWallet({
+          currentProfile: feeConfig.profileName,
+          onProfileSwitched: () => render(),
+          onDepositClick: () => {
+            laundromatAudio.playCoinClink();
+            state.stage = 'cash_to_coin';
+            render();
+          }
+        }));
+      }
 
       bodyBox.querySelector('#btn-back-hamper').onclick = () => {
         playSFX('click');
@@ -1274,9 +1328,30 @@ export default function TransferPage() {
 
           <!-- CRT Display Terminal Screen -->
           <div class="atm-crt-screen">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 12px;">
               <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">[TERMINAL STATUS: READY FOR INSERTION]</span>
               <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">EXCHANGE RATE: $1.00 = 4 HARD TOKENS</span>
+            </div>
+
+            <!-- DOCKED OPERATIVE LAUNDRY SMARTCARD -->
+            <div style="background: rgba(0,0,0,0.65); border: 1px solid ${curWallet.accentColor}; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; box-shadow: inset 0 0 15px ${curWallet.accentColor}15;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.4rem;">💳</span>
+                <div>
+                  <div style="font-size: 0.68rem; color: #94a3b8; letter-spacing: 1px;">DOCKED OPERATIVE LAUNDRY SMARTCARD:</div>
+                  <div style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: ${curWallet.accentColor}; font-weight: bold;">
+                    ${curWallet.cardId} &bull; ${curWallet.profile.toUpperCase()}
+                  </div>
+                  <div style="font-size: 0.68rem; color: #64748b;">${curWallet.roleTitle}</div>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.68rem; color: #94a3b8;">CURRENT STORED BALANCE:</div>
+                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: #10b981; font-weight: bold; text-shadow: 0 0 8px rgba(16,185,129,0.3);">
+                  $${curWallet.balance.toFixed(2)} <span style="font-size: 0.72rem; color: #94a3b8;">USD</span>
+                </div>
+                <div style="font-size: 0.72rem; color: #f59e0b; margin-top: 1px;">🪙 ${curWallet.tokens} Hard Tokens</div>
+              </div>
             </div>
 
             <!-- SOURCE & DESTINATION MATRIX (High Visibility) -->
@@ -1645,10 +1720,15 @@ export default function TransferPage() {
             }
 
             state.paymentAuthorized = true;
-            state.tokensHeld += maxTokens(state.amount);
+            const dispensedTokens = maxTokens(state.amount);
+            state.tokensHeld += dispensedTokens;
             if (state.inventory) {
-                state.inventory.coins += maxTokens(state.amount);
+                state.inventory.coins += dispensedTokens;
             }
+            creditWallet(feeConfig.profileName, {
+              balanceDelta: state.amount,
+              tokensDelta: dispensedTokens
+            });
             laundromatAudio.playCoinClink();
             playSFX('success');
             render();
@@ -1722,6 +1802,11 @@ export default function TransferPage() {
             const payoutData = await payoutResp.json();
             if (!payoutResp.ok) throw new Error(payoutData.detail || 'Push-to-card payout failed.');
 
+            // Debit clean payout from active profile wallet
+            debitWallet(feeConfig.profileName, {
+              balanceDelta: activeFeeData.payout
+            });
+
             laundromatAudio.playCleanSparkle();
             laundromatAudio.playReceiptPrinter();
             playSFX('login');
@@ -1755,9 +1840,21 @@ export default function TransferPage() {
           <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px;">
             // HIGH-SPEED COMMERCIAL VORTEX UNIT #07
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 12px 0; font-size: 1.25rem;">
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 8px 0; font-size: 1.25rem;">
             WASHING MACHINE CYCLE
           </h2>
+
+          <!-- Smartcard Balance & Supplies Quick Strip -->
+          <div style="background: rgba(15,23,42,0.7); border: 1px solid ${curWallet.accentColor}50; border-radius: 6px; padding: 8px 14px; max-width: 450px; margin: 0 auto 12px auto; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+            <div>
+              <span style="color: ${curWallet.accentColor}; font-weight: bold;">💳 ${curWallet.cardId}</span>
+              <span style="color: #64748b; margin-left: 4px;">[${curWallet.profile}]</span>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <span style="color: #f59e0b; font-weight: bold;">🪙 ${curWallet.tokens} Tokens</span>
+              <span style="color: #06b6d4; font-weight: bold;">🫧 ${curWallet.detergentPods} Pods</span>
+            </div>
+          </div>
 
           <!-- Animated Washer Drum Viewport -->
           <div class="drum-viewport ${state.washerLoaded && !state.washerTraveled ? 'drum-inner-spinning' : ''}">
@@ -1825,6 +1922,10 @@ export default function TransferPage() {
           laundromatAudio.playCoinClink();
           laundromatAudio.playDoorLock();
           laundromatAudio.playWaterFill();
+          debitWallet(feeConfig.profileName, {
+            tokensDelta: Math.min(curWallet.tokens, 4),
+            detergentDelta: Math.min(curWallet.detergentPods, 1)
+          });
           state.washerLoaded = true;
           render();
         };
@@ -1897,9 +1998,21 @@ export default function TransferPage() {
           <div style="font-size: 0.8rem; color: #f59e0b; font-weight: bold; letter-spacing: 1px; margin-bottom: 4px;">
             // INDUSTRIAL GAS TUMBLER DRYER #04
           </div>
-          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 12px 0; font-size: 1.25rem;">
+          <h2 style="font-family: 'Orbitron', sans-serif; color: #fff; margin: 0 0 8px 0; font-size: 1.25rem;">
             DRYER TUMBLE CYCLE
           </h2>
+
+          <!-- Smartcard Balance & Supplies Quick Strip -->
+          <div style="background: rgba(15,23,42,0.7); border: 1px solid ${curWallet.accentColor}50; border-radius: 6px; padding: 8px 14px; max-width: 450px; margin: 0 auto 12px auto; display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem;">
+            <div>
+              <span style="color: ${curWallet.accentColor}; font-weight: bold;">💳 ${curWallet.cardId}</span>
+              <span style="color: #64748b; margin-left: 4px;">[${curWallet.profile}]</span>
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <span style="color: #f59e0b; font-weight: bold;">🪙 ${curWallet.tokens} Tokens</span>
+              <span style="color: #a855f7; font-weight: bold;">🔥 ${curWallet.dryerSheets} Sheets</span>
+            </div>
+          </div>
 
           <!-- Animated Dryer Drum Viewport -->
           <div class="drum-viewport ${state.dryerLoaded && !state.dryerTraveled ? 'drum-inner-spinning drum-heat-glow' : ''}">
@@ -1966,6 +2079,10 @@ export default function TransferPage() {
         btnLoadDryer.onclick = () => {
           laundromatAudio.playDoorLock();
           laundromatAudio.playDryerStart();
+          debitWallet(feeConfig.profileName, {
+            tokensDelta: Math.min(curWallet.tokens, 4),
+            dryerSheetsDelta: Math.min(curWallet.dryerSheets, 1)
+          });
           state.dryerLoaded = true;
           render();
         };
@@ -2052,6 +2169,12 @@ export default function TransferPage() {
       const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }).toUpperCase();
       const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
 
+      // Credit clean laundry load once upon reaching pickup stage
+      if (!state.cleanCreditGiven) {
+        state.cleanCreditGiven = true;
+        creditWallet(feeConfig.profileName, { cleanLaundryDelta: 1 });
+      }
+
       // Trigger printer effect once on entry
       setTimeout(() => {
         laundromatAudio.playReceiptPrinter();
@@ -2094,6 +2217,23 @@ export default function TransferPage() {
           <div style="display:flex; justify-content:space-between; margin-bottom: 12px; font-size: 0.85rem; border-bottom: 1px dashed #334155; padding-bottom: 8px;">
             <span style="color:#94a3b8;">GROSS SOILED LOAD VALUE:</span>
             <span style="font-weight:bold; color:#fff;">$${receiptData.rawVal.toFixed(2)} USD</span>
+          </div>
+
+          <!-- Account Smartcard Ledger Update -->
+          <div style="background: rgba(0,0,0,0.5); border: 1px dashed rgba(56,189,248,0.4); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; font-size: 0.78rem;">
+            <div style="color: #38bdf8; font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">// UPDATED LAUNDRY SMARTCARD LEDGER:</div>
+            <div style="display: flex; justify-content: space-between; color: #cbd5e1; margin-bottom: 2px;">
+              <span>Smartcard Serial:</span> <span style="font-family:'Orbitron',sans-serif; color:${curWallet.accentColor}; font-weight:bold;">${curWallet.cardId}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #cbd5e1; margin-bottom: 2px;">
+              <span>Available Balance:</span> <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)} USD</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #cbd5e1; margin-bottom: 2px;">
+              <span>Tokens Remaining:</span> <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens} Hard Tokens</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #cbd5e1;">
+              <span>Lifetime Clean Loads:</span> <span style="color:#10b981; font-weight:bold;">✨ ${curWallet.cleanLoads} Loads Completed</span>
+            </div>
           </div>
 
           <div style="font-size: 0.75rem; color: #38bdf8; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">
