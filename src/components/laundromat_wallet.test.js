@@ -35,28 +35,28 @@ describe('Laundromat Wallet & Account Balance System', () => {
   });
 
   describe('Wallet Retrieval & Defaults', () => {
-    it('returns default balances for all predefined AlphaCore profiles', () => {
+    it('returns $0.00 real money default balances for all predefined AlphaCore profiles', () => {
       const wallets = getAllWallets();
       expect(wallets['Architect']).toBeDefined();
-      expect(wallets['Architect'].balance).toBe(150.00);
+      expect(wallets['Architect'].balance).toBe(0.00);
       expect(wallets['Architect'].cardId).toBe('AC-CARD-9901');
-      expect(wallets['Architect'].tokens).toBe(20);
-      expect(wallets['Architect'].detergentPods).toBe(12);
+      expect(wallets['Architect'].tokens).toBe(0);
+      expect(wallets['Architect'].detergentPods).toBe(0);
 
       expect(wallets['DoeBoy']).toBeDefined();
-      expect(wallets['DoeBoy'].balance).toBe(45.00);
+      expect(wallets['DoeBoy'].balance).toBe(0.00);
       expect(wallets['DoeBoy'].cardId).toBe('AC-CARD-6969');
-      expect(wallets['DoeBoy'].tokens).toBe(8);
+      expect(wallets['DoeBoy'].tokens).toBe(0);
 
       expect(wallets['Fisherman']).toBeDefined();
-      expect(wallets['Fisherman'].balance).toBe(20.00);
+      expect(wallets['Fisherman'].balance).toBe(0.00);
       expect(wallets['Fisherman'].cardId).toBe('AC-CARD-1990');
-      expect(wallets['Fisherman'].tokens).toBe(4);
+      expect(wallets['Fisherman'].tokens).toBe(0);
 
       expect(wallets['J. P.']).toBeDefined();
-      expect(wallets['J. P.'].balance).toBe(35.00);
+      expect(wallets['J. P.'].balance).toBe(0.00);
       expect(wallets['J. P.'].cardId).toBe('AC-CARD-2002');
-      expect(wallets['J. P.'].tokens).toBe(6);
+      expect(wallets['J. P.'].tokens).toBe(0);
 
       expect(wallets['Guest']).toBeDefined();
       expect(wallets['Guest'].balance).toBe(0.00);
@@ -68,7 +68,7 @@ describe('Laundromat Wallet & Account Balance System', () => {
       getProfileWallet('DoeBoy');
       expect(localStorage.getItem(WALLET_STORAGE_KEY)).not.toBeNull();
       const stored = JSON.parse(localStorage.getItem(WALLET_STORAGE_KEY));
-      expect(stored['DoeBoy'].balance).toBe(45.00);
+      expect(stored['DoeBoy'].balance).toBe(0.00);
     });
 
     it('creates an on-the-fly wallet for custom profiles with generated card ID', () => {
@@ -81,7 +81,7 @@ describe('Laundromat Wallet & Account Balance System', () => {
   });
 
   describe('creditWallet & debitWallet', () => {
-    it('credits balance, tokens, detergent, and clean loads correctly', () => {
+    it('credits balance, tokens, detergent, and clean loads correctly from $0.00 base', () => {
       const updated = creditWallet('DoeBoy', {
         balanceDelta: 25.50,
         tokensDelta: 10,
@@ -89,18 +89,26 @@ describe('Laundromat Wallet & Account Balance System', () => {
         cleanLaundryDelta: 1
       });
 
-      expect(updated.balance).toBe(70.50); // 45.00 + 25.50
-      expect(updated.tokens).toBe(18);     // 8 + 10
-      expect(updated.detergentPods).toBe(6); // 4 + 2
-      expect(updated.cleanLoads).toBe(3);   // 2 + 1
+      expect(updated.balance).toBe(25.50); // 0.00 + 25.50
+      expect(updated.tokens).toBe(10);     // 0 + 10
+      expect(updated.detergentPods).toBe(2); // 0 + 2
+      expect(updated.cleanLoads).toBe(1);   // 0 + 1
 
       // Verify persistence in localStorage
       const reloaded = getProfileWallet('DoeBoy');
-      expect(reloaded.balance).toBe(70.50);
-      expect(reloaded.tokens).toBe(18);
+      expect(reloaded.balance).toBe(25.50);
+      expect(reloaded.tokens).toBe(10);
     });
 
     it('debits balance and supplies without going below zero', () => {
+      // First credit some funds
+      creditWallet('Fisherman', {
+        balanceDelta: 20.00,
+        tokensDelta: 4,
+        detergentDelta: 2,
+        dryerSheetsDelta: 2
+      });
+
       const debited = debitWallet('Fisherman', {
         balanceDelta: 15.00,
         tokensDelta: 2,
@@ -129,9 +137,9 @@ describe('Laundromat Wallet & Account Balance System', () => {
       expect(el).toBeTruthy();
       expect(el.innerHTML).toContain('AC-CARD-9901');
       expect(el.innerHTML).toContain('ARCHITECT');
-      expect(el.innerHTML).toContain('$150.00');
-      expect(el.innerHTML).toContain('🪙 20');
-      expect(el.innerHTML).toContain('🫧 12');
+      expect(el.innerHTML).toContain('$0.00');
+      expect(el.innerHTML).toContain('🪙 0');
+      expect(el.innerHTML).toContain('🫧 0');
       expect(el.innerHTML).toContain('RELOAD CARD AT ATM');
       expect(el.innerHTML).toContain('SWITCH PROFILE');
     });
@@ -140,7 +148,7 @@ describe('Laundromat Wallet & Account Balance System', () => {
       const el = renderLaundromatWallet({ currentProfile: 'DoeBoy', compact: true });
       expect(el.classList.contains('wallet-compact')).toBe(true);
       expect(el.innerHTML).toContain('AC-CARD-6969');
-      expect(el.innerHTML).toContain('$45.00');
+      expect(el.innerHTML).toContain('$0.00');
       expect(el.innerHTML).toContain('SWITCH ▾');
     });
 
@@ -152,9 +160,8 @@ describe('Laundromat Wallet & Account Balance System', () => {
       expect(modal).toBeTruthy();
       expect(modal.innerHTML).toContain('OPERATIVE ACCOUNT BALANCES');
       expect(modal.innerHTML).toContain('Architect');
-      expect(modal.innerHTML).toContain('$150.00');
+      expect(modal.innerHTML).toContain('$0.00');
       expect(modal.innerHTML).toContain('DoeBoy');
-      expect(modal.innerHTML).toContain('$45.00');
       expect(modal.innerHTML).toContain('Fisherman');
       expect(modal.innerHTML).toContain('J. P.');
 

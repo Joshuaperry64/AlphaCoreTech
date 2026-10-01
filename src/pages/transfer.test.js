@@ -72,8 +72,8 @@ describe('TransferPage (Laundro-mat)', () => {
     const btnHeaderWallet = el.querySelector('#btn-header-wallet');
     expect(btnHeaderWallet).toBeTruthy();
     expect(btnHeaderWallet.innerHTML).toContain('AC-CARD-6969');
-    expect(btnHeaderWallet.innerHTML).toContain('$45.00');
-    expect(btnHeaderWallet.innerHTML).toContain('🪙 8');
+    expect(btnHeaderWallet.innerHTML).toContain('$0.00');
+    expect(btnHeaderWallet.innerHTML).toContain('🪙 0');
   });
 
   it('renders full smartcard with live balance and token sack in Stage 2 (laundromat_hub)', () => {
@@ -90,9 +90,9 @@ describe('TransferPage (Laundro-mat)', () => {
     const walletMount = el.querySelector('#laundromat-wallet-mount');
     expect(walletMount).toBeTruthy();
     expect(walletMount.innerHTML).toContain('AC-CARD-9901');
-    expect(walletMount.innerHTML).toContain('$150.00');
-    expect(walletMount.innerHTML).toContain('🪙 20');
-    expect(walletMount.innerHTML).toContain('🫧 12');
+    expect(walletMount.innerHTML).toContain('$0.00');
+    expect(walletMount.innerHTML).toContain('🪙 0');
+    expect(walletMount.innerHTML).toContain('🫧 0');
   });
 
   it('displays docked smartcard and stored balance in Stage 3 (Cyber-ATM)', () => {
@@ -108,7 +108,7 @@ describe('TransferPage (Laundro-mat)', () => {
     expect(el.innerHTML).toContain('DOCKED OPERATIVE LAUNDRY SMARTCARD');
     expect(el.innerHTML).toContain('AC-CARD-1990');
     expect(el.innerHTML).toContain('FISHERMAN');
-    expect(el.innerHTML).toContain('$20.00');
-    expect(el.innerHTML).toContain('🪙 4 Hard Tokens');
+    expect(el.innerHTML).toContain('$0.00');
+    expect(el.innerHTML).toContain('🪙 0 Hard Tokens');
   });
 });

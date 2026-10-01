@@ -8,18 +8,18 @@ import { createElement } from './utils.js';
 import { playSFX } from './audio.js';
 import { openLoginModal } from './pinpad.js';
 
-export const WALLET_STORAGE_KEY = 'alphacore_laundromat_wallets';
+export const WALLET_STORAGE_KEY = 'alphacore_laundromat_wallets_v2';
 
 export const DEFAULT_WALLETS = {
   'Architect': {
     profile: 'Architect',
     cardId: 'AC-CARD-9901',
-    balance: 150.00,
-    tokens: 20,
-    detergentPods: 12,
-    detergentSerial: 'AC-DET-9901 [VIP ULTRA-CONCENTRATE]',
-    dryerSheets: 12,
-    cleanLoads: 5,
+    balance: 0.00,
+    tokens: 0,
+    detergentPods: 0,
+    detergentSerial: 'AC-DET-9901 [VIP ALLOCATION]',
+    dryerSheets: 0,
+    cleanLoads: 0,
     roleTitle: 'CHIEF ARCHITECT // FULL ACCESS',
     accentColor: '#10b981',
     pin: '672167566',
@@ -28,12 +28,12 @@ export const DEFAULT_WALLETS = {
   'DoeBoy': {
     profile: 'DoeBoy',
     cardId: 'AC-CARD-6969',
-    balance: 45.00,
-    tokens: 8,
-    detergentPods: 4,
+    balance: 0.00,
+    tokens: 0,
+    detergentPods: 0,
     detergentSerial: 'AC-DET-6969 [NEON LAVENDER BURST]',
-    dryerSheets: 4,
-    cleanLoads: 2,
+    dryerSheets: 0,
+    cleanLoads: 0,
     roleTitle: 'SYSTEM OPERATOR // VAULT CLEARANCE',
     accentColor: '#a855f7',
     pin: '6969',
@@ -42,12 +42,12 @@ export const DEFAULT_WALLETS = {
   'Fisherman': {
     profile: 'Fisherman',
     cardId: 'AC-CARD-1990',
-    balance: 20.00,
-    tokens: 4,
-    detergentPods: 2,
+    balance: 0.00,
+    tokens: 0,
+    detergentPods: 0,
     detergentSerial: 'AC-DET-1990 [DEEP OCEAN SURGE]',
-    dryerSheets: 2,
-    cleanLoads: 1,
+    dryerSheets: 0,
+    cleanLoads: 0,
     roleTitle: 'HARBOR NAVIGATOR // PREFERRED TIER (7%)',
     accentColor: '#06b6d4',
     pin: '1990',
@@ -56,12 +56,12 @@ export const DEFAULT_WALLETS = {
   'J. P.': {
     profile: 'J. P.',
     cardId: 'AC-CARD-2002',
-    balance: 35.00,
-    tokens: 6,
-    detergentPods: 3,
+    balance: 0.00,
+    tokens: 0,
+    detergentPods: 0,
     detergentSerial: 'AC-DET-2002 [SPRING CYBER RAIN]',
-    dryerSheets: 3,
-    cleanLoads: 1,
+    dryerSheets: 0,
+    cleanLoads: 0,
     roleTitle: 'FIELD AGENT // CREATOR PRIVILEGES',
     accentColor: '#38bdf8',
     pin: '20022005',
@@ -72,9 +72,9 @@ export const DEFAULT_WALLETS = {
     cardId: 'AC-CARD-GUEST-00',
     balance: 0.00,
     tokens: 0,
-    detergentPods: 1,
+    detergentPods: 0,
     detergentSerial: 'AC-DET-GUEST [SINGLE-USE SAMPLE]',
-    dryerSheets: 1,
+    dryerSheets: 0,
     cleanLoads: 0,
     roleTitle: 'TEMPORARY ESCROW HOLD (24-HR AUTO REFUND)',
     accentColor: '#f59e0b',
@@ -102,6 +102,13 @@ export function canonicalProfileName(rawName) {
  * Retrieve all persistent wallets from localStorage (or fallback to defaults)
  */
 export function getAllWallets() {
+  // Purge legacy mock data if present
+  try {
+    if (localStorage.getItem('alphacore_laundromat_wallets')) {
+      localStorage.removeItem('alphacore_laundromat_wallets');
+    }
+  } catch {}
+
   try {
     const raw = localStorage.getItem(WALLET_STORAGE_KEY);
     if (raw) {
