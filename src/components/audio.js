@@ -23,28 +23,35 @@ const sfxFiles = {
   pop: '/pop.mp3'
 };
 
-const sfxAudioCache = {};
+const sfxAudioPool = {};
 
-function getSfxAudio(type) {
+function getPooledSfxAudio(type) {
   if (!sfxFiles[type]) return null;
-  if (!sfxAudioCache[type]) {
-    sfxAudioCache[type] = new Audio(sfxFiles[type]);
+  if (!sfxAudioPool[type]) {
+    sfxAudioPool[type] = {
+      pool: [new Audio(sfxFiles[type]), new Audio(sfxFiles[type]), new Audio(sfxFiles[type])],
+      index: 0
+    };
   }
-  return sfxAudioCache[type];
+  const entry = sfxAudioPool[type];
+  const sound = entry.pool[entry.index % entry.pool.length];
+  entry.index = (entry.index + 1) % entry.pool.length;
+  return sound;
 }
 
 /**
  * Plays a UI sound effect with optional volume scaling.
+ * Optimized with pooled audio instances to prevent DOM cloning stalls during rapid input.
  * 
  * @param {'click'|'navigate'|'transition'|'modal'|'response'|'bypass'|'incorrect'|'login'|'pop'} type 
  * @param {number} [volume=0.5] 
  */
 export function playSFX(type, volume = 0.5) {
   try {
-    const baseAudio = getSfxAudio(type);
-    if (!baseAudio) return;
-    const sound = baseAudio.cloneNode();
+    const sound = getPooledSfxAudio(type);
+    if (!sound) return;
     sound.volume = Math.max(0, Math.min(1, volume * 0.5));
+    sound.currentTime = 0;
     sound.play().catch(() => {});
   } catch (e) {
     // Non-critical audio failure
@@ -177,51 +184,75 @@ export function initAudioVisualizer() {
   const canvasCtx = visCanvas.getContext('2d');
   if (!canvasCtx) return;
 
-  let tick = 0;
+  function resizeCanvas() {
+    visCanvas.width = window.innerWidth;
+    visCanvas.height = 80;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  let wasCleared = false;
+  let cachedLogo = null;
+  let lastLogoCheck = 0;
+
   function drawVis() {
     requestAnimationFrame(drawVis);
     
-    if (document.hidden || localStorage.getItem('alphacore_eco_mode') === 'true') {
-      canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+    const isIntro = document.body.classList.contains('intro-mode');
+    const isEco = localStorage.getItem('alphacore_eco_mode') === 'true';
+
+    if (document.hidden || isEco || isIntro) {
+      if (!wasCleared) {
+        canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+        wasCleared = true;
+      }
       return;
     }
 
-    visCanvas.width = window.innerWidth;
-    visCanvas.height = 80;
+    const audioSetup = getAudioContext();
+    const isAudioPlaying = audioSetup && audioSetup.analyser && audioSetup.audioCtx && audioSetup.audioCtx.state === 'running' && isPlaying;
+
+    if (!isAudioPlaying) {
+      if (!wasCleared) {
+        canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+        wasCleared = true;
+      }
+      return;
+    }
+
+    wasCleared = false;
     canvasCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
 
-    tick += 0.05;
-    const audioSetup = getAudioContext();
+    const { analyser } = audioSetup;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteFrequencyData(dataArray);
+
+    const barWidth = (visCanvas.width / bufferLength) * 2.5;
+    let x = 0;
     let bassSum = 0;
 
-    if (audioSetup && audioSetup.analyser) {
-      const { analyser } = audioSetup;
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      analyser.getByteFrequencyData(dataArray);
+    for (let i = 0; i < bufferLength; i++) {
+      const barHeight = (dataArray[i] / 255) * 60;
+      if (i < 8) bassSum += dataArray[i];
 
-      const barWidth = (visCanvas.width / bufferLength) * 2.5;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const barHeight = (dataArray[i] / 255) * 60;
-        if (i < 8) bassSum += dataArray[i];
-
-        canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.2 + (dataArray[i] / 255) * 0.6})`;
-        canvasCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 1;
-      }
-    } else {
-      // Audio is off, leave background pure black (cleared)
+      canvasCtx.fillStyle = `rgba(6, 182, 212, ${0.2 + (dataArray[i] / 255) * 0.6})`;
+      canvasCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
+      x += barWidth + 1;
     }
-    
-    const logoImg = document.querySelector('.intro-logo-img');
-    if (logoImg) {
+
+    const now = performance.now();
+    if (now - lastLogoCheck > 500) {
+      cachedLogo = document.querySelector('.intro-logo-img');
+      lastLogoCheck = now;
+    }
+    if (cachedLogo && cachedLogo.isConnected) {
       const avgBass = bassSum / 8;
       const scale = 1 + (avgBass / 255) * 0.08;
-      logoImg.style.transform = `scale(${scale})`;
+      cachedLogo.style.transform = `scale(${scale})`;
     }
   }
 
   drawVis();
 }
+

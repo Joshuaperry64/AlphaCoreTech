@@ -13,8 +13,7 @@ export default function createIntro(container) {
     Object.assign(intro.style, {
       position: 'fixed', inset: '0', zIndex: '99999',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      backgroundColor: 'rgba(3, 4, 8, 0.4)',
-      backdropFilter: 'blur(2px)',
+      backgroundColor: 'rgba(3, 4, 8, 0.94)',
       color: '#e2e8f0', fontFamily: "'Share Tech Mono', monospace",
       overflowX: 'hidden', overflowY: 'auto', padding: '20px'
     });
@@ -22,9 +21,8 @@ export default function createIntro(container) {
     const styleEl = document.createElement('style');
     styleEl.textContent = `
       @keyframes pulse-cyan {
-        0% { filter: drop-shadow(0 0 15px rgba(6,182,212,0.4)); }
-        50% { filter: drop-shadow(0 0 35px rgba(6,182,212,0.85)); }
-        100% { filter: drop-shadow(0 0 15px rgba(6,182,212,0.4)); }
+        0%, 100% { opacity: 0.85; }
+        50% { opacity: 1; }
       }
       @keyframes glitch-shake {
         0% { transform: translate(0, 0); }
@@ -34,6 +32,7 @@ export default function createIntro(container) {
         100% { transform: translate(0, 0); }
       }
       .intro-logo-glow {
+        filter: drop-shadow(0 0 15px rgba(6,182,212,0.6));
         animation: pulse-cyan 3s ease-in-out infinite;
       }
       .intro-glitch-active {
@@ -64,8 +63,8 @@ export default function createIntro(container) {
     const bgWatermark = createElement('img', { src: '/Images/ALPHA-LOGO.png' });
     Object.assign(bgWatermark.style, {
       position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-      width: '460px', height: '460px', objectFit: 'contain', opacity: '0.18',
-      filter: 'drop-shadow(0 0 50px rgba(6,182,212,0.7))', pointerEvents: 'none', zIndex: '2'
+      width: '420px', height: '420px', objectFit: 'contain', opacity: '0.08',
+      pointerEvents: 'none', zIndex: '2'
     });
     intro.appendChild(bgWatermark);
 
@@ -267,7 +266,11 @@ export default function createIntro(container) {
       }
     }
 
-    setTimeout(runNextFitsLine, 200);
+    if (localStorage.getItem('alphacore_intro_complete') === '1') {
+      finishBoot();
+    } else {
+      setTimeout(runNextFitsLine, 200);
+    }
 
     function cleanup() {
       cancelled = true;

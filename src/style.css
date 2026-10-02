@@ -3468,7 +3468,7 @@ body.eco-mode .glitch {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   letter-spacing: 1.5px;
-  backdrop-filter: blur(8px);
+  background: rgba(4, 8, 16, 0.95);
   user-select: none;
 }
 .bottom-hud-uptime .hud-label {
@@ -3482,42 +3482,44 @@ body.eco-mode .glitch {
   text-shadow: 0 0 8px #00f0ff;
 }
 
-/* Metal Edge Sparks & Laser Slide */
-.aim-panel, .panel, .sidebar {
+/* Metal Edge Sparks & Laser Slide (GPU Hardware-Accelerated) */
+.cyber-desk-wrapper {
   position: relative;
 }
-.aim-panel::before, .panel::before, .sidebar::before {
+.cyber-desk-wrapper::before {
   content: '';
   position: absolute;
-  top: 0; left: -10%; width: 40px; height: 2px;
+  top: 0; left: 0; width: 60px; height: 2px;
   background: linear-gradient(90deg, transparent, #00f0ff, #ffffff, #00f0ff, transparent);
   box-shadow: 0 0 10px #00f0ff, 0 0 18px #ffffff;
-  animation: metal-spark-top 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: metal-spark-top 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   pointer-events: none;
   z-index: 99;
+  will-change: transform;
 }
 @keyframes metal-spark-top {
-  0% { left: -10%; opacity: 0; }
+  0% { transform: translateX(-100%); opacity: 0; }
   10% { opacity: 1; }
   90% { opacity: 1; }
-  100% { left: 105%; opacity: 0; }
+  100% { transform: translateX(1100%); opacity: 0; }
 }
 
-.aim-panel::after, .panel::after {
+.cyber-desk-wrapper::after {
   content: '';
   position: absolute;
-  bottom: 0; right: -10%; width: 35px; height: 2px;
+  bottom: 0; right: 0; width: 60px; height: 2px;
   background: linear-gradient(90deg, transparent, #ff003c, #ffffff, #ff003c, transparent);
   box-shadow: 0 0 10px #ff003c, 0 0 18px #ffffff;
-  animation: metal-spark-bottom 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.5s;
+  animation: metal-spark-bottom 7s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.5s;
   pointer-events: none;
   z-index: 99;
+  will-change: transform;
 }
 @keyframes metal-spark-bottom {
-  0% { right: -10%; opacity: 0; }
+  0% { transform: translateX(100%); opacity: 0; }
   10% { opacity: 1; }
   90% { opacity: 1; }
-  100% { right: 105%; opacity: 0; }
+  100% { transform: translateX(-1100%); opacity: 0; }
 }
 
 /* Rotating Tech Rings & Orbital Accents */
@@ -3731,22 +3733,21 @@ body.eco-mode .glitch {
 /* Individual Physical Desk Prop Card */
 .desk-prop-card {
   position: relative;
-  background: rgba(10, 16, 26, 0.75);
+  background: rgba(10, 16, 26, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 16px 14px;
   cursor: pointer;
-  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 6px 16px rgba(0,0,0,0.5);
-  backdrop-filter: blur(8px);
 }
 .desk-prop-card:hover {
   transform: translateY(-5px);
   border-color: rgba(6, 182, 212, 0.6);
-  background: rgba(14, 25, 42, 0.85);
+  background: rgba(14, 25, 42, 0.96);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.7), 0 0 20px rgba(6, 182, 212, 0.2);
 }
 .desk-prop-card.active-focus {
@@ -3923,7 +3924,10 @@ body.eco-mode .glitch {
   border-radius: 50%;
   border: 2px dashed rgba(6, 182, 212, 0.6);
   background: rgba(15, 23, 42, 0.9);
-  animation: spin-reel 8s linear infinite;
+  transition: transform 0.3s ease;
+}
+.desk-prop-card:hover .cam-reel {
+  animation: spin-reel 4s linear infinite;
 }
 @keyframes spin-reel {
   from { transform: rotate(0deg); }
@@ -4268,8 +4272,13 @@ body.eco-mode .glitch {
   height: 16px;
   background: rgba(255, 255, 255, 0.4);
   border-radius: 4px;
-  filter: blur(1.5px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.desk-prop-card:hover .mug-steam,
+.mug-steam.active {
   animation: steam-float 2.2s infinite ease-out;
+  opacity: 0.7;
 }
 .mug-steam.s2 {
   left: 28px;

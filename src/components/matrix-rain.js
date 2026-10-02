@@ -43,15 +43,21 @@ export function initMatrixRain() {
   const fps = 10;
   const interval = 1000 / fps;
 
+  let wasCleared = false;
+
   function draw(timestamp) {
     requestAnimationFrame(draw);
 
-    if (document.hidden || isEcoMode) {
-      if (isEcoMode) {
+    const isIntro = typeof document !== 'undefined' && document.body?.classList.contains('intro-mode');
+
+    if (document.hidden || isEcoMode || isIntro) {
+      if ((isEcoMode || isIntro) && !wasCleared) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        wasCleared = true;
       }
       return;
     }
+    wasCleared = false;
 
     const delta = timestamp - lastDrawTime;
     if (delta < interval) return;
