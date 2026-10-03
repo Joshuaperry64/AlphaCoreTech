@@ -454,3 +454,6 @@ def StripeAPI() -> FastAPI:
         }
 
     return web_app
+
+# Fix: Export the application globally so it can be mounted directly by deploy.py
+app = StripeAPI()

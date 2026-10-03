@@ -15,6 +15,7 @@ OUTPUTS_DIR = Path("/outputs")
 cuda_version = "12.4.1"
 tag = f"{cuda_version}-devel-ubuntu22.04"
 
+# Fix: Mount shared_app directly in the image chain before the import
 image = (
     modal.Image.from_registry(f"nvidia/cuda:{tag}", add_python="3.12")
     .entrypoint([])
@@ -37,6 +38,7 @@ image = (
         "protobuf",
     )
     .env({"HF_XET_HIGH_PERFORMANCE": "1", "HF_HUB_CACHE": CACHE_DIR, "HF_HOME": CACHE_DIR})
+    .add_local_python_source("shared_app") 
 )
 
 from shared_app import app
@@ -51,10 +53,8 @@ cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 outputs_volume = modal.Volume.from_name("outputs", create_if_missing=True)
 
 MODEL_480P = "fdk6566/wan2.2_14b_i2v_480p_lightning_nsfw_diffusers"
-# Assuming standard HuggingFace naming convention for 720p if requested
 MODEL_720P = "fdk6566/wan2.2_14b_i2v_720p_lightning_nsfw_diffusers"
 
-image = image.add_local_python_source("shared_app")
 @app.cls(
     gpu="H100",  # 14B model requires H100
     timeout=60 * MINUTES,
@@ -286,7 +286,6 @@ class Img2Vid:
     def web_img2vid(self):
         import fastapi
         from fastapi.middleware.cors import CORSMiddleware
-        import base64
 
         web_app = fastapi.FastAPI(title="AlphaCore Img2Vid Wan API", version="1.0.0")
         web_app.add_middleware(
@@ -356,7 +355,6 @@ class Img2Vid:
             return StreamingResponse(event_stream(), media_type="text/event-stream")
 
         return web_app
-
 
 @app.cls(
     gpu="L40S",

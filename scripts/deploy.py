@@ -604,7 +604,8 @@ def AlphaCore_Main_API():
     master_app.mount("/eco", web_app_eco)
     
     import stripe_transfer
-    master_app.mount("/stripe", stripe_transfer.StripeAPI())
+    # Fix: Mount the globally initialized module app directly
+    master_app.mount("/stripe", stripe_transfer.app) 
     
     return master_app
 
@@ -620,4 +621,3 @@ def scan_and_download(force: bool = False):
     print("\n✅ Sync run completed!")
     import json
     print(json.dumps(result, indent=2))
-
