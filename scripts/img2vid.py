@@ -15,7 +15,7 @@ OUTPUTS_DIR = Path("/outputs")
 cuda_version = "12.4.1"
 tag = f"{cuda_version}-devel-ubuntu22.04"
 
-# Fix: Mount shared_app directly in the image chain before the import
+# FIX: Hard-mount shared_app.py directly into the root directory where this script executes
 image = (
     modal.Image.from_registry(f"nvidia/cuda:{tag}", add_python="3.12")
     .entrypoint([])
@@ -38,7 +38,7 @@ image = (
         "protobuf",
     )
     .env({"HF_XET_HIGH_PERFORMANCE": "1", "HF_HUB_CACHE": CACHE_DIR, "HF_HOME": CACHE_DIR})
-    .add_local_python_source("shared_app") 
+    .add_local_file("shared_app.py", "/root/shared_app.py") 
 )
 
 from shared_app import app

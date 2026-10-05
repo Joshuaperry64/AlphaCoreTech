@@ -16,7 +16,7 @@ from shared_app import app, CACHE_DIR, cache_volume
 # 2. Import worker scripts
 import music
 import web_loader
-import cloner
+import voice_cloner
 import upscaler
 import vid2audio
 
@@ -66,7 +66,7 @@ def _get_secrets():
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic", "Pillow", "numpy")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio")
+    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio")
 )
 
 @app.cls(
@@ -433,7 +433,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_profiles():
         try:
             import asyncio
-            contents = await asyncio.wait_for(cloner.VoiceCloner_Storage().list_volume_contents.remote.aio(), timeout=15.0)
+            contents = await asyncio.wait_for(voice_cloner.VoiceCloner_Storage().list_volume_contents.remote.aio(), timeout=15.0)
             volume_profiles = []
             if isinstance(contents, dict) and "error" not in contents:
                 for path_str in contents.keys():
@@ -468,7 +468,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_convert(req: VoiceConvertRequest):
         try:
             audio_bytes = base64.b64decode(req.audio_b64)
-            fn = cloner.VoiceCloner_Eco().infer_audio_modal_eco if is_eco else cloner.VoiceCloner().infer_audio_modal
+            fn = voice_cloner.VoiceCloner_Eco().infer_audio_modal_eco if is_eco else voice_cloner.VoiceCloner().infer_audio_modal
             result = await fn.remote.aio(
                 profile_name=req.profile_name,
                 audio_bytes=audio_bytes,
@@ -493,7 +493,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
     async def api_voice_upload_sample(req: VoiceSampleUpload):
         try:
             file_bytes = base64.b64decode(req.audio_b64)
-            await cloner.VoiceCloner_Storage().upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
+            await voice_cloner.VoiceCloner_Storage().upload_audio_file.remote.aio(req.profile_name, req.filename, file_bytes)
             return {"status": "success", "message": f"Sample {req.filename} saved for {req.profile_name}"}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -504,7 +504,7 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
         if not target_name:
             raise HTTPException(status_code=400, detail="Missing 'profile_name' parameter")
         try:
-            call = cloner.VoiceCloner().process_audio_samples.spawn(target_name)
+            call = voice_cloner.VoiceCloner().process_audio_samples.spawn(target_name)
             return {
                 "status": "training_started",
                 "call_id": call.object_id,
@@ -577,7 +577,7 @@ web_app_eco = create_aio_api(is_eco=True)
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "stripe")
-    .add_local_python_source("shared_app", "music", "web_loader", "cloner", "upscaler", "vid2audio", "stripe_transfer")
+    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio", "stripe_transfer")
 )
 
 @app.function(image=router_image, volumes={CACHE_DIR: cache_volume}, scaledown_window=120, secrets=_get_secrets())
@@ -604,7 +604,7 @@ def AlphaCore_Main_API():
     master_app.mount("/eco", web_app_eco)
     
     import stripe_transfer
-    # Fix: Mount the globally initialized module app directly
+    # Mount the globally initialized module app directly
     master_app.mount("/stripe", stripe_transfer.app) 
     
     return master_app
@@ -613,8 +613,8 @@ def AlphaCore_Main_API():
 def scan_and_download(force: bool = False):
     """
     Run locally via:
-        modal run deployment.py
-        modal run deployment.py --force
+        modal run deploy.py
+        modal run deploy.py --force
     """
     print("🚀 Triggering remote volume scan & download for all website checkpoints and LoRAs...")
     result = AssetSync().sync_website_models.remote(force=force)

@@ -1,14 +1,13 @@
 /**
  * AlphaCore RVC v2 Voice Synthesis & Neural Cloning Suite
- * Connects directly to Modal A10G Cloud GPU backend (alphacoreprogramming).
- * Available to ALL operators with zero guest lockouts.
+ * Connects directly to Modal Cloud GPU backend (alphacoreprogramming).
  * Supports:
- *   - Microphone Audio Recording (with real-time oscilloscope waveform)
- *   - Audio File Uploads (.wav, .mp3, .m4a, .ogg)
- *   - Neural Text-to-Speech (TTS) baseline generation
+ *   - Voice-to-Voice: Microphone audio with real-time waveform visualizer
+ *   - Voice-to-Voice: File audio uploads (.wav, .mp3, .m4a, .ogg)
+ *   - Text-to-Voice: Neural speech baseline generation directly from cloud backend
  *   - Pitch Shifting & Vocal Formant Modulation (-12 to +12 semitones)
  *   - RVC v2 Cloud Conversion & Local DSP Vocoder fallback
- *   - Custom Voice Profile Training pipeline on A10G GPU
+ *   - Custom Voice Profile Training pipeline on Modal GPU
  */
 
 import { createElement } from '../components/utils.js';
@@ -32,7 +31,7 @@ export default function VoiceClonerPage() {
   let activeProfile = 'AlphaCore-EDEN11';
   let activeInputMode = 'MIC'; // 'MIC' | 'UPLOAD' | 'TTS'
 
-  // Recording State
+  // Recording State (Voice-to-Voice)
   let mediaRecorder = null;
   let audioChunks = [];
   let recordedBlob = null;
@@ -44,24 +43,23 @@ export default function VoiceClonerPage() {
   let micAnalyser = null;
   let micAnimId = null;
 
-  // File Upload State
+  // File Upload State (Voice-to-Voice)
   let uploadedFile = null;
   let uploadedAudioUrl = null;
 
-  // TTS State
+  // TTS State (Text-to-Voice)
   let ttsBlob = null;
   let ttsAudioUrl = null;
+  let isSynthesizingTts = false;
 
   // Converted Audio Output
+  let convertedAudioBlob = null;
   let convertedAudioUrl = null;
-
-  // Training State
-  let trainingSamples = [];
 
   // Default Preset Voices
   const PRESET_VOICES = [
     { name: 'AlphaCore-EDEN11', label: 'ALPHA EDEN-11', desc: 'Sentient AI with crisp cybernetic harmonics and precise modulation', icon: '🤖' },
-    { name: 'Darkened-Luci', label: 'DARKENED LUCI', desc: 'Unfiltered sultry provocative voice with dynamic presence', icon: '💋' },
+    { name: 'Darkened-Luci', label: 'DARKENED LUCI', desc: 'Provocative sultry voice with dynamic acoustic presence', icon: '💋' },
     { name: 'Architect-Lead', label: 'ARCHITECT LEAD', desc: 'Deep commanding baritone authority with low harmonic resonance', icon: '◈' },
     { name: 'CyberSynth-V1', label: 'CYBERSYNTH V1', desc: 'Robotic vocoder with analog distortion and overdrive timbre', icon: '⚡' },
     { name: 'GlitchCore-X', label: 'GLITCHCORE X', desc: 'High-energy cyberpunk neural broadcast modulation', icon: '🧬' }
@@ -70,7 +68,7 @@ export default function VoiceClonerPage() {
 
   function render() {
     const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
-    const tierHw = isArchitect ? 'WARM CLOUD GPU' : 'COST-OPTIMIZED (60s AUTO-SCALE)';
+    const tierHw = isArchitect ? 'WARM CLOUD GPU (A10G)' : 'COST-OPTIMIZED (T4 AUTO-SCALE)';
     const tierColor = isArchitect ? '#38bdf8' : '#10b981';
     const tierBg = isArchitect ? 'rgba(56, 189, 248, 0.1)' : 'rgba(16, 185, 129, 0.1)';
     const tierBorder = isArchitect ? '#38bdf8' : '#10b981';
@@ -81,7 +79,7 @@ export default function VoiceClonerPage() {
           <div>
             <h1 class="page-title" style="font-family:'Orbitron',sans-serif; letter-spacing:2px;">RVC VOICE SYNTHESIS</h1>
             <p class="page-subtitle" style="font-family:'Share Tech Mono',monospace; letter-spacing:1px; color:var(--accent,#06b6d4);">
-              NEURAL VOICE CLONING & AUDIO MANIPULATION MATRIX // ${tierName}
+              NEURAL VOICE-TO-VOICE & TEXT-TO-VOICE MATRIX // ${tierName}
             </p>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
@@ -95,7 +93,7 @@ export default function VoiceClonerPage() {
       <!-- Navigation Tabs -->
       <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px; flex-wrap:wrap;">
         <button id="tab-btn-convert" class="aim-btn aim-btn-sm" style="${activeTab === 'CONVERT' ? 'background:rgba(6,182,212,0.25); border-color:var(--accent,#06b6d4); color:#fff;' : 'background:transparent; border-color:rgba(255,255,255,0.15); color:#888;'}">
-          🎙️ VOICE CONVERTER & MORPHER
+          🎙️ VOICE SYNTHESIZER & MORPHER
         </button>
         <button id="tab-btn-train" class="aim-btn aim-btn-sm" style="${activeTab === 'TRAIN' ? 'background:rgba(6,182,212,0.25); border-color:var(--accent,#06b6d4); color:#fff;' : 'background:transparent; border-color:rgba(255,255,255,0.15); color:#888;'}">
           🚀 CLOUD MODEL TRAINER
@@ -136,20 +134,20 @@ export default function VoiceClonerPage() {
               </div>
             </div>
 
-            <!-- Input Audio Source -->
+            <!-- Input Audio Source (Voice or Text) -->
             <div class="panel" style="background:rgba(8,12,20,0.85); border:1px solid rgba(6,182,212,0.3); padding:18px; border-radius:4px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <div style="font-family:'Orbitron',sans-serif; font-size:0.9rem; color:#fff;">
-                  2. SOURCE AUDIO INPUT
+                  2. SOURCE AUDIO / TEXT INPUT
                 </div>
                 <div style="display:flex; gap:6px;">
-                  <button id="btn-input-mic" class="aim-btn aim-btn-sm" style="${activeInputMode === 'MIC' ? 'background:rgba(6,182,212,0.3); color:#fff;' : 'background:transparent; color:#888;'}">🎙️ MIC</button>
-                  <button id="btn-input-upload" class="aim-btn aim-btn-sm" style="${activeInputMode === 'UPLOAD' ? 'background:rgba(6,182,212,0.3); color:#fff;' : 'background:transparent; color:#888;'}">📁 FILE</button>
-                  <button id="btn-input-tts" class="aim-btn aim-btn-sm" style="${activeInputMode === 'TTS' ? 'background:rgba(6,182,212,0.3); color:#fff;' : 'background:transparent; color:#888;'}">📝 TTS</button>
+                  <button id="btn-input-mic" class="aim-btn aim-btn-sm" style="${activeInputMode === 'MIC' ? 'background:rgba(6,182,212,0.3); color:#fff; border-color:var(--accent,#06b6d4);' : 'background:transparent; color:#888;'}">🎙️ MIC (VOICE)</button>
+                  <button id="btn-input-upload" class="aim-btn aim-btn-sm" style="${activeInputMode === 'UPLOAD' ? 'background:rgba(6,182,212,0.3); color:#fff; border-color:var(--accent,#06b6d4);' : 'background:transparent; color:#888;'}">📁 FILE (VOICE)</button>
+                  <button id="btn-input-tts" class="aim-btn aim-btn-sm" style="${activeInputMode === 'TTS' ? 'background:rgba(6,182,212,0.3); color:#fff; border-color:var(--accent,#06b6d4);' : 'background:transparent; color:#888;'}">📝 TEXT TO VOICE</button>
                 </div>
               </div>
 
-              <!-- Option A: Microphone Recording -->
+              <!-- Option A: Microphone Recording (Voice to Voice) -->
               <div id="section-input-mic" style="${activeInputMode === 'MIC' ? 'display:block;' : 'display:none;'}">
                 <div style="background:rgba(0,0,0,0.5); border:1px dashed rgba(6,182,212,0.3); border-radius:4px; padding:20px; text-align:center;">
                   <canvas id="mic-waveform-canvas" width="400" height="80" style="width:100%; height:80px; background:rgba(0,0,0,0.4); border-radius:3px; margin-bottom:14px;"></canvas>
@@ -169,7 +167,7 @@ export default function VoiceClonerPage() {
                 </div>
               </div>
 
-              <!-- Option B: File Upload -->
+              <!-- Option B: File Upload (Voice to Voice) -->
               <div id="section-input-upload" style="${activeInputMode === 'UPLOAD' ? 'display:block;' : 'display:none;'}">
                 <div id="dropzone-file" style="background:rgba(0,0,0,0.5); border:2px dashed rgba(6,182,212,0.3); border-radius:4px; padding:24px; text-align:center; cursor:pointer;">
                   <input type="file" id="ipt-audio-file" accept="audio/*" style="display:none;" />
@@ -180,18 +178,20 @@ export default function VoiceClonerPage() {
                   <div style="font-size:0.75rem; color:#888;">
                     Supports WAV, MP3, M4A, OGG (Max 25MB)
                   </div>
-                  <div id="lbl-uploaded-name" style="margin-top:10px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:#00ff66;"></div>
+                  <div id="lbl-uploaded-name" style="margin-top:10px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:#00ff66;">
+                    ${uploadedFile ? `Loaded: ${uploadedFile.name}` : ''}
+                  </div>
                 </div>
                 <div id="upload-preview-box" style="margin-top:12px; ${uploadedAudioUrl ? 'display:block;' : 'display:none;'}">
                   <audio id="audio-upload-preview" controls src="${uploadedAudioUrl || ''}" style="width:100%; height:34px;"></audio>
                 </div>
               </div>
 
-              <!-- Option C: Text-To-Speech Baseline -->
+              <!-- Option C: Text-To-Voice Synthesis Baseline -->
               <div id="section-input-tts" style="${activeInputMode === 'TTS' ? 'display:block;' : 'display:none;'}">
                 <div style="background:rgba(0,0,0,0.5); padding:16px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);">
                   <label style="font-size:0.75rem; color:#888; font-family:'Share Tech Mono',monospace; display:block; margin-bottom:6px;">
-                    ENTER TEXT TO SYNTHESIZE:
+                    ENTER TEXT TO SYNTHESIZE INTO VOICE:
                   </label>
                   <textarea id="ipt-tts-text" class="aim-input" style="width:100%; height:80px; resize:none; font-family:'Share Tech Mono',monospace; font-size:0.85rem;" placeholder="e.g. Systems operational. AlphaCore neural matrix active and awaiting command."></textarea>
                   
@@ -202,10 +202,11 @@ export default function VoiceClonerPage() {
                   </div>
 
                   <button id="btn-synthesize-tts" class="aim-btn aim-btn-sm" style="width:100%; background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66; font-weight:bold;">
-                    🔊 GENERATE BASE SPEECH
+                    ${isSynthesizingTts ? '🔄 SYNTHESIZING BASE SPEECH...' : '🔊 GENERATE BASE SPEECH'}
                   </button>
 
                   <div id="tts-preview-box" style="margin-top:12px; ${ttsAudioUrl ? 'display:block;' : 'display:none;'}">
+                    <label style="font-size:0.7rem; color:#888; font-family:'Share Tech Mono',monospace; display:block; margin-bottom:4px;">BASE SYNTHESIS PREVIEW:</label>
                     <audio id="audio-tts-preview" controls src="${ttsAudioUrl || ''}" style="width:100%; height:34px;"></audio>
                   </div>
                 </div>
@@ -243,7 +244,7 @@ export default function VoiceClonerPage() {
                   SYNTHESIS ENGINE ARCHITECTURE:
                 </label>
                 <select id="select-engine-mode" class="aim-input" style="width:100%;">
-                  <option value="modal">Modal Cloud RVC v2 (A10G GPU Inference)</option>
+                  <option value="modal">Modal Cloud RVC v2 (GPU Neural Inference)</option>
                   <option value="dsp">Neural Cybernetic Vocoder (Instant Real-time DSP)</option>
                 </select>
               </div>
@@ -254,7 +255,7 @@ export default function VoiceClonerPage() {
               </button>
 
               <div id="vc-convert-spinner" style="display:none; text-align:center; color:#00ff66; font-family:'Share Tech Mono',monospace; font-size:0.85rem; margin-top:12px;">
-                🔄 PROCESSING AUDIO VIA MODAL A10G NEURAL PIPELINE...
+                🔄 PROCESSING AUDIO VIA MODAL NEURAL PIPELINE...
               </div>
             </div>
 
@@ -280,7 +281,7 @@ export default function VoiceClonerPage() {
                 ` : `
                   <div style="font-size:2rem; color:#444; margin-bottom:6px;">🎙️</div>
                   <div style="font-size:0.8rem; color:#666; font-family:'Share Tech Mono',monospace;">
-                    Record audio or select a sample, then hit CONVERT to synthesize.
+                    Record audio, upload a file, or enter text, then click CONVERT.
                   </div>
                 `}
               </div>
@@ -294,10 +295,10 @@ export default function VoiceClonerPage() {
       <div id="tab-content-train" style="${activeTab === 'TRAIN' ? 'display:block;' : 'display:none;'}">
         <div class="panel" style="background:rgba(8,12,20,0.85); border:1px solid rgba(6,182,212,0.3); padding:24px; border-radius:4px; max-width:800px; margin:0 auto;">
           <div style="font-family:'Orbitron',sans-serif; font-size:1.1rem; color:#fff; margin-bottom:6px;">
-            🚀 RVC v2 CLOUD MODEL TRAINER (A10G GPU)
+            🚀 RVC v2 CLOUD MODEL TRAINER (GPU)
           </div>
           <p style="font-size:0.85rem; color:#aaa; line-height:1.6; margin-bottom:20px;">
-            Upload voice audio samples (10 seconds to 10 minutes total). The system will automatically preprocess, extract RMVPE pitch and HuBERT features, and train a personalized RVC v2 model checkpoint on Modal's high-speed cloud GPU.
+            Upload voice audio samples (10 seconds to 10 minutes total). The system will automatically preprocess, extract RMVPE pitch and HuBERT features, and train a personalized RVC v2 model checkpoint on Modal persistent storage.
           </p>
 
           <div style="margin-bottom:16px;">
@@ -341,7 +342,7 @@ export default function VoiceClonerPage() {
           </div>
 
           <p style="font-size:0.85rem; color:#aaa; margin-bottom:16px;">
-            Lists active model checkpoints, index files, and uploaded dataset audio samples stored in Modal persistent storage.
+            Active model checkpoints, index files, and uploaded dataset audio samples stored in Modal persistent storage.
           </p>
 
           <div id="volume-items-list" style="font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:#ccc; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:14px; max-height:240px; overflow-y:auto;">
@@ -365,7 +366,7 @@ export default function VoiceClonerPage() {
       card.addEventListener('click', () => {
         activeProfile = card.dataset.profile;
         render();
-        showToast('PROFILE', `Voice Profile: ${activeProfile}`);
+        showToast('PROFILE', `Target Voice Profile: ${activeProfile}`);
       });
     });
 
@@ -384,7 +385,7 @@ export default function VoiceClonerPage() {
       });
     }
 
-    // Microphone Recording
+    // Microphone Recording (Voice to Voice)
     const btnRecord = container.querySelector('#btn-record-toggle');
     const lblRecordTimer = container.querySelector('#lbl-record-timer');
     const micCanvas = container.querySelector('#mic-waveform-canvas');
@@ -397,7 +398,6 @@ export default function VoiceClonerPage() {
             audioChunks = [];
             mediaRecorder = new MediaRecorder(stream);
             
-            // Audio visualizer setup
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             micAudioContext = new AudioContextClass();
             const source = micAudioContext.createMediaStreamSource(stream);
@@ -405,7 +405,6 @@ export default function VoiceClonerPage() {
             micAnalyser.fftSize = 256;
             source.connect(micAnalyser);
 
-            // Draw visualizer
             const drawWave = () => {
               if (!micCanvas || !micAnalyser) return;
               const cvCtx = micCanvas.getContext('2d');
@@ -453,12 +452,11 @@ export default function VoiceClonerPage() {
               if (lblRecordTimer) lblRecordTimer.textContent = `${mins}:${secs}`;
             }, 1000);
 
-            showToast('RECORDING', 'Microphone active. Speak into mic...');
+            showToast('RECORDING', 'Microphone active. Speak now...');
           } catch (err) {
             showToast('ERROR', 'Microphone access denied: ' + err.message);
           }
         } else {
-          // Stop recording
           if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
           }
@@ -469,10 +467,9 @@ export default function VoiceClonerPage() {
       };
     }
 
-    // File Upload Drag & Drop
+    // File Upload Drag & Drop (Voice to Voice)
     const dropzone = container.querySelector('#dropzone-file');
     const iptAudioFile = container.querySelector('#ipt-audio-file');
-    const lblUploadedName = container.querySelector('#lbl-uploaded-name');
 
     if (dropzone && iptAudioFile) {
       dropzone.onclick = () => iptAudioFile.click();
@@ -481,15 +478,11 @@ export default function VoiceClonerPage() {
       dropzone.ondrop = (e) => {
         e.preventDefault();
         dropzone.style.borderColor = 'rgba(6,182,212,0.3)';
-        if (e.dataTransfer.files.length > 0) {
-          handleFileSelected(e.dataTransfer.files[0]);
-        }
+        if (e.dataTransfer.files.length > 0) handleFileSelected(e.dataTransfer.files[0]);
       };
 
       iptAudioFile.onchange = (e) => {
-        if (e.target.files.length > 0) {
-          handleFileSelected(e.target.files[0]);
-        }
+        if (e.target.files.length > 0) handleFileSelected(e.target.files[0]);
       };
     }
 
@@ -500,7 +493,7 @@ export default function VoiceClonerPage() {
       render();
     };
 
-    // TTS Synthesis
+    // Text to Voice Synthesis Trigger
     const btnTts = container.querySelector('#btn-synthesize-tts');
     const iptTts = container.querySelector('#ipt-tts-text');
     if (btnTts && iptTts) {
@@ -555,7 +548,6 @@ export default function VoiceClonerPage() {
         appendLog(`Uploading ${files.length} sample(s) for profile '${profileName}'...`);
 
         try {
-          // Upload all samples concurrently
           const uploadPromises = Array.from(files).map(async (f, i) => {
             appendLog(`Uploading sample ${i+1}/${files.length}: ${f.name}...`);
             const b64 = await fileToBase64(f);
@@ -567,14 +559,13 @@ export default function VoiceClonerPage() {
           });
           await Promise.all(uploadPromises);
 
-          appendLog('All samples staged. Launching Modal A10G training container...');
+          appendLog('All samples staged. Launching Modal GPU training container...');
           const trainRes = await fetch(`${MAIN_API_BASE}/api/voice/train?profile_name=${encodeURIComponent(profileName)}`, {
             method: 'POST'
           });
           const trainData = await trainRes.json();
           appendLog(`Training task initiated! Call ID: ${trainData.call_id || 'active'}`);
-          appendLog(`Profile '${profileName}' is now training on Modal volume.`);
-          showToast('TRAINING INITIATED', 'A10G GPU training started in background.');
+          showToast('TRAINING INITIATED', 'Modal GPU training dispatched in background.');
         } catch (err) {
           appendLog(`ERROR: ${err.message}`);
           showToast('ERROR', 'Training dispatch failed: ' + err.message);
@@ -584,41 +575,74 @@ export default function VoiceClonerPage() {
       };
     }
 
-    // Refresh volume data
     container.querySelector('#btn-refresh-volume')?.addEventListener('click', fetchVolumeData);
   }
 
-  // Synthesize Text-to-Speech Baseline Audio using Web Speech API & MediaStream
-  function synthesizeTtsAudio(text) {
-    if (!('speechSynthesis' in window)) {
-      return showToast('ERROR', 'SpeechSynthesis not supported in browser');
+  // Synthesize Text-to-Voice Baseline Audio via Modal Backend (with browser fallback)
+  async function synthesizeTtsAudio(text) {
+    isSynthesizingTts = true;
+    showToast('SYNTHESIZING', 'Generating neural base speech from Modal backend...');
+
+    try {
+      const res = await fetch(`${MAIN_API_BASE}/api/voice/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: 'en-US-ChristopherNeural' })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      const binary = atob(data.audio_b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      ttsBlob = new Blob([bytes], { type: 'audio/mp3' });
+      ttsAudioUrl = URL.createObjectURL(ttsBlob);
+
+      showToast('TTS READY', 'Neural base speech generated.');
+      render();
+      return ttsBlob;
+    } catch (err) {
+      console.warn('[VOICE CLONER] Backend TTS error, attempting browser speech synthesis fallback:', err.message);
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+        showToast('FALLBACK ACTIVE', 'Speaking via browser speech engine.');
+      } else {
+        showToast('ERROR', 'TTS generation failed: ' + err.message);
+      }
+      return null;
+    } finally {
+      isSynthesizingTts = false;
     }
-
-    showToast('SYNTHESIZING', 'Generating base speech...');
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-
-    // Pick crisp voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Zira')));
-    if (englishVoice) utterance.voice = englishVoice;
-
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    showToast('TTS READY', 'Speech generated. You can now convert it below.');
   }
 
-  // Convert Voice Core Function
+  // Convert Voice Core Function (Voice-to-Voice & Text-to-Voice)
   async function executeVoiceConversion() {
-    // Determine source audio blob
     let sourceBlob = null;
-    if (activeInputMode === 'MIC') sourceBlob = recordedBlob;
-    else if (activeInputMode === 'UPLOAD') sourceBlob = uploadedFile;
-    else if (activeInputMode === 'TTS') sourceBlob = ttsBlob;
+
+    if (activeInputMode === 'MIC') {
+      sourceBlob = recordedBlob;
+    } else if (activeInputMode === 'UPLOAD') {
+      sourceBlob = uploadedFile;
+    } else if (activeInputMode === 'TTS') {
+      if (!ttsBlob) {
+        const text = container.querySelector('#ipt-tts-text')?.value.trim();
+        if (!text) {
+          return showToast('NO TEXT', 'Please enter text to synthesize into speech.');
+        }
+        sourceBlob = await synthesizeTtsAudio(text);
+      } else {
+        sourceBlob = ttsBlob;
+      }
+    }
 
     if (!sourceBlob) {
-      return showToast('NO AUDIO', 'Please record audio or upload a voice sample first.');
+      return showToast('NO AUDIO', 'Record audio, upload a file, or generate text speech first.');
     }
 
     const spinner = container.querySelector('#vc-convert-spinner');
@@ -632,7 +656,6 @@ export default function VoiceClonerPage() {
 
     try {
       if (engineMode === 'modal') {
-        // Cloud Modal RVC v2 Inference
         const b64 = await blobToBase64(sourceBlob);
         const res = await fetch(`${MAIN_API_BASE}/api/voice/convert`, {
           method: 'POST',
@@ -657,7 +680,6 @@ export default function VoiceClonerPage() {
         convertedAudioUrl = URL.createObjectURL(convertedAudioBlob);
         showToast('SUCCESS', 'Voice converted via Modal RVC v2!');
       } else {
-        // Local Web Audio DSP Pitch & Formant Vocoder
         convertedAudioBlob = await applyLocalDspPitchShift(sourceBlob, pitchShift);
         convertedAudioUrl = URL.createObjectURL(convertedAudioBlob);
         showToast('SUCCESS', 'Voice morphed via Real-time Neural DSP!');
@@ -665,9 +687,8 @@ export default function VoiceClonerPage() {
 
       render();
     } catch (err) {
-      console.warn('[VOICE CLONER] Cloud conversion notice:', err.message);
-      // Seamlessly fall back to Neural DSP audio conversion if model is not yet compiled on cloud
-      showToast('DSP ACTIVE', 'Model warming up. Applying Instant Neural Vocoder DSP...');
+      console.warn('[VOICE CLONER] Cloud conversion note:', err.message);
+      showToast('DSP ACTIVE', 'Model checkpoint not found. Applying Instant Neural DSP...');
       try {
         convertedAudioBlob = await applyLocalDspPitchShift(sourceBlob, pitchShift);
         convertedAudioUrl = URL.createObjectURL(convertedAudioBlob);
@@ -681,18 +702,17 @@ export default function VoiceClonerPage() {
     }
   }
 
-  // Real-time Neural Vocoder DSP Pitch Transposition using Web Audio API
+  // Real-time Neural DSP Pitch Transposition using Web Audio API
   async function applyLocalDspPitchShift(blob, semitones) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioContextClass();
     const arrayBuffer = await blob.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
-    // Speed / pitch ratio: 2^(semitones / 12)
     const pitchRatio = Math.pow(2, semitones / 12);
     const offlineCtx = new OfflineAudioContext(
       audioBuffer.numberOfChannels,
-      Math.round(audioBuffer.length / pitchRatio),
+      Math.max(1, Math.round(audioBuffer.length / pitchRatio)),
       audioBuffer.sampleRate
     );
 
@@ -700,7 +720,6 @@ export default function VoiceClonerPage() {
     source.buffer = audioBuffer;
     source.playbackRate.value = pitchRatio;
 
-    // Resonant cyber filter
     const filter = offlineCtx.createBiquadFilter();
     filter.type = 'peaking';
     filter.frequency.value = 2400;
@@ -713,15 +732,13 @@ export default function VoiceClonerPage() {
     const renderedBuffer = await offlineCtx.startRendering();
     ctx.close();
 
-    // Encode renderedBuffer to standard 16-bit PCM WAV
     return bufferToWavBlob(renderedBuffer);
   }
 
-  // Helper: Convert AudioBuffer to WAV Blob
   function bufferToWavBlob(audioBuffer) {
     const numChannels = audioBuffer.numberOfChannels;
     const sampleRate = audioBuffer.sampleRate;
-    const format = 1; // PCM
+    const format = 1;
     const bitDepth = 16;
     const numSamples = audioBuffer.length * numChannels;
     const buffer = new ArrayBuffer(44 + numSamples * 2);
@@ -781,11 +798,11 @@ export default function VoiceClonerPage() {
       const res = await fetch(`${MAIN_API_BASE}/api/voice/profiles`);
       const data = await res.json();
       let html = '<div style="margin-bottom:8px; color:var(--accent,#06b6d4);">// CONNECTED TO MODAL STORAGE</div>';
-      html += '<div><strong>BUILT-IN PROFILES:</strong></div>';
-      data.presets.forEach(p => {
+      html += '<div><strong>BUILT-IN PRESETS:</strong></div>';
+      (data.presets || []).forEach(p => {
         html += `<div style="padding-left:12px; color:#00ff66;">● ${p.label} [${p.name}]</div>`;
       });
-      html += '<div style="margin-top:10px;"><strong>CUSTOM TRAINED VOLUMES:</strong></div>';
+      html += '<div style="margin-top:10px;"><strong>CUSTOM TRAINED PROFILES:</strong></div>';
       if (data.custom_profiles && data.custom_profiles.length > 0) {
         data.custom_profiles.forEach(c => {
           html += `<div style="padding-left:12px; color:#f59e0b;">● /models/${c}/ (Checkpoints Loaded)</div>`;
@@ -799,7 +816,7 @@ export default function VoiceClonerPage() {
     }
   }
 
-  // Load available profiles from endpoint on initial mount
+  // Fetch initial profile list from backend
   fetch(`${MAIN_API_BASE}/api/voice/profiles`)
     .then(r => r.json())
     .then(data => {
@@ -810,7 +827,6 @@ export default function VoiceClonerPage() {
           desc: p.desc || 'Custom Neural Voice Profile',
           icon: p.name.includes('Alpha') ? '🤖' : (p.name.includes('Architect') ? '◈' : '🎙️')
         }));
-        // Append custom volume models if any
         if (data.custom_profiles) {
           data.custom_profiles.forEach(c => {
             if (!voiceProfiles.some(p => p.name === c)) {
