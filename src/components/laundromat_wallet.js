@@ -23,7 +23,8 @@ export const DEFAULT_WALLETS = {
     roleTitle: 'CHIEF ARCHITECT // FULL ACCESS',
     accentColor: '#10b981',
     pin: '672167566',
-    isExempt: true
+    isExempt: true,
+    avatar: null
   },
   'DoeBoy': {
     profile: 'DoeBoy',
@@ -37,7 +38,8 @@ export const DEFAULT_WALLETS = {
     roleTitle: 'SYSTEM OPERATOR // VAULT CLEARANCE',
     accentColor: '#a855f7',
     pin: '6969',
-    isExempt: false
+    isExempt: false,
+    avatar: null
   },
   'Fisherman': {
     profile: 'Fisherman',
@@ -51,7 +53,8 @@ export const DEFAULT_WALLETS = {
     roleTitle: 'HARBOR NAVIGATOR // PREFERRED TIER (7%)',
     accentColor: '#06b6d4',
     pin: '1990',
-    isExempt: false
+    isExempt: false,
+    avatar: null
   },
   'J. P.': {
     profile: 'J. P.',
@@ -65,7 +68,8 @@ export const DEFAULT_WALLETS = {
     roleTitle: 'FIELD AGENT // CREATOR PRIVILEGES',
     accentColor: '#38bdf8',
     pin: '20022005',
-    isExempt: false
+    isExempt: false,
+    avatar: null
   },
   'Guest': {
     profile: 'Guest',
@@ -79,7 +83,8 @@ export const DEFAULT_WALLETS = {
     roleTitle: 'TEMPORARY ESCROW HOLD (24-HR AUTO REFUND)',
     accentColor: '#f59e0b',
     pin: null,
-    isExempt: false
+    isExempt: false,
+    avatar: null
   }
 };
 
@@ -160,7 +165,8 @@ export function getProfileWallet(profileName) {
     roleTitle: 'REGISTERED OPERATIVE',
     accentColor: '#38bdf8',
     pin: null,
-    isExempt: false
+    isExempt: false,
+    avatar: null
   };
   wallets[cName] = newWallet;
   try {
@@ -522,6 +528,7 @@ export function openWalletInspectorModal({ onProfileSwitched = null } = {}) {
           ">
             <div style="flex: 1; min-width: 180px;">
               <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2em; margin-right: 5px;">${w.avatar || '👤'}</span>
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 1rem; color: ${w.accentColor}; font-weight: bold;">
                   ${w.profile}
                 </span>
@@ -619,4 +626,16 @@ export function openWalletInspectorModal({ onProfileSwitched = null } = {}) {
       }
     });
   };
+}
+
+
+export function saveWalletAvatar(profileName, emoji) {
+  const profile = canonicalProfileName(profileName);
+  const wallets = getAllWallets();
+  if (wallets[profile]) {
+    wallets[profile].avatar = emoji;
+    localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(wallets));
+    return true;
+  }
+  return false;
 }
