@@ -156,6 +156,8 @@ class Txt2Vid:
             model_file = "autismmixSDXL_autismmixPony.safetensors"
         elif model_name.lower().startswith("0x7"):
             model_file = "0x7RealisticFreedom_omegaSDXL.safetensors"
+        elif model_name.lower().startswith("into") or "realism" in model_name.lower() and "epic" not in model_name.lower():
+            model_file = "intorealism_sdxlV4.safetensors"
         else:
             model_file = "juggernautXL_ragnarok.safetensors"
 

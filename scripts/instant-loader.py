@@ -26,6 +26,7 @@ CHECKPOINTS = {
     "dreamshaperXL_alpha2Xl10.safetensors": "128713",
     "lustifyNSFWCheckpoint_zenithV9.safetensors": "3112728",
     "epicrealismXL_pureFix.safetensors": "2514955",
+    "intorealism_sdxlV4.safetensors": "2650268",
 }
 
 def get_civitai_secrets():

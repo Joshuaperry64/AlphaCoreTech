@@ -69,6 +69,7 @@ SDXL_CHECKPOINTS = {
     "unholyDesireMixSinister_v80": "unholyDesireMixSinister_v80.safetensors",
     "lustifyNSFWCheckpoint_zenithV9": "lustifyNSFWCheckpoint_zenithV9.safetensors",
     "dreamshaperXL_alpha2Xl10": "dreamshaperXL_alpha2Xl10.safetensors",
+    "intorealism_sdxlV4": "intorealism_sdxlV4.safetensors",
 }
 
 

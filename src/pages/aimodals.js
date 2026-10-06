@@ -892,6 +892,7 @@ function buildTxt2Img() {
           <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE</option>
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
+          <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
           <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
@@ -1506,6 +1507,7 @@ function buildImg2Img() {
         <option value="unholyDesireMixSinister_v80">unholyDesireMixSinister_v80 (Sinister Dark Stylization)</option>
         <option value="lustifyNSFWCheckpoint_zenithV9">lustifyNSFWCheckpoint_zenithV9 (Unfiltered High-Aesthetic)</option>
         <option value="dreamshaperXL_alpha2Xl10">dreamshaperXL_alpha2Xl10 (Creative Concept & Digital Art)</option>
+        <option value="intorealism_sdxlV4">intorealism_sdxlV4 (Hyper-Realistic Skin & Lighting)</option>
       </select>
     </div>
 
