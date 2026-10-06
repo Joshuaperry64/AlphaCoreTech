@@ -1,6 +1,7 @@
 import { createElement } from '../components/utils.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { showModal } from '../components/modal.js';
+import { supabase } from '../lib/supabase.js';
 
 export default function VaultPage() {
   const container = createElement('div', { class: 'vault-page' });
@@ -709,178 +710,214 @@ function buildStoragePanel() {
   const currentProfile = sessionStorage.getItem('current_profile') || 'GUEST';
 
   let files = [];
-  try {
-    files = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
-  } catch(e) {}
 
-  const myFiles = files.filter(f => f.owner === currentProfile);
-  const sharedFiles = files.filter(f => f.shared && f.owner !== currentProfile);
-
-  function renderFileList(list, listTitle, emptyMsg) {
-    let html = `<div class="panel-subtitle">// ${listTitle}</div>`;
-    if (list.length === 0) {
-      html += `<div style="padding: 10px; color: var(--blue-dim); font-size: 0.8rem;">> ${emptyMsg}</div>`;
-    } else {
-      html += '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">';
-      list.forEach(f => {
-        const isImage = f.type && f.type.startsWith('image/');
-        const isVideo = f.type && f.type.startsWith('video/');
-        let previewBlock = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:3rem; color:var(--blue-dim);">📄</div>`;
-        if (isImage) {
-          previewBlock = `<img src="${f.content}" style="width:100%; height:100%; object-fit:cover;" />`;
-        } else if (isVideo) {
-          previewBlock = `<video src="${f.content}" style="width:100%; height:100%; object-fit:cover;" controls loop playsinline></video>`;
-        }
-
-        html += `
-          <div style="border: 1px solid var(--border-dim); background: rgba(0,184,255,0.02); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden;">
-            <div style="height:140px; background:rgba(0,0,0,0.5); border-bottom:1px solid var(--border-dim); position:relative;">
-              ${previewBlock}
-            </div>
-            <div style="padding:10px; display:flex; flex-direction:column; justify-content:space-between; flex-grow:1;">
-              <div>
-                <div style="font-family: var(--font-hud); color: var(--blue); font-size: 0.85rem; word-break: break-all; margin-bottom:4px; line-height:1.2;">${f.filename}</div>
-                <div style="color: var(--blue-dim); font-size: 0.65rem;">OWNER: ${f.owner} | SIZE: ${f.content.length}b</div>
-              </div>
-              <div style="display:flex; gap:6px; margin-top:10px;">
-                <button class="aim-btn btn-view-file" style="flex:1; padding:4px 0; font-size:0.7rem;" data-id="${f.id}">VIEW</button>
-                ${f.owner === currentProfile ? `<button class="aim-btn btn-del-file" style="flex:1; padding:4px 0; font-size:0.7rem; border-color:var(--accent); color:var(--accent);" data-id="${f.id}">DEL</button>` : ''}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      html += '</div>';
-    }
-    return html;
-  }
-
-  el.innerHTML = `
-    <div class="vault-storage-grid">
-      <div class="vsg-col-main">
-        ${renderFileList(myFiles, 'PERSONAL_STORAGE', 'NO ENCRYPTED FILES FOUND IN PERSONAL STORAGE.')}
-        <div style="margin-top: 30px;"></div>
-        ${renderFileList(sharedFiles, 'SHARED_STORAGE', 'NO CLASSIFIED SHARED FILES AVAILABLE.')}
-      </div>
-      
-      <div class="vsg-col-side">
-        <div class="panel-subtitle">// UPLOAD_NEW_DATA</div>
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-          <input type="text" class="aim-input" id="new-file-name" placeholder="OPTIONAL_FILENAME" />
-          <textarea class="aim-textarea" id="new-file-content" rows="4" placeholder="ENTER TEXT DATA..."></textarea>
-          <div style="font-size: 0.75rem; color: var(--text-dim, #607080); text-align: center;">-- OR ATTACH FILE --</div>
-          <input type="file" class="aim-input" id="new-file-upload" style="font-size: 0.8rem; padding: 5px; cursor: pointer;" />
-          <label style="color: var(--blue-dim); font-size: 0.75rem; display: block; margin-top: 4px;">
-            <input type="checkbox" id="new-file-shared"> SHARE WITH OTHER USERS
-          </label>
-          <button class="aim-btn aim-btn-generate" id="btn-save-file" style="margin-top:10px;">ENCRYPT & SAVE</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Attach events
-  const btnSave = el.querySelector('#btn-save-file');
-  btnSave.onclick = async () => {
-    let filename = el.querySelector('#new-file-name').value.trim();
-    const contentText = el.querySelector('#new-file-content').value.trim();
-    const fileInput = el.querySelector('#new-file-upload');
-    const shared = el.querySelector('#new-file-shared').checked;
-    
-    let finalContent = contentText;
-    let fileType = 'text/plain';
-
-    if (fileInput.files && fileInput.files[0]) {
-      const file = fileInput.files[0];
-      if (!filename) filename = file.name;
-      fileType = file.type || 'application/octet-stream';
-      
-      // Convert to Base64
-      finalContent = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(file);
-      });
-    } else if (!filename) {
-      filename = `SECURE_NOTE_${Date.now().toString().slice(-5)}.txt`;
-    }
-    
-    if (!finalContent) {
-      alert("CONTENT OR FILE REQUIRED.");
-      return;
-    }
-    
-    try {
-      files.push({
-        id: Date.now().toString(),
-        owner: currentProfile,
-        filename,
-        content: finalContent,
-        type: fileType,
-        shared,
-        createdAt: Date.now()
-      });
-      localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
-    } catch(e) {
-      alert("STORAGE LIMIT EXCEEDED. CANNOT ENCRYPT FILE.");
-      return;
-    }
-    
-    // Re-render
-    const parent = el.parentElement;
-    parent.innerHTML = '';
-    parent.appendChild(buildStoragePanel());
+  const getPublicUrl = (path) => {
+    if (!path) return '';
+    const { data } = supabase.storage.from('vault_data').getPublicUrl(path);
+    return data.publicUrl;
   };
 
-  el.querySelectorAll('.btn-view-file').forEach(btn => {
-    btn.onclick = () => {
-      const id = btn.getAttribute('data-id');
-      const file = files.find(f => f.id === id);
-      if (file) {
-        const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
-        
-        const modal = document.createElement('div');
-        modal.style.cssText = 'background:#050a0f; border:1px solid var(--accent); padding:20px; max-width:800px; width:90%; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(6,182,212,0.2);';
-        
-        let contentHtml = '';
-        if (file.type && file.type.startsWith('image/')) {
-          contentHtml = `<img src="${file.content}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" />`;
-        } else if (file.type && file.type.startsWith('video/')) {
-          contentHtml = `<video src="${file.content}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" controls autoplay loop playsinline></video>`;
-        } else {
-          contentHtml = `<pre style="white-space: pre-wrap; word-break: break-all; font-family: var(--font-mono, monospace); color: var(--blue-dim, #a0b0c0); font-size: 0.85rem; overflow-y:auto; max-height:60vh; margin:0; padding:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border-dim);">${file.content}</pre>`;
-        }
+  async function loadFiles() {
+    el.innerHTML = '<div style="color: var(--blue); font-family: var(--font-hud); padding: 20px;">> SYNCING CLOUD SUBSTRATE...</div>';
+    try {
+      const { data, error } = await supabase.from('vault_files').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      files = data || [];
+      renderUI();
+    } catch(err) {
+      el.innerHTML = `<div style="color: var(--accent); padding: 20px;">> ERROR SYNCING CLOUD: ${err.message}</div>`;
+    }
+  }
 
-        modal.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(6,182,212,0.3); padding-bottom:10px; margin-bottom:15px;">
-            <div style="color:var(--accent); font-family:var(--font-hud, monospace); font-size:1.1rem;">// VIEWING: ${file.filename}</div>
-            <div style="color:var(--blue-dim); font-size:0.7rem;">TYPE: ${file.type || 'TEXT'}</div>
-          </div>
-          ${contentHtml}
-          <button id="close-file-btn" class="aim-btn" style="margin-top:20px; text-align:center;">CLOSE PREVIEW</button>
-        `;
+  function renderUI() {
+    const myFiles = files.filter(f => f.owner === currentProfile);
+    const sharedFiles = files.filter(f => f.shared && f.owner !== currentProfile);
 
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
+    function renderFileList(list, listTitle, emptyMsg) {
+      let html = `<div class="panel-subtitle">// ${listTitle}</div>`;
+      if (list.length === 0) {
+        html += `<div style="padding: 10px; color: var(--blue-dim); font-size: 0.8rem;">> ${emptyMsg}</div>`;
+      } else {
+        html += '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">';
+        list.forEach(f => {
+          const isImage = f.type && f.type.startsWith('image/');
+          const isVideo = f.type && f.type.startsWith('video/');
+          const url = getPublicUrl(f.storage_path);
+          
+          let previewBlock = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:3rem; color:var(--blue-dim);">📄</div>`;
+          if (isImage && url) {
+            previewBlock = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" />`;
+          } else if (isVideo && url) {
+            previewBlock = `<video src="${url}" style="width:100%; height:100%; object-fit:cover;" controls loop playsinline></video>`;
+          }
 
-        modal.querySelector('#close-file-btn').addEventListener('click', () => {
-          document.body.removeChild(overlay);
+          html += `
+            <div style="border: 1px solid var(--border-dim); background: rgba(0,184,255,0.02); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden;">
+              <div style="height:140px; background:rgba(0,0,0,0.5); border-bottom:1px solid var(--border-dim); position:relative;">
+                ${previewBlock}
+              </div>
+              <div style="padding:10px; display:flex; flex-direction:column; justify-content:space-between; flex-grow:1;">
+                <div>
+                  <div style="font-family: var(--font-hud); color: var(--blue); font-size: 0.85rem; word-break: break-all; margin-bottom:4px; line-height:1.2;">${f.filename}</div>
+                  <div style="color: var(--blue-dim); font-size: 0.65rem;">OWNER: ${f.owner}</div>
+                </div>
+                <div style="display:flex; gap:6px; margin-top:10px;">
+                  <button class="aim-btn btn-view-file" style="flex:1; padding:4px 0; font-size:0.7rem;" data-id="${f.id}">VIEW</button>
+                  ${f.owner === currentProfile ? `<button class="aim-btn btn-del-file" style="flex:1; padding:4px 0; font-size:0.7rem; border-color:var(--accent); color:var(--accent);" data-id="${f.id}">DEL</button>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
         });
+        html += '</div>';
+      }
+      return html;
+    }
+
+    el.innerHTML = `
+      <div class="vault-storage-grid">
+        <div class="vsg-col-main">
+          ${renderFileList(myFiles, 'PERSONAL_STORAGE', 'NO ENCRYPTED FILES FOUND IN PERSONAL STORAGE.')}
+          <div style="margin-top: 30px;"></div>
+          ${renderFileList(sharedFiles, 'SHARED_STORAGE', 'NO CLASSIFIED SHARED FILES AVAILABLE.')}
+        </div>
+        
+        <div class="vsg-col-side">
+          <div class="panel-subtitle">// UPLOAD_NEW_DATA</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+            <input type="text" class="aim-input" id="new-file-name" placeholder="OPTIONAL_FILENAME" />
+            <textarea class="aim-textarea" id="new-file-content" rows="4" placeholder="ENTER TEXT DATA..."></textarea>
+            <div style="font-size: 0.75rem; color: var(--text-dim, #607080); text-align: center;">-- OR ATTACH FILE --</div>
+            <input type="file" class="aim-input" id="new-file-upload" style="font-size: 0.8rem; padding: 5px; cursor: pointer;" />
+            <label style="color: var(--blue-dim); font-size: 0.75rem; display: block; margin-top: 4px;">
+              <input type="checkbox" id="new-file-shared"> SHARE WITH OTHER USERS
+            </label>
+            <button class="aim-btn aim-btn-generate" id="btn-save-file" style="margin-top:10px;">ENCRYPT & UPLOAD</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Attach events
+    const btnSave = el.querySelector('#btn-save-file');
+    btnSave.onclick = async () => {
+      let filename = el.querySelector('#new-file-name').value.trim();
+      const contentText = el.querySelector('#new-file-content').value.trim();
+      const fileInput = el.querySelector('#new-file-upload');
+      const shared = el.querySelector('#new-file-shared').checked;
+      
+      let fileObj;
+      let fileType = 'text/plain';
+
+      if (fileInput.files && fileInput.files[0]) {
+        fileObj = fileInput.files[0];
+        if (!filename) filename = fileObj.name;
+        fileType = fileObj.type || 'application/octet-stream';
+      } else if (contentText) {
+        if (!filename) filename = `SECURE_NOTE_${Date.now().toString().slice(-5)}.txt`;
+        fileObj = new Blob([contentText], { type: 'text/plain' });
+      } else {
+        alert("CONTENT OR FILE REQUIRED.");
+        return;
+      }
+      
+      btnSave.textContent = "UPLOADING...";
+      btnSave.disabled = true;
+      
+      try {
+        const storagePath = `${currentProfile}/${Date.now()}_${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('vault_data')
+          .upload(storagePath, fileObj);
+          
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase.from('vault_files').insert([{
+          filename,
+          type: fileType,
+          owner: currentProfile,
+          shared,
+          storage_path: uploadData.path
+        }]);
+
+        if (dbError) throw dbError;
+
+        loadFiles();
+      } catch(e) {
+        alert("UPLOAD FAILED: " + e.message);
+        btnSave.textContent = "ENCRYPT & UPLOAD";
+        btnSave.disabled = false;
       }
     };
-  });
 
-  el.querySelectorAll('.btn-del-file').forEach(btn => {
-    btn.onclick = () => {
-      const id = btn.getAttribute('data-id');
-      files = files.filter(f => f.id !== id);
-      localStorage.setItem('alphacore_vault_files', JSON.stringify(files));
-      const parent = el.parentElement;
-      parent.innerHTML = '';
-      parent.appendChild(buildStoragePanel());
-    };
-  });
+    el.querySelectorAll('.btn-view-file').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        const file = files.find(f => f.id === id);
+        if (file) {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(5px);';
+          
+          const modal = document.createElement('div');
+          modal.style.cssText = 'background:#050a0f; border:1px solid var(--accent); padding:20px; max-width:800px; width:90%; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(6,182,212,0.2);';
+          
+          const url = getPublicUrl(file.storage_path);
+          let contentHtml = '';
+          
+          if (file.type && file.type.startsWith('image/')) {
+            contentHtml = `<img src="${url}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" />`;
+          } else if (file.type && file.type.startsWith('video/')) {
+            contentHtml = `<video src="${url}" style="max-width:100%; max-height:60vh; object-fit:contain; border:1px solid var(--border-dim);" controls autoplay loop playsinline></video>`;
+          } else {
+            // Fetch raw text for preview
+            try {
+              const res = await fetch(url);
+              const text = await res.text();
+              contentHtml = `<pre style="white-space: pre-wrap; word-break: break-all; font-family: var(--font-mono, monospace); color: var(--blue-dim, #a0b0c0); font-size: 0.85rem; overflow-y:auto; max-height:60vh; margin:0; padding:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border-dim);">${text}</pre>`;
+            } catch (e) {
+              contentHtml = `<div style="color:var(--accent);">FAILED TO LOAD PREVIEW</div>`;
+            }
+          }
+
+          modal.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(6,182,212,0.3); padding-bottom:10px; margin-bottom:15px;">
+              <div style="color:var(--accent); font-family:var(--font-hud, monospace); font-size:1.1rem;">// VIEWING: ${file.filename}</div>
+              <div style="color:var(--blue-dim); font-size:0.7rem;"><a href="${url}" target="_blank" style="color:var(--blue); text-decoration:none;">DOWNLOAD</a> | TYPE: ${file.type || 'TEXT'}</div>
+            </div>
+            ${contentHtml}
+            <button id="close-file-btn" class="aim-btn" style="margin-top:20px; text-align:center;">CLOSE PREVIEW</button>
+          `;
+
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+
+          modal.querySelector('#close-file-btn').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+          });
+        }
+      };
+    });
+
+    el.querySelectorAll('.btn-del-file').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        const file = files.find(f => f.id === id);
+        if (file && confirm('DELETE CLASSIFIED CLOUD DATA?')) {
+          btn.textContent = '...';
+          try {
+            await supabase.storage.from('vault_data').remove([file.storage_path]);
+            await supabase.from('vault_files').delete().eq('id', id);
+            loadFiles();
+          } catch (e) {
+            alert('DELETE FAILED: ' + e.message);
+          }
+        }
+      };
+    });
+  }
+
+  // Initial load
+  loadFiles();
 
   return el;
 }
