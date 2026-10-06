@@ -283,19 +283,23 @@ class Txt2Img:
                 
                 if lora_path.exists():
                     print(f"Loading LoRA: {lora_path}")
-                    
-                    # 3. Properly indented loading function
-                    run_pipe.load_lora_weights(
-                        str(lora_path.parent), 
-                        weight_name=lora_path.name, 
-                        adapter_name=clean_name
-                    )
-                    loaded_adapters.append(clean_name)
+                    try:
+                        run_pipe.load_lora_weights(
+                            str(lora_path.parent), 
+                            weight_name=lora_path.name, 
+                            adapter_name=clean_name
+                        )
+                        loaded_adapters.append(clean_name)
+                    except Exception as le:
+                        print(f"⚠️ Failed to load LoRA {clean_name} (architecture mismatch or corrupt): {le}")
                 else:
                     print(f"LoRA {lora_path} not found!")
                     
             if loaded_adapters:
-                run_pipe.set_adapters(loaded_adapters)
+                try:
+                    run_pipe.set_adapters(loaded_adapters)
+                except Exception as ae:
+                    print(f"⚠️ Failed to activate LoRA adapters: {ae}")
 
 
         import queue

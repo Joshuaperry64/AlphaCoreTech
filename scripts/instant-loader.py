@@ -9,7 +9,7 @@ cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 image = modal.Image.debian_slim(python_version="3.12").pip_install("requests", "tqdm")
 
 LORAS = {
-    "epiCRealismHelper.safetensors": "118945",
+    "epiCRealismHelper.safetensors": "1051156",
     "cunny.safetensors": "286911",
     "FlatTop.safetensors": "1109661",
     "BJ.safetensors": "1312598",

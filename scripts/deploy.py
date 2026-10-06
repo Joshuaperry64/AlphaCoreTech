@@ -41,7 +41,7 @@ WEBSITE_CHECKPOINTS = {
 }
 
 WEBSITE_LORAS = {
-    "epiCRealismHelper.safetensors": "118945",
+    "epiCRealismHelper.safetensors": "1051156",
     "cunny.safetensors": "286911",
     "FlatTop.safetensors": "1109661",
     "BJ.safetensors": "1312598",
@@ -77,12 +77,15 @@ sync_image = (
 )
 class AssetSync:
     @modal.method()
-    def sync_website_models(self, force: bool = False):
+    def sync_website_models(self, force: bool = False, check_updates: bool = True):
         """
         Scans the hf-hub-cache modal volume for all website checkpoints and LoRAs.
+        If check_updates is True, checks CivitAI for newer versions of models and LoRAs
+        belonging to the same base architecture (SDXL) and alerts/updates them.
         If any model or LoRA is missing or empty, downloads it directly from CivitAI.
         """
         import os
+        import json
         import requests
         from pathlib import Path
         from tqdm import tqdm
@@ -101,13 +104,80 @@ class AssetSync:
             print(f"[DEPLOYMENT] Volume reload note (non-fatal): {ve}")
 
         summary = {
-            "checkpoints": {"already_present": [], "downloaded": [], "failed": []},
-            "loras": {"already_present": [], "downloaded": [], "failed": []},
+            "checkpoints": {"already_present": [], "downloaded": [], "updates_available": [], "failed": []},
+            "loras": {"already_present": [], "downloaded": [], "updates_available": [], "failed": []},
         }
+
+        # Cache of version metadata to prevent duplicate API hits
+        version_cache = {}
+
+        def fetch_version_meta(v_id):
+            if v_id in version_cache:
+                return version_cache[v_id]
+            try:
+                res = requests.get(f"https://civitai.com/api/v1/model-versions/{v_id}", headers=headers, timeout=25)
+                if res.status_code == 200:
+                    data = res.json()
+                    version_cache[v_id] = data
+                    return data
+            except Exception as e:
+                print(f"  [API] Failed fetching version {v_id}: {e}")
+            return None
+
+        def check_for_upstream_update(current_version_id, category_name, filename):
+            """Checks CivitAI parent model for newer versions with matching SDXL architecture."""
+            try:
+                v_data = fetch_version_meta(current_version_id)
+                if not v_data:
+                    return None
+                model_id = v_data.get("modelId")
+                curr_base = (v_data.get("baseModel") or "SDXL").strip().upper()
+                curr_created = v_data.get("createdAt")
+
+                if not model_id:
+                    return None
+
+                m_res = requests.get(f"https://civitai.com/api/v1/models/{model_id}", headers=headers, timeout=25)
+                if m_res.status_code != 200:
+                    return None
+
+                m_data = m_res.json()
+                all_versions = m_data.get("modelVersions", [])
+                for v in all_versions:
+                    v_base = (v.get("baseModel") or "").strip().upper()
+                    # Ensure same base model architecture family (e.g. SDXL)
+                    if "SDXL" in curr_base and "SDXL" not in v_base:
+                        continue
+                    if str(v.get("id")) != str(current_version_id):
+                        v_created = v.get("createdAt")
+                        # Compare release timestamp if present
+                        if v_created and curr_created and v_created > curr_created:
+                            return {
+                                "newer_version_id": str(v.get("id")),
+                                "newer_version_name": v.get("name"),
+                                "newer_created_at": v_created,
+                                "current_version_id": str(current_version_id),
+                                "current_version_name": v_data.get("name"),
+                                "model_title": m_data.get("name"),
+                                "filename": filename,
+                                "category": category_name
+                            }
+            except Exception as check_err:
+                print(f"  [UPDATE CHECK] Note for {filename}: {check_err}")
+            return None
 
         def process_item(filename, version_id, target_dir, category_key):
             dest_path = target_dir / filename
             category_name = "CHECKPOINT" if category_key == "checkpoints" else "LORA"
+
+            # Check for upstream newer versions if update checking is active
+            if check_updates:
+                update_info = check_for_upstream_update(version_id, category_name, filename)
+                if update_info:
+                    print(f"🔔 [UPDATE AVAILABLE] {category_name} '{filename}' ({update_info['model_title']}):")
+                    print(f"    Current: {update_info['current_version_name']} (ID: {update_info['current_version_id']})")
+                    print(f"    Newer:   {update_info['newer_version_name']} (ID: {update_info['newer_version_id']} - Released: {update_info['newer_created_at']})")
+                    summary[category_key]["updates_available"].append(update_info)
 
             if not force and dest_path.exists():
                 size_mb = dest_path.stat().st_size / (1024 * 1024)
@@ -146,17 +216,13 @@ class AssetSync:
 
             print(f"[{category_name}] Missing {filename}! Fetching metadata from CivitAI (ID: {version_id})...")
             try:
-                meta_url = f"https://civitai.com/api/v1/model-versions/{version_id}"
-                meta_res = requests.get(meta_url, headers=headers, timeout=30)
-                if meta_res.status_code != 200:
-                    err = f"CivitAI API error: HTTP {meta_res.status_code}"
-                    if meta_res.status_code in (401, 403):
-                        err += " (Unauthorized/Forbidden - CIVITAI_API_KEY required for gated/NSFW models)"
+                meta_data = fetch_version_meta(version_id)
+                if not meta_data:
+                    err = f"CivitAI API could not retrieve metadata for ID {version_id}."
                     print(f"  -> ERROR: {err}")
                     summary[category_key]["failed"].append({"file": filename, "error": err})
                     return
 
-                meta_data = meta_res.json()
                 files = meta_data.get("files", [])
                 primary = next((f for f in files if f.get("primary", False)), files[0] if files else None)
                 if not primary or "downloadUrl" not in primary:
@@ -610,14 +676,29 @@ def AlphaCore_Main_API():
     return master_app
 
 @app.local_entrypoint()
-def scan_and_download(force: bool = False):
+def scan_and_download(force: bool = False, check_updates: bool = True):
     """
     Run locally via:
         modal run deploy.py
         modal run deploy.py --force
+        modal run deploy.py --no-check-updates
     """
     print("🚀 Triggering remote volume scan & download for all website checkpoints and LoRAs...")
-    result = AssetSync().sync_website_models.remote(force=force)
+    if check_updates:
+        print("🔍 Update checking enabled: Will inspect CivitAI for newer compatible model versions...")
+    result = AssetSync().sync_website_models.remote(force=force, check_updates=check_updates)
     print("\n✅ Sync run completed!")
     import json
     print(json.dumps(result, indent=2))
+    
+    # Highlight updates if detected
+    updates = result.get("checkpoints", {}).get("updates_available", []) + result.get("loras", {}).get("updates_available", [])
+    if updates:
+        print("\n" + "!" * 60)
+        print("🔔 ACTIONABLE MODEL/LORA UPDATES FOUND ON CIVITAI:")
+        print("!" * 60)
+        for u in updates:
+            print(f"  • [{u['category']}] {u['filename']} ({u['model_title']})")
+            print(f"    Current Version: {u['current_version_name']} (ID: {u['current_version_id']})")
+            print(f"    Newer Version:   {u['newer_version_name']} (ID: {u['newer_version_id']} - {u['newer_created_at']})")
+        print("!" * 60)
