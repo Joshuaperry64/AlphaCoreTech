@@ -59,7 +59,7 @@ MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"
 image = image.add_local_python_source("shared_app")
 @app.cls(
     image=image,
-    gpu="L40S",
+    gpu="B300",  # Architect Tier: NVIDIA B300 (Blackwell Ultra, 288GB VRAM)
     timeout=60 * MINUTES,
     scaledown_window=60,
     max_containers=1,

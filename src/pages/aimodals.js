@@ -46,7 +46,7 @@ export function getModalSettings() {
     upscalerUrl: 'https://alphacoreprogramming--alphacore-aio-backend-upscaler-web-cb5cf9.modal.run',
     vid2audioUrl: 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-web.modal.run/stream',
     tierName: 'ARCHITECT PRIORITY',
-    tierHardware: 'H100 / L40S High-Performance Nodes',
+    tierHardware: 'B300 / H100 / L40S High-Performance Nodes',
   };
 
   const economyEndpoints = {
@@ -3807,7 +3807,7 @@ function buildTxt2Vid() {
     const genBtn = wrap.querySelector('#t2v-gen-btn');
 
     genBtn.disabled = true;
-    setStatus(wrap, '#t2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
+    setStatus(wrap, '#t2v-status', 'ROUTING TO B300 VIDEO NODE...', 'info');
     const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
@@ -4150,7 +4150,7 @@ function buildImg2Vid() {
     const genBtn = wrap.querySelector('#i2v-gen-btn');
 
     genBtn.disabled = true;
-    setStatus(wrap, '#i2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
+    setStatus(wrap, '#i2v-status', 'ROUTING TO B300 VIDEO NODE...', 'info');
     const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);

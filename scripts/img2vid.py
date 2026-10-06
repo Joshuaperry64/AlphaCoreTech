@@ -59,7 +59,7 @@ MODEL_720P = "fdk6566/wan2.2_14b_i2v_720p_lightning_nsfw_diffusers"
 
 @app.cls(
     image=image,
-    gpu="H100",  # 14B model requires H100
+    gpu="B300",  # Architect Tier: NVIDIA B300 (Blackwell Ultra, 288GB VRAM)
     timeout=60 * MINUTES,
     scaledown_window=60,
     max_containers=1,
