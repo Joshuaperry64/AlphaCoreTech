@@ -428,7 +428,7 @@ export default function PlaceholderPage() {
           const simInp = rootContext.querySelector('#sim-input');
           const apiKey = localStorage.getItem('gemini_api_key');
           try {
-              const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${apiKey}\`, {
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
                   body: JSON.stringify({
@@ -452,13 +452,13 @@ export default function PlaceholderPage() {
               if(procEl) procEl.remove();
               simOutput.innerHTML = simOutput.innerHTML.replace('<p>"The world is born from your imagination, Architect. Connecting to Gemini neural link..."</p>', '');
               
-              simOutput.innerHTML += \`<p style="color:#fbcfe8;">\${escapeHTML(replyText)}</p>\`;
+              simOutput.innerHTML += `<p style="color:#fbcfe8;">${escapeHTML(replyText)}</p>`;
               simOutput.scrollTop = simOutput.scrollHeight;
               playSFX('click', 0.5);
           } catch(e) {
               const procEl = simOutput.querySelector('#sim-processing');
               if(procEl) procEl.remove();
-              simOutput.innerHTML += \`<p style="color:#f87171;">[Connection Error: \${escapeHTML(e.message)}]. Ensure your Gemini API Key is correct.</p>\`;
+              simOutput.innerHTML += `<p style="color:#f87171;">[Connection Error: ${escapeHTML(e.message)}]. Ensure your Gemini API Key is correct.</p>`;
           } finally {
               if(simInp) {
                   simInp.disabled = false;
