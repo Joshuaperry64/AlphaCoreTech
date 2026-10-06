@@ -286,7 +286,7 @@ export default function PlaceholderPage() {
         const btn = root.querySelector('#sz-acquire-btn');
         btn.disabled = true; btn.textContent = '...ACQUIRING...'; playSFX('start');
         try {
-            const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-mugshots-web-mugshots.modal.run/api/sectorzero?query=${encodeURIComponent(query)}`);
+            const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-mugshots.modal.run/api/sectorzero?query=${encodeURIComponent(query)}`);
             const data = await res.json();
             if(data.status === 'success' && data.data.length > 0) {
                 let html = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">';
