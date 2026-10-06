@@ -2350,6 +2350,111 @@ input:focus, textarea:focus {
   color: #fff;
 }
 
+/* ── OmniGen Reference Insertion Controls ── */
+.omnigen-ref-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: rgba(0, 184, 255, 0.04);
+  border: 1px solid rgba(0, 184, 255, 0.2);
+  border-radius: var(--radius);
+}
+.omnigen-ref-toolbar-label {
+  font-family: var(--font-hud);
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  color: var(--text-dim, #64748b);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.omnigen-insert-ref-btn {
+  font-family: var(--font-hud);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 184, 255, 0.35);
+  color: var(--blue, #00b8ff);
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.omnigen-insert-ref-btn:hover {
+  background: rgba(0, 184, 255, 0.2);
+  border-color: var(--blue, #00b8ff);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 184, 255, 0.3);
+  transform: translateY(-1px);
+}
+.omnigen-insert-ref-btn:active {
+  transform: translateY(1px);
+}
+.omnigen-insert-ref-btn.has-ref {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+.omnigen-insert-ref-btn.has-ref:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #34d399;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.omnigen-ref-tag-preview {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.omnigen-btn-plus {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: var(--accent, #00b8ff);
+}
+.omnigen-slot-insert-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  background: rgba(0, 184, 255, 0.12);
+  border: 1px solid rgba(0, 184, 255, 0.35);
+  color: var(--blue, #00b8ff);
+  font-family: var(--font-hud);
+  font-size: 0.68rem;
+  letter-spacing: 0.8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  z-index: 4;
+}
+.omnigen-slot-insert-btn:hover {
+  background: rgba(0, 184, 255, 0.3);
+  border-color: var(--blue, #00b8ff);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(0, 184, 255, 0.3);
+}
+.omnigen-slot-insert-btn:active {
+  transform: scale(0.98);
+}
+.omnigen-slot-insert-btn.has-ref {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+}
+
 /* ── ControlNet Tile Creative Upscaling ── */
 .tile-creative-panel {
   background: rgba(6, 182, 212, 0.04);

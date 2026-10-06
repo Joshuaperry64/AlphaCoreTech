@@ -2253,7 +2253,7 @@ function buildImg2Img() {
 }
 
 /* ─── OMNIGEN MULTIMODAL SYNTHESIS PANEL (OBJECTIVE 1) ──────── */
-function buildOmniGen() {
+export function buildOmniGen() {
   const settings = getModalSettings();
   const isArchitect = settings.isArchitect;
   const maxBatchCount = isArchitect ? Infinity : 4;
@@ -2286,6 +2286,9 @@ function buildOmniGen() {
             <div class="aim-dz-sub">Subject / Identity</div>
           </div>
           <img class="omnigen-slot-preview hidden" id="omni-preview-0" alt="Ref 1 preview" />
+          <button type="button" class="omnigen-slot-insert-btn" id="omni-card-insert-0" data-slot="0" data-token="<img><|image_1|></img>" title="Insert <img><|image_1|></img> at cursor in prompt">
+            <span class="omnigen-btn-plus">+</span> Insert &lt;|image_1|&gt;
+          </button>
         </div>
 
         <!-- SLOT 2 -->
@@ -2299,6 +2302,9 @@ function buildOmniGen() {
             <div class="aim-dz-sub">Style / Outfit / Pose</div>
           </div>
           <img class="omnigen-slot-preview hidden" id="omni-preview-1" alt="Ref 2 preview" />
+          <button type="button" class="omnigen-slot-insert-btn" id="omni-card-insert-1" data-slot="1" data-token="<img><|image_2|></img>" title="Insert <img><|image_2|></img> at cursor in prompt">
+            <span class="omnigen-btn-plus">+</span> Insert &lt;|image_2|&gt;
+          </button>
         </div>
 
         <!-- SLOT 3 -->
@@ -2312,6 +2318,9 @@ function buildOmniGen() {
             <div class="aim-dz-sub">Background / Scene</div>
           </div>
           <img class="omnigen-slot-preview hidden" id="omni-preview-2" alt="Ref 3 preview" />
+          <button type="button" class="omnigen-slot-insert-btn" id="omni-card-insert-2" data-slot="2" data-token="<img><|image_3|></img>" title="Insert <img><|image_3|></img> at cursor in prompt">
+            <span class="omnigen-btn-plus">+</span> Insert &lt;|image_3|&gt;
+          </button>
         </div>
       </div>
     </div>
@@ -2322,6 +2331,23 @@ function buildOmniGen() {
         <label class="aim-label" for="omni-prompt" style="margin:0;">MULTIMODAL SYNTHESIS PROMPT & INSTRUCTION</label>
         <button type="button" class="aim-btn aim-btn-sm" id="omni-enhance-btn" style="padding:2px 10px; font-size:0.75rem; background:rgba(6,182,212,0.15); border-color:var(--accent); color:var(--accent);" title="Auto-enhance instruction with AI matrix descriptors">✨ AI ENHANCE</button>
       </div>
+
+      <!-- REFERENCE INSERTION TOOLBAR -->
+      <div class="omnigen-ref-toolbar" id="omni-ref-toolbar">
+        <span class="omnigen-ref-toolbar-label">
+          <span>🎯 INSERT REF:</span>
+        </span>
+        <button type="button" class="aim-btn aim-btn-sm omnigen-insert-ref-btn" data-slot="0" data-token="<img><|image_1|></img>" id="omni-insert-toolbar-0" title="Click to insert <img><|image_1|></img> at current cursor position">
+          <span class="omnigen-btn-plus">+</span> 🖼️ Image 1 <span class="omnigen-ref-tag-preview">&lt;|image_1|&gt;</span>
+        </button>
+        <button type="button" class="aim-btn aim-btn-sm omnigen-insert-ref-btn" data-slot="1" data-token="<img><|image_2|></img>" id="omni-insert-toolbar-1" title="Click to insert <img><|image_2|></img> at current cursor position">
+          <span class="omnigen-btn-plus">+</span> 🖼️ Image 2 <span class="omnigen-ref-tag-preview">&lt;|image_2|&gt;</span>
+        </button>
+        <button type="button" class="aim-btn aim-btn-sm omnigen-insert-ref-btn" data-slot="2" data-token="<img><|image_3|></img>" id="omni-insert-toolbar-2" title="Click to insert <img><|image_3|></img> at current cursor position">
+          <span class="omnigen-btn-plus">+</span> 🖼️ Image 3 <span class="omnigen-ref-tag-preview">&lt;|image_3|&gt;</span>
+        </button>
+      </div>
+
       <textarea class="aim-textarea" id="omni-prompt" rows="3" placeholder="e.g. <img><|image_1|></img> wears the outfit from <img><|image_2|></img> in a futuristic cyberpunk city at night..."></textarea>
       
       <div class="aim-quick-actions" style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
@@ -2422,6 +2448,10 @@ function buildOmniGen() {
       dzInner.classList.add('hidden');
       removeBtn.classList.remove('hidden');
       slotCard.classList.add('has-image');
+      const tbBtn = wrap.querySelector(`#omni-insert-toolbar-${i}`);
+      if (tbBtn) tbBtn.classList.add('has-ref');
+      const cardBtn = wrap.querySelector(`#omni-card-insert-${i}`);
+      if (cardBtn) cardBtn.classList.add('has-ref');
       setStatus(wrap, '#omni-status', `Reference Image #${i + 1} loaded [${file.name}].`, 'info');
     }
 
@@ -2432,6 +2462,10 @@ function buildOmniGen() {
       dzInner.classList.remove('hidden');
       removeBtn.classList.add('hidden');
       slotCard.classList.remove('has-image');
+      const tbBtn = wrap.querySelector(`#omni-insert-toolbar-${i}`);
+      if (tbBtn) tbBtn.classList.remove('has-ref');
+      const cardBtn = wrap.querySelector(`#omni-card-insert-${i}`);
+      if (cardBtn) cardBtn.classList.remove('has-ref');
       fileInput.value = '';
     }
 
@@ -2446,7 +2480,7 @@ function buildOmniGen() {
     });
 
     slotCard.addEventListener('click', (e) => {
-      if (e.target === removeBtn || e.target === fileInput) return;
+      if (e.target === removeBtn || e.target === fileInput || e.target.closest('.omnigen-slot-insert-btn')) return;
       fileInput.click();
     });
 
@@ -2484,24 +2518,84 @@ function buildOmniGen() {
         dzInner.classList.add('hidden');
         removeBtn.classList.remove('hidden');
         slotCard.classList.add('has-image');
+        const tbBtn0 = wrap.querySelector('#omni-insert-toolbar-0');
+        if (tbBtn0) tbBtn0.classList.add('has-ref');
+        const cardBtn0 = wrap.querySelector('#omni-card-insert-0');
+        if (cardBtn0) cardBtn0.classList.add('has-ref');
         setStatus(wrap, '#omni-status', 'Reference Image #1 injected via Cross-Modal Synthesis Chain.', 'ok');
       })
       .catch(console.warn);
   }
 
-  // Token Insert Pills
+  // Prompt Cursor-Aware Reference Insertion
   const promptInput = wrap.querySelector('#omni-prompt');
-  wrap.querySelectorAll('.omnigen-token-pill').forEach(pill => {
-    pill.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const token = pill.dataset.token || pill.textContent.trim();
-      const pos = promptInput.selectionStart || promptInput.value.length;
-      const val = promptInput.value;
-      promptInput.value = val.slice(0, pos) + token + val.slice(pos);
-      promptInput.focus();
-      playSFX('pop', 0.8);
+  let lastPromptStart = promptInput.value.length;
+  let lastPromptEnd = promptInput.value.length;
+
+  const updateCursorTracking = () => {
+    if (typeof promptInput.selectionStart === 'number') {
+      lastPromptStart = promptInput.selectionStart;
+      lastPromptEnd = promptInput.selectionEnd ?? promptInput.selectionStart;
+    }
+  };
+  promptInput.addEventListener('keyup', updateCursorTracking);
+  promptInput.addEventListener('click', updateCursorTracking);
+  promptInput.addEventListener('select', updateCursorTracking);
+  promptInput.addEventListener('input', updateCursorTracking);
+
+  function insertReferenceToken(token) {
+    if (!token) return;
+    let start = typeof promptInput.selectionStart === 'number'
+      ? promptInput.selectionStart
+      : (lastPromptStart ?? promptInput.value.length);
+    let end = typeof promptInput.selectionEnd === 'number'
+      ? promptInput.selectionEnd
+      : (lastPromptEnd ?? promptInput.value.length);
+
+    if (start < 0 || start > promptInput.value.length) start = promptInput.value.length;
+    if (end < start || end > promptInput.value.length) end = start;
+
+    const val = promptInput.value;
+    const before = val.substring(0, start);
+    const after = val.substring(end);
+    promptInput.value = before + token + after;
+    const newPos = start + token.length;
+    lastPromptStart = newPos;
+    lastPromptEnd = newPos;
+
+    promptInput.focus();
+    if (typeof promptInput.setSelectionRange === 'function') {
+      promptInput.setSelectionRange(newPos, newPos);
+    }
+    promptInput.dispatchEvent(new Event('input', { bubbles: true }));
+    playSFX('pop', 0.8);
+  }
+
+  function bindInsertButton(btn) {
+    if (!btn) return;
+    // Prevent button mousedown/pointerdown from blurring prompt textarea
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
     });
-  });
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+    });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const token = btn.dataset.token || btn.getAttribute('data-token');
+      insertReferenceToken(token);
+    });
+  }
+
+  // Bind reference toolbar buttons
+  wrap.querySelectorAll('.omnigen-insert-ref-btn').forEach(bindInsertButton);
+
+  // Bind slot card insert buttons
+  wrap.querySelectorAll('.omnigen-slot-insert-btn').forEach(bindInsertButton);
+
+  // Bind header description token pills
+  wrap.querySelectorAll('.omnigen-token-pill').forEach(bindInsertButton);
 
   // Prompt enhancement
   wrap.querySelector('#omni-enhance-btn')?.addEventListener('click', () => {
