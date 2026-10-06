@@ -58,6 +58,7 @@ MOTION_ADAPTER_ID = "guoyww/animatediff-motion-adapter-sdxl-beta"
 
 image = image.add_local_python_source("shared_app")
 @app.cls(
+    image=image,
     gpu="L40S",
     timeout=60 * MINUTES,
     scaledown_window=60,
@@ -318,6 +319,7 @@ class Txt2Vid:
 
 
 @app.cls(
+    image=image,
     gpu="A10G",
     timeout=60 * MINUTES,
     scaledown_window=60,

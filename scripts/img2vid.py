@@ -39,11 +39,11 @@ image = (
         "protobuf",
     )
     .env({"HF_XET_HIGH_PERFORMANCE": "1", "HF_HUB_CACHE": CACHE_DIR, "HF_HOME": CACHE_DIR})
-    .add_local_file("shared_app.py", "/root/shared_app.py") 
 )
 
-sys.path.insert(0, "/root")
 from shared_app import app
+
+image = image.add_local_python_source("shared_app")
 
 with image.imports():
     import torch
@@ -58,6 +58,7 @@ MODEL_480P = "fdk6566/wan2.2_14b_i2v_480p_lightning_nsfw_diffusers"
 MODEL_720P = "fdk6566/wan2.2_14b_i2v_720p_lightning_nsfw_diffusers"
 
 @app.cls(
+    image=image,
     gpu="H100",  # 14B model requires H100
     timeout=60 * MINUTES,
     scaledown_window=60,
@@ -359,6 +360,7 @@ class Img2Vid:
         return web_app
 
 @app.cls(
+    image=image,
     gpu="L40S",
     timeout=60 * MINUTES,
     scaledown_window=60,
