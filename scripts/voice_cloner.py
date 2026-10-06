@@ -14,7 +14,7 @@ import modal
 from pathlib import Path
 
 # ─────────────────────────────────────────────
-# Modal Infrastructure
+# Modal Infrastructure & Image Definition
 # ─────────────────────────────────────────────
 
 volume = modal.Volume.from_name("rvc-models-volume", create_if_missing=True)
@@ -35,9 +35,12 @@ image = (
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -P /rvc/assets/pretrained_v2/",
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -P /rvc/assets/pretrained_v2/"
     )
-    .add_local_file("shared_app.py", "/root/shared_app.py")
+    # FIX: Explicitly mount shared_app.py into the /rvc working directory
+    .add_local_file("shared_app.py", "/rvc/shared_app.py")
 )
 
+# Ensure the /rvc directory is in the Python path so shared_app can be found on boot
+sys.path.insert(0, "/rvc")
 from shared_app import app
 
 # ─────────────────────────────────────────────
@@ -75,7 +78,7 @@ def _execute_rvc_inference(profile_name: str, audio_bytes: bytes, pitch_shift: i
     if not pth_files:
         return {
             "status": "error",
-            "message": f"No trained model found for profile '{profile_name}'. Upload audio samples in the Cloud Model Trainer tab to train this profile."
+            "message": f"No trained model found for profile '{profile_name}'. Please train this profile first."
         }
 
     config = Config()
