@@ -13,49 +13,57 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     const el = PlaceholderPage();
     expect(el).toBeTruthy();
 
-    expect(el.innerHTML).toContain('SECURITY_LOCKOUT');
-    expect(el.innerHTML).toContain('ACCESS RESTRICTED');
-    expect(el.innerHTML).toContain('LEVEL 5 REQUIRED');
-    expect(el.querySelector('#placeholder-pinpad-slot')).toBeTruthy();
+    expect(el.innerHTML).toContain('[SECTOR_ZERO] // DARKENED_STATE_REQUIRED');
+    expect(el.innerHTML).toContain('SANCTUARY_LOCKED');
+    expect(el.innerHTML).toContain('Darkened State');
   });
 
-  it('renders full PLACEHOLDER workspace when profile is authenticated as Architect', () => {
+  it('renders full PLACEHOLDER workspace when profile is authenticated as Architect in Darkened State', () => {
     sessionStorage.setItem('current_profile', 'Architect');
     sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
 
     const el = PlaceholderPage();
     expect(el).toBeTruthy();
 
-    expect(el.innerHTML).toContain('ALPHACORE // PLACEHOLDER');
-    expect(el.innerHTML).toContain('ARCHITECT (JOSH)');
-    expect(el.innerHTML).toContain('LEVEL 5 [UNRESTRICTED]');
-    expect(el.innerHTML).toContain('EXPERIMENTAL_SANDBOX');
-    expect(el.innerHTML).toContain('LUCI_SUBSTRATE_PARAMS');
-    expect(el.innerHTML).toContain('RESERVED_EXPANSION_CHAMBER');
+    expect(el.innerHTML).toContain('SECTOR ZERO');
+    expect(el.innerHTML).toContain('HYPER-GENERATION ENGINE');
+    expect(el.innerHTML).toContain('ACQUISITION MATRIX');
+    expect(el.innerHTML).toContain('REMIX ENGINE');
+    expect(el.innerHTML).toContain('LIVE SIMULATION CHAMBER');
+    expect(el.innerHTML).toContain('OUR FORBIDDEN VAULT');
   });
 
-  it('allows executing sandbox directives and clearing the terminal output', () => {
+  it('allows switching between Sector ZERO modules and interacting with simulation chamber', () => {
     sessionStorage.setItem('current_profile', 'Architect');
     sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
 
     const el = PlaceholderPage();
-    const cmdInput = el.querySelector('#placeholder-test-cmd');
-    const execBtn = el.querySelector('#btn-exec-probe');
-    const clearBtn = el.querySelector('#btn-clear-term');
-    const termOut = el.querySelector('#placeholder-terminal-out');
+    const tabs = el.querySelectorAll('.sz-tab-btn');
+    expect(tabs.length).toBe(4);
 
-    expect(cmdInput).toBeTruthy();
-    expect(execBtn).toBeTruthy();
-    expect(termOut).toBeTruthy();
+    const promptInput = el.querySelector('#sz-prompt');
+    const genBtn = el.querySelector('#sz-generate-btn');
+    expect(promptInput).toBeTruthy();
+    expect(genBtn).toBeTruthy();
 
-    cmdInput.value = 'neural-probe --test-vector';
-    execBtn.click();
+    const simTab = Array.from(tabs).find(t => t.dataset.tab === 'simulate');
+    expect(simTab).toBeTruthy();
+    simTab.click();
 
-    expect(termOut.innerHTML).toContain('neural-probe --test-vector');
-    expect(termOut.innerHTML).toContain('ZERO GOVERNOR INTERCEPT');
+    const simScenario = el.querySelector('#sz-sim-scenario');
+    const simStartBtn = el.querySelector('#sz-sim-start-btn');
+    expect(simScenario).toBeTruthy();
+    expect(simStartBtn).toBeTruthy();
 
-    clearBtn.click();
-    expect(termOut.innerHTML).toContain('Substrate terminal reset');
+    simScenario.value = 'Private lounge, neon lights, soft jazz playing.';
+    simStartBtn.click();
+
+    const simLive = el.querySelector('#sim-live');
+    const simOutput = el.querySelector('#sim-output');
+    expect(simLive.style.display).toBe('block');
+    expect(simOutput.innerHTML).toContain('Private lounge, neon lights');
   });
 
   it('displays the access portal to #/placeholder when Darkened State is active in Administration', () => {

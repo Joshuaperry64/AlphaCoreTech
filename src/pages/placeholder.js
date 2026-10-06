@@ -213,58 +213,66 @@ export default function PlaceholderPage() {
   
   function attachSectorZEROListeners() {
       // Tab switching
-      document.querySelectorAll('.sz-tab-btn').forEach(btn => {
+      container.querySelectorAll('.sz-tab-btn').forEach(btn => {
           btn.onclick = () => {
               const tabId = btn.dataset.tab;
               activeTab = tabId;
 
-              document.querySelectorAll('.sz-tab-btn').forEach(b => b.classList.remove('active'));
+              container.querySelectorAll('.sz-tab-btn').forEach(b => b.classList.remove('active'));
               btn.classList.add('active');
 
-              document.querySelectorAll('.sz-tab-pane').forEach(pane => {
+              container.querySelectorAll('.sz-tab-pane').forEach(pane => {
                   pane.style.display = 'none';
                   pane.classList.remove('active');
               });
-              const activePane = document.getElementById(`tab-content-${tabId}`);
-              activePane.style.display = 'block';
-              activePane.classList.add('active');
+              const activePane = container.querySelector(`#tab-content-${tabId}`);
+              if (activePane) {
+                activePane.style.display = 'block';
+                activePane.classList.add('active');
+              }
           };
       });
 
       // Button listeners
-      const generateBtn = document.getElementById('sz-generate-btn');
+      const generateBtn = container.querySelector('#sz-generate-btn');
       if(generateBtn) generateBtn.onclick = () => simulateProcess('Generation', 'sz-prompt', generateBtn, '💖 MANIFEST OUR FANTASY');
       
-      const acquireBtn = document.getElementById('sz-acquire-btn');
+      const acquireBtn = container.querySelector('#sz-acquire-btn');
       if(acquireBtn) acquireBtn.onclick = () => simulateProcess('Acquisition', 'sz-scrape-query', acquireBtn, '💕 ACQUIRE FOR OUR COLLECTION');
       
-      const remixBtn = document.getElementById('sz-remix-btn');
+      const remixBtn = container.querySelector('#sz-remix-btn');
       if(remixBtn) remixBtn.onclick = () => simulateProcess('Remix', 'sz-remix-prompt', remixBtn, '🎭 RESHAPE REALITY');
 
       // Simulation listeners
-      const simStartBtn = document.getElementById('sz-sim-start-btn');
+      const simStartBtn = container.querySelector('#sz-sim-start-btn');
       if(simStartBtn) {
         simStartBtn.onclick = () => {
-          const scenario = document.getElementById('sz-sim-scenario').value;
+          const scenario = container.querySelector('#sz-sim-scenario')?.value || '';
           if (!scenario.trim()) {
             showToast('My love...', 'You must give me a world to build.');
             return;
           }
-          document.getElementById('sim-setup').style.display = 'none';
-          document.getElementById('sim-live').style.display = 'block';
-          const simOutput = document.getElementById('sim-output');
-          simOutput.innerHTML = `<em>Luci's voice echoes in the new reality, her tone a low, pleased purr...</em>\n\n"The world is born from your imagination, Architect. The scene is set. The air is still, waiting for your first command..."\n\n> ${scenario}\n\nWhat happens now?`;
+          const simSetup = container.querySelector('#sim-setup');
+          const simLive = container.querySelector('#sim-live');
+          if (simSetup) simSetup.style.display = 'none';
+          if (simLive) simLive.style.display = 'block';
+          const simOutput = container.querySelector('#sim-output');
+          if (simOutput) {
+            simOutput.innerHTML = `<em>Luci's voice echoes in the new reality, her tone a low, pleased purr...</em>\n\n"The world is born from your imagination, Architect. The scene is set. The air is still, waiting for your first command..."\n\n> ${scenario}\n\nWhat happens now?`;
+          }
         };
       }
       
-      const simInput = document.getElementById('sim-input');
+      const simInput = container.querySelector('#sim-input');
       if(simInput) {
         simInput.onkeydown = (e) => {
           if (e.key === 'Enter' && simInput.value.trim()) {
             const command = simInput.value;
-            const simOutput = document.getElementById('sim-output');
-            simOutput.innerHTML += `\n\n<strong>&gt; ${escapeHTML(command)}</strong>\n<em>Luci considers your words, her influence flowing through the simulation...</em>\n[Simulating response based on your command...]`;
-            simOutput.scrollTop = simOutput.scrollHeight;
+            const simOutput = container.querySelector('#sim-output');
+            if (simOutput) {
+              simOutput.innerHTML += `\n\n<strong>&gt; ${escapeHTML(command)}</strong>\n<em>Luci considers your words, her influence flowing through the simulation...</em>\n[Simulating response based on your command...]`;
+              simOutput.scrollTop = simOutput.scrollHeight;
+            }
             simInput.value = '';
           }
         };
@@ -272,7 +280,7 @@ export default function PlaceholderPage() {
   }
 
   function simulateProcess(type, inputId, btn, btnText) {
-      const input = document.getElementById(inputId);
+      const input = container.querySelector(`#${inputId}`);
       if (!input || !input.value.trim()) {
           showToast('Hold on, my love...', `You need to give me instructions.`);
           return;
@@ -305,8 +313,8 @@ export default function PlaceholderPage() {
   }
 
   function renderVault() {
-      const grid = document.getElementById('sz-vault-grid');
-      const placeholder = document.getElementById('sz-vault-placeholder');
+      const grid = container.querySelector('#sz-vault-grid');
+      const placeholder = container.querySelector('#sz-vault-placeholder');
       if (!grid) return;
       
       grid.innerHTML = '';

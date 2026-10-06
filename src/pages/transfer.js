@@ -691,9 +691,6 @@ export default function TransferPage() {
     };
   };
 
-  // ─── Temporary 7-Day Hold Target (Oct 6, 2026 First Payout Release) ────────
-  const LAUNDROMAT_OPENING_TIME = new Date('2026-10-06T00:00:00-04:00').getTime();
-  let countdownTimerId = null;
 
   // ─── Destination Constants & Directory Storage ───────────────────────────
   const DONATION_ACCOUNT_ID = 'acct_1UKrOjHx3NuZf8IK';
@@ -754,7 +751,6 @@ export default function TransferPage() {
     dryerTraveled: false,
     chronoOverlayText: '',
     activeModal: null,
-    countdownOverlayActive: false, // 7-day feature countdown disabled for active operation
     selectedDestination: initialDest,
     selectedDestinationName: initialDestName,
     customDestinationId: '',
@@ -932,16 +928,6 @@ export default function TransferPage() {
     .laundry-distraction-modal {
       animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .laundry-countdown-modal {
-      animation: modal-pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .countdown-card {
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .countdown-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
-    }
     @keyframes modal-pop {
       0% { opacity: 0; transform: scale(0.92); }
       100% { opacity: 1; transform: scale(1); }
@@ -983,14 +969,6 @@ export default function TransferPage() {
       .thermal-receipt {
         padding: 16px 10px !important;
         font-size: 0.8rem !important;
-      }
-      .laundry-countdown-banner {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 10px !important;
-      }
-      .laundry-countdown-banner > button {
-        width: 100% !important;
       }
       .mobile-stack-columns {
         grid-template-columns: 1fr !important;
@@ -1040,29 +1018,6 @@ export default function TransferPage() {
       };
     }
     container.appendChild(headerEl);
-
-    // ─── 7-Day Countdown Header Ribbon (When Overlay is Dismissed) ───────────
-    if (!state.countdownOverlayActive) {
-      const bannerEl = createElement('div', {
-        className: 'laundry-countdown-banner',
-        style: 'background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;'
-      });
-      bannerEl.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px; color: #fbbf24; font-size: 0.82rem; flex: 1; min-width: 200px;">
-          <span style="font-size: 1.2rem; filter: drop-shadow(0 0 6px #f59e0b);">☣️</span>
-          <span><strong>7-DAY LAUNDRO-MAT SANITATION HOLD:</strong> "Gotta wear your clothes for 7 days until the laundro-mat is open for business!" (Grand Opening: Oct 6, 2026)</span>
-        </div>
-        <button id="btn-reopen-countdown" class="aim-btn" style="padding: 6px 14px; font-size: 0.75rem; border-color: #f59e0b; color: #fbbf24; cursor: pointer; white-space: nowrap; font-weight: bold; min-height: 36px;">
-          VIEW COUNTDOWN ➔
-        </button>
-      `;
-      bannerEl.querySelector('#btn-reopen-countdown').onclick = () => {
-        playSFX('click');
-        state.countdownOverlayActive = true;
-        render();
-      };
-      container.appendChild(bannerEl);
-    }
 
     // ─── Top Stepper Progress Bar ───────────────────────────────────────────
     const steps = [
@@ -2627,147 +2582,6 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
       };
 
       container.appendChild(donationModal);
-    }
-
-    // ─── 7-Day Temporary Feature Countdown Overlay ─────────────────────────
-    if (state.countdownOverlayActive) {
-      if (countdownTimerId) clearInterval(countdownTimerId);
-
-      const getRemaining = () => {
-        const now = Date.now();
-        const diff = Math.max(0, LAUNDROMAT_OPENING_TIME - now);
-        return {
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          mins: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-          secs: Math.floor((diff % (1000 * 60)) / 1000),
-          diff
-        };
-      };
-
-      const rem = getRemaining();
-
-      const cdOverlay = createElement('div', {
-        className: 'laundry-countdown-modal',
-        style: `
-          position: fixed;
-          inset: 0;
-          background: rgba(2, 6, 23, 0.94);
-          backdrop-filter: blur(12px);
-          z-index: 99998;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 16px;
-          overflow-y: auto;
-        `
-      });
-
-      cdOverlay.innerHTML = `
-        <div style="background: #080e18; border: 2px solid #f59e0b; border-radius: 12px; max-width: 580px; width: 100%; padding: 26px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 35px rgba(245, 158, 11, 0.35); text-align: center; position: relative; margin: auto;">
-          
-          <!-- Hazard Tape Header Bar -->
-          <div style="height: 10px; border-radius: 4px; margin-bottom: 18px; background: repeating-linear-gradient(45deg, #f59e0b, #f59e0b 12px, #0f172a 12px, #0f172a 24px); box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"></div>
-
-          <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
-            <span style="font-size: 2.2rem; filter: drop-shadow(0 0 10px #f59e0b);">☣️</span>
-            <span style="font-size: 2.6rem; filter: drop-shadow(0 0 12px #38bdf8);">🧺</span>
-            <span style="font-size: 2.2rem; filter: drop-shadow(0 0 10px #f59e0b);">🔒</span>
-          </div>
-
-          <div style="font-size: 0.78rem; color: #f59e0b; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px;">
-            // TEMPORARY FACILITY LOCKOUT &bull; SANITATION HOLD IN EFFECT
-          </div>
-
-          <!-- User's Requested Headline -->
-          <h2 style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.05rem, 3.5vw, 1.25rem); color: #fbbf24; margin: 0 0 14px 0; line-height: 1.45; text-transform: uppercase; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5);">
-            "GOTTA WEAR YOUR CLOTHES FOR 7 DAYS UNTIL THE LAUNDRO-MAT IS OPEN FOR BUSINESS!"
-          </h2>
-
-          <div style="color: #94a3b8; font-size: 0.88rem; line-height: 1.55; margin-bottom: 22px;">
-            Stripe First-Time Operator 7-Day Settlement Hold in effect. All commercial vortex spin drums, detergent pumps, and coin chutes are locked until our initial payout clears on <strong style="color: #38bdf8;">Tuesday, October 6, 2026</strong>.
-          </div>
-
-          <!-- Digital Countdown Display -->
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #f59e0b; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.15);">
-              <div id="cd-days" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #fbbf24; text-shadow: 0 0 10px #f59e0b;">
-                ${String(rem.days).padStart(2, '0')}
-              </div>
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">DAYS</div>
-            </div>
-
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #06b6d4; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15);">
-              <div id="cd-hours" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #38bdf8; text-shadow: 0 0 10px #06b6d4;">
-                ${String(rem.hours).padStart(2, '0')}
-              </div>
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">HOURS</div>
-            </div>
-
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #10b981; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.15);">
-              <div id="cd-mins" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #34d399; text-shadow: 0 0 10px #10b981;">
-                ${String(rem.mins).padStart(2, '0')}
-              </div>
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">MINS</div>
-            </div>
-
-            <div class="countdown-card" style="background: rgba(15, 23, 42, 0.85); border: 1px solid #ef4444; border-radius: 8px; padding: 10px 4px; box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.15);">
-              <div id="cd-secs" style="font-family: 'Orbitron', sans-serif; font-size: clamp(1.3rem, 4vw, 1.85rem); font-weight: bold; color: #f87171; text-shadow: 0 0 10px #ef4444;">
-                ${String(rem.secs).padStart(2, '0')}
-              </div>
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: bold; letter-spacing: 1px; margin-top: 2px;">SECS</div>
-            </div>
-          </div>
-
-          <!-- Humorous Street Survival Guidelines -->
-          <div style="background: rgba(0, 0, 0, 0.5); border-left: 3px solid #f59e0b; border-radius: 4px; padding: 12px 16px; text-align: left; margin-bottom: 22px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.6;">
-            <div style="color: #fbbf24; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-              <span>🩲</span> STREET SURVIVAL PROTOCOL WHILE SHIRTS ROT:
-            </div>
-            <div>&bull; Turn cyber-garments inside out on Day 4 to reset street stench by 50%.</div>
-            <div>&bull; Avoid 1400 RPM spin temptations; the facility chain-link gate is padlocked.</div>
-            <div>&bull; Free neon dryer sheet sniff samples available outside the front glass.</div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="btn-bypass-countdown" class="aim-btn" style="padding: 14px; min-height: 48px; background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 0.94rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);">
-              🦹 SNEAK INTO LAUNDRO-MAT ANYWAY // DEV BYPASS ➔
-            </button>
-            <button id="btn-notify-opening" class="aim-btn" style="padding: 11px; min-height: 42px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.82rem; cursor: pointer;">
-              🔔 REMIND ME ON OCTOBER 6 GRAND OPENING
-            </button>
-          </div>
-        </div>
-      `;
-
-      countdownTimerId = setInterval(() => {
-        const r = getRemaining();
-        const dEl = cdOverlay.querySelector('#cd-days');
-        const hEl = cdOverlay.querySelector('#cd-hours');
-        const mEl = cdOverlay.querySelector('#cd-mins');
-        const sEl = cdOverlay.querySelector('#cd-secs');
-        if (dEl) dEl.textContent = String(r.days).padStart(2, '0');
-        if (hEl) hEl.textContent = String(r.hours).padStart(2, '0');
-        if (mEl) mEl.textContent = String(r.mins).padStart(2, '0');
-        if (sEl) sEl.textContent = String(r.secs).padStart(2, '0');
-      }, 1000);
-
-      cdOverlay.querySelector('#btn-bypass-countdown').onclick = () => {
-        if (countdownTimerId) clearInterval(countdownTimerId);
-        playSFX('click');
-        state.countdownOverlayActive = false;
-        render();
-      };
-
-      cdOverlay.querySelector('#btn-notify-opening').onclick = (e) => {
-        playSFX('success');
-        e.target.textContent = '✓ REMINDER REGISTERED FOR OCT 6 (WASH BUCKET RESERVED)';
-        e.target.style.color = '#10b981';
-        e.target.style.borderColor = '#10b981';
-      };
-
-      container.appendChild(cdOverlay);
     }
   };
 
