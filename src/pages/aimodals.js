@@ -3893,7 +3893,10 @@ function buildTxt2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" controls autoplay loop muted playsinline preload="auto" style="width:100%; height:auto; object-fit:contain; border-radius:6px;">
+            <source src="${url}" type="video/mp4">
+            Your browser does not support HTML5 video playback.
+          </video>
         </div>
         <div class="aim-result-actions" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center;">
           <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:auto;">// VIDEO SYNTHESIS CHAIN:</span>
@@ -3939,6 +3942,11 @@ function buildTxt2Vid() {
 
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      const vidEl = resultEl.querySelector('#aim-result-vid');
+      if (vidEl) {
+        vidEl.load();
+        vidEl.play().catch(() => {});
+      }
       playSFX('pop', 0.8);
       setStatus(wrap, '#t2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
       if (window._aimNotifyWarm) window._aimNotifyWarm();
@@ -4249,7 +4257,10 @@ function buildImg2Vid() {
       resultEl.className = 'aim-result-view';
       resultEl.innerHTML = `
         <div class="aim-result-frame">
-          <video id="aim-result-vid" src="${url}" controls autoplay loop muted playsinline style="width:100%; height:auto; object-fit:contain; border-radius:6px;"></video>
+          <video id="aim-result-vid" controls autoplay loop muted playsinline preload="auto" style="width:100%; height:auto; object-fit:contain; border-radius:6px;">
+            <source src="${url}" type="video/mp4">
+            Your browser does not support HTML5 video playback.
+          </video>
         </div>
         <div class="aim-result-actions" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center;">
           <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:auto;">// VIDEO SYNTHESIS CHAIN:</span>
@@ -4295,6 +4306,11 @@ function buildImg2Vid() {
 
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
+      const vidEl = resultEl.querySelector('#aim-result-vid');
+      if (vidEl) {
+        vidEl.load();
+        vidEl.play().catch(() => {});
+      }
       playSFX('pop', 0.8);
       setStatus(wrap, '#i2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
       if (window._aimNotifyWarm) window._aimNotifyWarm();

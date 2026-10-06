@@ -61,7 +61,7 @@ image = image.add_local_python_source("shared_app")
     image=image,
     gpu="B300",  # Architect Tier: NVIDIA B300 (Blackwell Ultra, 288GB VRAM)
     timeout=60 * MINUTES,
-    scaledown_window=60,
+    scaledown_window=300,  # 5 minutes warm retention for B300
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
     secrets=[modal.Secret.from_name("huggingface-secret")],
@@ -200,7 +200,12 @@ class Txt2Vid:
                 try:
                     import numpy as np
                     import imageio
-                    video_frames = [np.array(img) for img in output]
+                    video_frames = []
+                    for img in output:
+                        arr = np.array(img)
+                        if arr.dtype != np.uint8:
+                            arr = (np.clip(arr, 0, 1) * 255).astype(np.uint8)
+                        video_frames.append(arr)
                     imageio.mimwrite(
                         tmp_path, 
                         video_frames, 
@@ -208,7 +213,8 @@ class Txt2Vid:
                         format="FFMPEG", 
                         codec="h264", 
                         pixelformat="yuv420p", 
-                        macro_block_size=2
+                        macro_block_size=2,
+                        output_params=["-movflags", "+faststart", "-profile:v", "main"]
                     )
                     video_bytes = Path(tmp_path).read_bytes()
                 finally:
