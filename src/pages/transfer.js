@@ -1901,7 +1901,7 @@ export default function TransferPage() {
           if (timeLeft <= 0) {
             clearInterval(washInterval);
             if (washerIcon) washerIcon.classList.remove('washer-spin');
-            import('../components/utils.js').then(({ playSFX }) => playSFX('success'));
+            playSFX('success');
             state.washerTraveled = true;
             render();
           } else {

@@ -7,6 +7,7 @@ import { apiUrl } from './api.js';
 import { logAction } from './logger.js';
 import { pushToServer } from './db_sync.js';
 import { playSFX } from './audio.js';
+import { showModal } from './modal.js';
 
 // ─── Default Hardcoded PIN Registry ──────────────────────────────────────────
 
@@ -370,7 +371,6 @@ export function buildPinPad({
       signupFeedback.className = 'aim-pin-feedback';
 
       try {
-        const { apiUrl } = await import('./api.js');
         const res = await fetch(apiUrl('/api/pending-profiles/request'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -474,37 +474,35 @@ export function openLoginModal({
   icon = '🔒',
   isLoginScreen = false
 } = {}) {
-  import('./modal.js').then(({ showModal }) => {
-    const pinPadEl = buildPinPad({
-      onSuccess: () => {
-        showModal({ title: '', content: '' });
-        window.location.reload();
-      },
-      title,
-      subtitle,
-      icon: '🔑'
-    });
+  const pinPadEl = buildPinPad({
+    onSuccess: () => {
+      showModal({ title: '', content: '' });
+      window.location.reload();
+    },
+    title,
+    subtitle,
+    icon: '🔑'
+  });
 
-    const modalWrap = document.createElement('div');
-    modalWrap.appendChild(pinPadEl);
+  const modalWrap = document.createElement('div');
+  modalWrap.appendChild(pinPadEl);
 
-    if (sessionStorage.getItem('current_profile') && sessionStorage.getItem('current_profile') !== 'Guest') {
-      const logoutBtn = document.createElement('button');
-      logoutBtn.className = 'aim-btn';
-      logoutBtn.style.cssText = 'width: 100%; margin-top: 12px; background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444;';
-      logoutBtn.textContent = 'LOGOUT TO GUEST PROFILE';
-      logoutBtn.onclick = () => {
-        sessionStorage.clear();
-        sessionStorage.setItem('current_profile', 'Guest');
-        window.location.reload();
-      };
-      modalWrap.appendChild(logoutBtn);
-    }
+  if (sessionStorage.getItem('current_profile') && sessionStorage.getItem('current_profile') !== 'Guest') {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'aim-btn';
+    logoutBtn.style.cssText = 'width: 100%; margin-top: 12px; background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444;';
+    logoutBtn.textContent = 'LOGOUT TO GUEST PROFILE';
+    logoutBtn.onclick = () => {
+      sessionStorage.clear();
+      sessionStorage.setItem('current_profile', 'Guest');
+      window.location.reload();
+    };
+    modalWrap.appendChild(logoutBtn);
+  }
 
-    showModal({
-      title: 'AUTH_SESSION_GATEWAY',
-      content: modalWrap
-    });
+  showModal({
+    title: 'AUTH_SESSION_GATEWAY',
+    content: modalWrap
   });
 }
 

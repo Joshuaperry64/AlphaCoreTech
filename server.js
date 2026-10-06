@@ -8,8 +8,16 @@ import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
 import sanitizeHtml from 'sanitize-html';
 
-const _filename = fileURLToPath(import.meta.url);
-const _dirname = path.dirname(_filename);
+let _dirname = process.cwd();
+try {
+  if (typeof import.meta !== 'undefined' && import.meta && import.meta.url) {
+    _dirname = path.dirname(fileURLToPath(import.meta.url));
+  } else if (typeof __dirname !== 'undefined') {
+    _dirname = __dirname;
+  }
+} catch {
+  _dirname = process.cwd();
+}
 
 const app = express();
 app.use(cors());

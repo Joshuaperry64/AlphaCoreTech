@@ -2,6 +2,8 @@ import { createElement, escapeHTML } from '../components/utils.js';
 import { buildPinPad, getPins, addPin, revokePin, requireAuth } from '../components/pinpad.js';
 import { getLogs, clearLogs } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
+import { apiUrl } from '../components/api.js';
+import { syncFromServer } from '../components/db_sync.js';
 
 export default function AdminPage() {
   const container = createElement('div');
@@ -281,12 +283,11 @@ function buildAdminUI() {
 
   async function updatePendingProfiles() {
     try {
-      const { apiUrl } = await import('../components/api.js');
       const pin = sessionStorage.getItem('current_pin');
       const res = await fetch(apiUrl('/api/pending-profiles'), {
         headers: { 'x-user-pin': pin }
       });
-      if (!res.ok) return;
+      if (!res || !res.ok) return;
       const profiles = await res.json();
 
       if (!profiles || profiles.length === 0) {
@@ -327,7 +328,6 @@ function buildAdminUI() {
     const roles = Array.from(roleBoxes).map(b => b.value);
 
     try {
-      const { apiUrl } = await import('../components/api.js');
       const authPin = sessionStorage.getItem('current_pin');
 
       const res = await fetch(apiUrl('/api/pending-profiles/approve'), {
@@ -339,11 +339,10 @@ function buildAdminUI() {
         body: JSON.stringify({ pin: pinValue, roles })
       });
 
-      if (res.ok) {
+      if (res && res.ok) {
         showFeedback(pinFeedback, 'PROFILE APPROVED AND AUTHORIZED.', 'ok');
 
         // Sync the DB down from the server to get updated pins
-        const { syncFromServer } = await import('../components/db_sync.js');
         await syncFromServer();
 
         updatePendingProfiles();
@@ -360,7 +359,6 @@ function buildAdminUI() {
     if (!confirm('Are you sure you want to reject and delete this profile request?')) return;
 
     try {
-      const { apiUrl } = await import('../components/api.js');
       const authPin = sessionStorage.getItem('current_pin');
 
       const res = await fetch(apiUrl('/api/pending-profiles/reject'), {

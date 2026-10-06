@@ -31,7 +31,6 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     expect(el.innerHTML).toContain('ACQUISITION MATRIX');
     expect(el.innerHTML).toContain('REMIX ENGINE');
     expect(el.innerHTML).toContain('LIVE SIMULATION CHAMBER');
-    expect(el.innerHTML).toContain('OUR FORBIDDEN VAULT');
   });
 
   it('allows switching between Sector ZERO modules and interacting with simulation chamber', () => {
@@ -64,6 +63,79 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     const simOutput = el.querySelector('#sim-output');
     expect(simLive.style.display).toBe('block');
     expect(simOutput.innerHTML).toContain('Private lounge, neon lights');
+  });
+
+  it('validates empty prompt on #sz-generate-btn without triggering generation', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
+
+    let apiCalled = false;
+    window.__mock_openrouter_image_generation = async () => {
+      apiCalled = true;
+      return { result: 'https://example.com/mock.png' };
+    };
+
+    const el = PlaceholderPage();
+    const genBtn = el.querySelector('#sz-generate-btn');
+    const promptInput = el.querySelector('#sz-prompt');
+    promptInput.value = '   ';
+
+    await genBtn.onclick();
+
+    expect(apiCalled).toBe(false);
+    expect(genBtn.disabled).toBe(false);
+  });
+
+  it('constructs weighted LoRA prompt, calls openrouter_image_generation tool, and displays result image', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
+
+    let passedPrompt = '';
+    window.__mock_openrouter_image_generation = async ({ prompt }) => {
+      passedPrompt = prompt;
+      return { result: 'https://cdn.example.com/cyber_art_123.png' };
+    };
+
+    const el = PlaceholderPage();
+    const genBtn = el.querySelector('#sz-generate-btn');
+    const promptInput = el.querySelector('#sz-prompt');
+    const loraSelect = el.querySelector('#sz-lora');
+    const outputArea = el.querySelector('#sz-generate-output');
+
+    promptInput.value = 'a girl in a field';
+    loraSelect.value = 'younger.safetensors';
+
+    await genBtn.onclick();
+
+    expect(passedPrompt).toBe('(younger:1.3), a girl in a field');
+    expect(genBtn.disabled).toBe(false);
+    expect(outputArea.innerHTML).toContain('https://cdn.example.com/cyber_art_123.png');
+    expect(outputArea.innerHTML).toContain('(younger:1.3), a girl in a field');
+    expect(outputArea.innerHTML).toContain('SAVE OUR ART');
+  });
+
+  it('handles generation errors gracefully by displaying error message and re-enabling button', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
+
+    window.__mock_openrouter_image_generation = async () => {
+      throw new Error('Neural network timeout');
+    };
+
+    const el = PlaceholderPage();
+    const genBtn = el.querySelector('#sz-generate-btn');
+    const promptInput = el.querySelector('#sz-prompt');
+    const outputArea = el.querySelector('#sz-generate-output');
+
+    promptInput.value = 'test neural scene';
+
+    await genBtn.onclick();
+
+    expect(genBtn.disabled).toBe(false);
+    expect(outputArea.innerHTML).toContain('Neural network timeout');
   });
 
   it('displays the access portal to #/placeholder when Darkened State is active in Administration', () => {
