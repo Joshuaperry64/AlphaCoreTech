@@ -266,11 +266,12 @@ export default function createIntro(container) {
       }
     }
 
-    if (localStorage.getItem('alphacore_intro_complete') === '1') {
-      finishBoot();
-    } else {
-      setTimeout(runNextFitsLine, 200);
-    }
+    // Always play the full high-tech boot sequence on unauthenticated visit.
+    // Clean up any legacy skip flags so the intro is never skipped automatically.
+    try {
+      localStorage.removeItem('alphacore_intro_complete');
+    } catch (_) {}
+    setTimeout(runNextFitsLine, 200);
 
     function cleanup() {
       cancelled = true;

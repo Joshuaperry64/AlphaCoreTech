@@ -171,7 +171,9 @@ async function renderRoute() {
       isLoginScreen: true,
       onSuccess: () => {
         cleanup();
-        localStorage.setItem('alphacore_intro_complete', '1');
+        try {
+          localStorage.removeItem('alphacore_intro_complete');
+        } catch (_) {}
         document.body.classList.remove('intro-mode');
         if (sidebar) sidebar.style.display = '';
         if (mobileTopbar) mobileTopbar.style.display = '';
@@ -426,8 +428,7 @@ function initApp() {
     lockLink.onclick = e => {
       e.preventDefault();
       sessionStorage.clear();
-      sessionStorage.setItem('current_profile', 'Guest');
-      window.location.hash = '#';
+      window.location.hash = '#/';
       renderRoute();
     };
     nav.appendChild(lockLink);
