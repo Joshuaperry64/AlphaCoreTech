@@ -48,6 +48,7 @@ import MugshotsPage from './pages/mugshots.js';
 import TheLabPage from './pages/thelab.js';
 import TransferPage from './pages/transfer.js';
 import CyberDirectorPage from './pages/director.js';
+import PlaceholderPage from './pages/placeholder.js';
 
 const routes = {
   '/': Overview,
@@ -86,6 +87,8 @@ const routes = {
   '/assets': AssetManagerPage,
   '/changelog': ChangelogPage,
   '/mugshots': MugshotsPage,
+  '/placeholder': PlaceholderPage,
+  '/admin/placeholder': PlaceholderPage,
 };
 
 function updateActiveNav(hash) {

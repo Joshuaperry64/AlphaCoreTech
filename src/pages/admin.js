@@ -1,6 +1,7 @@
 import { createElement, escapeHTML } from '../components/utils.js';
 import { buildPinPad, getPins, addPin, revokePin, requireAuth } from '../components/pinpad.js';
 import { getLogs, clearLogs } from '../components/logger.js';
+import { playSFX } from '../components/audio.js';
 
 export default function AdminPage() {
   const container = createElement('div');
@@ -456,6 +457,19 @@ function buildAdminUI() {
             <button class="aim-seg-btn" data-f="low">STEALTH IDLE</button>
           </div>
         </div>
+        <div class="aim-field" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(255, 0, 60, 0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="aim-label" style="color: var(--accent, #ff003c); margin-bottom: 0;">// CLASSIFIED_SUBSTRATE</label>
+            <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #ff003c; background: rgba(255,0,60,0.15); border: 1px solid rgba(255,0,60,0.4); padding: 1px 6px; border-radius: 3px; letter-spacing: 1px;">ARCHITECT ONLY</span>
+          </div>
+          <a href="#/placeholder" id="btn-portal-placeholder" class="aim-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 4px; background: rgba(255, 0, 60, 0.18); border-color: #ff003c; color: #fff; text-shadow: 0 0 10px #ff003c; text-decoration: none; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; letter-spacing: 1.5px; padding: 10px; transition: all 0.25s ease;">
+            🔒 ACCESS [PLACEHOLDER]
+          </a>
+          <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: 5px; text-align: center;">
+            Hidden sandbox substrate accessible strictly via Darkened State directives.
+          </p>
+        </div>
+
         <button class="aim-btn" id="btn-revert-darkness" style="margin-top: 15px; border-color: #555; color: #777; width: 100%;">REVERT TO STANDARD</button>
       </div>
     `;
@@ -464,6 +478,13 @@ function buildAdminUI() {
     const darkVal = darknessSlot.querySelector('#dark-str-val');
     const freqBtns = darknessSlot.querySelectorAll('#dark-freq-seg .aim-seg-btn');
     const revertBtn = darknessSlot.querySelector('#btn-revert-darkness');
+    const placeholderPortalBtn = darknessSlot.querySelector('#btn-portal-placeholder');
+
+    if (placeholderPortalBtn) {
+      placeholderPortalBtn.onclick = () => {
+        playSFX('navigate', 0.6);
+      };
+    }
 
     darkRange.oninput = () => {
       darkVal.textContent = `${darkRange.value}%`;
@@ -494,13 +515,15 @@ function buildAdminUI() {
   updatePendingProfiles();
 
   // Cleanup periodic refresh interval on component unmount
-  const observer = new MutationObserver(() => {
-    if (!document.body.contains(root)) {
-      clearInterval(refreshInterval);
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  if (typeof document !== 'undefined' && document.body) {
+    const observer = new MutationObserver(() => {
+      if (typeof document === 'undefined' || !document.body || !document.body.contains(root)) {
+        clearInterval(refreshInterval);
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
   renderLogs();
 

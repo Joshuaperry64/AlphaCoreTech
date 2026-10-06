@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 import tempfile
 import base64
+import sys
 
 import modal
 
@@ -15,7 +16,7 @@ OUTPUTS_DIR = Path("/outputs")
 cuda_version = "12.4.1"
 tag = f"{cuda_version}-devel-ubuntu22.04"
 
-# FIX: Hard-mount shared_app.py directly into the root directory where this script executes
+# Hard-mount shared_app.py directly into the root directory where this script executes
 image = (
     modal.Image.from_registry(f"nvidia/cuda:{tag}", add_python="3.12")
     .entrypoint([])
@@ -41,6 +42,7 @@ image = (
     .add_local_file("shared_app.py", "/root/shared_app.py") 
 )
 
+sys.path.insert(0, "/root")
 from shared_app import app
 
 with image.imports():
