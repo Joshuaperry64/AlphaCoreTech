@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Hardcoded publishable keys to ensure persistence across different hosting providers
+const supabaseUrl = 'https://dmlcergmwkotcbyylpdb.supabase.co';
+const supabaseAnonKey = 'sb_publishable_qOYOw9CHH3nTTd-_-kxqXQ_2iZYNlb2';
 
-if (!supabaseUrl) {
-  console.error("Missing VITE_SUPABASE_URL in .env");
-}
-
-export const supabase = supabaseUrl ? createClient(supabaseUrl, supabaseAnonKey) : null;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
