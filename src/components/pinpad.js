@@ -130,46 +130,98 @@ export function buildPinPad({
   wrap.className = 'aim-pin-wrap';
 
   wrap.innerHTML = `
-    <div class="aim-pin-box" id="aim-pin-box-inner">
-      <div class="aim-pin-header">
-        <div class="aim-pin-icon">${icon}</div>
-        <div class="aim-pin-title">${title}</div>
-        <div class="aim-pin-subtitle">${subtitle}</div>
-      </div>
-      <div class="aim-pin-display-wrap">
-        <div class="aim-pin-display" id="aim-pin-display"></div>
-        <div class="aim-pin-feedback" id="aim-pin-feedback">> AWAITING INPUT</div>
-      </div>
-      <div class="aim-pinpad-grid">
-        <button class="aim-pad-btn" data-val="1">1</button>
-        <button class="aim-pad-btn" data-val="2">2</button>
-        <button class="aim-pad-btn" data-val="3">3</button>
-        <button class="aim-pad-btn" data-val="4">4</button>
-        <button class="aim-pad-btn" data-val="5">5</button>
-        <button class="aim-pad-btn" data-val="6">6</button>
-        <button class="aim-pad-btn" data-val="7">7</button>
-        <button class="aim-pad-btn" data-val="8">8</button>
-        <button class="aim-pad-btn" data-val="9">9</button>
-        <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
-        <button class="aim-pad-btn" data-val="0">0</button>
-        <button class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back">⌫</button>
+    <div class="aim-pin-box">
+      <!-- Main PIN Pad View -->
+      <div id="aim-pin-main-view" class="aim-pin-box-inner">
+        ${icon ? `<div class="aim-pin-icon">${icon}</div>` : ''}
+        <h2 class="aim-pin-title">${title}</h2>
+        <p class="aim-pin-subtitle">${subtitle}</p>
+
+        <div class="aim-pin-display-wrap">
+          <div class="aim-pin-display" id="aim-pin-display"></div>
+          <div class="aim-pin-feedback" id="aim-pin-feedback">> AWAITING INPUT</div>
+        </div>
+        <div class="aim-pinpad-grid">
+          <button class="aim-pad-btn" data-val="1">1</button>
+          <button class="aim-pad-btn" data-val="2">2</button>
+          <button class="aim-pad-btn" data-val="3">3</button>
+          <button class="aim-pad-btn" data-val="4">4</button>
+          <button class="aim-pad-btn" data-val="5">5</button>
+          <button class="aim-pad-btn" data-val="6">6</button>
+          <button class="aim-pad-btn" data-val="7">7</button>
+          <button class="aim-pad-btn" data-val="8">8</button>
+          <button class="aim-pad-btn" data-val="9">9</button>
+          <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
+          <button class="aim-pad-btn" data-val="0">0</button>
+          <button class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back">⌫</button>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; flex-direction: row; gap: 8px;">
+          <button class="aim-btn" id="aim-pad-enter" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+            ENTER
+          </button>
+          <button class="aim-btn" id="aim-pin-bypass-btn" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+            ⚡ BYPASS
+          </button>
+          ${isLoginScreen ? `
+          <button class="aim-btn" id="aim-pin-request-btn" style="flex: 1; padding: 10px; background: rgba(255, 150, 0, 0.1); border: 1px solid rgba(255, 150, 0, 0.4); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+            📝 REQUEST ACCESS
+          </button>
+          ` : ''}
+        </div>
       </div>
 
-      <div style="margin-top: 12px; display: flex; flex-direction: row; gap: 8px;">
-        <button class="aim-btn" id="aim-pad-enter" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
-          ENTER
-        </button>
-        <button class="aim-btn" id="aim-pin-bypass-btn" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
-          ⚡ BYPASS
-        </button>
+      <!-- Request Access View -->
+      <div id="aim-pin-signup-view" class="aim-pin-box-inner" style="display: none;">
+        <div class="aim-pin-icon">📝</div>
+        <h2 class="aim-pin-title">REQUEST ACCESS</h2>
+        <p class="aim-pin-subtitle">SUBMIT PROFILE FOR APPROVAL</p>
+
+        <div style="text-align: left; margin-bottom: 15px;">
+          <label style="display:block; color:var(--blue-dim); font-size:0.75rem; margin-bottom:4px;">USERNAME</label>
+          <input type="text" id="signup-username" class="aim-input" placeholder="Enter username..." style="width: 100%; box-sizing: border-box;" />
+        </div>
+        <div style="text-align: left; margin-bottom: 15px;">
+          <label style="display:block; color:var(--blue-dim); font-size:0.75rem; margin-bottom:4px;">EMAIL</label>
+          <input type="email" id="signup-email" class="aim-input" placeholder="Enter email address..." style="width: 100%; box-sizing: border-box;" />
+        </div>
+        <div style="text-align: left; margin-bottom: 15px;">
+          <label style="display:block; color:var(--blue-dim); font-size:0.75rem; margin-bottom:4px;">REQUESTED PIN (8-9 DIGITS)</label>
+          <input type="text" id="signup-pin" class="aim-input" placeholder="Enter 8-9 digit PIN..." maxlength="9" style="width: 100%; box-sizing: border-box;" />
+        </div>
+
+        <div id="signup-feedback" class="aim-pin-feedback" style="margin-bottom: 10px;">> AWAITING INPUT</div>
+
+        <div style="display: flex; flex-direction: row; gap: 8px;">
+          <button class="aim-btn" id="signup-submit-btn" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64;">SUBMIT REQUEST</button>
+          <button class="aim-btn" id="signup-cancel-btn" style="flex: 1; padding: 10px;">CANCEL</button>
+        </div>
       </div>
+
+      <!-- Pending Approval View -->
+      <div id="aim-pin-pending-view" class="aim-pin-box-inner" style="display: none;">
+        <div class="aim-pin-icon" style="color: #ff9600; text-shadow: 0 0 10px #ff9600;">⏳</div>
+        <h2 class="aim-pin-title" style="color: #ff9600;">PROFILE PENDING</h2>
+        <p class="aim-pin-subtitle" style="color: #ff9600;">AWAITING ADMINISTRATOR APPROVAL</p>
+
+        <div style="margin: 20px 0; color: #aaa; font-size: 0.9rem; text-align: center; line-height: 1.5;">
+          Your profile request has been received and is currently under review by an administrator.<br/><br/>
+          Please check back later or contact an admin to expedite the process.
+        </div>
+
+        <button class="aim-btn" id="pending-back-btn" style="width: 100%; padding: 10px; margin-top: 10px;">RETURN TO LOGIN</button>
+      </div>
+
     </div>
   `;
 
   let currentPin = '';
   let locked = false;
 
-  const pinBox   = wrap.querySelector('#aim-pin-box-inner');
+  const pinBox   = wrap.querySelector('#aim-pin-main-view');
+  const mainView = wrap.querySelector('#aim-pin-main-view');
+  const signupView = wrap.querySelector('#aim-pin-signup-view');
+  const pendingView = wrap.querySelector('#aim-pin-pending-view');
   const display  = wrap.querySelector('#aim-pin-display');
   const feedback = wrap.querySelector('#aim-pin-feedback');
 
@@ -265,6 +317,101 @@ export function buildPinPad({
   wrap.querySelector('#aim-pad-clear').onclick = e => { e.stopPropagation(); handleClear(); };
   wrap.querySelector('#aim-pad-enter').onclick = e => { e.stopPropagation(); handleEnter(); };
   wrap.querySelector('#aim-pad-back').onclick = e => { e.stopPropagation(); handleBackspace(); };
+
+  // Request Access / Signup Flow
+  const requestBtn = wrap.querySelector('#aim-pin-request-btn');
+  if (requestBtn) {
+    requestBtn.onclick = (e) => {
+      e.stopPropagation();
+      playSFX('click');
+      mainView.style.display = 'none';
+      signupView.style.display = 'flex';
+    };
+  }
+
+  const cancelSignupBtn = wrap.querySelector('#signup-cancel-btn');
+  if (cancelSignupBtn) {
+    cancelSignupBtn.onclick = (e) => {
+      e.stopPropagation();
+      playSFX('click');
+      signupView.style.display = 'none';
+      mainView.style.display = 'flex';
+      wrap.querySelector('#signup-username').value = '';
+      wrap.querySelector('#signup-email').value = '';
+      wrap.querySelector('#signup-pin').value = '';
+      wrap.querySelector('#signup-feedback').textContent = '> AWAITING INPUT';
+      wrap.querySelector('#signup-feedback').className = 'aim-pin-feedback';
+    };
+  }
+
+  const submitSignupBtn = wrap.querySelector('#signup-submit-btn');
+  if (submitSignupBtn) {
+    submitSignupBtn.onclick = async (e) => {
+      e.stopPropagation();
+      const username = wrap.querySelector('#signup-username').value.trim();
+      const email = wrap.querySelector('#signup-email').value.trim();
+      const pin = wrap.querySelector('#signup-pin').value.trim();
+      const signupFeedback = wrap.querySelector('#signup-feedback');
+
+      if (!username || !email || !pin) {
+        signupFeedback.textContent = '> ERROR: ALL FIELDS REQUIRED';
+        signupFeedback.className = 'aim-pin-feedback feedback-error';
+        return;
+      }
+
+      if (!/^\d{8,9}$/.test(pin)) {
+        signupFeedback.textContent = '> ERROR: PIN MUST BE 8-9 DIGITS';
+        signupFeedback.className = 'aim-pin-feedback feedback-error';
+        return;
+      }
+
+      submitSignupBtn.disabled = true;
+      signupFeedback.textContent = '> TRANSMITTING REQUEST...';
+      signupFeedback.className = 'aim-pin-feedback';
+
+      try {
+        const { apiUrl } = await import('./api.js');
+        const res = await fetch(apiUrl('/api/pending-profiles/request'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, pin })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          playSFX('success');
+          signupView.style.display = 'none';
+          pendingView.style.display = 'flex';
+        } else {
+          playSFX('incorrect');
+          signupFeedback.textContent = `> ERROR: ${data.error || 'REQUEST FAILED'}`;
+          signupFeedback.className = 'aim-pin-feedback feedback-error';
+        }
+      } catch (err) {
+        playSFX('incorrect');
+        signupFeedback.textContent = '> ERROR: CONNECTION FAILED';
+        signupFeedback.className = 'aim-pin-feedback feedback-error';
+      } finally {
+        submitSignupBtn.disabled = false;
+      }
+    };
+  }
+
+  const pendingBackBtn = wrap.querySelector('#pending-back-btn');
+  if (pendingBackBtn) {
+    pendingBackBtn.onclick = (e) => {
+      e.stopPropagation();
+      playSFX('click');
+      pendingView.style.display = 'none';
+      mainView.style.display = 'flex';
+      if (signupView) {
+        wrap.querySelector('#signup-username').value = '';
+        wrap.querySelector('#signup-email').value = '';
+        wrap.querySelector('#signup-pin').value = '';
+      }
+    };
+  }
 
   // Guest button listener
   // Bypass Easter Egg button listener

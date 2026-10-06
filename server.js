@@ -25,6 +25,7 @@ const DEFAULT_DB = {
     { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() }
   ],
   logs: [],
+  pendingProfiles: [],
   settings: {
     txt2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
     img2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2img-web-img2img.modal.run',
@@ -81,6 +82,7 @@ async function readDB() {
     if (!dbCache.pins) dbCache.pins = DEFAULT_DB.pins;
     if (!dbCache.logs) dbCache.logs = [];
     if (!dbCache.settings) dbCache.settings = DEFAULT_DB.settings;
+    if (!dbCache.pendingProfiles) dbCache.pendingProfiles = [];
 
     // Ensure default profiles are always present
     DEFAULT_DB.pins.forEach(defaultPin => {
@@ -220,6 +222,98 @@ app.get('/api/pins', async (req, res) => {
   }
 });
 
+
+// ==========================================================
+// PENDING PROFILES ENDPOINTS
+// ==========================================================
+
+app.get('/api/pending-profiles', authenticate, async (req, res) => {
+  const db = await readDB();
+  res.json(db.pendingProfiles || []);
+});
+
+app.post('/api/pending-profiles/request', async (req, res) => {
+  const { username, email, pin } = req.body;
+  if (!username || !email || !pin) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const db = await readDB();
+
+  // Check if PIN already exists in active pins
+  if (db.pins.some(p => p.pin === pin)) {
+    return res.status(400).json({ error: 'PIN already in use' });
+  }
+
+  // Check if PIN already exists in pending profiles
+  if (db.pendingProfiles && db.pendingProfiles.some(p => p.pin === pin)) {
+    return res.status(400).json({ error: 'PIN request already pending' });
+  }
+
+  const newRequest = {
+    username,
+    email,
+    pin,
+    createdAt: Date.now()
+  };
+
+  if (!db.pendingProfiles) db.pendingProfiles = [];
+  db.pendingProfiles.push(newRequest);
+
+  await writeDB(db);
+  res.json({ success: true, message: 'Request submitted successfully' });
+});
+
+app.post('/api/pending-profiles/approve', authenticate, async (req, res) => {
+  const { pin, roles } = req.body;
+  if (!pin) return res.status(400).json({ error: 'PIN required' });
+
+  const db = await readDB();
+  if (!db.pendingProfiles) db.pendingProfiles = [];
+
+  const requestIndex = db.pendingProfiles.findIndex(p => p.pin === pin);
+  if (requestIndex === -1) {
+    return res.status(404).json({ error: 'Pending request not found' });
+  }
+
+  const request = db.pendingProfiles[requestIndex];
+
+  // Remove from pending
+  db.pendingProfiles.splice(requestIndex, 1);
+
+  // Add to active pins
+  db.pins.push({
+    pin: request.pin,
+    type: 'permanent',
+    label: request.username,
+    roles: roles || [],
+    createdAt: Date.now()
+  });
+
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+app.post('/api/pending-profiles/reject', authenticate, async (req, res) => {
+  const { pin } = req.body;
+  if (!pin) return res.status(400).json({ error: 'PIN required' });
+
+  const db = await readDB();
+  if (!db.pendingProfiles) db.pendingProfiles = [];
+
+  const requestIndex = db.pendingProfiles.findIndex(p => p.pin === pin);
+  if (requestIndex === -1) {
+    return res.status(404).json({ error: 'Pending request not found' });
+  }
+
+  // Remove from pending
+  db.pendingProfiles.splice(requestIndex, 1);
+
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+
 app.post('/api/pins', authenticate, async (req, res) => {
   const db = await readDB();
   db.pins = req.body;
@@ -250,6 +344,10 @@ app.post('/api/auth', async (req, res) => {
   const found = db.pins.find(p => p.pin === pin);
 
   if (!found) {
+    const isPending = db.pendingProfiles && db.pendingProfiles.some(p => p.pin === pin);
+    if (isPending) {
+      return res.json({ valid: false, reason: 'PROFILE PENDING APPROVAL', isPending: true });
+    }
     return res.json({ valid: false, reason: 'ACCESS DENIED' });
   }
 
