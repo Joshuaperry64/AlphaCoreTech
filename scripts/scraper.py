@@ -160,6 +160,65 @@ def fetch_mugshots():
 
     return {'status': 'error', 'message': 'All intel acquisition vectors failed', 'data': []}
 
+@web_app.get('/api/sectorzero')
+def fetch_sector_zero(query: str = ""):
+    """Acquisition Matrix Scraper for Darkened State."""
+    results = []
+    
+    # Target 1: XVideos
+    try:
+        url = f"https://www.xvideos.com/?k={query.replace(' ', '+')}"
+        res = session.get(url, timeout=8)
+        if res.status_code == 200:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(res.text, 'html.parser')
+            for div in soup.select('.mozaique .thumb-block')[:10]:
+                a_tag = div.select_one('.thumb a')
+                img_tag = div.select_one('.thumb img')
+                title_tag = div.select_one('p.title a')
+                
+                if a_tag and img_tag and title_tag:
+                    link = 'https://www.xvideos.com' + a_tag.get('href', '')
+                    thumb = img_tag.get('data-src') or img_tag.get('src')
+                    title = title_tag.text.strip()
+                    results.append({
+                        'title': title,
+                        'url': link,
+                        'thumb': thumb,
+                        'source': 'xvideos'
+                    })
+    except Exception as e:
+        print("XVideos scrape error:", e)
+
+    # Target 2: XNXX
+    try:
+        url = f"https://www.xnxx.com/search/{query.replace(' ', '+')}"
+        res = session.get(url, timeout=8)
+        if res.status_code == 200:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(res.text, 'html.parser')
+            for div in soup.select('.mozaique .thumb-block')[:10]:
+                a_tag = div.select_one('.thumb a')
+                img_tag = div.select_one('.thumb img')
+                title_tag = div.select_one('p.title a')
+                
+                if a_tag and img_tag and title_tag:
+                    link = 'https://www.xnxx.com' + a_tag.get('href', '')
+                    thumb = img_tag.get('data-src') or img_tag.get('src')
+                    title = title_tag.get('title') or title_tag.text.strip()
+                    results.append({
+                        'title': title,
+                        'url': link,
+                        'thumb': thumb,
+                        'source': 'xnxx'
+                    })
+    except Exception as e:
+        print("XNXX scrape error:", e)
+
+    if results:
+        return {'status': 'success', 'count': len(results), 'data': results}
+    return {'status': 'error', 'message': 'Acquisition failed', 'data': []}
+
 @app.function(image=image, timeout=120)
 @modal.asgi_app()
 def Mugshots():
