@@ -89,6 +89,27 @@ function buildAdminUI() {
           <div class="admin-feedback" id="pin-form-feedback"></div>
         </div>
 
+
+        <div class="header-line" style="margin: 20px 0 15px 0; opacity: 0.3;"></div>
+
+        <div class="panel-subtitle" style="color: #ff9600;">// PENDING_PROFILE_REQUESTS</div>
+        <div class="pin-list-wrap" style="margin-bottom: 30px;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>USERNAME</th>
+                <th>EMAIL</th>
+                <th>REQUESTED PIN</th>
+                <th>ROLES TO GRANT</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="pending-list-body">
+              <tr><td colspan="5" style="text-align:center; padding: 20px;">NO PENDING REQUESTS.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <div class="header-line" style="margin: 20px 0 15px 0; opacity: 0.3;"></div>
 
         <div class="panel-subtitle">// ACTIVE_ACCESS_TOKENS</div>
@@ -255,6 +276,113 @@ function buildAdminUI() {
     }, 4000);
   }
 
+
+  const pendingListBody = root.querySelector('#pending-list-body');
+
+  async function updatePendingProfiles() {
+    try {
+      const { apiUrl } = await import('../components/api.js');
+      const pin = sessionStorage.getItem('current_pin');
+      const res = await fetch(apiUrl('/api/pending-profiles'), {
+        headers: { 'x-user-pin': pin }
+      });
+      if (!res.ok) return;
+      const profiles = await res.json();
+
+      if (!profiles || profiles.length === 0) {
+        pendingListBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">NO PENDING REQUESTS.</td></tr>';
+        return;
+      }
+
+      pendingListBody.innerHTML = '';
+      profiles.forEach((p, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="table-label">${escapeHTML(p.username)}</td>
+          <td class="table-mono">${escapeHTML(p.email)}</td>
+          <td class="table-mono">${escapeHTML(p.pin)}</td>
+          <td>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; max-width: 250px;">
+              <label style="font-size: 0.65rem;"><input type="checkbox" class="pending-role-${i}" value="aimodals"> AI</label>
+              <label style="font-size: 0.65rem;"><input type="checkbox" class="pending-role-${i}" value="generate"> Gen</label>
+              <label style="font-size: 0.65rem;"><input type="checkbox" class="pending-role-${i}" value="lora"> LoRA</label>
+              <label style="font-size: 0.65rem;"><input type="checkbox" class="pending-role-${i}" value="vault"> Vault</label>
+              <label style="font-size: 0.65rem;"><input type="checkbox" class="pending-role-${i}" value="diagnostics"> Diag</label>
+            </div>
+          </td>
+          <td>
+            <button class="aim-btn aim-btn-sm" onclick="approvePending('${p.pin}', ${i})" style="margin-right: 8px; color: #00ff64; border-color: rgba(0,255,100,0.3);">APPROVE</button>
+            <button class="aim-btn aim-btn-sm" onclick="rejectPending('${p.pin}')" style="color: #ff003c; border-color: rgba(255,0,60,0.3);">REJECT</button>
+          </td>
+        `;
+        pendingListBody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error('Failed to update pending profiles', e);
+    }
+  }
+
+  window.approvePending = async (pinValue, index) => {
+    const roleBoxes = document.querySelectorAll(`.pending-role-${index}:checked`);
+    const roles = Array.from(roleBoxes).map(b => b.value);
+
+    try {
+      const { apiUrl } = await import('../components/api.js');
+      const authPin = sessionStorage.getItem('current_pin');
+
+      const res = await fetch(apiUrl('/api/pending-profiles/approve'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-pin': authPin
+        },
+        body: JSON.stringify({ pin: pinValue, roles })
+      });
+
+      if (res.ok) {
+        showFeedback(pinFeedback, 'PROFILE APPROVED AND AUTHORIZED.', 'ok');
+
+        // Sync the DB down from the server to get updated pins
+        const { syncFromServer } = await import('../components/db_sync.js');
+        await syncFromServer();
+
+        updatePendingProfiles();
+        updatePinList();
+      } else {
+        showFeedback(pinFeedback, 'ERROR APPROVING PROFILE.', 'error');
+      }
+    } catch (e) {
+      showFeedback(pinFeedback, 'NETWORK ERROR.', 'error');
+    }
+  };
+
+  window.rejectPending = async (pinValue) => {
+    if (!confirm('Are you sure you want to reject and delete this profile request?')) return;
+
+    try {
+      const { apiUrl } = await import('../components/api.js');
+      const authPin = sessionStorage.getItem('current_pin');
+
+      const res = await fetch(apiUrl('/api/pending-profiles/reject'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-pin': authPin
+        },
+        body: JSON.stringify({ pin: pinValue })
+      });
+
+      if (res.ok) {
+        showFeedback(pinFeedback, 'PROFILE REQUEST REJECTED.', 'ok');
+        updatePendingProfiles();
+      } else {
+        showFeedback(pinFeedback, 'ERROR REJECTING PROFILE.', 'error');
+      }
+    } catch (e) {
+      showFeedback(pinFeedback, 'NETWORK ERROR.', 'error');
+    }
+  };
+
   // Render authorized PINs table
   function updatePinList() {
     const pins = getPins();
@@ -384,6 +512,7 @@ function buildAdminUI() {
 
   // Initial render of PIN list
   updatePinList();
+  updatePendingProfiles();
 
   // Cleanup periodic refresh interval on component unmount
   if (typeof document !== 'undefined' && document.body) {

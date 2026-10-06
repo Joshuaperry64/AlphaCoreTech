@@ -33,6 +33,29 @@
         "generate"
       ],
       "createdAt": 1751676500000
+    },
+    {
+      "pin": "6969",
+      "type": "permanent",
+      "label": "DoeBoy",
+      "roles": [
+        "admin",
+        "vault",
+        "aimodals",
+        "generate",
+        "lora",
+        "diagnostics"
+      ],
+      "createdAt": 1791270916511
+    },
+    {
+      "pin": "11112222",
+      "type": "permanent",
+      "label": "guest1",
+      "roles": [
+        "vault"
+      ],
+      "createdAt": 1791270973315
     }
   ],
   "logs": [],
@@ -46,6 +69,7 @@
     "stepsFastImg": 8,
     "stepsFocusedImg": 30,
     "stepsNormalImg": 17,
-    "guidanceImg": 4.0
-  }
+    "guidanceImg": 4
+  },
+  "pendingProfiles": []
 }
