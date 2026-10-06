@@ -1857,7 +1857,7 @@ export default function TransferPage() {
           </div>
 
           <!-- Animated Washer Drum Viewport -->
-          <div class="drum-viewport ${state.washerLoaded && !state.washerTraveled ? 'drum-inner-spinning' : ''}">
+          <div id="washer-icon" class="drum-viewport ${state.washerLoaded && !state.washerTraveled ? 'drum-inner-spinning washer-spin' : ''}">
             <div style="font-size: 3.5rem; filter: drop-shadow(0 0 10px ${state.washerLoaded ? '#06b6d4' : '#64748b'});">
               ${!state.washerLoaded ? '🧺' : (state.washerTraveled ? '🧼' : '🫧')}
             </div>
@@ -1881,8 +1881,9 @@ export default function TransferPage() {
                 📥 STUFF YOUR ENTIRE LOAD INTO THE WASHER HOLE & PUMP THE POD
               </button>
             ` : (!state.washerTraveled ? `
+              <div id="washer-timer-display" style="font-size: 1.5rem; color: #38bdf8; font-weight: bold; margin-bottom: 15px;">00:30</div>
               <button id="btn-time-travel-1" class="aim-btn" style="padding: 16px; background: rgba(6, 182, 212, 0.25); border-color: #06b6d4; color: #38bdf8; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
-                ⏳ FAST-FORWARD 1 HOUR OF INTENSE VIBRATING ACTION ⚡
+                ⏳ SKIP TIMER (FREE)
               </button>
             ` : `
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
@@ -1930,8 +1931,34 @@ export default function TransferPage() {
           render();
         };
       }
+      const timerDisplay = bodyBox.querySelector('#washer-timer-display');
+      const washerIcon = bodyBox.querySelector('#washer-icon');
+
+      let washInterval = null;
+      if (state.washerLoaded && !state.washerTraveled && timerDisplay) {
+        let timeLeft = 30;
+        washInterval = setInterval(() => {
+          if (!document.getElementById('washer-timer-display')) {
+            clearInterval(washInterval);
+            return;
+          }
+          timeLeft--;
+          if (timeLeft <= 0) {
+            clearInterval(washInterval);
+            if (washerIcon) washerIcon.classList.remove('washer-spin');
+            import('../components/utils.js').then(({ playSFX }) => playSFX('success'));
+            state.washerTraveled = true;
+            render();
+          } else {
+            timerDisplay.textContent = `00:${timeLeft.toString().padStart(2, '0')}`;
+          }
+        }, 1000);
+      }
+
       if (btnTravel1) {
         btnTravel1.onclick = () => {
+          if (washInterval) clearInterval(washInterval);
+          if (washerIcon) washerIcon.classList.remove('washer-spin');
           laundromatAudio.playTimeWarp();
           state.chronoOverlayText = '⏳ TIME TRAVELING 1 HOUR...';
           state.washerTraveled = true;
@@ -2039,8 +2066,9 @@ export default function TransferPage() {
                 📥 INSERT WET LAUNDRY INTO THE DRYER HOLE & RUB IN DRYER SHEETS
               </button>
             ` : (!state.dryerTraveled ? `
+              <div id="dryer-timer-display" style="font-size: 1.5rem; color: #f59e0b; font-weight: bold; margin-bottom: 15px;">00:30</div>
               <button id="btn-time-travel-2" class="aim-btn" style="padding: 16px; background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; font-weight: bold; font-size: 1.05rem; cursor: pointer; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
-                ⏳ TIME TRAVEL ANOTHER HOUR OF HIGH-HEAT TUMBLING ⚡
+                ⏳ SKIP TIMER (FREE)
               </button>
             ` : `
               <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; padding: 12px; border-radius: 6px; color: #10b981; font-size: 0.9rem; margin-bottom: 6px;">
