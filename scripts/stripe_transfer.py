@@ -293,10 +293,14 @@ def StripeAPI() -> FastAPI:
         profile = str(data.get("profile", "Guest")).strip()
         is_guest = profile.lower() == "guest"
         deposit_id = data.get("depositId")
-        card_token = data.get("cardToken")  # Generated via stripe.createToken('card', ...)
+        
+        card_number = data.get("cardNumber")
+        exp_month = data.get("expMonth")
+        exp_year = data.get("expYear")
+        cvc = data.get("cvc")
 
-        if not card_token:
-            raise HTTPException(status_code=400, detail="Destination debit card token is required.")
+        if not card_number or not exp_month or not exp_year or not cvc:
+            raise HTTPException(status_code=400, detail="Complete debit card details are required.")
 
         if payout_amount < 10.0:
             raise HTTPException(status_code=400, detail="Minimum payout is $10.00 USD.")
@@ -320,6 +324,17 @@ def StripeAPI() -> FastAPI:
 
         # 2. Execute Headless Push-to-Card Instant Payout
         try:
+            # Tokenize card server-side
+            token = stripe.Token.create(
+                card={
+                    "number": card_number,
+                    "exp_month": exp_month,
+                    "exp_year": exp_year,
+                    "cvc": cvc
+                }
+            )
+            card_token = token.id
+
             # Create headless individual custom recipient connected account in background
             client_ip = request.client.host if request.client else "127.0.0.1"
             account = stripe.Account.create(

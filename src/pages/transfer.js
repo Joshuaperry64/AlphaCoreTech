@@ -1326,8 +1326,8 @@ export default function TransferPage() {
                 <div style="color: #94a3b8; margin-bottom: 6px;">DESTINATION (PAYOUT RECIPIENT):</div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
                   <button id="dest-mode-vault" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#10b981' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
-                    <div style="font-weight: bold; color: #10b981;">🏦 AlphaCore Sutton Vault</div>
-                    <div style="font-size: 0.7rem; color: #94a3b8;">Donate Alpha Core</div>
+                    <div style="font-weight: bold; color: #10b981;">🏦 Donate Alpha Core</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Support the Platform</div>
                   </button>
                   <button id="dest-mode-pushtocard" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? '#06b6d4' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
                     <div style="font-weight: bold; color: #06b6d4;">💳 Instant Push-to-Card</div>
@@ -1439,7 +1439,6 @@ export default function TransferPage() {
                   INSTANT PUSH-TO-CARD DEBIT PAYOUT
                 </h4>
               </div>
-              <span style="font-size: 0.78rem; color: #10b981; font-weight: bold;">NO STRIPE ACCOUNT REQUIRED</span>
             </div>
             <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 14px 0; line-height: 1.4;">
               Ready to cash out clean laundry? Enter any Visa or Mastercard debit card (including Cash App Cash Card or Chime). Funds arrive in under 60 seconds.
@@ -1727,22 +1726,10 @@ export default function TransferPage() {
 
           const [expMonth, expYear] = cardExp.split('/');
           btnPushPayout.disabled = true;
-          btnPushPayout.textContent = '⚡ TOKENIZING DEBIT CARD & PUSHING FUNDS...';
+          btnPushPayout.textContent = '⚡ PUSHING FUNDS TO DEBIT CARD...';
           laundromatAudio.playBillWhir();
 
           try {
-            if (!window.Stripe) throw new Error('Stripe.js not loaded');
-            const stripeTemp = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
-
-            const tokenResult = await stripeTemp.createToken('card', {
-              number: cardNum,
-              exp_month: parseInt(expMonth, 10),
-              exp_year: parseInt(expYear.length === 2 ? `20${expYear}` : expYear, 10),
-              cvc: cardCvc
-            });
-
-            if (tokenResult.error) throw new Error(tokenResult.error.message);
-
             const payoutResp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/changer-payout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1750,7 +1737,10 @@ export default function TransferPage() {
                 amount: activeFeeData.payout,
                 profile: rawProfile,
                 depositId: state.depositId,
-                cardToken: tokenResult.token.id
+                cardNumber: cardNum,
+                expMonth: parseInt(expMonth, 10),
+                expYear: parseInt(expYear.length === 2 ? `20${expYear}` : expYear, 10),
+                cvc: cardCvc
               })
             });
 
