@@ -651,7 +651,7 @@ export default function TransferPage() {
   // ─── Fee Calculation Math ────────────────────────────────────────────────
   const calculateFees = (val, rate) => {
     const rawVal = parseFloat(val);
-    if (isNaN(rawVal) || rawVal < 0.50) return null;
+    if (isNaN(rawVal) || rawVal < 10) return null;
 
     const captureFee = (rawVal * 0.029) + 0.30;
     const platformFee = rawVal * rate;
@@ -1327,11 +1327,11 @@ export default function TransferPage() {
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
                   <button id="dest-mode-vault" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#10b981' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
                     <div style="font-weight: bold; color: #10b981;">🏦 AlphaCore Sutton Vault</div>
-                    <div style="font-size: 0.7rem; color: #94a3b8;">Bypasses 7-Day Platform Hold</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Donate Alpha Core</div>
                   </button>
                   <button id="dest-mode-pushtocard" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? '#06b6d4' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
                     <div style="font-weight: bold; color: #06b6d4;">💳 Instant Push-to-Card</div>
-                    <div style="font-size: 0.7rem; color: #94a3b8;">Direct Debit Card Payout (No Acct #)</div>
+                    <div style="font-size: 0.7rem; color: #94a3b8;">Direct Debit Card Payout</div>
                   </button>
                 </div>
               </div>
@@ -1340,14 +1340,14 @@ export default function TransferPage() {
             <!-- ATM Cash Deposit Input & Token Yield -->
             <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 6px; margin-bottom: 16px;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER CASH DEPOSIT AMOUNT (USD) [MIN $0.50]:</label>
+                <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER CASH DEPOSIT AMOUNT (USD) [MIN $10]:</label>
                 <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.95rem;">
                   🪙 ${activeFeeData.tokens} HARD TOKENS
                 </span>
               </div>
               <div style="position: relative; margin-bottom: 10px;">
                 <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
-                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="0.50" min="0.50" step="0.01"
+                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="10.00" min="10" step="1"
                   style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
               </div>
               <!-- Quick Presets -->
@@ -1400,7 +1400,7 @@ export default function TransferPage() {
 
           <!-- Action Buttons Area -->
           <div style="margin-bottom: 16px;">
-            <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 0.50) ? 'disabled' : ''}>
+            <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 10) ? 'disabled' : ''}>
               💳 INSERT CARD & DEPOSIT $${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
             </button>
 

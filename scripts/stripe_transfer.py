@@ -164,14 +164,14 @@ def StripeAPI() -> FastAPI:
     # -------------------------------------------------------------
     @web_app.post("/atm-deposit")
     async def atm_deposit(request: Request):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         data = await request.json()
         amount_usd = float(data.get("amount", 0.0))
         profile = str(data.get("profile", "Guest")).strip()
         is_guest = profile.lower() == "guest" or bool(data.get("is_guest", False))
 
-        if amount_usd < 0.50:
-            raise HTTPException(status_code=400, detail="Minimum ATM deposit is $0.50 USD.")
+        if amount_usd < 10.0:
+            raise HTTPException(status_code=400, detail="Minimum ATM deposit is $10.00 USD.")
 
         amount_cents = int(round(amount_usd * 100))
         # Non-refundable card network capture fee: Stripe standard (2.9% + 30 cents)
@@ -222,7 +222,7 @@ def StripeAPI() -> FastAPI:
 
     @web_app.post("/confirm-atm-deposit")
     async def confirm_atm_deposit(request: Request):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         data = await request.json()
         pi_id = data.get("paymentIntentId")
         deposit_id = data.get("depositId")
@@ -287,7 +287,7 @@ def StripeAPI() -> FastAPI:
     # -------------------------------------------------------------
     @web_app.post("/changer-payout")
     async def changer_payout(request: Request):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         data = await request.json()
         payout_amount = float(data.get("amount", 0.0))
         profile = str(data.get("profile", "Guest")).strip()
@@ -298,8 +298,8 @@ def StripeAPI() -> FastAPI:
         if not card_token:
             raise HTTPException(status_code=400, detail="Destination debit card token is required.")
 
-        if payout_amount < 0.50:
-            raise HTTPException(status_code=400, detail="Minimum payout is $0.50 USD.")
+        if payout_amount < 10.0:
+            raise HTTPException(status_code=400, detail="Minimum payout is $10.00 USD.")
 
         ledger = _load_ledger()
 
@@ -388,7 +388,7 @@ def StripeAPI() -> FastAPI:
     # -------------------------------------------------------------
     @web_app.post("/create-payment-intent")
     async def create_payment_intent(request: Request):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         data = await request.json()
         amount_usd = data.get("amount")
         profile = str(data.get("profile", "Guest")).strip()
@@ -425,7 +425,7 @@ def StripeAPI() -> FastAPI:
 
     @web_app.post("/create-connect-account")
     async def create_connect_account(request: Request):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         data = await request.json()
         name = str(data.get("name", "AlphaCore Recipient")).strip()
         account = stripe.Account.create(
@@ -444,7 +444,7 @@ def StripeAPI() -> FastAPI:
 
     @web_app.get("/get-account-info")
     async def get_account_info(account_id: str):
-        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
         acc = stripe.Account.retrieve(str(account_id).strip())
         return {
             "id": acc.id,

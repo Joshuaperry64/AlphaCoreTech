@@ -62,6 +62,10 @@ def _get_secrets():
         secrets.append(modal.Secret.from_name("huggingface-secret"))
     except:
         pass
+    try:
+        secrets.append(modal.Secret.from_name("stripe-secret"))
+    except:
+        pass
     return secrets
 
 sync_image = (
