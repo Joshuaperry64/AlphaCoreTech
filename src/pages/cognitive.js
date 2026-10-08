@@ -2,7 +2,7 @@ import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 import { pushToServer } from '../components/db_sync.js';
-import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
 
 export default function CognitiveUplink() {
@@ -77,7 +77,7 @@ export default function CognitiveUplink() {
     let currentChannel = 'private'; 
     let currentThreadId = null;
     let ttsEnabled = false;
-    let useAlphaCorePrivate = localStorage.getItem(\lphacore_instruction_private_\C:\Users\josh6\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1\) === 'true';
+    let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
 
     let globalSettings = {};
     try { globalSettings = JSON.parse(localStorage.getItem('alphacore_modal_settings')) || {}; } catch(e){}
@@ -131,7 +131,7 @@ export default function CognitiveUplink() {
         container.querySelector('#guest-key-status').textContent = 'Key saved locally.';
       };
     } else {
-      configContent.innerHTML = ``<div class="panel-title">// CORE CONFIGURATION</div><div style="padding: 20px;">Configured via Architect Master Controls.</div>`;
+      configContent.innerHTML = `<div class="panel-title">// CORE CONFIGURATION</div><div style="padding: 20px;">Configured via Architect Master Controls.</div>`;
     }
 
     const tabs = container.querySelectorAll('.aim-seg-btn');
@@ -195,7 +195,7 @@ export default function CognitiveUplink() {
         toggleAlphaCoreBtn.textContent = 'ðŸ”’ ALPHA PROTOCOL: ENFORCED';
         toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: rgba(0, 255, 140, 0.7); color: #00ff8c; background: rgba(0, 255, 140, 0.15); cursor: not-allowed;';
       } else {
-        channelTitle.textContent = \// PRIVATE_UPLINK [\\]\;
+        channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}]`;
         toggleAlphaCoreBtn.disabled = false;
         if (useAlphaCorePrivate) {
           toggleAlphaCoreBtn.textContent = 'âš¡ ALPHA PROTOCOL: ON';
@@ -210,7 +210,7 @@ export default function CognitiveUplink() {
     toggleAlphaCoreBtn.addEventListener('click', () => {
       if (currentChannel === 'shared') return;
       useAlphaCorePrivate = !useAlphaCorePrivate;
-      localStorage.setItem(\lphacore_instruction_private_\C:\Users\josh6\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1\, useAlphaCorePrivate ? 'true' : 'false');
+      localStorage.setItem(`alphacore_instruction_private_${profile}`, useAlphaCorePrivate ? 'true' : 'false');
       updateTitleAndAlpha();
     });
 
