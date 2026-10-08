@@ -8,7 +8,7 @@ import { apiUrl } from '../components/api.js';
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
   
-  container.innerHTML = \
+  container.innerHTML = `
     <div class="section-header">
       <h1 class="glitch" data-text="// COGNITIVE_CORE_LIVE">// COGNITIVE_CORE_LIVE</h1>
       <div class="header-line"></div>
@@ -67,7 +67,7 @@ export default function CognitiveUplink() {
         </div>
       </div>
     </div>
-  \;
+  `;
 
   setTimeout(() => {
     const profile = sessionStorage.getItem('current_profile') || 'Guest';
@@ -90,20 +90,20 @@ export default function CognitiveUplink() {
 
     const configContent = container.querySelector('#config-content');
     if (isArchitect) {
-      configContent.innerHTML = \
+      configContent.innerHTML = `
         <div class="panel-title">// ARCHITECT GLOBAL CONTROLS</div>
         <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
           <label class="aim-label">MASTER GEMINI API KEY (Applies to all registered users)</label>
-          <input type="password" id="master-api-key" class="aim-input" value="\" style="width: 100%; margin-bottom: 15px;">
+          <input type="password" id="master-api-key" class="aim-input" value="${masterApiKey}" style="width: 100%; margin-bottom: 15px;">
           <label class="aim-label">GLOBAL SYSTEM INSTRUCTION (Applies to all sessions)</label><textarea id="system-instruction" class="aim-input" style="width: 100%; height: 100px; margin-bottom: 15px; resize: vertical; padding: 10px; font-family: monospace;" placeholder="Enter system instructions to govern AI behavior..."></textarea><label class="aim-label">BACKEND ENGINE</label>
           <select id="core-backend" class="aim-input" style="width: 100%; margin-bottom: 15px;">
-            <option value="gemini_live" \>Gemini Live API (WebSockets)</option>
-            <option value="vllm" \>vLLM Local Server</option>
+            <option value="gemini_live" ${coreBackend === 'gemini_live' ? 'selected' : ''}>Gemini Live API (WebSockets)</option>
+            <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Local Server</option>
           </select>
           <button id="save-config-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE GLOBAL CONFIG</button>
           <div id="config-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim);"></div>
         </div>
-      \;
+      `;
       setTimeout(() => { if(container.querySelector('#system-instruction')) container.querySelector('#system-instruction').value = globalSettings.systemInstruction || ''; }, 50);
       container.querySelector('#save-config-btn').onclick = () => {
         globalSettings.masterApiKey = container.querySelector('#master-api-key').value.trim();
@@ -116,22 +116,22 @@ export default function CognitiveUplink() {
         container.querySelector('#config-status').textContent = 'Global configuration saved and synced.';
       };
     } else if (isGuest) {
-      configContent.innerHTML = \
+      configContent.innerHTML = `
         <div class="panel-title">// GUEST API KEY</div>
         <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px;">
           <label class="aim-label">YOUR GEMINI API KEY</label>
-          <input type="password" id="guest-api-key" class="aim-input" value="\" style="width: 100%; margin-bottom: 15px;">
+          <input type="password" id="guest-api-key" class="aim-input" value="${guestApiKey}" style="width: 100%; margin-bottom: 15px;">
           <button id="save-guest-key" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE KEY</button>
           <div id="guest-key-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim);"></div>
         </div>
-      \;
+      `;
       container.querySelector('#save-guest-key').onclick = () => {
         guestApiKey = container.querySelector('#guest-api-key').value.trim();
         localStorage.setItem('gemini_api_key_guest', guestApiKey);
         container.querySelector('#guest-key-status').textContent = 'Key saved locally.';
       };
     } else {
-      configContent.innerHTML = \<div class="panel-title">// CORE CONFIGURATION</div><div style="padding: 20px;">Configured via Architect Master Controls.</div>\;
+      configContent.innerHTML = ``<div class="panel-title">// CORE CONFIGURATION</div><div style="padding: 20px;">Configured via Architect Master Controls.</div>`;
     }
 
     const tabs = container.querySelectorAll('.aim-seg-btn');
@@ -222,8 +222,8 @@ export default function CognitiveUplink() {
     const threadsSidebar = container.querySelector('#threads-sidebar');
     const threadsList = container.querySelector('#threads-list');
 
-    function getThreadsKey() { return currentChannel === 'private' ? \gemini_chat_threads_\C:\Users\josh6\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1\ : \gemini_chat_threads_shared\; }
-    function getMessagesKey(threadId) { return \gemini_chat_thread_\\; }
+    function getThreadsKey() { return currentChannel === 'private' ? `gemini_chat_threads_${profile}` : 'gemini_chat_threads_shared'; }
+    function getMessagesKey(threadId) { return `gemini_chat_thread_${threadId}`; }
     function generateId() { return Math.random().toString(36).substring(2, 10); }
 
     async function loadThreads() {
@@ -310,9 +310,9 @@ export default function CognitiveUplink() {
 
     function appendMessage(prefix, text, className) {
       const msg = document.createElement('div');
-      msg.className = \chat-msg \\;
-      let htmlContent = escapeHtml(text).replace(/\\*\\*(.*?)\\*\\*/g, '<strong></strong>').replace(/\\*(.*?)\\*/g, '<em></em>').replace(/\\n/g, '<br/>');
-      msg.innerHTML = \<span class="chat-prefix">[\]</span><span class="chat-text" style="white-space:pre-wrap;">\</span>\;
+      msg.className = `chat-msg ${className}`;
+      let htmlContent = escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
+      msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text" style="white-space:pre-wrap;">${htmlContent}</span>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
       return msg;
@@ -850,6 +850,10 @@ export default function CognitiveUplink() {
 
   return container;
 }
+
+
+
+
 
 
 
