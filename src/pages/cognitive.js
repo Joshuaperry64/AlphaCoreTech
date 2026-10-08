@@ -680,9 +680,9 @@ export default function CognitiveUplink() {
         let baseInstructions = globalSettings.systemInstruction ? globalSettings.systemInstruction + '\n\n' : '';
         let instructions = baseInstructions + (isAlpha ? ALPHACORE_SYSTEM_INSTRUCTION : 'You are a helpful assistant.');
         
-        // Inject Current User Profile into context
-        instructions = \CURRENT ACTIVE USER PROFILE: \\n\n\ + instructions;
-        
+        // Inject Current User Profile and System Time into context
+        const currentTime = new Date().toLocaleString();
+        instructions = `CURRENT SYSTEM TIME: ${currentTime}\nCURRENT ACTIVE USER PROFILE: ${profile.toUpperCase()}\n\n` + instructions;
         liveSession = await ai.live.connect({
           model: 'gemini-3.1-flash-live-preview',
           config: {
