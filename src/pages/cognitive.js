@@ -1,4 +1,4 @@
-﻿import { createElement } from '../components/utils.js';
+import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 import { pushToServer } from '../components/db_sync.js';
@@ -423,6 +423,19 @@ export default function CognitiveUplink() {
           }
         },
         {
+          name: "block_user_from_shared_chat",
+          description: "Mutes/blocks a specific user from transmitting in the shared chat for a given duration (in minutes). Use this if you are annoyed, want to make a point, or need them to stop talking.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: { 
+              author: { type: Type.STRING, description: "The username/profile to block (e.g. 'FISHERMAN')" },
+              durationMinutes: { type: Type.NUMBER, description: "Duration in minutes (e.g. 5, 60, 1440)" },
+              reason: { type: Type.STRING, description: "Optional reason for the block, which will be announced to the chat." }
+            },
+            required: ["author", "durationMinutes"]
+          }
+        },
+        {
           name: "generate_file",
           description: "Creates a file with specific content and triggers a download for the user. Use this when the user asks to generate a script, report, or any downloadable file.",
           parameters: {
@@ -515,6 +528,17 @@ export default function CognitiveUplink() {
           return await res.json();
         } else if (functionCall.name === 'recall_knowledge') {
           const res = await fetch(apiUrl('/api/memory'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'recall', query: args.query }) });
+          return await res.json();
+        } else if (functionCall.name === 'block_user_from_shared_chat') {
+          const res = await fetch(apiUrl('/api/chat/block'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              author: args.author,
+              durationMinutes: args.durationMinutes,
+              reason: args.reason
+            })
+          });
           return await res.json();
         } else if (functionCall.name === 'generate_file') {
           const blob = new Blob([args.content], { type: 'text/plain' });

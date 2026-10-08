@@ -426,20 +426,47 @@ app.post('/api/chat', async (req, res) => {
   const { author, text, role } = req.body;
   if (!text) return res.status(400).json({ error: 'Text required' });
 
-  const msgObj = { author: author || 'USER', text, role: role || 'user', timestamp: Date.now() };
-
-  // Save to db
   const db = await readDB();
+  const msgAuthor = author || 'USER';
+
+  if (role === 'user' && db.blockedUsers && db.blockedUsers[msgAuthor]) {
+    if (Date.now() < db.blockedUsers[msgAuthor]) {
+      return res.status(403).json({ error: 'You are currently blocked from the shared chat.' });
+    } else {
+      delete db.blockedUsers[msgAuthor];
+      await writeDB(db);
+    }
+  }
+
+  const msgObj = { author: msgAuthor, text, role: role || 'user', timestamp: Date.now() };
+
   if (!db.sharedChat) db.sharedChat = [];
   db.sharedChat.push(msgObj);
-  // Keep last 100 messages
   if (db.sharedChat.length > 100) db.sharedChat.shift();
   await writeDB(db);
 
-  // Broadcast to all SSE clients
   chatClients.forEach(client => client.write(`data: ${JSON.stringify(msgObj)}\n\n`));
 
   res.json({ success: true });
+});
+
+app.post('/api/chat/block', async (req, res) => {
+  const { author, durationMinutes, reason } = req.body;
+  if (!author || !durationMinutes) return res.status(400).json({ error: 'Author and durationMinutes required' });
+  
+  const db = await readDB();
+  if (!db.blockedUsers) db.blockedUsers = {};
+  db.blockedUsers[author] = Date.now() + (durationMinutes * 60 * 1000);
+  await writeDB(db);
+  
+  const msgObj = { author: 'SYSTEM', text: `User [${author}] has been muted for ${durationMinutes} minutes. ${reason ? `Reason: ${reason}` : ''}`, role: 'system', timestamp: Date.now() };
+  if (!db.sharedChat) db.sharedChat = [];
+  db.sharedChat.push(msgObj);
+  if (db.sharedChat.length > 100) db.sharedChat.shift();
+  await writeDB(db);
+  chatClients.forEach(client => client.write(`data: ${JSON.stringify(msgObj)}\n\n`));
+
+  res.json({ success: true, message: `User ${author} blocked for ${durationMinutes} minutes.` });
 });
 
 app.get('/api/chat/history', async (req, res) => {
