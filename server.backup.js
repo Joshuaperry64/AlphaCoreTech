@@ -383,68 +383,8 @@ app.post('/api/auth', async (req, res) => {
   res.json({ valid: true, pinObj: found });
 });
 
-// --- GLOBAL MEMORY SYSTEM ---
-app.get('/api/memory', async (req, res) => {
-  const db = await readDB();
-  res.json(db.memory || []);
-});
-
-app.post('/api/memory', async (req, res) => {
-  const db = await readDB();
-  if (!db.memory) db.memory = [];
-  
-  const { action, fact, query } = req.body;
-  if (action === 'memorize' && fact) {
-    db.memory.push({ fact, timestamp: Date.now() });
-    await writeDB(db);
-    return res.json({ success: true, fact });
-  } else if (action === 'recall' && query) {
-    // Basic text search recall
-    const results = db.memory.filter(m => m.fact.toLowerCase().includes(query.toLowerCase()));
-    return res.json({ results });
-  }
-  res.status(400).json({ error: 'Invalid action or missing parameters' });
-});
-
-// --- SHARED CHAT SSE & POST ---
-let chatClients = [];
-
-app.get('/api/chat/stream', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  chatClients.push(res);
-
-  req.on('close', () => {
-    chatClients = chatClients.filter(client => client !== res);
-  });
-});
-
 app.post('/api/chat', async (req, res) => {
-  const { author, text, role } = req.body;
-  if (!text) return res.status(400).json({ error: 'Text required' });
-
-  const msgObj = { author: author || 'USER', text, role: role || 'user', timestamp: Date.now() };
-
-  // Save to db
-  const db = await readDB();
-  if (!db.sharedChat) db.sharedChat = [];
-  db.sharedChat.push(msgObj);
-  // Keep last 100 messages
-  if (db.sharedChat.length > 100) db.sharedChat.shift();
-  await writeDB(db);
-
-  // Broadcast to all SSE clients
-  chatClients.forEach(client => client.write(`data: ${JSON.stringify(msgObj)}\n\n`));
-
-  res.json({ success: true });
-});
-
-app.get('/api/chat/history', async (req, res) => {
-  const db = await readDB();
-  res.json(db.sharedChat || []);
+  res.json({ reply: 'this feature is still in development.' });
 });
 
 app.post('/api/vault', authenticate, async (req, res) => {
