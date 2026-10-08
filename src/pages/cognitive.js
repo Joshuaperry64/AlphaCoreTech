@@ -59,6 +59,7 @@ export default function CognitiveUplink() {
         <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 10px;"></div>
         
         <div class="chat-input-wrap" style="position: relative; display: flex; align-items: flex-end; gap: 8px;">
+          <button id="chat-mic-btn" class="aim-btn" title="VOICE TRANSMISSION" style="padding: 15px; font-size: 1.2rem; height: 50px;">&#x1F3A4;</button>
           <button id="chat-upload-btn" class="aim-btn" title="UPLOAD FILE" style="padding: 15px; font-size: 1.2rem; height: 50px;">&#x1F4CE;</button>
           <input type="file" id="chat-file-input" style="display: none;" multiple>
           <textarea class="chat-input" id="chat-input" rows="1" placeholder="Initialize transmission..." maxlength="10000" style="flex: 1; padding: 15px; font-size: 1.1rem; resize: none; overflow-y: auto; max-height: 150px; height: 50px; border-radius: 4px;"></textarea>
@@ -365,8 +366,65 @@ export default function CognitiveUplink() {
     let nextAudioTime = 0;
     let activeAudioSources = [];
     
+    let isRecording = false;
+    let recordingStream = null;
+    let audioInputCtx = null;
+    let scriptProcessor = null;
+    
     const connectBtn = container.querySelector('#connect-live-btn');
     const disconnectBtn = container.querySelector('#disconnect-live-btn');
+    const micBtn = container.querySelector('#chat-mic-btn');
+
+    if (micBtn) {
+      micBtn.onclick = async () => {
+        if (!liveSession) {
+          appendMessage('SYSTEM', 'Initialize live link before audio transmission.', 'system-msg');
+          return;
+        }
+        if (isRecording) {
+          isRecording = false;
+          if (scriptProcessor) scriptProcessor.disconnect();
+          if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
+          if (audioInputCtx) audioInputCtx.close();
+          micBtn.style.color = 'var(--text)';
+          micBtn.style.background = 'transparent';
+          appendMessage('SYSTEM', 'Microphone disabled.', 'system-msg');
+          return;
+        }
+        
+        try {
+          recordingStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, sampleRate: 16000 } });
+          audioInputCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+          const source = audioInputCtx.createMediaStreamSource(recordingStream);
+          scriptProcessor = audioInputCtx.createScriptProcessor(4096, 1, 1);
+          
+          scriptProcessor.onaudioprocess = (e) => {
+            if (!isRecording || !liveSession) return;
+            const inputData = e.inputBuffer.getChannelData(0);
+            const pcm16 = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+              let s = Math.max(-1, Math.min(1, inputData[i]));
+              pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            const buffer = new Uint8Array(pcm16.buffer);
+            let binary = '';
+            for (let i = 0; i < buffer.byteLength; i++) binary += String.fromCharCode(buffer[i]);
+            const b64Data = window.btoa(binary);
+            liveSession.sendRealtimeInput([{ mimeType: 'audio/pcm;rate=16000', data: b64Data }]);
+          };
+          
+          source.connect(scriptProcessor);
+          scriptProcessor.connect(audioInputCtx.destination);
+          
+          isRecording = true;
+          micBtn.style.color = '#ff003c';
+          micBtn.style.background = 'rgba(255,0,60,0.1)';
+          appendMessage('SYSTEM', 'Microphone active. Transmitting audio...', 'system-msg');
+        } catch (e) {
+          appendMessage('SYSTEM', `Microphone error: ${e.message}`, 'system-msg');
+        }
+      };
+    }
     
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
