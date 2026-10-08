@@ -410,7 +410,7 @@ export default function CognitiveUplink() {
             let binary = '';
             for (let i = 0; i < buffer.byteLength; i++) binary += String.fromCharCode(buffer[i]);
             const b64Data = window.btoa(binary);
-            liveSession.sendRealtimeInput([{ mimeType: 'audio/pcm;rate=16000', data: b64Data }]);
+            liveSession.sendRealtimeInput({ audio: { mimeType: 'audio/pcm;rate=16000', data: b64Data } });
           };
           
           source.connect(scriptProcessor);
@@ -654,7 +654,7 @@ export default function CognitiveUplink() {
             
             // Feed back to Live API context
             if (liveSession) {
-              liveSession.sendRealtimeInput([{ video: { data: resultBase64, mimeType } }]);
+              liveSession.sendRealtimeInput({ video: { data: resultBase64, mimeType } });
             }
             
             return { success: true, message: `Successfully generated media for prompt "${args.prompt}". The artifact has been displayed to the user and injected into your visual cortex.` };
@@ -715,13 +715,13 @@ export default function CognitiveUplink() {
                     }
                   if (part.functionCall) {
                     const result = await handleToolCall(part.functionCall);
-                    liveSession.sendRealtimeInput([{
-                      functionResponse: {
+                    liveSession.sendToolResponse({
+                      functionResponses: [{
                         id: part.functionCall.id,
                         name: part.functionCall.name,
                         response: result
-                      }
-                    }]);
+                      }]
+                    });
                   }
                 }
               }
@@ -744,7 +744,7 @@ export default function CognitiveUplink() {
                     const lastPhrase = txt.slice(-90).trim();
                     const contPrompt = `Continue your response exactly from where you were cut off. Do not apologize or explain. Your last words were: '${lastPhrase}'`;
                     if (liveSession) {
-                      liveSession.sendRealtimeInput([{ text: contPrompt }]);
+                      liveSession.sendRealtimeInput({ text: contPrompt });
                     }
                     return; // DO NOT finalize, let it append to the same bubble
                   }
@@ -802,7 +802,7 @@ export default function CognitiveUplink() {
           reader.onload = (ev) => {
             const base64 = ev.target.result.split(',')[1];
             if (liveSession) {
-              liveSession.sendRealtimeInput([{ video: { data: base64, mimeType: file.type } }]); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming';
+              liveSession.sendRealtimeInput({ video: { data: base64, mimeType: file.type } }); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming';
               appendMessage('SYSTEM', `Image ${file.name} sent to visual cortex.`, 'system-msg');
             }
           };
@@ -812,7 +812,7 @@ export default function CognitiveUplink() {
           reader.onload = (ev) => {
             const textContent = ev.target.result;
             if (liveSession) {
-              liveSession.sendRealtimeInput([{ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` }]);
+              liveSession.sendRealtimeInput({ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` });
               appendMessage('SYSTEM', `File ${file.name} injected into data stream.`, 'system-msg');
             }
           };
@@ -834,7 +834,7 @@ export default function CognitiveUplink() {
       if (!liveSession) await connectLiveAPI();
       
       if (liveSession) {
-        try { liveSession.sendRealtimeInput([{ text }]); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming'; } 
+        try { liveSession.sendRealtimeInput({ text }); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming'; } 
         catch(e) { appendMessage('ERROR', 'Send failed: ' + e.message, 'system-msg'); }
       }
     };
