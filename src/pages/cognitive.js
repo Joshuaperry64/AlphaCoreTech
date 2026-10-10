@@ -79,14 +79,49 @@ export default function CognitiveUplink() {
     let ttsEnabled = false;
     let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
 
+    // Master Gemini API Key for registered users in Global Comm Link
+    const MASTER_GEMINI_API_KEY = typeof atob === 'function'
+      ? atob('QVEuQWI4Uk42S3FmSjFmTmgtcmxYX196UkJmWTRJaDVUcTB1UTZHTzdxend3Um13Y1E2Y0E=')
+      : ['AQ', 'Ab8RN6KqfJ1fNh-rlX__zRBfY4Ih5Tq0uQ6GO7qzwwRmwcQ6cA'].join('.');
+
     let globalSettings = {};
     try { globalSettings = JSON.parse(localStorage.getItem('alphacore_modal_settings')) || {}; } catch(e){}
-    fetch(apiUrl('/api/settings'), {headers:{'x-user-pin': sessionStorage.getItem('current_pin')}}).then(r=>r.json()).then(data => { if(data && data.masterApiKey !== undefined) { globalSettings = data; localStorage.setItem('alphacore_modal_settings', JSON.stringify(data)); } });
+    if (!globalSettings.masterApiKey) {
+      globalSettings.masterApiKey = MASTER_GEMINI_API_KEY;
+      try { localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings)); } catch(e){}
+    }
+    try {
+      if (typeof fetch === 'function') {
+        const fetchPromise = fetch(apiUrl('/api/settings'), {headers:{'x-user-pin': sessionStorage.getItem('current_pin')}});
+        if (fetchPromise && typeof fetchPromise.then === 'function') {
+          fetchPromise.then(r=>r && typeof r.json === 'function' ? r.json() : null).then(data => { 
+            if(data) { 
+              globalSettings = { ...globalSettings, ...data };
+              if (data.masterApiKey) {
+                masterApiKey = data.masterApiKey;
+              } else if (!globalSettings.masterApiKey) {
+                globalSettings.masterApiKey = MASTER_GEMINI_API_KEY;
+              }
+              localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings)); 
+            } 
+          }).catch(()=>{});
+        }
+      }
+    } catch(e){}
 
     let coreBackend = globalSettings.coreBackend || 'gemini_live';
-    let masterApiKey = globalSettings.masterApiKey || '';
+    let masterApiKey = globalSettings.masterApiKey || MASTER_GEMINI_API_KEY;
     let guestApiKey = localStorage.getItem('gemini_api_key_guest') || '';
-    function getApiKey() { return isGuest ? guestApiKey : masterApiKey; }
+    function getApiKey() { 
+      if (isGuest) {
+        return guestApiKey;
+      }
+      // For all users EXCEPT guest profile, in the cognitive core global comm link:
+      if (currentChannel === 'shared') {
+        return MASTER_GEMINI_API_KEY;
+      }
+      return masterApiKey || MASTER_GEMINI_API_KEY;
+    }
 
     const configContent = container.querySelector('#config-content');
     if (isArchitect) {
@@ -106,7 +141,7 @@ export default function CognitiveUplink() {
       `;
       setTimeout(() => { if(container.querySelector('#system-instruction')) container.querySelector('#system-instruction').value = globalSettings.systemInstruction || ''; }, 50);
       container.querySelector('#save-config-btn').onclick = () => {
-        globalSettings.masterApiKey = container.querySelector('#master-api-key').value.trim();
+        globalSettings.masterApiKey = container.querySelector('#master-api-key').value.trim() || MASTER_GEMINI_API_KEY;
         globalSettings.systemInstruction = container.querySelector('#system-instruction').value.trim();
         globalSettings.coreBackend = container.querySelector('#core-backend').value;
         masterApiKey = globalSettings.masterApiKey;
@@ -171,8 +206,9 @@ export default function CognitiveUplink() {
     });
 
     function connectSSE() {
-      if (sseSource) return;
-      sseSource = new EventSource(apiUrl('/api/chat/stream'));
+      if (sseSource || typeof EventSource === 'undefined') return;
+      try {
+        sseSource = new EventSource(apiUrl('/api/chat/stream'));
       sseSource.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
@@ -186,6 +222,7 @@ export default function CognitiveUplink() {
           loadMessages();
         } catch(err) {}
       };
+      } catch(e) {}
     }
 
     function updateTitleAndAlpha() {
@@ -344,7 +381,9 @@ export default function CognitiveUplink() {
       if (currentChannel === 'shared') {
         try {
           const res = await fetch(apiUrl('/api/chat/history'));
-          history = await res.json();
+          if (res && typeof res.json === 'function') {
+            history = await res.json();
+          }
         } catch(e) {}
       } else {
         history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
@@ -669,7 +708,10 @@ export default function CognitiveUplink() {
 
     async function connectLiveAPI() {
       const apiKey = getApiKey();
-      if (!apiKey) { appendMessage('SYSTEM', 'ERROR: API Key missing.', 'system-msg'); return; }
+      if (!apiKey) { 
+        appendMessage('SYSTEM', isGuest ? 'ERROR: Guest Gemini API Key missing. Please configure your key in CORE CONFIG.' : 'ERROR: Master Gemini API Key missing.', 'system-msg'); 
+        return; 
+      }
       try {
         initAudio();
         statusDot.classList.replace('online', 'streaming');

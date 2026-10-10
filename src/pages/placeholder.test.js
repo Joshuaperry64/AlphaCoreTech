@@ -37,6 +37,7 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     sessionStorage.setItem('current_profile', 'Architect');
     sessionStorage.setItem('current_pin', '672167566');
     sessionStorage.setItem('darkness_mode_active', 'true');
+    localStorage.setItem('gemini_api_key', 'test_key');
 
     const el = PlaceholderPage();
     const tabs = el.querySelectorAll('.sz-tab-btn');

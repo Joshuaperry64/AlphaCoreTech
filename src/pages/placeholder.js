@@ -400,7 +400,7 @@ export default function PlaceholderPage() {
           root.querySelector('#sim-setup').style.display = 'none';
           root.querySelector('#sim-live').style.display = 'block';
           const simOutput = root.querySelector('#sim-output');
-          simOutput.innerHTML = `<p><em>Luci's voice echoes in the new reality...</em></p><p>"The world is born from your imagination, Architect. Connecting to Gemini neural link..."</p>`;
+          simOutput.innerHTML = `<p><strong>&gt; ${escapeHTML(scenario)}</strong></p><p><em>Luci's voice echoes in the new reality...</em></p><p>"The world is born from your imagination, Architect. Connecting to Gemini neural link..."</p>`;
           
           processSimTurn(root);
         };
