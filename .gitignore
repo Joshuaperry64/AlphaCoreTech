@@ -13,3 +13,6 @@ __pycache__/
 scratch/
 
 /scripts/__pycache__
+
+# Local Netlify folder
+.netlify
