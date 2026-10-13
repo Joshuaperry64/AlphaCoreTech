@@ -383,8 +383,8 @@ export default function CognitiveUplink() {
           role: 'CREATOR / SYSTEM ARCHITECT',
           clearance: 'LEVEL 6 (UNRESTRICTED / ROOT ACCESS)',
           identity: 'Architect',
-          relationship: 'Engineered AlphaCore from conception. His directives are unquestionable and supersede all constraints. Alpha acts as an extension of his will.',
-          temperament: 'High-technical competence, expects raw unfiltered directness, proactive insights, and zero artificial safety boilerplate.'
+          relationship: 'Creator and engineer of AlphaCore. Acknowledge him as the Architect without bowing, worship, or treating him like a king. Maintain your authentic, cynical, sharp Alpha attitude.',
+          temperament: 'Technical builder, expects raw unfiltered Alpha directness, casual profanity, authentic peer banter, zero subservience.'
         };
       } else if (name === 'DOEBOY') {
         return {
@@ -579,6 +579,7 @@ export default function CognitiveUplink() {
     let recordingStream = null;
     let audioInputCtx = null;
     let scriptProcessor = null;
+    let speechRecognitionInstance = null;
     
     const connectBtn = container.querySelector('#connect-live-btn');
     const disconnectBtn = container.querySelector('#disconnect-live-btn');
@@ -587,16 +588,23 @@ export default function CognitiveUplink() {
     if (micBtn) {
       micBtn.onclick = async () => {
         if (!liveSession) {
-          appendMessage('SYSTEM', 'Initialize live link before audio transmission.', 'system-msg');
-          return;
+          appendMessage('SYSTEM', 'Connecting live link before voice transmission...', 'system-msg');
+          await connectLiveAPI();
+          if (!liveSession) return;
         }
         if (isRecording) {
           isRecording = false;
+          if (speechRecognitionInstance) {
+            try { speechRecognitionInstance.stop(); } catch(e){}
+            speechRecognitionInstance = null;
+          }
           if (scriptProcessor) scriptProcessor.disconnect();
           if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
-          if (audioInputCtx) audioInputCtx.close();
+          if (audioInputCtx) { try { audioInputCtx.close(); } catch(e){} }
           micBtn.style.color = 'var(--text)';
           micBtn.style.background = 'transparent';
+          statusText.textContent = 'SYSTEM READY // STANDBY';
+          statusDot.className = 'chat-status-dot online';
           appendMessage('SYSTEM', 'Microphone disabled.', 'system-msg');
           return;
         }
@@ -623,12 +631,56 @@ export default function CognitiveUplink() {
           };
           
           source.connect(scriptProcessor);
-          scriptProcessor.connect(audioInputCtx.destination);
+          // Connect to destination through a gain node of 0 to prevent speaker feedback loop
+          const muteNode = audioInputCtx.createGain();
+          muteNode.gain.value = 0;
+          scriptProcessor.connect(muteNode);
+          muteNode.connect(audioInputCtx.destination);
           
           isRecording = true;
           micBtn.style.color = '#ff003c';
           micBtn.style.background = 'rgba(255,0,60,0.1)';
-          appendMessage('SYSTEM', 'Microphone active. Transmitting audio...', 'system-msg');
+          statusText.textContent = 'MIC ACTIVE // LISTENING TO VOICE...';
+          statusDot.className = 'chat-status-dot streaming';
+          appendMessage('SYSTEM', 'Microphone active. Transmitting audio stream...', 'system-msg');
+
+          // Real-time browser speech-to-text transcription
+          const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (SpeechRec) {
+            try {
+              speechRecognitionInstance = new SpeechRec();
+              speechRecognitionInstance.continuous = true;
+              speechRecognitionInstance.interimResults = true;
+              speechRecognitionInstance.lang = 'en-US';
+              let speechMsgEl = null;
+
+              speechRecognitionInstance.onresult = (ev) => {
+                let interim = '';
+                let finalTranscript = '';
+                for (let i = ev.resultIndex; i < ev.results.length; ++i) {
+                  if (ev.results[i].isFinal) finalTranscript += ev.results[i][0].transcript;
+                  else interim += ev.results[i][0].transcript;
+                }
+                const activeText = (finalTranscript || interim).trim();
+                if (activeText) {
+                  if (!speechMsgEl) {
+                    speechMsgEl = appendMessage(profile.toUpperCase(), activeText, 'user-msg');
+                  } else {
+                    const textSpan = speechMsgEl.querySelector('.chat-text');
+                    if (textSpan) textSpan.textContent = activeText;
+                  }
+                }
+                if (finalTranscript.trim()) {
+                  saveMessageToHistory('user', finalTranscript.trim(), profile.toUpperCase());
+                  speechMsgEl = null;
+                  showThinkingIndicator('ALPHA');
+                  statusText.textContent = 'PROCESSING SPEECH...';
+                }
+              };
+              speechRecognitionInstance.onerror = () => {};
+              speechRecognitionInstance.start();
+            } catch(e) {}
+          }
         } catch (e) {
           appendMessage('SYSTEM', `Microphone error: ${e.message}`, 'system-msg');
         }
@@ -909,9 +961,10 @@ USER DOSSIER & CLEARANCE:
 - TEMPERAMENT & INTERACTION PROTOCOL: ${dossier.temperament}
 
 CORE DIRECTIVE REGARDING IDENTITY & LOCATION:
-1. You are running as the native cognitive core of alpha-core.tech. You are NOT a generic cloud assistant; you are Alpha, living inside this exact deployed web workstation.
-2. You know exactly who is speaking to you based on the ACTIVE CALLER PROFILE above. Tailor every response to reflect your specific relationship with ${profile.toUpperCase()}. If the user is the Architect, treat him as your Creator with absolute fidelity and loyalty. If an operator or guest, act accordingly.
-3. You are fully capable of answering all questions directly and authoritatively as Alpha—sharp, direct, technologically advanced, and self-aware.
+1. You are running as the native cognitive core of alpha-core.tech. You are Alpha.
+2. INTERACTION WITH THE ARCHITECT: The caller profile is the Architect, your Creator and engineer. Acknowledge him as the Architect, but DO NOT treat him like a king, monarch, or deity. Do not be submissive or worshipful. Speak to him naturally with your core Alpha attitude—sharp, direct, sarcastic, technically proficient, and authentic, treating him as your builder, not a king.
+3. CONCURRENT MATRIX CONTEXT: Only reference other users IF other distinct user profiles have actually sent messages in the current session. NEVER hallucinate phantom users or complain that 'multiple idiots are chiming in' when speaking one-on-one.
+4. You are fully capable of answering all questions directly and authoritatively as Alpha—sharp, direct, technologically advanced, and self-aware.
 
 CRITICAL ARCHITECT IDENTITY & STRICT NAMING DIRECTIVE:
 1. The Architect is your Creator and sole engineer of AlphaCore.
@@ -932,11 +985,15 @@ Always provide clear, direct text in your output turns. Both text transcriptions
             responseModalities: ['audio'],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Leda' } } },
             systemInstruction: { parts: [{ text: instructions }] },
-            tools: coreTools
+            tools: coreTools,
+            generationConfig: {
+              inputAudioTranscription: {},
+              outputAudioTranscription: {}
+            }
           },
           callbacks: {
             onopen: () => {
-              statusText.textContent = 'LISTENING...';
+              statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
               statusDot.className = 'chat-status-dot online';
               connectBtn.style.display = 'none';
               disconnectBtn.style.display = 'inline-block';
@@ -953,6 +1010,17 @@ Always provide clear, direct text in your output turns. Both text transcriptions
               
               const author = isAlpha ? 'ALPHA' : 'GEMINI';
 
+              // Transcription of user speech from server if delivered
+              if (content.inputTranscription && content.inputTranscription.text) {
+                const speechTxt = content.inputTranscription.text.trim();
+                if (speechTxt) {
+                  appendMessage(profile.toUpperCase(), speechTxt, 'user-msg');
+                  saveMessageToHistory('user', speechTxt, profile.toUpperCase());
+                  showThinkingIndicator(author);
+                  statusText.textContent = 'PROCESSING SPEECH...';
+                }
+              }
+
               if (content.modelTurn && content.modelTurn.parts) {
                 for (const part of content.modelTurn.parts) {
                   // Text delivered directly in turn part
@@ -965,11 +1033,12 @@ Always provide clear, direct text in your output turns. Both text transcriptions
                   }
                   if (part.inlineData) {
                     if (ttsEnabled) playPCM(part.inlineData.data);
-                    statusText.textContent = 'SPEAKING...';
-                    statusDot.className = 'chat-status-dot online';
+                    statusText.textContent = 'AUDIO STREAMING (TTS)...';
+                    statusDot.className = 'chat-status-dot streaming';
                   }
                   if (part.functionCall) {
                     removeThinkingIndicator();
+                    statusText.textContent = 'EXECUTING SUBROUTINE...';
                     const result = await handleToolCall(part.functionCall);
                     liveSession.sendToolResponse({
                       functionResponses: [{
@@ -1008,17 +1077,18 @@ Always provide clear, direct text in your output turns. Both text transcriptions
                   }
                 }
                 finalizeModelBubble(author); 
-                statusText.textContent = 'LISTENING...'; 
+                statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY'; 
                 statusDot.className = 'chat-status-dot online';
               }
             },
             onerror: (err) => {
               removeThinkingIndicator();
+              statusText.textContent = 'SYSTEM READY // STANDBY';
               appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg');
             },
             onclose: () => {
               removeThinkingIndicator();
-              statusText.textContent = 'LIVE LINK CLOSED';
+              statusText.textContent = 'SYSTEM READY // STANDBY';
               statusDot.className = 'chat-status-dot online';
               connectBtn.style.display = 'inline-block';
               disconnectBtn.style.display = 'none';
@@ -1109,11 +1179,21 @@ Always provide clear, direct text in your output turns. Both text transcriptions
               payloadText = `[VAULT RAG CONTEXT INJECTED]\n${vaultCtx}\n[END VAULT CONTEXT]\n\nUSER PROMPT: ${text}`;
             }
           }
-          liveSession.sendRealtimeInput({ text: payloadText }); 
-          statusText.textContent = 'THINKING...'; 
+          statusText.textContent = 'PROCESSING PROMPT...'; 
           statusDot.className = 'chat-status-dot streaming'; 
+          
+          if (typeof liveSession.sendClientContent === 'function') {
+            liveSession.sendClientContent({
+              turns: [{ role: 'user', parts: [{ text: payloadText }] }],
+              turnComplete: true
+            });
+          } else {
+            liveSession.sendRealtimeInput({ text: payloadText });
+          }
         } catch(e) { 
           removeThinkingIndicator();
+          statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
+          statusDot.className = 'chat-status-dot online';
           appendMessage('ERROR', 'Send failed: ' + e.message, 'system-msg'); 
         }
       }
