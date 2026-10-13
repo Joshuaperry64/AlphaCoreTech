@@ -15,6 +15,7 @@ import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX,
 import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
 import { showToast } from './components/toast.js';
+import { a11y } from './components/a11y-engine.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -289,6 +290,9 @@ async function renderRoute() {
 
   app.appendChild(pageElement);
   updateActiveNav(rawHash);
+  
+  const pageTitle = pageElement.querySelector('h1, h2, .panel-title')?.textContent || hash.replace('/', '');
+  a11y.announce(`Loaded page: ${pageTitle.replace(/^[⎔🧺🔬⟁✨🎨🖼️🧬🔍🎬🎥🦾🔊🎞️🎙️🎵💾👁️🔐⌬◬◈⚡⍾📑📜⚙●// ]+/u, '').trim()}`);
 }
 
 window.addEventListener('hashchange', () => {
@@ -335,6 +339,7 @@ function initApp() {
 
   initSidebar();
   initModal();
+  a11y.init();
 
   // Restore Synthwave Overdrive Theme if previously unlocked
   if (localStorage.getItem('alphacore_synthwave_active') === '1') {

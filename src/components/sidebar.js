@@ -37,7 +37,7 @@ export function initSidebar() {
     const vaultTab = document.querySelector('a[data-route="/vault"]');
     if (vaultTab) vaultTab.style.display = 'flex';
 
-    authVal.onclick = () => {
+    const triggerProfileModal = () => {
       import('./modal.js').then(({ showModal }) => {
         import('./pinpad.js').then(({ buildPinPad }) => {
           const pinPadEl = buildPinPad({
@@ -58,6 +58,7 @@ export function initSidebar() {
             logoutBtn.className = 'aim-btn';
             logoutBtn.style.cssText = 'width: 100%; margin-top: 12px; background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444;';
             logoutBtn.textContent = 'LOGOUT TO GUEST PROFILE';
+            logoutBtn.setAttribute('aria-label', 'Logout to Guest Profile');
             logoutBtn.onclick = () => {
               sessionStorage.clear();
               sessionStorage.setItem('current_profile', 'Guest');
@@ -72,6 +73,14 @@ export function initSidebar() {
           });
         });
       });
+    };
+
+    authVal.onclick = triggerProfileModal;
+    authVal.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerProfileModal();
+      }
     };
   }
 

@@ -4518,3 +4518,72 @@ body::before {
   z-index: 9999;
   opacity: 0.4;
 }
+
+/* ==========================================================================
+   GLOBAL ACCESSIBILITY & WINOCR COMPATIBILITY STYLES
+   ========================================================================== */
+
+/* Distinct, high-contrast Cyberpunk focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--blue, #00b8ff) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 10px rgba(0, 184, 255, 0.8), inset 0 0 4px rgba(0, 184, 255, 0.4) !important;
+}
+
+/* Ensure focus outline is clear on dark/red theme modes */
+body.synthwave-overdrive :focus-visible {
+  outline-color: #ff00ff !important;
+  box-shadow: 0 0 12px rgba(255, 0, 255, 0.9) !important;
+}
+
+.aim-access-granted :focus-visible {
+  outline-color: #00ff64 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 100, 0.9) !important;
+}
+
+/* Screen reader only utility class */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Skip link styling */
+.skip-to-content:focus {
+  top: 0 !important;
+  outline: 3px solid #fff !important;
+}
+
+/* WINOCR & High Contrast Text Clarity */
+/* Keeps cyberpunk aesthetic while ensuring clear font glyph boundaries for OCR readers */
+[data-ocr-readable="true"],
+.panel-title,
+.aim-pin-title,
+.status-row,
+.aim-pin-feedback,
+.log-console,
+.nav-label,
+.s-label,
+.s-val {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.5px;
+}
+
+/* Allow text selectability for OCR tools and inspection */
+[data-ocr-readable="true"],
+.log-console,
+.aim-pin-feedback,
+.stat-modal-content {
+  user-select: text;
+  -webkit-user-select: text;
+}
+

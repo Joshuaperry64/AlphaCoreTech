@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   <!-- Stripe Elements -->
   <script src="https://js.stripe.com/v3/"></script>
-  <script type="module" crossorigin src="/assets/index-DLUoUEXm.js"></script>
+  <script type="module" crossorigin src="/assets/index-DH3v-jtb.js"></script>
 </head>
 <body style="background-color: #030308; margin: 0; color: #fff;">
   <section id="startup-status" role="status" style="position:fixed; inset:0; z-index:1000000; display:grid; place-content:center; padding:24px; background:#030308; color:#00b8ff; font-family:'Share Tech Mono',monospace; text-align:center;">
@@ -198,31 +198,33 @@
       </a>
     </nav>
     
-    <div class="sidebar-footer">
+    <div class="sidebar-footer" role="region" aria-label="System Telemetry Status">
       <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
       <div class="status-row"><span class="s-label">NET SYNC</span><span class="s-val node-active">● SYNCED</span></div>
-      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent" id="sidebar-auth-val">CREATOR</span></div>
+      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent" id="sidebar-auth-val" role="button" tabindex="0" aria-label="Current Profile: CREATOR. Click or press Enter to switch profile.">CREATOR</span></div>
       <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4.7</span></div>
       <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
-      <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter">00:00:00</span></div>
+      <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter" aria-label="System Uptime">00:00:00</span></div>
     </div>
     
-    <button class="sidebar-collapse-btn" id="sidebar-collapse-btn">
+    <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse or Expand Sidebar Menu">
       <span class="sc-label">COLLAPSE</span>
       <span class="sc-icon">‹</span>
     </button>
   </aside>
   
-  <main class="main-content" id="app"></main>
+  <main class="main-content" id="app" role="main" aria-label="AlphaCore Interface Page Content" tabindex="-1"></main>
 
-    <div class="bottom-right-controls" style="display: none;">
-    <button id="play-audio-btn" class="play-audio-btn" title="Play Music" aria-label="Toggle Audio">
+  <div class="bottom-right-controls" style="display: none;" role="toolbar" aria-label="Quick System Controls">
+    <button id="play-audio-btn" class="play-audio-btn" title="Toggle Audio Playback" aria-label="Toggle Cyberpunk Audio Stream">
       &#9658;
     </button>
-    <button id="eco-mode-btn" class="eco-mode-btn" title="Toggle Eco/Performance Mode" aria-label="Toggle Eco Mode">
-      <span class="eco-icon">⚡</span>
+    <button id="eco-mode-btn" class="eco-mode-btn" title="Toggle Eco or Performance Mode" aria-label="Toggle Eco and Performance GPU Mode">
+      <span class="eco-icon" aria-hidden="true">⚡</span>
     </button>
   </div>
-  
+  
+  <div id="stat-modal" class="stat-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display: none;"></div>
+
 </body>
 </html>

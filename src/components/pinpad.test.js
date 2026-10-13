@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { validatePin, addPin, getPins } from './pinpad';
+import { validatePin, addPin, getPins, buildPinPad } from './pinpad';
 
 // Mock dependencies
 vi.mock('./logger.js', () => ({
@@ -311,5 +311,130 @@ describe('addPin', () => {
 
     const pins = getPins();
     expect(pins).toContainEqual(pin);
+  });
+});
+
+describe('buildPinPad automation and accessibility', () => {
+  it('renders native hidden input, form wrapper, submit button, and aria attributes', () => {
+    const el = buildPinPad({
+      title: '// ALPHACORE IDENTITY_VERIFICATION',
+      subtitle: 'ENTER SECURE ACCESS PIN',
+      onSuccess: vi.fn()
+    });
+
+    // Form wrapper
+    const form = el.querySelector('form#pin-login-form');
+    expect(form).not.toBeNull();
+
+    // Hidden native input
+    const input = el.querySelector('input#secure-pin-input');
+    expect(input).not.toBeNull();
+    expect(input.getAttribute('type')).toBe('password');
+    expect(input.getAttribute('name')).toBe('pin');
+    expect(input.getAttribute('autocomplete')).toBe('off');
+
+    // Submit button
+    const submitBtn = el.querySelector('#aim-pad-enter');
+    expect(submitBtn).not.toBeNull();
+    expect(submitBtn.getAttribute('type')).toBe('submit');
+    expect(submitBtn.getAttribute('aria-label')).toBe('Submit PIN');
+
+    // Keypad aria labels
+    const digit1 = el.querySelector('button[data-val="1"]');
+    expect(digit1).not.toBeNull();
+    expect(digit1.getAttribute('aria-label')).toBe('Digit 1');
+
+    const clearBtn = el.querySelector('#aim-pad-clear');
+    expect(clearBtn).not.toBeNull();
+    expect(clearBtn.getAttribute('aria-label')).toBe('Clear Input');
+
+    const backBtn = el.querySelector('#aim-pad-back');
+    expect(backBtn).not.toBeNull();
+    expect(backBtn.getAttribute('aria-label')).toBe('Backspace');
+
+    // Terminal feedback live region
+    const feedback = el.querySelector('#aim-pin-feedback');
+    expect(feedback).not.toBeNull();
+    expect(feedback.getAttribute('aria-live')).toBe('polite');
+    expect(feedback.textContent).toContain('> AWAITING INPUT');
+  });
+
+  it('synchronizes clicks on visual keypad with hidden input value and input events', () => {
+    const el = buildPinPad({ onSuccess: vi.fn() });
+    document.body.appendChild(el);
+
+    const input = el.querySelector('#secure-pin-input');
+    const feedback = el.querySelector('#aim-pin-feedback');
+
+    const inputSpy = vi.fn();
+    input.addEventListener('input', inputSpy);
+
+    // Click 1, 2, 3
+    el.querySelector('button[data-val="1"]').click();
+    el.querySelector('button[data-val="2"]').click();
+    el.querySelector('button[data-val="3"]').click();
+
+    expect(input.value).toBe('123');
+    expect(inputSpy).toHaveBeenCalledTimes(3);
+    expect(feedback.textContent).toBe('> * * *');
+
+    // Backspace
+    el.querySelector('#aim-pad-back').click();
+    expect(input.value).toBe('12');
+    expect(feedback.textContent).toBe('> * *');
+
+    // Clear
+    el.querySelector('#aim-pad-clear').click();
+    expect(input.value).toBe('');
+    expect(feedback.textContent).toBe('> AWAITING INPUT');
+
+    el.remove();
+  });
+
+  it('updates visual dots and feedback when automation tools inject into hidden input directly', () => {
+    const el = buildPinPad({ onSuccess: vi.fn() });
+    document.body.appendChild(el);
+
+    const input = el.querySelector('#secure-pin-input');
+    const display = el.querySelector('#aim-pin-display');
+    const feedback = el.querySelector('#aim-pin-feedback');
+
+    // Simulate Playwright/Selenium input event
+    input.value = '7890';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(display.querySelectorAll('.aim-pin-dot.filled').length).toBe(4);
+    expect(feedback.textContent).toBe('> * * * *');
+    expect(feedback.getAttribute('aria-label')).toBe('4 digits entered');
+
+    el.remove();
+  });
+
+  it('submits form on Enter and validates PIN via automation submission', async () => {
+    mockFetch([{
+      pin: '1234',
+      type: 'permanent',
+      label: 'Admin User',
+      roles: ['admin'],
+      createdAt: Date.now()
+    }]);
+
+    const successSpy = vi.fn();
+    const el = buildPinPad({ onSuccess: successSpy });
+    document.body.appendChild(el);
+
+    const input = el.querySelector('#secure-pin-input');
+    input.value = '1234';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const form = el.querySelector('#pin-login-form');
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    // Wait for validation promise and timeout
+    await new Promise(r => setTimeout(r, 600));
+    const feedback = el.querySelector('#aim-pin-feedback');
+    expect(feedback.textContent).toContain('ACCESS GRANTED');
+
+    el.remove();
   });
 });

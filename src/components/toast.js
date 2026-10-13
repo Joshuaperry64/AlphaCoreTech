@@ -20,6 +20,9 @@ function ensureContainer() {
       pointer-events: none;
       font-family: 'Share Tech Mono', monospace;
     `;
+    toastContainer.setAttribute('role', 'region');
+    toastContainer.setAttribute('aria-label', 'System Notifications');
+    toastContainer.setAttribute('aria-live', 'polite');
     document.body.appendChild(toastContainer);
   }
 }
@@ -28,6 +31,8 @@ export function showToast(type = 'INFO', message = '') {
   ensureContainer();
 
   const toast = document.createElement('div');
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
   toast.style.cssText = `
     pointer-events: auto;
     background: rgba(10, 15, 25, 0.95);

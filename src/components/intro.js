@@ -80,7 +80,10 @@ export default function createIntro(container) {
     // Scanlines kept for intro
 
     // Skip / Fast Boot Button
-    const skipBtn = createElement('button', { class: 'aim-btn aim-btn-sm' }, '⚡ FAST BOOT / SKIP');
+    const skipBtn = createElement('button', { 
+      class: 'aim-btn aim-btn-sm',
+      'aria-label': 'Skip boot sequence and go directly to identity verification'
+    }, '⚡ FAST BOOT / SKIP');
     Object.assign(skipBtn.style, {
       position: 'absolute', top: '20px', right: '20px', zIndex: '100',
       background: 'rgba(6,182,212,0.15)', border: '1px solid #06b6d4', color: '#06b6d4',
@@ -90,7 +93,11 @@ export default function createIntro(container) {
     intro.appendChild(skipBtn);
 
     // FITS Terminal (Phase 1)
-    const fitsTerminal = createElement('div', {});
+    const fitsTerminal = createElement('div', {
+      role: 'region',
+      'aria-label': 'Kernel FITS Telemetry Stream',
+      'aria-live': 'polite'
+    });
     Object.assign(fitsTerminal.style, {
       position: 'absolute', top: '40px', left: '40px', zIndex: '60',
       fontFamily: "'Share Tech Mono', monospace", fontSize: '0.8rem', color: '#00f0ff',
@@ -132,11 +139,22 @@ export default function createIntro(container) {
     mainWrap.appendChild(statusTitle);
 
     // Terminal Output Box
-    const termBox = createElement('div', { class: 'intro-term-box' });
+    const termBox = createElement('div', { 
+      class: 'intro-term-box',
+      role: 'status',
+      'aria-live': 'polite',
+      'aria-label': 'Kernel Boot Diagnostics Log'
+    });
     mainWrap.appendChild(termBox);
 
     // Progress Bar
-    const progressWrap = createElement('div', {});
+    const progressWrap = createElement('div', {
+      role: 'progressbar',
+      'aria-label': 'Boot sequence initialization progress',
+      'aria-valuemin': '0',
+      'aria-valuemax': '100',
+      'aria-valuenow': '0'
+    });
     Object.assign(progressWrap.style, {
       width: '100%', display: 'flex', alignItems: 'center', gap: '15px',
       fontFamily: "'Share Tech Mono', monospace", fontSize: '0.85rem', color: '#ccc',
@@ -144,19 +162,19 @@ export default function createIntro(container) {
     });
     
     const progressLabel = createElement('span', {}, 'BOOT PROGRESS:');
-    const barTrack = createElement('div', {});
+    const barTrack = createElement('div', { 'aria-hidden': 'true' });
     Object.assign(barTrack.style, {
       flex: '1', height: '6px', background: 'rgba(6,182,212,0.1)',
       border: '1px solid rgba(6,182,212,0.3)', position: 'relative'
     });
-    const barFill = createElement('div', { id: 'intro-bar' });
+    const barFill = createElement('div', { id: 'intro-bar', 'aria-hidden': 'true' });
     Object.assign(barFill.style, {
       position: 'absolute', top: '0', left: '0', height: '100%',
       background: '#06b6d4', width: '0%', transition: 'width 0.2s ease',
       boxShadow: '0 0 10px #06b6d4'
     });
     barTrack.appendChild(barFill);
-    const progressPct = createElement('span', { id: 'intro-pct' }, '0%');
+    const progressPct = createElement('span', { id: 'intro-pct', 'aria-hidden': 'true' }, '0%');
     
     progressWrap.appendChild(progressLabel);
     progressWrap.appendChild(barTrack);
@@ -232,6 +250,7 @@ export default function createIntro(container) {
         const pct = Math.floor((bootLineIdx / bootLines.length) * 100);
         barFill.style.width = `${pct}%`;
         progressPct.textContent = `${pct}%`;
+        progressWrap.setAttribute('aria-valuenow', String(pct));
 
         if (bootLineIdx === 3 || bootLineIdx === 5) {
           logoImg.classList.add('intro-glitch-active');

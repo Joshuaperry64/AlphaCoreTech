@@ -54,15 +54,18 @@ export function initCommandPalette() {
     align-items: flex-start;
     padding-top: 12vh;
   `;
+  modalOverlay.setAttribute('role', 'dialog');
+  modalOverlay.setAttribute('aria-modal', 'true');
+  modalOverlay.setAttribute('aria-label', 'Command Palette and Navigation Search');
 
   modalOverlay.innerHTML = `
     <div style="width: 90%; max-width: 600px; background: rgba(12, 18, 30, 0.95); border: 1px solid var(--accent, #06b6d4); box-shadow: 0 0 25px rgba(6,182,212,0.3); border-radius: 6px; overflow: hidden; font-family: 'Share Tech Mono', monospace;">
       <div style="display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 16px;">
-        <span style="color: var(--accent, #06b6d4); font-size: 1.2rem; margin-right: 10px;">>_</span>
-        <input type="text" id="cmd-input" placeholder="Type a command or navigate... (e.g. 'changelog', 'terminal', 'prompt')" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 1rem;" autofocus />
-        <span style="font-size: 0.75rem; color: #666; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 3px;">ESC to exit</span>
+        <span style="color: var(--accent, #06b6d4); font-size: 1.2rem; margin-right: 10px;" aria-hidden="true">>_</span>
+        <input type="text" id="cmd-input" placeholder="Type a command or navigate... (e.g. 'changelog', 'terminal', 'prompt')" aria-label="Command search query" style="flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Share Tech Mono', monospace; font-size: 1rem;" autofocus />
+        <span style="font-size: 0.75rem; color: #666; background: rgba(255,255,255,0.05); padding: 3px 6px; border-radius: 3px;" aria-hidden="true">ESC to exit</span>
       </div>
-      <div id="cmd-list" style="max-height: 320px; overflow-y: auto; padding: 8px 0;"></div>
+      <div id="cmd-list" role="listbox" aria-label="Matching commands" style="max-height: 320px; overflow-y: auto; padding: 8px 0;"></div>
     </div>
   `;
 
@@ -83,6 +86,10 @@ export function initCommandPalette() {
 
     filtered.forEach((cmd, idx) => {
       const item = document.createElement('div');
+      item.setAttribute('role', 'option');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+      item.setAttribute('aria-label', `${cmd.title}${cmd.path ? ' - path: ' + cmd.path : ''}`);
       item.style.cssText = `
         display: flex; align-items: center; justify-content: space-between;
         padding: 10px 16px; cursor: pointer; color: #ccc; transition: all 0.15s ease;
@@ -91,7 +98,7 @@ export function initCommandPalette() {
 
       item.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="color: var(--accent, #06b6d4);">${cmd.icon}</span>
+          <span style="color: var(--accent, #06b6d4);" aria-hidden="true">${cmd.icon}</span>
           <span style="font-size: 0.9rem;">${cmd.title}</span>
         </div>
         <span style="font-size: 0.75rem; color: #666;">${cmd.path || 'ACTION'}</span>
@@ -108,9 +115,17 @@ export function initCommandPalette() {
         item.style.borderLeftColor = 'transparent';
       };
 
-      item.onclick = () => {
+      const selectCmd = () => {
         executeCommand(cmd);
         closePalette();
+      };
+
+      item.onclick = selectCmd;
+      item.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          selectCmd();
+        }
       };
 
       list.appendChild(item);

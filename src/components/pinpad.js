@@ -133,44 +133,57 @@ export function buildPinPad({
   wrap.innerHTML = `
     <div class="aim-pin-box">
       <!-- Main PIN Pad View -->
-      <div id="aim-pin-main-view" class="aim-pin-box-inner">
-        ${icon ? `<div class="aim-pin-icon">${icon}</div>` : ''}
+      <form id="pin-login-form" class="aim-pin-box-inner" autocomplete="off" onsubmit="return false;">
+        ${icon ? `<div class="aim-pin-icon" aria-hidden="true">${icon}</div>` : ''}
         <h2 class="aim-pin-title">${title}</h2>
         <p class="aim-pin-subtitle">${subtitle}</p>
 
+        <!-- Native hidden input for browser automation & physical keyboard synchronization -->
+        <input 
+          type="password" 
+          id="secure-pin-input" 
+          name="pin" 
+          autocomplete="off" 
+          maxlength="12"
+          inputmode="numeric"
+          tabindex="0"
+          aria-label="Secure Access PIN"
+          style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px; pointer-events: none;"
+        />
+
         <div class="aim-pin-display-wrap">
-          <div class="aim-pin-display" id="aim-pin-display"></div>
-          <div class="aim-pin-feedback" id="aim-pin-feedback">> AWAITING INPUT</div>
+          <div class="aim-pin-display" id="aim-pin-display" aria-hidden="true"></div>
+          <div class="aim-pin-feedback" id="aim-pin-feedback" aria-live="polite" role="status">> AWAITING INPUT</div>
         </div>
-        <div class="aim-pinpad-grid">
-          <button class="aim-pad-btn" data-val="1">1</button>
-          <button class="aim-pad-btn" data-val="2">2</button>
-          <button class="aim-pad-btn" data-val="3">3</button>
-          <button class="aim-pad-btn" data-val="4">4</button>
-          <button class="aim-pad-btn" data-val="5">5</button>
-          <button class="aim-pad-btn" data-val="6">6</button>
-          <button class="aim-pad-btn" data-val="7">7</button>
-          <button class="aim-pad-btn" data-val="8">8</button>
-          <button class="aim-pad-btn" data-val="9">9</button>
-          <button class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear">CLR</button>
-          <button class="aim-pad-btn" data-val="0">0</button>
-          <button class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back">⌫</button>
+        <div class="aim-pinpad-grid" role="group" aria-label="PIN Keypad">
+          <button type="button" class="aim-pad-btn" data-val="1" aria-label="Digit 1">1</button>
+          <button type="button" class="aim-pad-btn" data-val="2" aria-label="Digit 2">2</button>
+          <button type="button" class="aim-pad-btn" data-val="3" aria-label="Digit 3">3</button>
+          <button type="button" class="aim-pad-btn" data-val="4" aria-label="Digit 4">4</button>
+          <button type="button" class="aim-pad-btn" data-val="5" aria-label="Digit 5">5</button>
+          <button type="button" class="aim-pad-btn" data-val="6" aria-label="Digit 6">6</button>
+          <button type="button" class="aim-pad-btn" data-val="7" aria-label="Digit 7">7</button>
+          <button type="button" class="aim-pad-btn" data-val="8" aria-label="Digit 8">8</button>
+          <button type="button" class="aim-pad-btn" data-val="9" aria-label="Digit 9">9</button>
+          <button type="button" class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear" aria-label="Clear Input">CLR</button>
+          <button type="button" class="aim-pad-btn" data-val="0" aria-label="Digit 0">0</button>
+          <button type="button" class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back" aria-label="Backspace">⌫</button>
         </div>
 
         <div style="margin-top: 12px; display: flex; flex-direction: row; gap: 8px;">
-          <button class="aim-btn" id="aim-pad-enter" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          <button type="submit" class="aim-btn" id="aim-pad-enter" aria-label="Submit PIN" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
             ENTER
           </button>
-          <button class="aim-btn" id="aim-pin-bypass-btn" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          <button type="button" class="aim-btn" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
             ⚡ BYPASS
           </button>
           ${isLoginScreen ? `
-          <button class="aim-btn" id="aim-pin-request-btn" style="flex: 1; padding: 10px; background: rgba(255, 150, 0, 0.1); border: 1px solid rgba(255, 150, 0, 0.4); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          <button type="button" class="aim-btn" id="aim-pin-request-btn" aria-label="Request Access Profile" style="flex: 1; padding: 10px; background: rgba(255, 150, 0, 0.1); border: 1px solid rgba(255, 150, 0, 0.4); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
             📝 REQUEST ACCESS
           </button>
           ` : ''}
         </div>
-      </div>
+      </form>
 
       <!-- Request Access View -->
       <div id="aim-pin-signup-view" class="aim-pin-box-inner" style="display: none;">
@@ -219,8 +232,10 @@ export function buildPinPad({
   let currentPin = '';
   let locked = false;
 
-  const pinBox   = wrap.querySelector('#aim-pin-main-view');
-  const mainView = wrap.querySelector('#aim-pin-main-view');
+  const pinForm  = wrap.querySelector('#pin-login-form');
+  const pinBox   = pinForm;
+  const mainView = pinForm;
+  const pinInput = wrap.querySelector('#secure-pin-input');
   const signupView = wrap.querySelector('#aim-pin-signup-view');
   const pendingView = wrap.querySelector('#aim-pin-pending-view');
   const display  = wrap.querySelector('#aim-pin-display');
@@ -240,28 +255,62 @@ export function buildPinPad({
     feedback.className = `aim-pin-feedback${state ? ' aim-feedback-' + state : ''}`;
   }
 
-  function handleInput(val) {
-    if (locked || currentPin.length >= 12) return;
-    playSFX('click', 0.4);
-    currentPin += val;
+  function syncFromNativeInput(notifyAudio = false) {
+    if (locked) return;
+    const sanitized = (pinInput.value || '').replace(/\D/g, '').slice(0, 12);
+    if (pinInput.value !== sanitized) {
+      pinInput.value = sanitized;
+    }
+    const oldLen = currentPin.length;
+    currentPin = sanitized;
     renderDots();
-    setFeedback('ENTERING PIN...');
+
+    if (currentPin.length > 0) {
+      const stars = '* '.repeat(currentPin.length).trim();
+      const countMsg = `${currentPin.length} digit${currentPin.length > 1 ? 's' : ''} entered`;
+      setFeedback(stars);
+      feedback.setAttribute('aria-label', countMsg);
+      if (notifyAudio && currentPin.length > oldLen) {
+        playSFX('click', 0.4);
+      }
+    } else {
+      setFeedback('AWAITING INPUT');
+      feedback.setAttribute('aria-label', 'Awaiting input');
+      if (notifyAudio && oldLen > 0) {
+        playSFX('click', 0.4);
+      }
+    }
+  }
+
+  function appendPinDigit(val) {
+    if (locked || pinInput.value.length >= 12) return;
+    pinInput.value += val;
+    pinInput.dispatchEvent(new Event('input', { bubbles: true }));
+    playSFX('click', 0.4);
   }
 
   function handleClear() {
     if (locked) return;
     playSFX('click', 0.4);
-    currentPin = '';
-    renderDots();
-    setFeedback('AWAITING INPUT');
+    pinInput.value = '';
+    pinInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   function handleBackspace() {
-    if (locked || !currentPin.length) return;
-    currentPin = currentPin.slice(0, -1);
-    renderDots();
-    setFeedback(currentPin.length ? 'ENTERING PIN...' : 'AWAITING INPUT');
+    if (locked || !pinInput.value.length) return;
+    playSFX('click', 0.4);
+    pinInput.value = pinInput.value.slice(0, -1);
+    pinInput.dispatchEvent(new Event('input', { bubbles: true }));
   }
+
+  pinInput.addEventListener('input', () => {
+    syncFromNativeInput(false);
+  });
+
+  // Focus native input by default if visible in DOM
+  setTimeout(() => {
+    try { pinInput.focus(); } catch (_) {}
+  }, 50);
 
   async function handleEnter() {
     if (locked || !currentPin) {
@@ -304,20 +353,44 @@ export function buildPinPad({
       pinBox.classList.add('aim-shake');
       setTimeout(() => {
         pinBox.classList.remove('aim-shake');
-        currentPin = '';
-        renderDots();
+        pinInput.value = '';
+        pinInput.dispatchEvent(new Event('input', { bubbles: true }));
         locked = false;
         setFeedback('AWAITING INPUT');
       }, 700);
     }
   }
 
+  // Native form submit handling (for automation & enter key)
+  pinForm.onsubmit = e => {
+    e.preventDefault();
+    handleEnter();
+    return false;
+  };
+
   wrap.querySelectorAll('.aim-pad-btn[data-val]').forEach(btn => {
-    btn.onclick = e => { e.stopPropagation(); handleInput(btn.dataset.val); };
+    btn.onclick = e => { 
+      e.preventDefault();
+      e.stopPropagation(); 
+      appendPinDigit(btn.dataset.val); 
+    };
   });
-  wrap.querySelector('#aim-pad-clear').onclick = e => { e.stopPropagation(); handleClear(); };
-  wrap.querySelector('#aim-pad-enter').onclick = e => { e.stopPropagation(); handleEnter(); };
-  wrap.querySelector('#aim-pad-back').onclick = e => { e.stopPropagation(); handleBackspace(); };
+  wrap.querySelector('#aim-pad-clear').onclick = e => { 
+    e.preventDefault();
+    e.stopPropagation(); 
+    handleClear(); 
+  };
+  wrap.querySelector('#aim-pad-enter').onclick = e => { 
+    // Trigger standard form submission
+    e.preventDefault();
+    e.stopPropagation(); 
+    pinForm.requestSubmit ? pinForm.requestSubmit() : handleEnter(); 
+  };
+  wrap.querySelector('#aim-pad-back').onclick = e => { 
+    e.preventDefault();
+    e.stopPropagation(); 
+    handleBackspace(); 
+  };
 
   // Request Access / Signup Flow
   const requestBtn = wrap.querySelector('#aim-pin-request-btn');
@@ -442,10 +515,28 @@ export function buildPinPad({
   }
 
   function keyHandler(e) {
-    if (e.key >= '0' && e.key <= '9') handleInput(e.key);
-    else if (e.key === 'Backspace') handleBackspace();
-    else if (e.key === 'Escape' || e.key === 'Delete') handleClear();
-    else if (e.key === 'Enter') handleEnter();
+    // If active element is another input (e.g. signup form inputs), don't intercept keypad keys
+    if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement !== pinInput) {
+      return;
+    }
+
+    if ((e.key >= '0' && e.key <= '9')) {
+      e.preventDefault();
+      appendPinDigit(e.key);
+    } else if (e.key === 'Backspace') {
+      e.preventDefault();
+      handleBackspace();
+    } else if (e.key === 'Escape' || e.key === 'Delete') {
+      e.preventDefault();
+      handleClear();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (pinForm.requestSubmit) {
+        pinForm.requestSubmit();
+      } else {
+        handleEnter();
+      }
+    }
   }
   window.addEventListener('keydown', keyHandler);
 
