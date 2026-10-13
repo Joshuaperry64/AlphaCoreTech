@@ -4587,3 +4587,57 @@ body.synthwave-overdrive :focus-visible {
   -webkit-user-select: text;
 }
 
+/* ==========================================================================
+   COGNITIVE CORE THINKING & LATENCY REFLECTION STYLES
+   ========================================================================== */
+.chat-msg.thinking-bubble {
+  border-left: 2px solid var(--blue, #00b8ff);
+  background: rgba(0, 184, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin: 6px 0;
+  animation: sectionIn 0.2s ease;
+}
+.thinking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-hud);
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  color: var(--blue, #00b8ff);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.thinking-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue, #00b8ff);
+  box-shadow: 0 0 10px var(--blue, #00b8ff);
+  animation: pulse-dim 0.8s infinite alternate;
+}
+.thinking-latency-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #aaa;
+  margin-left: auto;
+  letter-spacing: 0.5px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 184, 255, 0.2);
+}
+.thinking-thought-preview {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #888;
+  font-style: italic;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+

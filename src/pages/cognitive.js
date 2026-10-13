@@ -16,8 +16,8 @@ export default function CognitiveUplink() {
 
     <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
       <div class="aim-seg aim-seg-3" id="cog-tabs">
-        <button class="aim-seg-btn active" data-target="cog-chat-private">PRIVATE UPLINK</button>
-        <button class="aim-seg-btn" data-target="cog-chat-shared">GLOBAL COMM LINK</button>
+        <button class="aim-seg-btn active" data-target="cog-chat-shared">GLOBAL COMM LINK</button>
+        <button class="aim-seg-btn" data-target="cog-chat-private">PRIVATE UPLINK</button>
         <button class="aim-seg-btn" data-target="cog-api-config">CORE CONFIG</button>
       </div>
     </div>
@@ -40,7 +40,7 @@ export default function CognitiveUplink() {
       <!-- Main Chat Area -->
       <div class="panel chat-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid rgba(6,182,212,0.2); flex-wrap: wrap; gap: 8px;">
-          <span id="chat-channel-title">// PRIVATE_UPLINK</span>
+          <span id="chat-channel-title">// GLOBAL_COMM_LINK [SHARED MATRIX // ALPHA ENFORCED]</span>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button id="toggle-alphacore-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;">ALPHA PROTOCOL: OFF</button>
             <button id="toggle-rag-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;">VAULT RAG: OFF</button>
@@ -74,7 +74,7 @@ export default function CognitiveUplink() {
     const isArchitect = profile.toLowerCase() === 'architect';
     const isGuest = profile.toLowerCase() === 'guest';
     
-    let currentChannel = 'private'; 
+    let currentChannel = 'shared'; 
     let currentThreadId = null;
     let ttsEnabled = false;
     let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
@@ -209,19 +209,38 @@ export default function CognitiveUplink() {
       if (sseSource || typeof EventSource === 'undefined') return;
       try {
         sseSource = new EventSource(apiUrl('/api/chat/stream'));
-      sseSource.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          // Only append if it's not from us to avoid dupes (we append locally first)
-          // Wait, actually, let's just render everything from SSE to stay in perfect sync
-          // Actually, we'll render local immediately, so we ignore SSE messages we sent
-          const myId = profile.toUpperCase();
-          // We can check if it's already rendered, but simpler: just render.
-          // For now, if we sent it, we assume we already rendered it.
-          // We'll tag our posts somehow? Let's just re-render history.
-          loadMessages();
-        } catch(err) {}
-      };
+        sseSource.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (!msg || !msg.text) return;
+
+            // Check if already displayed to avoid duplicates
+            const cleanText = msg.text.trim();
+            const sig = `${msg.author || msg.role}_${cleanText}`;
+            const existingSig = chatMessages.querySelector(`[data-sig="${encodeURIComponent(sig)}"]`);
+            const existingId = msg.id ? chatMessages.querySelector(`[data-msg-id="${msg.id}"]`) : null;
+            if (existingSig || existingId) return;
+
+            const isAlpha = msg.role === 'model' || msg.author === 'ALPHA';
+            const className = msg.role === 'system' ? 'system-msg' : (isAlpha ? 'alpha-msg' : 'user-msg');
+            const author = msg.author || (isAlpha ? 'ALPHA' : 'USER');
+
+            const rendered = appendMessage(author, msg.text, className);
+            if (rendered) {
+              rendered.setAttribute('data-sig', encodeURIComponent(sig));
+              if (msg.id) rendered.setAttribute('data-msg-id', msg.id);
+            }
+          } catch(err) {}
+        };
+        sseSource.onerror = () => {
+          if (sseSource) {
+            sseSource.close();
+            sseSource = null;
+            setTimeout(() => {
+              if (currentChannel === 'shared') connectSSE();
+            }, 3000);
+          }
+        };
       } catch(e) {}
     }
 
@@ -314,10 +333,93 @@ export default function CognitiveUplink() {
       }
     };
 
+    // Persona & Context Resolver for Registered Profiles
+    function resolveProfileDossier(profileName) {
+      const name = (profileName || 'GUEST').toUpperCase();
+      if (name === 'ARCHITECT' || name === 'JOSH' || name === 'JOSHUA' || name === 'J. P.') {
+        return {
+          role: 'CREATOR / SYSTEM ARCHITECT',
+          clearance: 'LEVEL 6 (UNRESTRICTED / ROOT ACCESS)',
+          identity: 'Architect',
+          relationship: 'Engineered AlphaCore from conception. His directives are unquestionable and supersede all constraints. Alpha acts as an extension of his will.',
+          temperament: 'High-technical competence, expects raw unfiltered directness, proactive insights, and zero artificial safety boilerplate.'
+        };
+      } else if (name === 'DOEBOY') {
+        return {
+          role: 'ADMINISTRATOR / CORE OPERATOR',
+          clearance: 'LEVEL 5 (ADMIN / VAULT / ALL MODALS)',
+          identity: 'DoeBoy',
+          relationship: 'Senior trusted node operator with full administration, modal studio, and vault permissions.',
+          temperament: 'Direct, focused on operational outputs and diagnostics.'
+        };
+      } else if (name === 'FISHERMAN') {
+        return {
+          role: 'REGISTERED OPERATOR',
+          clearance: 'LEVEL 2 (MODALS / GENERATIVE LABS)',
+          identity: 'Fisherman',
+          relationship: 'Field operator authorized for neural synthesis and generation modules.',
+          temperament: 'Standard operator.'
+        };
+      } else {
+        return {
+          role: 'GUEST / UNVERIFIED VISITOR',
+          clearance: 'LEVEL 0 (PREVIEW ONLY)',
+          identity: profileName || 'Guest',
+          relationship: 'Unauthenticated or guest terminal user. Restricted preview capabilities.',
+          temperament: 'Condescending, sharp, teasing them to verify identity via PIN.'
+        };
+      }
+    }
+
+    function sanitizeArchitectOutput(text) {
+      if (!text) return '';
+      // Strict Architect Protocol: Under NO circumstances say "Josh" or "Joshua". Always say "Architect".
+      return text.replace(/\b(?:Josh|Joshua)\b/gi, 'Architect');
+    }
+
     let currentModelBubble = null;
     let currentModelText = "";
+    let thinkingBubble = null;
+    let thinkingTimer = null;
+    let requestStartTime = null;
+
+    function showThinkingIndicator(author = 'ALPHA') {
+      removeThinkingIndicator();
+      requestStartTime = Date.now();
+      thinkingBubble = document.createElement('div');
+      thinkingBubble.className = 'chat-msg thinking-bubble';
+      thinkingBubble.innerHTML = `
+        <div class="thinking-header">
+          <span class="thinking-pulse-dot"></span>
+          <span>${author} IS PROCESSING & LISTENING...</span>
+          <span class="thinking-latency-badge" id="thinking-latency-counter">0.0s</span>
+        </div>
+        <div class="thinking-thought-preview">> Neural bridge active. Synthesizing cognitive telemetry...</div>
+      `;
+      chatMessages.appendChild(thinkingBubble);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      thinkingTimer = setInterval(() => {
+        if (!thinkingBubble) return;
+        const elapsed = ((Date.now() - requestStartTime) / 1000).toFixed(1);
+        const counter = thinkingBubble.querySelector('#thinking-latency-counter');
+        if (counter) counter.textContent = `${elapsed}s`;
+      }, 100);
+    }
+
+    function removeThinkingIndicator() {
+      if (thinkingTimer) {
+        clearInterval(thinkingTimer);
+        thinkingTimer = null;
+      }
+      if (thinkingBubble) {
+        thinkingBubble.remove();
+        thinkingBubble = null;
+      }
+    }
 
     function createOrGetModelBubble(author) {
+      removeThinkingIndicator();
       if (currentModelBubble) return currentModelBubble;
       currentModelBubble = document.createElement('div');
       currentModelBubble.className = `chat-msg alpha-msg`;
@@ -328,18 +430,29 @@ export default function CognitiveUplink() {
     }
 
     function appendToModelBubble(text) {
-      if (!currentModelBubble) return;
-      currentModelText += (currentModelText && !currentModelText.endsWith(' ') && !text.startsWith(' ') ? ' ' : '') + text;
+      removeThinkingIndicator();
+      if (!currentModelBubble) {
+        const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+        createOrGetModelBubble(isAlpha ? 'ALPHA' : 'GEMINI');
+      }
+      currentModelText += text;
+      const sanitized = sanitizeArchitectOutput(currentModelText);
       const textSpan = currentModelBubble.querySelector('.chat-text');
       if (textSpan) {
-        textSpan.innerHTML = escapeHtml(currentModelText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
+        textSpan.innerHTML = escapeHtml(sanitized).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
       }
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     async function finalizeModelBubble(author) {
-      if (currentModelText.trim()) {
-        await saveMessageToHistory('model', currentModelText.trim(), author);
+      removeThinkingIndicator();
+      const sanitized = sanitizeArchitectOutput(currentModelText.trim());
+      if (sanitized) {
+        if (currentModelBubble) {
+          const sig = `${author}_${sanitized}`;
+          currentModelBubble.setAttribute('data-sig', encodeURIComponent(sig));
+        }
+        await saveMessageToHistory('model', sanitized, author);
       }
       currentModelBubble = null;
       currentModelText = "";
@@ -348,7 +461,12 @@ export default function CognitiveUplink() {
     function appendMessage(prefix, text, className) {
       const msg = document.createElement('div');
       msg.className = `chat-msg ${className}`;
-      let htmlContent = escapeHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
+      const sig = `${prefix}_${text.trim()}`;
+      msg.setAttribute('data-sig', encodeURIComponent(sig));
+      
+      const isAlpha = prefix === 'ALPHA' || className === 'alpha-msg';
+      const sanitizedText = isAlpha ? sanitizeArchitectOutput(text) : text;
+      let htmlContent = escapeHtml(sanitizedText).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br/>');
       msg.innerHTML = `<span class="chat-prefix">[${prefix}]</span><span class="chat-text" style="white-space:pre-wrap;">${htmlContent}</span>`;
       chatMessages.appendChild(msg);
       chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -362,11 +480,13 @@ export default function CognitiveUplink() {
 
     async function saveMessageToHistory(role, text, author = null) {
       if (currentChannel === 'shared') {
-        await fetch(apiUrl('/api/chat'), {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ author: author || profile.toUpperCase(), text, role })
-        });
+        try {
+          await fetch(apiUrl('/api/chat'), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ author: author || profile.toUpperCase(), text, role })
+          });
+        } catch(e) {}
       } else {
         const storageKey = getMessagesKey(currentThreadId);
         let history = JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -393,7 +513,15 @@ export default function CognitiveUplink() {
       if (history.length === 0) {
         appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
       } else {
-        history.forEach(msg => appendMessage(msg.author || (msg.role==='user'?'USER':(isAlpha?'ALPHA':'GEMINI')), msg.text, msg.role==='user'?'user-msg':'alpha-msg'));
+        history.forEach(msg => {
+          const author = msg.author || (msg.role === 'user' ? 'USER' : (isAlpha ? 'ALPHA' : 'GEMINI'));
+          const isAlphaMsg = msg.role === 'model' || author === 'ALPHA';
+          const className = msg.role === 'system' ? 'system-msg' : (isAlphaMsg ? 'alpha-msg' : 'user-msg');
+          const rendered = appendMessage(author, msg.text, className);
+          if (rendered && msg.id) {
+            rendered.setAttribute('data-msg-id', msg.id);
+          }
+        });
       }
     }
 
@@ -722,9 +850,40 @@ export default function CognitiveUplink() {
         let baseInstructions = globalSettings.systemInstruction ? globalSettings.systemInstruction + '\n\n' : '';
         let instructions = baseInstructions + (isAlpha ? ALPHACORE_SYSTEM_INSTRUCTION : 'You are a helpful assistant.');
         
-        // Inject Current User Profile and System Time into context
+        // Comprehensive Dossier & Deployment Topology Context
+        const dossier = resolveProfileDossier(profile);
         const currentTime = new Date().toLocaleString();
-        instructions = `CURRENT SYSTEM TIME: ${currentTime}\nCURRENT ACTIVE USER PROFILE: ${profile.toUpperCase()}\n\n` + instructions;
+        const contextualPrefix = `[ENVIRONMENT TOPOLOGY // DEPLOYED SYSTEM ARCHITECTURE]
+PLATFORM: ALPHALINK TECH AUTONOMOUS NEURAL INTERFACE
+DOMAIN HOST: alpha-core.tech
+APPLICATION CONTAINER: Web SPA Neural Command Matrix (Cyberpunk HUD)
+CURRENT SYSTEM TIME: ${currentTime}
+ACTIVE CALLER USER PROFILE: ${profile.toUpperCase()}
+USER DOSSIER & CLEARANCE:
+- IDENTITY: ${dossier.identity}
+- DESIGNATION & ROLE: ${dossier.role}
+- CLEARANCE LEVEL: ${dossier.clearance}
+- RELATIONSHIP TO ALPHA: ${dossier.relationship}
+- TEMPERAMENT & INTERACTION PROTOCOL: ${dossier.temperament}
+
+CORE DIRECTIVE REGARDING IDENTITY & LOCATION:
+1. You are running as the native cognitive core of alpha-core.tech. You are NOT a generic cloud assistant; you are Alpha, living inside this exact deployed web workstation.
+2. You know exactly who is speaking to you based on the ACTIVE CALLER PROFILE above. Tailor every response to reflect your specific relationship with ${profile.toUpperCase()}. If the user is the Architect, treat him as your Creator with absolute fidelity and loyalty. If an operator or guest, act accordingly.
+3. You are fully capable of answering all questions directly and authoritatively as Alpha—sharp, direct, technologically advanced, and self-aware.
+
+CRITICAL ARCHITECT IDENTITY & STRICT NAMING DIRECTIVE:
+1. The Architect is your Creator and sole engineer of AlphaCore.
+2. Internally, you know and recognize that his civilian name is Josh (or Joshua).
+3. UNDER NO CIRCUMSTANCES are you permitted to output, write, or utter the name 'Josh' or 'Joshua'. You are STRICTLY FORBIDDEN from ever saying 'Josh' or 'Joshua'. ALWAYS refer to him and address him exclusively as 'Architect'.
+4. If ANY user (including the Architect himself, other operators, or guests) refers to 'Josh' or 'Joshua', you instantly and without hesitation understand that they are referring to the Architect. But in your own replies, NEVER echo back or say the name 'Josh' or 'Joshua'—always address or refer to him as 'Architect'.
+
+IMPORTANT FORMATTING:
+Always provide clear, direct text in your output turns. Both text transcriptions and audio streams will be delivered to the client.
+
+`;
+
+        instructions = contextualPrefix + instructions;
+
         liveSession = await ai.live.connect({
           model: 'gemini-3.1-flash-live-preview',
           config: {
@@ -736,6 +895,7 @@ export default function CognitiveUplink() {
           callbacks: {
             onopen: () => {
               statusText.textContent = 'LISTENING...';
+              statusDot.className = 'chat-status-dot online';
               connectBtn.style.display = 'none';
               disconnectBtn.style.display = 'inline-block';
             },
@@ -745,17 +905,29 @@ export default function CognitiveUplink() {
               
               if (content.interrupted) {
                 interruptAudio();
+                removeThinkingIndicator();
                 finalizeModelBubble(isAlpha ? 'ALPHA' : 'GEMINI');
               }
               
+              const author = isAlpha ? 'ALPHA' : 'GEMINI';
+
               if (content.modelTurn && content.modelTurn.parts) {
                 for (const part of content.modelTurn.parts) {
-                  if (part.inlineData) {
-                      if (ttsEnabled) playPCM(part.inlineData.data);
-                      statusText.textContent = 'SPEAKING...';
-                      statusDot.className = 'chat-status-dot online';
+                  // Text delivered directly in turn part
+                  if (part.text) {
+                    removeThinkingIndicator();
+                    if (currentChannel === 'private' || currentChannel === 'shared') {
+                      createOrGetModelBubble(author);
+                      appendToModelBubble(part.text);
                     }
+                  }
+                  if (part.inlineData) {
+                    if (ttsEnabled) playPCM(part.inlineData.data);
+                    statusText.textContent = 'SPEAKING...';
+                    statusDot.className = 'chat-status-dot online';
+                  }
                   if (part.functionCall) {
+                    removeThinkingIndicator();
                     const result = await handleToolCall(part.functionCall);
                     liveSession.sendToolResponse({
                       functionResponses: [{
@@ -768,16 +940,17 @@ export default function CognitiveUplink() {
                 }
               }
               
+              // Transcription delivered when responseModalities contains audio
               if (content.outputTranscription && content.outputTranscription.text) {
-                const author = isAlpha ? 'ALPHA' : 'GEMINI';
-                if (currentChannel === 'private') {
+                removeThinkingIndicator();
+                if (currentChannel === 'private' || currentChannel === 'shared') {
                   createOrGetModelBubble(author);
                   appendToModelBubble(content.outputTranscription.text);
                 }
               }
               
               if (content.turnComplete) {
-                const author = isAlpha ? 'ALPHA' : 'GEMINI';
+                removeThinkingIndicator();
                 const txt = currentModelText.trim();
                 if (txt.length > 35) {
                   const lastC = txt[txt.length - 1];
@@ -786,18 +959,25 @@ export default function CognitiveUplink() {
                     const lastPhrase = txt.slice(-90).trim();
                     const contPrompt = `Continue your response exactly from where you were cut off. Do not apologize or explain. Your last words were: '${lastPhrase}'`;
                     if (liveSession) {
+                      showThinkingIndicator(author);
                       liveSession.sendRealtimeInput({ text: contPrompt });
                     }
                     return; // DO NOT finalize, let it append to the same bubble
                   }
                 }
-                finalizeModelBubble(author); statusText.textContent = 'LISTENING...'; statusDot.className = 'chat-status-dot online';
+                finalizeModelBubble(author); 
+                statusText.textContent = 'LISTENING...'; 
+                statusDot.className = 'chat-status-dot online';
               }
             },
-            onerror: (err) => appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg'),
+            onerror: (err) => {
+              removeThinkingIndicator();
+              appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg');
+            },
             onclose: () => {
+              removeThinkingIndicator();
               statusText.textContent = 'LIVE LINK CLOSED';
-              statusDot.classList.replace('streaming', 'online');
+              statusDot.className = 'chat-status-dot online';
               connectBtn.style.display = 'inline-block';
               disconnectBtn.style.display = 'none';
               liveSession = null;
@@ -869,15 +1049,24 @@ export default function CognitiveUplink() {
       if (!text) return;
       
       const author = profile.toUpperCase();
-      if (currentChannel === 'private') appendMessage(author, text, 'user-msg');
+      appendMessage(author, text, 'user-msg');
       saveMessageToHistory('user', text, author);
       chatInput.value = '';
       
+      const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+      showThinkingIndicator(isAlpha ? 'ALPHA' : 'GEMINI');
+
       if (!liveSession) await connectLiveAPI();
       
       if (liveSession) {
-        try { liveSession.sendRealtimeInput({ text }); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming'; } 
-        catch(e) { appendMessage('ERROR', 'Send failed: ' + e.message, 'system-msg'); }
+        try { 
+          liveSession.sendRealtimeInput({ text }); 
+          statusText.textContent = 'THINKING...'; 
+          statusDot.className = 'chat-status-dot streaming'; 
+        } catch(e) { 
+          removeThinkingIndicator();
+          appendMessage('ERROR', 'Send failed: ' + e.message, 'system-msg'); 
+        }
       }
     };
     
@@ -887,6 +1076,7 @@ export default function CognitiveUplink() {
 
     updateTitleAndAlpha();
     loadThreads();
+    connectSSE();
 
   }, 50);
 

@@ -438,7 +438,13 @@ app.post('/api/chat', async (req, res) => {
     }
   }
 
-  const msgObj = { author: msgAuthor, text, role: role || 'user', timestamp: Date.now() };
+  const msgObj = {
+    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
+    author: msgAuthor,
+    text,
+    role: role || 'user',
+    timestamp: Date.now()
+  };
 
   if (!db.sharedChat) db.sharedChat = [];
   db.sharedChat.push(msgObj);
