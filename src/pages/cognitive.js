@@ -175,7 +175,49 @@ export default function CognitiveUplink() {
     const channelTitle = container.querySelector('#chat-channel-title');
     const toggleAlphaCoreBtn = container.querySelector('#toggle-alphacore-btn');
     const toggleTtsBtn = container.querySelector('#toggle-tts-btn');
-    toggleTtsBtn.onclick = () => { ttsEnabled = !ttsEnabled; toggleTtsBtn.textContent = 'TTS: ' + (ttsEnabled ? 'ON' : 'OFF'); toggleTtsBtn.style.color = ttsEnabled ? '#00ff8c' : 'var(--text-muted)'; toggleTtsBtn.style.background = ttsEnabled ? 'rgba(0,255,140,0.15)' : 'transparent'; };
+    const toggleRagBtn = container.querySelector('#toggle-rag-btn');
+    let useVaultRag = false;
+
+    toggleTtsBtn.onclick = () => { 
+      ttsEnabled = !ttsEnabled; 
+      toggleTtsBtn.textContent = 'TTS: ' + (ttsEnabled ? 'ON' : 'OFF'); 
+      toggleTtsBtn.style.color = ttsEnabled ? '#00ff8c' : 'var(--text-muted)'; 
+      toggleTtsBtn.style.background = ttsEnabled ? 'rgba(0,255,140,0.15)' : 'transparent'; 
+    };
+
+    if (toggleRagBtn) {
+      toggleRagBtn.onclick = () => {
+        useVaultRag = !useVaultRag;
+        toggleRagBtn.textContent = 'VAULT RAG: ' + (useVaultRag ? 'ON' : 'OFF');
+        toggleRagBtn.style.color = useVaultRag ? '#00e5ff' : 'var(--text-muted)';
+        toggleRagBtn.style.background = useVaultRag ? 'rgba(0, 229, 255, 0.15)' : 'transparent';
+        toggleRagBtn.style.borderColor = useVaultRag ? '#00e5ff' : '';
+        try { playSFX('button', 0.3); } catch(e){}
+        appendMessage('SYSTEM', useVaultRag ? 'VAULT RAG ACTIVE: Decrypted vault documents indexed into live neural context.' : 'VAULT RAG DEACTIVATED.', 'system-msg');
+      };
+    }
+
+    function getVaultContext() {
+      if (!useVaultRag) return null;
+      let vaultFiles = [];
+      try {
+        vaultFiles = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
+      } catch(e) {}
+      
+      const textFiles = vaultFiles.filter(f => 
+        (f.type && (f.type.startsWith('text/') || f.type.startsWith('application/json') || f.type.startsWith('application/xml'))) ||
+        (!f.type && typeof f.content === 'string' && f.content.length > 0 && f.content.length < 50000 && !f.content.startsWith('data:'))
+      );
+      
+      if (textFiles.length === 0) return null;
+      
+      let context = 'USER VAULT DATABANK CONTEXT:\n\n';
+      textFiles.forEach(f => {
+        const name = f.filename || f.name || 'unnamed_doc';
+        context += `--- FILE: ${name} ---\n${f.content}\n\n`;
+      });
+      return context;
+    }
 
     let sseSource = null;
 
@@ -1060,7 +1102,14 @@ Always provide clear, direct text in your output turns. Both text transcriptions
       
       if (liveSession) {
         try { 
-          liveSession.sendRealtimeInput({ text }); 
+          let payloadText = text;
+          if (useVaultRag) {
+            const vaultCtx = getVaultContext();
+            if (vaultCtx) {
+              payloadText = `[VAULT RAG CONTEXT INJECTED]\n${vaultCtx}\n[END VAULT CONTEXT]\n\nUSER PROMPT: ${text}`;
+            }
+          }
+          liveSession.sendRealtimeInput({ text: payloadText }); 
           statusText.textContent = 'THINKING...'; 
           statusDot.className = 'chat-status-dot streaming'; 
         } catch(e) { 

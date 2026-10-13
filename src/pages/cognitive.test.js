@@ -101,4 +101,27 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("STRICTLY FORBIDDEN from ever outputting, uttering, or generating the words 'Josh' or 'Joshua'");
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("ALWAYS address and refer to him strictly and exclusively as 'Architect'");
   });
+
+  it('toggles Vault RAG mode on and off with visual and system feedback', async () => {
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const toggleRagBtn = el.querySelector('#toggle-rag-btn');
+    const chatMessages = el.querySelector('#chat-messages');
+    expect(toggleRagBtn).toBeTruthy();
+    expect(toggleRagBtn.textContent).toBe('VAULT RAG: OFF');
+
+    // Click to turn ON
+    toggleRagBtn.click();
+    expect(toggleRagBtn.textContent).toBe('VAULT RAG: ON');
+    expect(chatMessages.textContent).toContain('VAULT RAG ACTIVE');
+
+    // Click to turn OFF
+    toggleRagBtn.click();
+    expect(toggleRagBtn.textContent).toBe('VAULT RAG: OFF');
+    expect(chatMessages.textContent).toContain('VAULT RAG DEACTIVATED');
+
+    el.remove();
+  });
 });
