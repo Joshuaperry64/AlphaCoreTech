@@ -985,11 +985,7 @@ Always provide clear, direct text in your output turns. Both text transcriptions
             responseModalities: ['audio'],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Leda' } } },
             systemInstruction: { parts: [{ text: instructions }] },
-            tools: coreTools,
-            generationConfig: {
-              inputAudioTranscription: {},
-              outputAudioTranscription: {}
-            }
+            tools: coreTools
           },
           callbacks: {
             onopen: () => {
