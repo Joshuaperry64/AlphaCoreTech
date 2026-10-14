@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -36,10 +37,20 @@ type Settings struct {
 	GuidanceImg     float64 `json:"guidanceImg"`
 }
 
+type ChatMessage struct {
+	ID        string `json:"id"`
+	Author    string `json:"author,omitempty"`
+	Text      string `json:"text"`
+	Role      string `json:"role,omitempty"`
+	Timestamp int64  `json:"timestamp"`
+}
+
 type Database struct {
-	Pins     []Pin                  `json:"pins"`
-	Logs     []interface{}          `json:"logs"`
-	Settings Settings               `json:"settings"`
+	Pins            []Pin         `json:"pins"`
+	Logs            []interface{} `json:"logs"`
+	Settings        Settings      `json:"settings"`
+	SharedChat      []ChatMessage `json:"sharedChat,omitempty"`
+	PendingProfiles []interface{} `json:"pendingProfiles,omitempty"`
 }
 
 func getDefaultDB() Database {
@@ -86,6 +97,12 @@ func readDB() Database {
 	}
 	if db.Logs == nil {
 		db.Logs = []interface{}{}
+	}
+	if db.SharedChat == nil {
+		db.SharedChat = []ChatMessage{}
+	}
+	if db.PendingProfiles == nil {
+		db.PendingProfiles = []interface{}{}
 	}
 	return db
 }
@@ -273,9 +290,177 @@ func handleRunpod(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"error": "RunPod functionality disabled in Go backend."})
 }
 
+// --- REAL-TIME CHAT SSE HUB & PERSISTENCE ---
+
+type SSEHub struct {
+	mu      sync.RWMutex
+	clients map[chan ChatMessage]bool
+}
+
+var sseHub = &SSEHub{
+	clients: make(map[chan ChatMessage]bool),
+}
+
+func (h *SSEHub) addClient(ch chan ChatMessage) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.clients[ch] = true
+}
+
+func (h *SSEHub) removeClient(ch chan ChatMessage) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.clients, ch)
+}
+
+func (h *SSEHub) broadcast(msg ChatMessage) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for ch := range h.clients {
+		select {
+		case ch <- msg:
+		default:
+		}
+	}
+}
+
+func handleChatStream(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	ch := make(chan ChatMessage, 32)
+	sseHub.addClient(ch)
+	defer sseHub.removeClient(ch)
+
+	fmt.Fprintf(w, ": connected\n\n")
+	flusher.Flush()
+
+	for {
+		select {
+		case msg := <-ch:
+			data, err := json.Marshal(msg)
+			if err == nil {
+				fmt.Fprintf(w, "data: %s\n\n", data)
+				flusher.Flush()
+			}
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
+func handleChatHistory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+
+	db := readDB()
+	if db.SharedChat == nil {
+		db.SharedChat = []ChatMessage{}
+	}
+	json.NewEncoder(w).Encode(db.SharedChat)
+}
+
 func handleChat(w http.ResponseWriter, r *http.Request) {
-	// Vestigial code handler
-	json.NewEncoder(w).Encode(map[string]string{"reply": "this feature is still in development."})
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+
+	if r.Method == http.MethodGet {
+		db := readDB()
+		if db.SharedChat == nil {
+			db.SharedChat = []ChatMessage{}
+		}
+		json.NewEncoder(w).Encode(db.SharedChat)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req struct {
+			Author string `json:"author"`
+			Text   string `json:"text"`
+			Role   string `json:"role"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"Invalid request payload"}`, http.StatusBadRequest)
+			return
+		}
+		if strings.TrimSpace(req.Text) == "" {
+			http.Error(w, `{"error":"Text required"}`, http.StatusBadRequest)
+			return
+		}
+
+		author := strings.TrimSpace(req.Author)
+		if author == "" {
+			author = "USER"
+		}
+		role := strings.TrimSpace(req.Role)
+		if role == "" {
+			role = "user"
+		}
+
+		msg := ChatMessage{
+			ID:        fmt.Sprintf("msg_%d_%d", time.Now().UnixMilli(), time.Now().Nanosecond()%10000),
+			Author:    author,
+			Text:      req.Text,
+			Role:      role,
+			Timestamp: time.Now().UnixMilli(),
+		}
+
+		dbMutex.Lock()
+		db := readDBInternal()
+		if db.SharedChat == nil {
+			db.SharedChat = []ChatMessage{}
+		}
+		db.SharedChat = append(db.SharedChat, msg)
+		if len(db.SharedChat) > 100 {
+			db.SharedChat = db.SharedChat[len(db.SharedChat)-100:]
+		}
+		writeDBInternal(db)
+		dbMutex.Unlock()
+
+		sseHub.broadcast(msg)
+
+		json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": msg})
+		return
+	}
+
+	http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+}
+
+func readDBInternal() Database {
+	data, err := os.ReadFile(dbPath)
+	if err != nil {
+		db := getDefaultDB()
+		writeDBInternal(db)
+		return db
+	}
+
+	var db Database
+	if err := json.Unmarshal(data, &db); err != nil {
+		return getDefaultDB()
+	}
+	if len(db.Pins) == 0 {
+		db.Pins = getDefaultDB().Pins
+	}
+	if db.Logs == nil {
+		db.Logs = []interface{}{}
+	}
+	if db.SharedChat == nil {
+		db.SharedChat = []ChatMessage{}
+	}
+	if db.PendingProfiles == nil {
+		db.PendingProfiles = []interface{}{}
+	}
+	return db
 }
 
 func main() {
@@ -286,6 +471,8 @@ func main() {
 	mux.HandleFunc("/api/settings", enableCORS(handleSettings))
 	mux.HandleFunc("/api/auth", enableCORS(handleAuth))
 	mux.HandleFunc("/api/runpod", enableCORS(handleRunpod))
+	mux.HandleFunc("/api/chat/stream", enableCORS(handleChatStream))
+	mux.HandleFunc("/api/chat/history", enableCORS(handleChatHistory))
 	mux.HandleFunc("/api/chat", enableCORS(handleChat))
 
 	// Serve Static Files

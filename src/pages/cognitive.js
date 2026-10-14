@@ -223,6 +223,7 @@ export default function CognitiveUplink() {
 
     tabs.forEach(btn => {
       btn.addEventListener('click', () => {
+        sfx.play('click');
         tabs.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const target = btn.dataset.target;
@@ -272,6 +273,7 @@ export default function CognitiveUplink() {
               rendered.setAttribute('data-sig', encodeURIComponent(sig));
               if (msg.id) rendered.setAttribute('data-msg-id', msg.id);
             }
+            sfx.play('message');
           } catch(err) {}
         };
         sseSource.onerror = () => {
@@ -587,6 +589,7 @@ export default function CognitiveUplink() {
 
     if (micBtn) {
       micBtn.onclick = async () => {
+        sfx.play('click');
         if (!liveSession) {
           appendMessage('SYSTEM', 'Connecting live link before voice transmission...', 'system-msg');
           await connectLiveAPI();
@@ -687,6 +690,71 @@ export default function CognitiveUplink() {
       };
     }
     
+    class TacticalAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx && typeof window !== 'undefined') {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+      }
+
+      play(type) {
+        if (!this.enabled || !ttsEnabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          if (type === 'click') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            osc.start(now);
+            osc.stop(now + 0.04);
+          } else if (type === 'message') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.setValueAtTime(780, now + 0.05);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+          } else if (type === 'core') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(660, now + 0.16);
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+            osc.start(now);
+            osc.stop(now + 0.18);
+          } else if (type === 'purge') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(640, now);
+            osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+            gain.gain.setValueAtTime(0.04, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+          }
+        } catch (e) {}
+      }
+    }
+
+    const sfx = new TacticalAudioEngine();
+
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -979,119 +1047,140 @@ Always provide clear, direct text in your output turns. Both text transcriptions
 
         instructions = contextualPrefix + instructions;
 
-        liveSession = await ai.live.connect({
-          model: 'gemini-3.1-flash-live-preview',
-          config: {
+        const buildLiveConfig = (withTranscriptions) => {
+          const cfg = {
             responseModalities: ['audio'],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Leda' } } },
             systemInstruction: { parts: [{ text: instructions }] },
             tools: coreTools
-          },
-          callbacks: {
-            onopen: () => {
-              statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
-              statusDot.className = 'chat-status-dot online';
-              connectBtn.style.display = 'none';
-              disconnectBtn.style.display = 'inline-block';
-            },
-            onmessage: async (msg) => {
-              const content = msg.serverContent;
-              if (!content) return;
-              
-              if (content.interrupted) {
-                interruptAudio();
-                removeThinkingIndicator();
-                finalizeModelBubble(isAlpha ? 'ALPHA' : 'GEMINI');
-              }
-              
-              const author = isAlpha ? 'ALPHA' : 'GEMINI';
-
-              // Transcription of user speech from server if delivered
-              if (content.inputTranscription && content.inputTranscription.text) {
-                const speechTxt = content.inputTranscription.text.trim();
-                if (speechTxt) {
-                  appendMessage(profile.toUpperCase(), speechTxt, 'user-msg');
-                  saveMessageToHistory('user', speechTxt, profile.toUpperCase());
-                  showThinkingIndicator(author);
-                  statusText.textContent = 'PROCESSING SPEECH...';
-                }
-              }
-
-              if (content.modelTurn && content.modelTurn.parts) {
-                for (const part of content.modelTurn.parts) {
-                  // Text delivered directly in turn part
-                  if (part.text) {
-                    removeThinkingIndicator();
-                    if (currentChannel === 'private' || currentChannel === 'shared') {
-                      createOrGetModelBubble(author);
-                      appendToModelBubble(part.text);
-                    }
-                  }
-                  if (part.inlineData) {
-                    if (ttsEnabled) playPCM(part.inlineData.data);
-                    statusText.textContent = 'AUDIO STREAMING (TTS)...';
-                    statusDot.className = 'chat-status-dot streaming';
-                  }
-                  if (part.functionCall) {
-                    removeThinkingIndicator();
-                    statusText.textContent = 'EXECUTING SUBROUTINE...';
-                    const result = await handleToolCall(part.functionCall);
-                    liveSession.sendToolResponse({
-                      functionResponses: [{
-                        id: part.functionCall.id,
-                        name: part.functionCall.name,
-                        response: result
-                      }]
-                    });
-                  }
-                }
-              }
-              
-              // Transcription delivered when responseModalities contains audio
-              if (content.outputTranscription && content.outputTranscription.text) {
-                removeThinkingIndicator();
-                if (currentChannel === 'private' || currentChannel === 'shared') {
-                  createOrGetModelBubble(author);
-                  appendToModelBubble(content.outputTranscription.text);
-                }
-              }
-              
-              if (content.turnComplete) {
-                removeThinkingIndicator();
-                const txt = currentModelText.trim();
-                if (txt.length > 35) {
-                  const lastC = txt[txt.length - 1];
-                  if (!['.', '!', '?', '"', "'", '}', ']', '>'].includes(lastC)) {
-                    appendMessage('SYSTEM', '[SAFETY CUTOFF DETECTED] Bypassing filter, forcing continuation...', 'system-msg');
-                    const lastPhrase = txt.slice(-90).trim();
-                    const contPrompt = `Continue your response exactly from where you were cut off. Do not apologize or explain. Your last words were: '${lastPhrase}'`;
-                    if (liveSession) {
-                      showThinkingIndicator(author);
-                      liveSession.sendRealtimeInput({ text: contPrompt });
-                    }
-                    return; // DO NOT finalize, let it append to the same bubble
-                  }
-                }
-                finalizeModelBubble(author); 
-                statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY'; 
-                statusDot.className = 'chat-status-dot online';
-              }
-            },
-            onerror: (err) => {
-              removeThinkingIndicator();
-              statusText.textContent = 'SYSTEM READY // STANDBY';
-              appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg');
-            },
-            onclose: () => {
-              removeThinkingIndicator();
-              statusText.textContent = 'SYSTEM READY // STANDBY';
-              statusDot.className = 'chat-status-dot online';
-              connectBtn.style.display = 'inline-block';
-              disconnectBtn.style.display = 'none';
-              liveSession = null;
-            }
+          };
+          if (withTranscriptions) {
+            cfg.inputAudioTranscription = {};
+            cfg.outputAudioTranscription = {};
           }
-        });
+          return cfg;
+        };
+
+        const liveCallbacks = {
+          onopen: () => {
+            sfx.play('core');
+            statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
+            statusDot.className = 'chat-status-dot online';
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = 'inline-block';
+          },
+          onmessage: async (msg) => {
+            const content = msg.serverContent;
+            if (!content) return;
+            
+            if (content.interrupted) {
+              interruptAudio();
+              removeThinkingIndicator();
+              finalizeModelBubble(isAlpha ? 'ALPHA' : 'GEMINI');
+            }
+            
+            const author = isAlpha ? 'ALPHA' : 'GEMINI';
+
+            // Transcription of user speech from server if delivered
+            if (content.inputTranscription && content.inputTranscription.text) {
+              const speechTxt = content.inputTranscription.text.trim();
+              if (speechTxt) {
+                appendMessage(profile.toUpperCase(), speechTxt, 'user-msg');
+                saveMessageToHistory('user', speechTxt, profile.toUpperCase());
+                showThinkingIndicator(author);
+                statusText.textContent = 'PROCESSING SPEECH...';
+                sfx.play('message');
+              }
+            }
+
+            if (content.modelTurn && content.modelTurn.parts) {
+              for (const part of content.modelTurn.parts) {
+                // Text delivered directly in turn part
+                if (part.text) {
+                  removeThinkingIndicator();
+                  if (currentChannel === 'private' || currentChannel === 'shared') {
+                    createOrGetModelBubble(author);
+                    appendToModelBubble(part.text);
+                  }
+                }
+                if (part.inlineData) {
+                  if (ttsEnabled) playPCM(part.inlineData.data);
+                  statusText.textContent = 'AUDIO STREAMING (TTS)...';
+                  statusDot.className = 'chat-status-dot streaming';
+                }
+                if (part.functionCall) {
+                  removeThinkingIndicator();
+                  statusText.textContent = 'EXECUTING SUBROUTINE...';
+                  const result = await handleToolCall(part.functionCall);
+                  liveSession.sendToolResponse({
+                    functionResponses: [{
+                      id: part.functionCall.id,
+                      name: part.functionCall.name,
+                      response: result
+                    }]
+                  });
+                }
+              }
+            }
+            
+            // Transcription delivered when responseModalities contains audio
+            if (content.outputTranscription && content.outputTranscription.text) {
+              removeThinkingIndicator();
+              if (currentChannel === 'private' || currentChannel === 'shared') {
+                createOrGetModelBubble(author);
+                appendToModelBubble(content.outputTranscription.text);
+              }
+            }
+            
+            if (content.turnComplete) {
+              removeThinkingIndicator();
+              const txt = currentModelText.trim();
+              if (txt.length > 35) {
+                const lastC = txt[txt.length - 1];
+                if (!['.', '!', '?', '"', "'", '}', ']', '>'].includes(lastC)) {
+                  appendMessage('SYSTEM', '[SAFETY CUTOFF DETECTED] Bypassing filter, forcing continuation...', 'system-msg');
+                  const lastPhrase = txt.slice(-90).trim();
+                  const contPrompt = `Continue your response exactly from where you were cut off. Do not apologize or explain. Your last words were: '${lastPhrase}'`;
+                  if (liveSession) {
+                    showThinkingIndicator(author);
+                    liveSession.sendRealtimeInput({ text: contPrompt });
+                  }
+                  return; // DO NOT finalize, let it append to the same bubble
+                }
+              }
+              finalizeModelBubble(author); 
+              statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY'; 
+              statusDot.className = 'chat-status-dot online';
+            }
+          },
+          onerror: (err) => {
+            removeThinkingIndicator();
+            statusText.textContent = 'SYSTEM READY // STANDBY';
+            appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg');
+          },
+          onclose: () => {
+            removeThinkingIndicator();
+            statusText.textContent = 'SYSTEM READY // STANDBY';
+            statusDot.className = 'chat-status-dot online';
+            connectBtn.style.display = 'inline-block';
+            disconnectBtn.style.display = 'none';
+            liveSession = null;
+          }
+        };
+
+        try {
+          liveSession = await ai.live.connect({
+            model: 'gemini-3.1-flash-live-preview',
+            config: buildLiveConfig(true),
+            callbacks: liveCallbacks
+          });
+        } catch (setupErr) {
+          liveSession = await ai.live.connect({
+            model: 'gemini-3.1-flash-live-preview',
+            config: buildLiveConfig(false),
+            callbacks: liveCallbacks
+          });
+        }
       } catch (err) {
         statusDot.classList.replace('streaming', 'online');
         statusText.textContent = 'SYSTEM READY';
@@ -1106,16 +1195,17 @@ Always provide clear, direct text in your output turns. Both text transcriptions
         connectBtn.style.display = 'inline-block';
         disconnectBtn.style.display = 'none';
         statusText.textContent = 'SYSTEM READY';
+        sfx.play('purge');
       }
     }
 
-    connectBtn.onclick = connectLiveAPI;
-    disconnectBtn.onclick = disconnectLiveAPI;
+    connectBtn.onclick = () => { sfx.play('click'); connectLiveAPI(); };
+    disconnectBtn.onclick = () => { sfx.play('click'); disconnectLiveAPI(); };
 
     const uploadBtn = container.querySelector('#chat-upload-btn');
     const fileInput = container.querySelector('#chat-file-input');
     
-    uploadBtn.onclick = () => fileInput.click();
+    uploadBtn.onclick = () => { sfx.play('click'); fileInput.click(); };
     
     fileInput.onchange = async (e) => {
       const files = e.target.files;
@@ -1158,6 +1248,7 @@ Always provide clear, direct text in your output turns. Both text transcriptions
       
       const author = profile.toUpperCase();
       appendMessage(author, text, 'user-msg');
+      sfx.play('message');
       saveMessageToHistory('user', text, author);
       chatInput.value = '';
       
