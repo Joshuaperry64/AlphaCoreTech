@@ -383,9 +383,14 @@ app.post('/api/auth', async (req, res) => {
   res.json({ valid: true, pinObj: found });
 });
 
-// --- GLOBAL MEMORY SYSTEM ---
+// --- GLOBAL MEMORY SYSTEM (USER PROFILE SCOPED) ---
 app.get('/api/memory', async (req, res) => {
   const db = await readDB();
+  const profile = (req.query.profile || '').toUpperCase();
+  if (profile) {
+    const userMemory = (db.memory || []).filter(m => !m.profile || m.profile === profile || m.profile === 'GLOBAL');
+    return res.json(userMemory);
+  }
   res.json(db.memory || []);
 });
 
@@ -393,14 +398,21 @@ app.post('/api/memory', async (req, res) => {
   const db = await readDB();
   if (!db.memory) db.memory = [];
   
-  const { action, fact, query } = req.body;
+  const { action, fact, query, profile } = req.body;
+  const callerProfile = (profile || 'GLOBAL').toUpperCase();
   if (action === 'memorize' && fact) {
-    db.memory.push({ fact, timestamp: Date.now() });
+    db.memory.push({ fact, profile: callerProfile, timestamp: Date.now() });
     await writeDB(db);
-    return res.json({ success: true, fact });
+    return res.json({ success: true, fact, profile: callerProfile });
   } else if (action === 'recall' && query) {
-    // Basic text search recall
-    const results = db.memory.filter(m => m.fact.toLowerCase().includes(query.toLowerCase()));
+    // Basic text search recall scoped to caller profile or GLOBAL
+    const results = db.memory.filter(m => {
+      const matches = m.fact && m.fact.toLowerCase().includes(query.toLowerCase());
+      if (!matches) return false;
+      if (!profile) return true;
+      const memProfile = (m.profile || 'GLOBAL').toUpperCase();
+      return memProfile === callerProfile || memProfile === 'GLOBAL';
+    });
     return res.json({ results });
   }
   res.status(400).json({ error: 'Invalid action or missing parameters' });

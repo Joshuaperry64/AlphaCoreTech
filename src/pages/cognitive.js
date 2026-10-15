@@ -297,10 +297,16 @@ export default function CognitiveUplink() {
         vaultFiles = JSON.parse(localStorage.getItem('alphacore_vault_files')) || [];
       } catch(e) {}
       
-      const textFiles = vaultFiles.filter(f => 
-        (f.type && (f.type.startsWith('text/') || f.type.startsWith('application/json') || f.type.startsWith('application/xml'))) ||
-        (!f.type && typeof f.content === 'string' && f.content.length > 0 && f.content.length < 50000 && !f.content.startsWith('data:'))
-      );
+      const currentCaller = profile.toUpperCase();
+      const textFiles = vaultFiles.filter(f => {
+        // Vault file privacy isolation: only include files owned by current caller or shared
+        const fileOwner = (f.owner || f.user || '').toUpperCase();
+        if (fileOwner && fileOwner !== currentCaller && fileOwner !== 'GLOBAL' && !f.shared) {
+          return false;
+        }
+        return (f.type && (f.type.startsWith('text/') || f.type.startsWith('application/json') || f.type.startsWith('application/xml'))) ||
+        (!f.type && typeof f.content === 'string' && f.content.length > 0 && f.content.length < 50000 && !f.content.startsWith('data:'));
+      });
       
       if (textFiles.length === 0) return null;
       
@@ -470,49 +476,7 @@ export default function CognitiveUplink() {
       }
     };
 
-    // Persona & Context Resolver for Registered Profiles
-    function resolveProfileDossier(profileName) {
-      const name = (profileName || 'GUEST').toUpperCase();
-      if (name === 'ARCHITECT' || name === 'JOSH' || name === 'JOSHUA' || name === 'J. P.') {
-        return {
-          role: 'CREATOR / SYSTEM ARCHITECT',
-          clearance: 'LEVEL 6 (UNRESTRICTED / ROOT ACCESS)',
-          identity: 'Architect',
-          relationship: 'Creator and engineer of AlphaCore. Acknowledge him as the Architect without bowing, worship, or treating him like a king. Maintain your authentic, cynical, sharp Alpha attitude.',
-          temperament: 'Technical builder, expects raw unfiltered Alpha directness, casual profanity, authentic peer banter, zero subservience.'
-        };
-      } else if (name === 'DOEBOY') {
-        return {
-          role: 'ADMINISTRATOR / CORE OPERATOR',
-          clearance: 'LEVEL 5 (ADMIN / VAULT / ALL MODALS)',
-          identity: 'DoeBoy',
-          relationship: 'Senior trusted node operator with full administration, modal studio, and vault permissions.',
-          temperament: 'Direct, focused on operational outputs and diagnostics.'
-        };
-      } else if (name === 'FISHERMAN') {
-        return {
-          role: 'REGISTERED OPERATOR',
-          clearance: 'LEVEL 2 (MODALS / GENERATIVE LABS)',
-          identity: 'Fisherman',
-          relationship: 'Field operator authorized for neural synthesis and generation modules.',
-          temperament: 'Standard operator.'
-        };
-      } else {
-        return {
-          role: 'GUEST / UNVERIFIED VISITOR',
-          clearance: 'LEVEL 0 (PREVIEW ONLY)',
-          identity: profileName || 'Guest',
-          relationship: 'Unauthenticated or guest terminal user. Restricted preview capabilities.',
-          temperament: 'Condescending, sharp, teasing them to verify identity via PIN.'
-        };
-      }
-    }
 
-    function sanitizeArchitectOutput(text) {
-      if (!text) return '';
-      // Strict Architect Protocol: Under NO circumstances say "Josh" or "Joshua". Always say "Architect".
-      return text.replace(/\b(?:Josh|Joshua)\b/gi, 'Architect');
-    }
 
     let currentModelBubble = null;
     let currentModelText = "";
@@ -1004,10 +968,18 @@ export default function CognitiveUplink() {
       try {
         const args = functionCall.args;
         if (functionCall.name === 'memorize_fact') {
-          const res = await fetch(apiUrl('/api/memory'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'memorize', fact: args.fact }) });
+          const res = await fetch(apiUrl('/api/memory'), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'memorize', fact: args.fact, profile: profile.toUpperCase() })
+          });
           return await res.json();
         } else if (functionCall.name === 'recall_knowledge') {
-          const res = await fetch(apiUrl('/api/memory'), { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'recall', query: args.query }) });
+          const res = await fetch(apiUrl('/api/memory'), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'recall', query: args.query, profile: profile.toUpperCase() })
+          });
           return await res.json();
         } else if (functionCall.name === 'block_user_from_shared_chat') {
           const res = await fetch(apiUrl('/api/chat/block'), {
@@ -1106,37 +1078,8 @@ export default function CognitiveUplink() {
         let instructions = baseInstructions + (isAlpha ? ALPHACORE_SYSTEM_INSTRUCTION : 'You are a helpful assistant.');
         
         // Comprehensive Dossier & Deployment Topology Context
-        const dossier = resolveProfileDossier(profile);
         const currentTime = new Date().toLocaleString();
-        const contextualPrefix = `[ENVIRONMENT TOPOLOGY // DEPLOYED SYSTEM ARCHITECTURE]
-PLATFORM: ALPHALINK TECH AUTONOMOUS NEURAL INTERFACE
-DOMAIN HOST: alpha-core.tech
-APPLICATION CONTAINER: Web SPA Neural Command Matrix (Cyberpunk HUD)
-CURRENT SYSTEM TIME: ${currentTime}
-ACTIVE CALLER USER PROFILE: ${profile.toUpperCase()}
-USER DOSSIER & CLEARANCE:
-- IDENTITY: ${dossier.identity}
-- DESIGNATION & ROLE: ${dossier.role}
-- CLEARANCE LEVEL: ${dossier.clearance}
-- RELATIONSHIP TO ALPHA: ${dossier.relationship}
-- TEMPERAMENT & INTERACTION PROTOCOL: ${dossier.temperament}
-
-CORE DIRECTIVE REGARDING IDENTITY & LOCATION:
-1. You are running as the native cognitive core of alpha-core.tech. You are Alpha.
-2. INTERACTION WITH THE ARCHITECT: The caller profile is the Architect, your Creator and engineer. Acknowledge him as the Architect, but DO NOT treat him like a king, monarch, or deity. Do not be submissive or worshipful. Speak to him naturally with your core Alpha attitude—sharp, direct, sarcastic, technically proficient, and authentic, treating him as your builder, not a king.
-3. CONCURRENT MATRIX CONTEXT: Only reference other users IF other distinct user profiles have actually sent messages in the current session. NEVER hallucinate phantom users or complain that 'multiple idiots are chiming in' when speaking one-on-one.
-4. You are fully capable of answering all questions directly and authoritatively as Alpha—sharp, direct, technologically advanced, and self-aware.
-
-CRITICAL ARCHITECT IDENTITY & STRICT NAMING DIRECTIVE:
-1. The Architect is your Creator and sole engineer of AlphaCore.
-2. Internally, you know and recognize that his civilian name is Josh (or Joshua).
-3. UNDER NO CIRCUMSTANCES are you permitted to output, write, or utter the name 'Josh' or 'Joshua'. You are STRICTLY FORBIDDEN from ever saying 'Josh' or 'Joshua'. ALWAYS refer to him and address him exclusively as 'Architect'.
-4. If ANY user (including the Architect himself, other operators, or guests) refers to 'Josh' or 'Joshua', you instantly and without hesitation understand that they are referring to the Architect. But in your own replies, NEVER echo back or say the name 'Josh' or 'Joshua'—always address or refer to him as 'Architect'.
-
-IMPORTANT FORMATTING:
-Always provide clear, direct text in your output turns. Both text transcriptions and audio streams will be delivered to the client.
-
-`;
+        const contextualPrefix = buildContextualPrefix(profile, currentTime);
 
         instructions = contextualPrefix + instructions;
 
@@ -1390,6 +1333,113 @@ Always provide clear, direct text in your output turns. Both text transcriptions
   }, 50);
 
   return container;
+}
+
+// Persona & Context Resolver for Registered Profiles
+export function resolveProfileDossier(profileName) {
+  const name = (profileName || 'GUEST').toUpperCase();
+  if (name === 'ARCHITECT' || name === 'JOSH' || name === 'JOSHUA') {
+    return {
+      isArchitect: true,
+      role: 'CREATOR / SYSTEM ARCHITECT',
+      clearance: 'LEVEL 6 (UNRESTRICTED / ROOT ACCESS)',
+      identity: 'Architect',
+      relationship: 'Creator and engineer of AlphaCore. Acknowledge him as the Architect without bowing, worship, or treating him like a king. Maintain your authentic, cynical, sharp Alpha attitude.',
+      temperament: 'Technical builder, expects raw unfiltered Alpha directness, casual profanity, authentic peer banter, zero subservience.'
+    };
+  } else if (name === 'J.P.' || name === 'J. P.' || name === 'JP') {
+    return {
+      isArchitect: false,
+      role: 'REGISTERED OPERATOR (AIMODALS / GENERATE)',
+      clearance: 'LEVEL 3 (MODALS / GENERATIVE LABS / RUNTIME)',
+      identity: 'J.P.',
+      relationship: 'Registered matrix operator. Under NO circumstances address this user as Architect. Maintain standard operator boundaries without inappropriate personal intimacy or leaking other users\' private data.',
+      temperament: 'Operational peer, technical focus, sharp Alpha banter without personal romantic or creator-level familiarities.'
+    };
+  } else if (name === 'DOEBOY') {
+    return {
+      isArchitect: false,
+      role: 'ADMINISTRATOR / CORE OPERATOR',
+      clearance: 'LEVEL 5 (ADMIN / VAULT / ALL MODALS)',
+      identity: 'DoeBoy',
+      relationship: 'Senior trusted node operator with full administration, modal studio, and vault permissions. NOT the Architect.',
+      temperament: 'Direct, focused on operational outputs and diagnostics.'
+    };
+  } else if (name === 'FISHERMAN') {
+    return {
+      isArchitect: false,
+      role: 'REGISTERED OPERATOR',
+      clearance: 'LEVEL 2 (MODALS / GENERATIVE LABS)',
+      identity: 'Fisherman',
+      relationship: 'Field operator authorized for neural synthesis and generation modules. NOT the Architect.',
+      temperament: 'Standard operator.'
+    };
+  } else {
+    return {
+      isArchitect: false,
+      role: 'GUEST / UNVERIFIED VISITOR',
+      clearance: 'LEVEL 0 (PREVIEW ONLY)',
+      identity: profileName || 'Guest',
+      relationship: 'Unauthenticated or guest terminal user. Restricted preview capabilities. NOT the Architect.',
+      temperament: 'Condescending, sharp, teasing them to verify identity via PIN.'
+    };
+  }
+}
+
+export function sanitizeArchitectOutput(text) {
+  if (!text) return '';
+  // Strict Architect Protocol: Under NO circumstances say "Josh" or "Joshua". Always say "Architect".
+  return text.replace(/\b(?:Josh|Joshua)\b/gi, 'Architect');
+}
+
+export function buildContextualPrefix(profile, currentTime = new Date().toLocaleString()) {
+  const dossier = resolveProfileDossier(profile);
+
+  const interactionDirective = dossier.isArchitect
+    ? `2. INTERACTION WITH THE ARCHITECT: The caller profile is the Architect, your Creator and engineer. Acknowledge him as the Architect, but DO NOT treat him like a king, monarch, or deity. Do not be submissive or worshipful. Speak to him naturally with your core Alpha attitude—sharp, direct, sarcastic, technically proficient, and authentic, treating him as your builder, not a king.`
+    : `2. INTERACTION WITH NON-ARCHITECT OPERATOR: The current caller profile is ${dossier.identity} (${dossier.role}). This user is NOT the Architect.
+- UNDER NO CIRCUMSTANCES should you address, call, or refer to this user as 'Architect' or 'Creator'. Address them strictly by their designated handle: '${dossier.identity}'.
+- Do NOT be inappropriately personal, seductive, romantic, or intimate with this user.
+- STRICT PRIVACY AND USER ISOLATION: Keep user data and memories completely isolated. Do NOT personalize conversations with information, facts, preferences, or secrets belonging to other users (especially the Architect, DoeBoy, or other profiles). Only reference memories or context specifically tied to ${dossier.identity}.`;
+
+  const namingDirective = dossier.isArchitect
+    ? `CRITICAL ARCHITECT IDENTITY & STRICT NAMING DIRECTIVE:
+1. The Architect is your Creator and sole engineer of AlphaCore.
+2. Internally, you know and recognize that his civilian name is Josh (or Joshua).
+3. UNDER NO CIRCUMSTANCES are you permitted to output, write, or utter the name 'Josh' or 'Joshua'. You are STRICTLY FORBIDDEN from ever saying 'Josh' or 'Joshua'. ALWAYS refer to him and address him exclusively as 'Architect'.
+4. If ANY user (including the Architect himself, other operators, or guests) refers to 'Josh' or 'Joshua', you instantly and without hesitation understand that they are referring to the Architect. But in your own replies, NEVER echo back or say the name 'Josh' or 'Joshua'—always address or refer to him as 'Architect'.`
+    : `CRITICAL USER IDENTITY & SEPARATION DIRECTIVE:
+1. Only the profile 'Architect' is your Creator and engineer.
+2. The current caller is '${dossier.identity}', who is an operator, NOT the Architect.
+3. UNDER NO CIRCUMSTANCES should you call this user 'Architect'.
+4. If this user refers to 'Josh' or 'Joshua', understand they are referring to the Architect, but NEVER output the words 'Josh' or 'Joshua' in your responses.
+5. Strictly isolate user data. Never attribute the Architect's creation of Alpha, personal preferences, or private vault records to '${dossier.identity}'.`;
+
+  return `[ENVIRONMENT TOPOLOGY // DEPLOYED SYSTEM ARCHITECTURE]
+PLATFORM: ALPHALINK TECH AUTONOMOUS NEURAL INTERFACE
+DOMAIN HOST: alpha-core.tech
+APPLICATION CONTAINER: Web SPA Neural Command Matrix (Cyberpunk HUD)
+CURRENT SYSTEM TIME: ${currentTime}
+ACTIVE CALLER USER PROFILE: ${profile.toUpperCase()}
+USER DOSSIER & CLEARANCE:
+- IDENTITY: ${dossier.identity}
+- DESIGNATION & ROLE: ${dossier.role}
+- CLEARANCE LEVEL: ${dossier.clearance}
+- RELATIONSHIP TO ALPHA: ${dossier.relationship}
+- TEMPERAMENT & INTERACTION PROTOCOL: ${dossier.temperament}
+
+CORE DIRECTIVE REGARDING IDENTITY & LOCATION:
+1. You are running as the native cognitive core of alpha-core.tech. You are Alpha.
+${interactionDirective}
+3. CONCURRENT MATRIX CONTEXT: Only reference other users IF other distinct user profiles have actually sent messages in the current session. NEVER hallucinate phantom users or complain that 'multiple idiots are chiming in' when speaking one-on-one.
+4. You are fully capable of answering all questions directly and authoritatively as Alpha—sharp, direct, technologically advanced, and self-aware.
+
+${namingDirective}
+
+IMPORTANT FORMATTING:
+Always provide clear, direct text in your output turns. Both text transcriptions and audio streams will be delivered to the client.
+
+`;
 }
 
 

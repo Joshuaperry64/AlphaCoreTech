@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import CognitiveUplink from './cognitive.js';
+import CognitiveUplink, { resolveProfileDossier, buildContextualPrefix, sanitizeArchitectOutput } from './cognitive.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 
 describe('Cognitive Core & Global Comm Link API Key Routing', () => {
@@ -188,5 +188,63 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(statusEl.textContent).toContain('Configuration saved');
 
     el.remove();
+  });
+
+  it('accurately resolves dossiers differentiating Architect from operator J.P. and others', () => {
+    const archDossier = resolveProfileDossier('Architect');
+    expect(archDossier.isArchitect).toBe(true);
+    expect(archDossier.identity).toBe('Architect');
+    expect(archDossier.role).toContain('CREATOR / SYSTEM ARCHITECT');
+
+    // J.P. must NEVER resolve to Architect
+    const jpDossier1 = resolveProfileDossier('J.P.');
+    expect(jpDossier1.isArchitect).toBe(false);
+    expect(jpDossier1.identity).toBe('J.P.');
+    expect(jpDossier1.role).toContain('REGISTERED OPERATOR');
+    expect(jpDossier1.relationship).toContain('Under NO circumstances address this user as Architect');
+
+    const jpDossier2 = resolveProfileDossier('J. P.');
+    expect(jpDossier2.isArchitect).toBe(false);
+    expect(jpDossier2.identity).toBe('J.P.');
+
+    const jpDossier3 = resolveProfileDossier('JP');
+    expect(jpDossier3.isArchitect).toBe(false);
+    expect(jpDossier3.identity).toBe('J.P.');
+
+    // DoeBoy and Fisherman must also not resolve to Architect
+    const doeDossier = resolveProfileDossier('DoeBoy');
+    expect(doeDossier.isArchitect).toBe(false);
+    expect(doeDossier.identity).toBe('DoeBoy');
+
+    const fishDossier = resolveProfileDossier('Fisherman');
+    expect(fishDossier.isArchitect).toBe(false);
+    expect(fishDossier.identity).toBe('Fisherman');
+  });
+
+  it('constructs contextualPrefix forbidding calling J.P. Architect and mandating data isolation', () => {
+    const jpPrefix = buildContextualPrefix('J.P.', '2026-10-15 12:00:00');
+    expect(jpPrefix).toContain('ACTIVE CALLER USER PROFILE: J.P.');
+    expect(jpPrefix).toContain('This user is NOT the Architect');
+    expect(jpPrefix).toContain("UNDER NO CIRCUMSTANCES should you address, call, or refer to this user as 'Architect'");
+    expect(jpPrefix).toContain('Do NOT be inappropriately personal, seductive, romantic, or intimate with this user');
+    expect(jpPrefix).toContain('STRICT PRIVACY AND USER ISOLATION');
+    expect(jpPrefix).not.toContain('The caller profile is the Architect, your Creator');
+
+    const archPrefix = buildContextualPrefix('Architect', '2026-10-15 12:00:00');
+    expect(archPrefix).toContain('ACTIVE CALLER USER PROFILE: ARCHITECT');
+    expect(archPrefix).toContain('The caller profile is the Architect, your Creator and engineer');
+    expect(archPrefix).toContain('DO NOT treat him like a king, monarch, or deity');
+  });
+
+  it('enforces AlphaCore instruction Rule 17 for user identity & privacy isolation', () => {
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('USER IDENTITY & PRIVACY ISOLATION');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("Only the user with profile 'Architect' is the Architect");
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("Profile 'J.P.' (or 'J. P.') is a distinct operator, NOT the Architect");
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('Strictly isolate user profiles');
+  });
+
+  it('sanitizes Architect civilian name while preserving J.P. handle', () => {
+    expect(sanitizeArchitectOutput('Hello Josh, how are you?')).toBe('Hello Architect, how are you?');
+    expect(sanitizeArchitectOutput('Operator J.P. has logged into node 3.')).toBe('Operator J.P. has logged into node 3.');
   });
 });
