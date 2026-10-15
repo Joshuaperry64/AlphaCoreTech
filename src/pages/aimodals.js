@@ -34,33 +34,33 @@ export function getModalSettings() {
   const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
 
   const architectEndpoints = {
-    txt2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
-    img2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run',
     omnigenUrl: 'https://alphacoreprogramming--alphacore-aio-backend-omnigen-web-omnigen.modal.run',
-    preprocessorUrl: 'https://alphacoreprogramming--alphacore-aio-backend-controlnet-m-11dd7a.modal.run',
-    txt2vidUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream',
-    img2vidUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2vid-web-img2vid.modal.run/stream',
-    framepackUrl: 'https://alphacoreprogramming--alphacore-aio-backend-framepack-ui-a08015.modal.run',
-    fanninCrimeUrl: 'https://alphacoreprogramming--alphacore-aio-backend-mugshots.modal.run/api/mugshots',
-    music_url: 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/architect',
-    upscalerUrl: 'https://alphacoreprogramming--alphacore-aio-backend-upscaler-web-cb5cf9.modal.run',
-    vid2audioUrl: 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-web.modal.run/stream',
+    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-controlne-0c3fb3.us-east.modal.run',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.us-east.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-w-784511.us-east.modal.run/stream',
+    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.us-east.modal.run',
+    fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots',
+    music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/architect',
+    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run',
+    vid2audioUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-web.us-east.modal.run/stream',
     tierName: 'ARCHITECT PRIORITY',
     tierHardware: 'B300 / H100 / L40S High-Performance Nodes',
   };
 
   const economyEndpoints = {
-    txt2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-eco--cce613.modal.run',
-    img2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2img-eco--6cc148.modal.run',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-e-80d906.us-east.modal.run',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-e-50f4bb.us-east.modal.run',
     omnigenUrl: 'https://alphacoreprogramming--alphacore-aio-backend-omnigen-eco-web-omnigen.modal.run',
-    preprocessorUrl: 'https://alphacoreprogramming--alphacore-aio-backend-controlnet-m-730e5f.modal.run',
-    txt2vidUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2vid-eco--fecf7d.modal.run/stream',
-    img2vidUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2vid-eco--f50514.modal.run/stream',
-    framepackUrl: 'https://alphacoreprogramming--alphacore-aio-backend-framepack-ec-32daed.modal.run',
-    fanninCrimeUrl: 'https://alphacoreprogramming--alphacore-aio-backend-mugshots.modal.run/api/mugshots',
-    music_url: 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/eco',
-    upscalerUrl: 'https://alphacoreprogramming--alphacore-aio-backend-upscaler-eco-7e901c.modal.run',
-    vid2audioUrl: 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-eco-web.modal.run/stream',
+    preprocessorUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-controlne-63cb92.us-east.modal.run',
+    txt2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-e-940b50.us-east.modal.run/stream',
+    img2vidUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2vid-e-a2ee56.us-east.modal.run/stream',
+    framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-129944.us-east.modal.run',
+    fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots',
+    music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/eco',
+    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run',
+    vid2audioUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-4f6ce0.us-east.modal.run/stream',
     tierName: 'PUBLIC ECONOMY',
     tierHardware: 'Cost-Optimized Nodes (60s Auto-Scale, Max 1)',
   };
@@ -3400,7 +3400,7 @@ function buildUpscaler() {
       if (modelName === 'dsp-fast') {
         resultData = await clientSideUpscale(currentSourceB64, activeScale, sharpen, denoise);
       } else {
-        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://alphacoreprogramming--alphacore-aio-backend-upscaler-web-cb5cf9.modal.run' : 'https://alphacoreprogramming--alphacore-aio-backend-upscaler-eco-7e901c.modal.run'));
+        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run' : 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run'));
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);
@@ -5041,7 +5041,7 @@ function buildVid2Audio() {
       };
 
       const settings = getModalSettings();
-      let endpoint = settings.vid2audioUrl || (settings.isArchitect ? 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-web.modal.run/stream' : 'https://alphacoreprogramming--alphacore-aio-backend-vid2audio-eco-web.modal.run/stream');
+      let endpoint = settings.vid2audioUrl || (settings.isArchitect ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-web.us-east.modal.run/stream' : 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-4f6ce0.us-east.modal.run/stream');
       if (endpoint.includes('alphacore-main-api') && !endpoint.includes('/api/vid2audio/generate')) {
         endpoint = resolveEndpoint(endpoint, '/api/vid2audio/generate');
       }

@@ -13,14 +13,14 @@ describe('AI Modals Profile Endpoint Routing', () => {
 
     expect(settings.isArchitect).toBe(false);
     expect(settings.tierName).toBe('PUBLIC ECONOMY');
-    expect(settings.txt2imgUrl).toContain('eco');
-    expect(settings.img2imgUrl).toContain('eco');
-    expect(settings.txt2vidUrl).toContain('eco');
-    expect(settings.img2vidUrl).toContain('eco');
-    expect(settings.preprocessorUrl).toContain('730e5f');
-    expect(settings.framepackUrl).toContain('framepack-ec-32daed');
-    expect(settings.upscalerUrl).toContain('eco');
-    expect(settings.vid2audioUrl).toContain('eco');
+    expect(settings.txt2imgUrl).toContain('txt2img-e-');
+    expect(settings.img2imgUrl).toContain('img2img-e-');
+    expect(settings.txt2vidUrl).toContain('txt2vid-e-');
+    expect(settings.img2vidUrl).toContain('img2vid-e-');
+    expect(settings.preprocessorUrl).toContain('controlne-63cb92');
+    expect(settings.framepackUrl).toContain('framepack-129944');
+    expect(settings.upscalerUrl).toContain('upscaler--a3cc47');
+    expect(settings.vid2audioUrl).toContain('vid2audio-4f6ce0');
     expect(settings.music_url).toContain('/eco');
   });
 
@@ -32,14 +32,14 @@ describe('AI Modals Profile Endpoint Routing', () => {
 
     expect(settings.isArchitect).toBe(false);
     expect(settings.tierName).toBe('PUBLIC ECONOMY');
-    expect(settings.txt2imgUrl).toContain('eco');
-    expect(settings.img2imgUrl).toContain('eco');
-    expect(settings.txt2vidUrl).toContain('eco');
-    expect(settings.img2vidUrl).toContain('eco');
-    expect(settings.preprocessorUrl).toContain('730e5f');
-    expect(settings.framepackUrl).toContain('framepack-ec-32daed');
-    expect(settings.upscalerUrl).toContain('eco');
-    expect(settings.vid2audioUrl).toContain('eco');
+    expect(settings.txt2imgUrl).toContain('txt2img-e-');
+    expect(settings.img2imgUrl).toContain('img2img-e-');
+    expect(settings.txt2vidUrl).toContain('txt2vid-e-');
+    expect(settings.img2vidUrl).toContain('img2vid-e-');
+    expect(settings.preprocessorUrl).toContain('controlne-63cb92');
+    expect(settings.framepackUrl).toContain('framepack-129944');
+    expect(settings.upscalerUrl).toContain('upscaler--a3cc47');
+    expect(settings.vid2audioUrl).toContain('vid2audio-4f6ce0');
     expect(settings.music_url).toContain('/eco');
   });
 
@@ -50,8 +50,8 @@ describe('AI Modals Profile Endpoint Routing', () => {
 
     expect(settings.isArchitect).toBe(false);
     expect(settings.tierName).toBe('PUBLIC ECONOMY');
-    expect(settings.txt2imgUrl).toContain('eco');
-    expect(settings.img2imgUrl).toContain('eco');
+    expect(settings.txt2imgUrl).toContain('txt2img-e-');
+    expect(settings.img2imgUrl).toContain('img2img-e-');
   });
 
   it('J. P. profile strictly points to economy endpoints', () => {
@@ -61,8 +61,8 @@ describe('AI Modals Profile Endpoint Routing', () => {
 
     expect(settings.isArchitect).toBe(false);
     expect(settings.tierName).toBe('PUBLIC ECONOMY');
-    expect(settings.txt2imgUrl).toContain('eco');
-    expect(settings.img2imgUrl).toContain('eco');
+    expect(settings.txt2imgUrl).toContain('txt2img-e-');
+    expect(settings.img2imgUrl).toContain('img2img-e-');
   });
 
   it('Architect profile points to primary high-performance endpoints', () => {
@@ -72,14 +72,14 @@ describe('AI Modals Profile Endpoint Routing', () => {
 
     expect(settings.isArchitect).toBe(true);
     expect(settings.tierName).toBe('ARCHITECT PRIORITY');
-    expect(settings.txt2imgUrl).not.toContain('eco');
-    expect(settings.img2imgUrl).not.toContain('eco');
-    expect(settings.txt2vidUrl).not.toContain('eco');
-    expect(settings.img2vidUrl).not.toContain('eco');
-    expect(settings.preprocessorUrl).toContain('11dd7a');
-    expect(settings.framepackUrl).not.toContain('eco');
-    expect(settings.upscalerUrl).not.toContain('eco');
-    expect(settings.vid2audioUrl).not.toContain('eco');
+    expect(settings.txt2imgUrl).not.toContain('txt2img-e-');
+    expect(settings.img2imgUrl).not.toContain('img2img-e-');
+    expect(settings.txt2vidUrl).not.toContain('txt2vid-e-');
+    expect(settings.img2vidUrl).not.toContain('img2vid-e-');
+    expect(settings.preprocessorUrl).toContain('controlne-0c3fb3');
+    expect(settings.framepackUrl).toContain('framepack-e7f107');
+    expect(settings.upscalerUrl).not.toContain('upscaler--a3cc47');
+    expect(settings.vid2audioUrl).not.toContain('vid2audio-4f6ce0');
     expect(settings.music_url).toContain('/architect');
   });
 });

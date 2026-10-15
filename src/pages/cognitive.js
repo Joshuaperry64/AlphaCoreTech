@@ -990,18 +990,18 @@ export default function CognitiveUplink() {
           // Wait, we MUST return a value. Let's block and wait. It usually takes ~10-20 seconds.
           
           if (functionCall.name === 'generate_image') {
-            const url = globalSettings.txt2imgUrl || 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run';
+            const url = globalSettings.txt2imgUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run';
             const payload = { prompt: args.prompt, num_inference_steps: 15, width: 1024, height: 1024 };
             const res = await fetchModal(url, 'GET', payload);
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'edit_image') {
-            const url = globalSettings.img2imgUrl || 'https://alphacoreprogramming--alphacore-aio-backend-img2img-web-img2img.modal.run';
+            const url = globalSettings.img2imgUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run';
             // img2img generally requires an image. If the user hasn't provided one via upload, it might fail.
             const payload = { prompt: args.prompt, num_inference_steps: 20 };
             const res = await fetchModal(url, 'GET', payload); // Note: img2img might need POST with an image, simplifying for now
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'generate_video') {
-            const url = globalSettings.txt2vidUrl || 'https://alphacoreprogramming--alphacore-aio-backend-txt2vid-web-txt2vid.modal.run/stream';
+            const url = globalSettings.txt2vidUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.us-east.modal.run/stream';
             const payload = { prompt: args.prompt, num_frames: 49, fps: 8 };
             const res = await fetchModal(url, 'GET', payload);
             resultBase64 = res.b64; mimeType = res.type;

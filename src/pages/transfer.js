@@ -1600,7 +1600,7 @@ export default function TransferPage() {
         btnDeposit.textContent = '⚡ ESTABLISHING SECURE STRIPE UPLINK...';
 
         try {
-          const resp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/atm-deposit', {
+          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1658,7 +1658,7 @@ export default function TransferPage() {
           } else {
             // Confirm deposit on backend
             try {
-              await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/confirm-atm-deposit', {
+              await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1730,7 +1730,7 @@ export default function TransferPage() {
           laundromatAudio.playBillWhir();
 
           try {
-            const payoutResp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/changer-payout', {
+            const payoutResp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/changer-payout', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -2475,7 +2475,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
         statusMsg.style.display = 'none';
 
         try {
-          const resp = await fetch('https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run/stripe/create-connect-account', {
+          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/create-connect-account', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

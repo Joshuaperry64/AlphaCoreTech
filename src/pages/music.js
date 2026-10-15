@@ -9,8 +9,8 @@ export default function MusicPage() {
   const currentPin = (sessionStorage.getItem('current_pin') || '').trim();
   const isArchitect = currentProfile === 'architect' || currentPin === '672167566';
   const defaultEndpoint = isArchitect
-    ? 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-main-api.modal.run'
-    : 'https://alphacoreprogramming--alphacore-aio-backend-alphacore-ma-9b0731.modal.run';
+    ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run'
+    : 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run';
 
   const tierName = isArchitect ? 'ARCHITECT PRIORITY' : 'PUBLIC ECONOMY';
   const tierHw = isArchitect ? 'L40S Node (Warm)' : 'Cost-Optimized Node (60s Auto-Scale)';

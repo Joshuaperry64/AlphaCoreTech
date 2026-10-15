@@ -17,7 +17,7 @@ export async function openrouter_image_generation({ prompt }) {
   if (typeof window !== 'undefined' && typeof window.__mock_openrouter_image_generation === 'function') {
     return await window.__mock_openrouter_image_generation({ prompt });
   }
-  const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run?prompt=${encodeURIComponent(prompt)}`);
+  const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run?prompt=${encodeURIComponent(prompt)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return { result: data.url || data.image_url || data.result };
@@ -236,7 +236,7 @@ export default function PlaceholderPage() {
             } else if (typeof default_api !== 'undefined' && typeof default_api.openrouter_image_generation === 'function') {
               response = await default_api.openrouter_image_generation({ prompt: finalPrompt });
             } else {
-              const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run?prompt=${encodeURIComponent(finalPrompt)}`);
+              const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run?prompt=${encodeURIComponent(finalPrompt)}`);
               if (res.ok) {
                 const data = await res.json();
                 response = { result: data.url || data.image_url || data.result };
@@ -286,7 +286,7 @@ export default function PlaceholderPage() {
         const btn = root.querySelector('#sz-acquire-btn');
         btn.disabled = true; btn.textContent = '...ACQUIRING...'; playSFX('start');
         try {
-            const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-mugshots.modal.run/api/sectorzero?query=${encodeURIComponent(query)}`);
+            const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/sectorzero?query=${encodeURIComponent(query)}`);
             const data = await res.json();
             if(data.status === 'success' && data.data.length > 0) {
                 let html = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">';
@@ -351,7 +351,7 @@ export default function PlaceholderPage() {
             formData.append('model', 'qwen'); 
             formData.append('strength', '0.75'); 
             
-            const res = await fetch(`https://alphacoreprogramming--alphacore-aio-backend-img2img-web-web-img2img.modal.run/v1/images/edits`, {
+            const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run/v1/images/edits`, {
                 method: 'POST',
                 body: formData
             });

@@ -35,8 +35,8 @@ const DEFAULT_DB = {
   logs: [],
   pendingProfiles: [],
   settings: {
-    txt2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-txt2img-web-txt2img.modal.run',
-    img2imgUrl: 'https://alphacoreprogramming--alphacore-aio-backend-img2img-web-img2img.modal.run',
+    txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run',
+    img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run',
     negativePrompt: 'worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts',
     stepsFastTxt: 10, stepsFocusedTxt: 50, stepsNormalTxt: 20,
     stepsFastImg: 8, stepsFocusedImg: 30, stepsNormalImg: 17,
