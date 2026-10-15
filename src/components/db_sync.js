@@ -33,12 +33,15 @@ export function pushToServer(endpoint, data, authPinOverride = null) {
   
   const cleanPath = endpoint.startsWith('/') ? endpoint : `/api/${endpoint}`;
 
-  fetch(apiUrl(cleanPath), {
+  const req = fetch(apiUrl(cleanPath), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-user-pin': pin
     },
     body: JSON.stringify(data)
-  }).catch(err => console.error(`Failed to push ${cleanPath} to server:`, err));
+  });
+  if (req && typeof req.catch === 'function') {
+    req.catch(err => console.error(`Failed to push ${cleanPath} to server:`, err));
+  }
 }

@@ -124,4 +124,69 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
 
     el.remove();
   });
+
+  it('allows registered operators to specify and save their own API key for private and global links', async () => {
+    sessionStorage.setItem('current_profile', 'DoeBoy');
+    sessionStorage.setItem('current_pin', '6969');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    // Open Core Config
+    const configTab = el.querySelector('[data-target="cog-api-config"]');
+    configTab.click();
+
+    const userInput = el.querySelector('#user-api-key');
+    const saveBtn = el.querySelector('#save-user-key-btn');
+    const statusEl = el.querySelector('#user-key-status');
+
+    expect(userInput).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    // Enter custom API key and save
+    userInput.value = 'AIzaSyTestDoeBoyCustomKey999';
+    saveBtn.click();
+
+    // Verify saved to localStorage
+    expect(localStorage.getItem('gemini_user_api_key_doeboy')).toBe('AIzaSyTestDoeBoyCustomKey999');
+    expect(statusEl.textContent).toContain('Personal API key saved');
+
+    // Clear key using button
+    const clearBtn = el.querySelector('#clear-user-key-btn');
+    clearBtn.click();
+    expect(localStorage.getItem('gemini_user_api_key_doeboy')).toBeNull();
+    expect(statusEl.textContent).toContain('Cleared custom key');
+
+    el.remove();
+  });
+
+  it('allows Architect to configure personal API key override alongside master controls', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const configTab = el.querySelector('[data-target="cog-api-config"]');
+    configTab.click();
+
+    const masterInput = el.querySelector('#master-api-key');
+    const userInput = el.querySelector('#user-api-key');
+    const saveBtn = el.querySelector('#save-config-btn');
+    const statusEl = el.querySelector('#config-status');
+
+    expect(masterInput).toBeTruthy();
+    expect(userInput).toBeTruthy();
+    expect(saveBtn).toBeTruthy();
+
+    userInput.value = 'AIzaSyArchitectPersonalKey123';
+    saveBtn.click();
+
+    expect(localStorage.getItem('gemini_user_api_key_architect')).toBe('AIzaSyArchitectPersonalKey123');
+    expect(statusEl.textContent).toContain('Configuration saved');
+
+    el.remove();
+  });
 });

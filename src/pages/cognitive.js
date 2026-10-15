@@ -112,13 +112,16 @@ export default function CognitiveUplink() {
     let coreBackend = globalSettings.coreBackend || 'gemini_live';
     let masterApiKey = globalSettings.masterApiKey || MASTER_GEMINI_API_KEY;
     let guestApiKey = localStorage.getItem('gemini_api_key_guest') || '';
+    const userKeyStorageKey = `gemini_user_api_key_${profile.toLowerCase().replace(/\s+/g, '_')}`;
+    let userApiKey = localStorage.getItem(userKeyStorageKey) || (isGuest ? (localStorage.getItem('gemini_api_key_guest') || '') : '');
+
     function getApiKey() { 
-      if (isGuest) {
-        return guestApiKey;
+      // User-specific API key takes priority for BOTH private and global com links if set
+      if (userApiKey && userApiKey.trim()) {
+        return userApiKey.trim();
       }
-      // For all users EXCEPT guest profile, in the cognitive core global comm link:
-      if (currentChannel === 'shared') {
-        return MASTER_GEMINI_API_KEY;
+      if (isGuest) {
+        return guestApiKey || '';
       }
       return masterApiKey || MASTER_GEMINI_API_KEY;
     }
@@ -126,47 +129,137 @@ export default function CognitiveUplink() {
     const configContent = container.querySelector('#config-content');
     if (isArchitect) {
       configContent.innerHTML = `
-        <div class="panel-title">// ARCHITECT GLOBAL CONTROLS</div>
+        <div class="panel-title">// ARCHITECT GLOBAL & PERSONAL CONTROLS</div>
         <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
-          <label class="aim-label">MASTER GEMINI API KEY (Applies to all registered users)</label>
+          <label class="aim-label">MASTER GEMINI API KEY (Default for all registered users across global & private links)</label>
           <input type="password" id="master-api-key" class="aim-input" value="${masterApiKey}" style="width: 100%; margin-bottom: 15px;">
-          <label class="aim-label">GLOBAL SYSTEM INSTRUCTION (Applies to all sessions)</label><textarea id="system-instruction" class="aim-input" style="width: 100%; height: 100px; margin-bottom: 15px; resize: vertical; padding: 10px; font-family: monospace;" placeholder="Enter system instructions to govern AI behavior..."></textarea><label class="aim-label">BACKEND ENGINE</label>
+
+          <label class="aim-label">YOUR PERSONAL GEMINI API KEY (Optional override for Architect - applies to Private & Global Comm Links)</label>
+          <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Leave blank to use Master Key..." style="width: 100%; margin-bottom: 15px;">
+
+          <label class="aim-label">GLOBAL SYSTEM INSTRUCTION (Applies to all sessions)</label>
+          <textarea id="system-instruction" class="aim-input" style="width: 100%; height: 100px; margin-bottom: 15px; resize: vertical; padding: 10px; font-family: monospace;" placeholder="Enter system instructions to govern AI behavior..."></textarea>
+          
+          <label class="aim-label">BACKEND ENGINE</label>
           <select id="core-backend" class="aim-input" style="width: 100%; margin-bottom: 15px;">
             <option value="gemini_live" ${coreBackend === 'gemini_live' ? 'selected' : ''}>Gemini Live API (WebSockets)</option>
             <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Local Server</option>
           </select>
-          <button id="save-config-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE GLOBAL CONFIG</button>
-          <div id="config-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim);"></div>
+
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:5px;">
+            <button id="save-config-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE CONFIGURATION</button>
+          </div>
+          <div id="config-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim); font-family: monospace;"></div>
         </div>
       `;
       setTimeout(() => { if(container.querySelector('#system-instruction')) container.querySelector('#system-instruction').value = globalSettings.systemInstruction || ''; }, 50);
       container.querySelector('#save-config-btn').onclick = () => {
-        globalSettings.masterApiKey = container.querySelector('#master-api-key').value.trim() || MASTER_GEMINI_API_KEY;
+        const masterInput = container.querySelector('#master-api-key');
+        const userInput = container.querySelector('#user-api-key');
+        globalSettings.masterApiKey = masterInput ? (masterInput.value.trim() || MASTER_GEMINI_API_KEY) : MASTER_GEMINI_API_KEY;
         globalSettings.systemInstruction = container.querySelector('#system-instruction').value.trim();
         globalSettings.coreBackend = container.querySelector('#core-backend').value;
         masterApiKey = globalSettings.masterApiKey;
         coreBackend = globalSettings.coreBackend;
+
+        if (userInput) {
+          userApiKey = userInput.value.trim();
+          if (userApiKey) {
+            localStorage.setItem(userKeyStorageKey, userApiKey);
+          } else {
+            localStorage.removeItem(userKeyStorageKey);
+          }
+        }
+
         localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings));
         pushToServer('settings', globalSettings);
-        container.querySelector('#config-status').textContent = 'Global configuration saved and synced.';
+        sfx.play('click');
+        const statusEl = container.querySelector('#config-status');
+        if (statusEl) {
+          statusEl.textContent = 'Configuration saved! Applied to your Global Comm Link and Private Uplink.';
+          statusEl.style.color = '#00ff8c';
+        }
       };
     } else if (isGuest) {
       configContent.innerHTML = `
-        <div class="panel-title">// GUEST API KEY</div>
+        <div class="panel-title">// GUEST API CONFIGURATION</div>
         <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px;">
           <label class="aim-label">YOUR GEMINI API KEY</label>
-          <input type="password" id="guest-api-key" class="aim-input" value="${guestApiKey}" style="width: 100%; margin-bottom: 15px;">
-          <button id="save-guest-key" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE KEY</button>
-          <div id="guest-key-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim);"></div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+            Specify your Gemini API key to establish cognitive uplink. When saved, this key applies to both your <strong>Global Comm Link</strong> and <strong>Private Uplink</strong>.
+          </p>
+          <input type="password" id="guest-api-key" class="aim-input" value="${userApiKey || guestApiKey}" placeholder="Enter Gemini API key..." style="width: 100%; margin-bottom: 15px;">
+          <button id="save-guest-key" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
+          <div id="guest-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey || guestApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
+            ${userApiKey || guestApiKey ? 'STATUS: Personal API key active (Applied to Global & Private Links).' : 'STATUS: No key configured.'}
+          </div>
         </div>
       `;
       container.querySelector('#save-guest-key').onclick = () => {
-        guestApiKey = container.querySelector('#guest-api-key').value.trim();
-        localStorage.setItem('gemini_api_key_guest', guestApiKey);
-        container.querySelector('#guest-key-status').textContent = 'Key saved locally.';
+        const guestInput = container.querySelector('#guest-api-key');
+        const key = guestInput ? guestInput.value.trim() : '';
+        guestApiKey = key;
+        userApiKey = key;
+        localStorage.setItem('gemini_api_key_guest', key);
+        localStorage.setItem(userKeyStorageKey, key);
+        sfx.play('click');
+        const statusEl = container.querySelector('#guest-key-status');
+        if (statusEl) {
+          statusEl.textContent = 'API key saved! Applied to your Global Comm Link and Private Uplink.';
+          statusEl.style.color = '#00ff8c';
+        }
       };
     } else {
-      configContent.innerHTML = `<div class="panel-title">// CORE CONFIGURATION</div><div style="padding: 20px;">Configured via Architect Master Controls.</div>`;
+      configContent.innerHTML = `
+        <div class="panel-title">// OPERATOR COGNITIVE CONFIGURATION [${profile.toUpperCase()}]</div>
+        <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
+          <label class="aim-label">YOUR PERSONAL GEMINI API KEY (Optional)</label>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+            Specify your own personal Gemini API key. When saved, this key will automatically apply to both your <strong>Global Comm Link</strong> and <strong>Private Uplink</strong>. If left blank, the system master key will be used automatically.
+          </p>
+          <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Enter your Gemini API key (optional)..." style="width: 100%; margin-bottom: 15px;">
+          
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px;">
+            <button id="save-user-key-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
+            <button id="clear-user-key-btn" class="aim-btn aim-btn-neutral">&#x274C; USE MASTER DEFAULT</button>
+          </div>
+          <div id="user-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
+            ${userApiKey ? 'STATUS: Custom personal API key active (Applied to Global & Private Links).' : 'STATUS: System master API key active (Default).'}
+          </div>
+        </div>
+      `;
+      container.querySelector('#save-user-key-btn').onclick = () => {
+        const userInput = container.querySelector('#user-api-key');
+        userApiKey = userInput ? userInput.value.trim() : '';
+        if (userApiKey) {
+          localStorage.setItem(userKeyStorageKey, userApiKey);
+          const statusEl = container.querySelector('#user-key-status');
+          if (statusEl) {
+            statusEl.textContent = 'Personal API key saved! Applied to your Global Comm Link and Private Uplink.';
+            statusEl.style.color = '#00ff8c';
+          }
+        } else {
+          localStorage.removeItem(userKeyStorageKey);
+          const statusEl = container.querySelector('#user-key-status');
+          if (statusEl) {
+            statusEl.textContent = 'Cleared custom key. System master key active for Global Comm Link and Private Uplink.';
+            statusEl.style.color = 'var(--blue-dim)';
+          }
+        }
+        sfx.play('click');
+      };
+      container.querySelector('#clear-user-key-btn').onclick = () => {
+        const userInput = container.querySelector('#user-api-key');
+        if (userInput) userInput.value = '';
+        userApiKey = '';
+        localStorage.removeItem(userKeyStorageKey);
+        const statusEl = container.querySelector('#user-key-status');
+        if (statusEl) {
+          statusEl.textContent = 'Cleared custom key. System master key active for Global Comm Link and Private Uplink.';
+          statusEl.style.color = 'var(--blue-dim)';
+        }
+        sfx.play('click');
+      };
     }
 
     const tabs = container.querySelectorAll('.aim-seg-btn');
@@ -999,7 +1092,7 @@ export default function CognitiveUplink() {
     async function connectLiveAPI() {
       const apiKey = getApiKey();
       if (!apiKey) { 
-        appendMessage('SYSTEM', isGuest ? 'ERROR: Guest Gemini API Key missing. Please configure your key in CORE CONFIG.' : 'ERROR: Master Gemini API Key missing.', 'system-msg'); 
+        appendMessage('SYSTEM', `ERROR: Gemini API Key missing for [${profile.toUpperCase()}]. Please configure your key in CORE CONFIG.`, 'system-msg'); 
         return; 
       }
       try {
