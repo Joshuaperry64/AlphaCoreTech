@@ -80,6 +80,7 @@ image = image.add_local_python_source("shared_app")
 class Vid2Audio:
     @modal.enter()
     def setup(self):
+        import torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.bfloat16
         self.current_variant = None
@@ -94,6 +95,11 @@ class Vid2Audio:
         self._load_model("large_44k_v2")
 
     def _load_model(self, variant: str):
+        import torch
+        from mmaudio.eval_utils import ModelConfig, all_model_cfg
+        from mmaudio.model.networks import get_my_mmaudio
+        from mmaudio.model.utils.features_utils import FeaturesUtils
+
         if self.current_variant == variant and self.net is not None:
             return
 
@@ -137,6 +143,11 @@ class Vid2Audio:
         Yields step progress updates and final synthesized audio + composite video.
         """
         yield {"step": 0, "max_steps": num_steps, "status": "Initializing neural pipeline"}
+
+        import torch
+        import torchaudio
+        from mmaudio.eval_utils import generate, load_video, make_video
+        from mmaudio.model.flow_matching import FlowMatching
 
         if seed < 0:
             seed = random.randint(0, 2**31 - 1)

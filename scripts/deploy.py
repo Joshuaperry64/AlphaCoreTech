@@ -113,6 +113,24 @@ class AssetSync:
             "loras": {"already_present": [], "downloaded": [], "updated": [], "failed": []},
         }
 
+        manifest_path = Path(CACHE_DIR) / "models_manifest.json"
+        manifest = {}
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as mf:
+                    manifest = json.load(mf)
+            except Exception as me:
+                print(f"[MANIFEST] Read note: {me}")
+
+        def save_manifest_entry(fname, vid, vname=""):
+            manifest[fname] = {"version_id": str(vid), "name": vname, "updated_at": time.time()}
+            try:
+                with open(manifest_path, "w", encoding="utf-8") as mf:
+                    json.dump(manifest, mf, indent=2)
+                cache_volume.commit()
+            except Exception as me:
+                print(f"[MANIFEST] Save note: {me}")
+
         # Cache of version metadata to prevent duplicate API hits
         version_cache = {}
 
@@ -132,7 +150,11 @@ class AssetSync:
         def check_for_upstream_update(current_version_id, category_name, filename):
             """Checks CivitAI parent model for newer versions with matching SDXL architecture."""
             try:
-                v_data = fetch_version_meta(current_version_id)
+                # If we have an on-volume recorded version for this file, use it as baseline
+                effective_curr_vid = manifest.get(filename, {}).get("version_id", str(current_version_id))
+                v_data = fetch_version_meta(effective_curr_vid)
+                if not v_data:
+                    v_data = fetch_version_meta(current_version_id)
                 if not v_data:
                     return None
                 model_id = v_data.get("modelId")
@@ -148,25 +170,32 @@ class AssetSync:
 
                 m_data = m_res.json()
                 all_versions = m_data.get("modelVersions", [])
+                candidates = []
                 for v in all_versions:
                     v_base = (v.get("baseModel") or "").strip().upper()
                     # Ensure same base model architecture family (e.g. SDXL)
                     if "SDXL" in curr_base and "SDXL" not in v_base:
                         continue
-                    if str(v.get("id")) != str(current_version_id):
+                    if str(v.get("id")) != str(effective_curr_vid):
                         v_created = v.get("createdAt")
                         # Compare release timestamp if present
                         if v_created and curr_created and v_created > curr_created:
-                            return {
-                                "newer_version_id": str(v.get("id")),
-                                "newer_version_name": v.get("name"),
-                                "newer_created_at": v_created,
-                                "current_version_id": str(current_version_id),
-                                "current_version_name": v_data.get("name"),
-                                "model_title": m_data.get("name"),
-                                "filename": filename,
-                                "category": category_name
-                            }
+                            candidates.append(v)
+
+                if candidates:
+                    # Sort candidates so the newest version by createdAt is selected
+                    candidates.sort(key=lambda x: x.get("createdAt") or "", reverse=True)
+                    newest = candidates[0]
+                    return {
+                        "newer_version_id": str(newest.get("id")),
+                        "newer_version_name": newest.get("name"),
+                        "newer_created_at": newest.get("createdAt"),
+                        "current_version_id": str(effective_curr_vid),
+                        "current_version_name": v_data.get("name"),
+                        "model_title": m_data.get("name"),
+                        "filename": filename,
+                        "category": category_name
+                    }
             except Exception as check_err:
                 print(f"  [UPDATE CHECK] Note for {filename}: {check_err}")
             return None
@@ -194,6 +223,8 @@ class AssetSync:
                 size_mb = dest_path.stat().st_size / (1024 * 1024)
                 if size_mb > 1.0:
                     print(f"[{category_name}] {filename} exists ({size_mb:.2f} MB). Skipping.")
+                    if filename not in manifest:
+                        save_manifest_entry(filename, version_id)
                     summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
                     return
 
@@ -288,6 +319,10 @@ class AssetSync:
                 cache_volume.commit()
                 actual_mb = dest_path.stat().st_size / (1024 * 1024)
                 print(f"  -> [SAVED] {dest_path} ({actual_mb:.2f} MB)")
+                
+                v_name = update_meta.get("newer_version_name", "") if update_meta else meta_data.get("name", "")
+                save_manifest_entry(filename, effective_version_id, v_name)
+
                 if is_an_update:
                     summary[category_key]["updated"].append({
                         "file": filename,
@@ -720,7 +755,7 @@ def scan_and_download(force: bool = False, check_updates: bool = True):
     import json
     print(json.dumps(result, indent=2))
     
-    # Highlight updates if executed
+    # Highlight updates if executed and automatically update local deploy.py catalog IDs
     updates = result.get("checkpoints", {}).get("updated", []) + result.get("loras", {}).get("updated", [])
     if updates:
         print("\n" + "!" * 60)
@@ -729,3 +764,27 @@ def scan_and_download(force: bool = False, check_updates: bool = True):
         for u in updates:
             print(f"  • {u['file']} -> Version: {u.get('new_version_name')} (ID: {u.get('new_version_id')}, {u.get('size_mb')} MB)")
         print("!" * 60)
+
+        try:
+            import re
+            deploy_script_path = Path(__file__).resolve()
+            with open(deploy_script_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            modified = False
+            for u in updates:
+                f_name = u["file"]
+                new_id = str(u["new_version_id"])
+                # Match e.g. "dreamshaperXL_alpha2Xl10.safetensors": "128713"
+                pattern = rf'("{re.escape(f_name)}":\s*")[^"]*(")'
+                if re.search(pattern, content):
+                    content = re.sub(pattern, rf'\g<1>{new_id}\g<2>', content)
+                    modified = True
+                    print(f"💾 [AUTO-CATALOG] Updated '{f_name}' to version ID '{new_id}' in deploy.py")
+
+            if modified:
+                with open(deploy_script_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print("✅ Successfully updated local deploy.py catalog IDs to prevent repeated downloads!")
+        except Exception as update_err:
+            print(f"⚠️ [AUTO-CATALOG] Failed updating local deploy.py catalog IDs: {update_err}")
