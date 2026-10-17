@@ -2,6 +2,7 @@ import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
+import { triggerBypassOverloadSequence } from '../components/pinpad.js';
 
 export default function MusicPage() {
   const container = createElement('div', { class: 'music-page slide-up' });
@@ -329,11 +330,8 @@ export default function MusicPage() {
 
   // Generate Handler
   btn.addEventListener('click', async () => {
-    if (!sessionStorage.getItem('generate_authenticated') && currentProfile === 'guest') {
-      showToast('GUEST PREVIEW MODE', 'Please log in with a profile PIN to synthesize music.');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR MUSIC SYNTHESIS' });
-      });
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      triggerBypassOverloadSequence();
       return;
     }
     const prompt = promptIn.value.trim();

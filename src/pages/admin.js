@@ -612,7 +612,7 @@ function buildAdminUI() {
             <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: #ff003c; background: rgba(255,0,60,0.15); border: 1px solid rgba(255,0,60,0.4); padding: 1px 6px; border-radius: 3px; letter-spacing: 1px;">ARCHITECT ONLY</span>
           </div>
           <a href="#/placeholder" id="btn-portal-placeholder" class="aim-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 4px; background: rgba(255, 0, 60, 0.18); border-color: #ff003c; color: #fff; text-shadow: 0 0 10px #ff003c; text-decoration: none; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; letter-spacing: 1.5px; padding: 10px; transition: all 0.25s ease;">
-            🔒 ACCESS MATRIX HOMEBREW
+            🔒 ACCESS [PLACEHOLDER] // MATRIX HOMEBREW
           </a>
           <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: 5px; text-align: center;">
             Hidden sandbox substrate accessible strictly via Darkened State directives.

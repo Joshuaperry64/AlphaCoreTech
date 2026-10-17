@@ -10,7 +10,7 @@ import { initModal } from './components/modal.js';
 import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
 import { syncFromServer, initRealtimeSync } from './components/db_sync.js';
-import { buildPinPad } from './components/pinpad.js';
+import { buildPinPad, triggerBypassOverloadSequence } from './components/pinpad.js';
 import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX, initAudioVisualizer } from './components/audio.js';
 import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
@@ -118,6 +118,42 @@ window.addEventListener('alphacore-aimodal-tab', (e) => {
   }
 });
 
+export function canNavigateTo(route) {
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim();
+  const isGuest = currentProfile.toLowerCase() === 'guest';
+  const cleanRoute = (route || '').split('?')[0];
+
+  // 1. Sector ZERO / Placeholder: strictly Architect + Darkness Mode
+  if (cleanRoute === '/placeholder' || cleanRoute === '/admin/placeholder') {
+    const isDarknessActive = sessionStorage.getItem('darkness_mode_active') === 'true';
+    const pin = (sessionStorage.getItem('current_pin') || '').trim();
+    const isArchitect = currentProfile.toLowerCase() === 'architect' || pin === '672167566';
+    return isArchitect && isDarknessActive;
+  }
+
+  // 2. Admin & Logs: strictly admin role
+  if (cleanRoute === '/admin' || cleanRoute === '/logs') {
+    return !!sessionStorage.getItem('admin_authenticated');
+  }
+
+  // 3. Vault: strictly vault role
+  if (cleanRoute === '/vault') {
+    return !!sessionStorage.getItem('vault_authenticated');
+  }
+
+  // 4. Recon & Mugshots: registered users only (not Guest)
+  if (cleanRoute === '/recon' || cleanRoute === '/mugshots') {
+    return !isGuest;
+  }
+
+  // 5. Cognitive Core: registered users only (not Guest)
+  if (cleanRoute === '/cognitive' || cleanRoute === '/promptlab') {
+    return !isGuest;
+  }
+
+  return true;
+}
+
 async function renderRoute() {
   const currentProfile = sessionStorage.getItem('current_profile');
   const sidebar = document.getElementById('sidebar');
@@ -141,6 +177,7 @@ async function renderRoute() {
     if (brControls) brControls.style.display = '';
     
     const app = document.getElementById('app');
+    if (!app) return;
     app.innerHTML = '';
     
     const { introContainer, cleanup } = await createIntro(app);
@@ -184,6 +221,7 @@ async function renderRoute() {
   const hash = cleanPath === '/' ? '/overview' : cleanPath;
 
   const app = document.getElementById('app');
+  if (!app) return;
   app.innerHTML = '';
   app.scrollTop = 0;
   
@@ -214,15 +252,10 @@ async function renderRoute() {
 
   const routeFn = routes[hash] || routes['/overview'] || routes['/'];
   
-  if (isGuest && (hash === '/recon' || hash === '/mugshots')) {
-      app.innerHTML = `
-        <div style="display:flex; height:100vh; flex-direction:column; align-items:center; justify-content:center; color:#ff003c;">
-          <h1 style="font-family:'Orbitron',sans-serif; margin-bottom:10px;">// ACCESS DENIED</h1>
-          <p style="font-family:'Share Tech Mono',monospace;">RECON & CUSTODY MODULES ARE CLASSIFIED. PLEASE AUTHENTICATE.</p>
-        </div>
-      `;
-      updateActiveNav(rawHash);
-      return;
+  if (!canNavigateTo(hash)) {
+    triggerBypassOverloadSequence();
+    updateActiveNav(rawHash);
+    return;
   }
 
   const pageElement = routeFn();

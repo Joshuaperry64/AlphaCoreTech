@@ -3,7 +3,7 @@
  * Disclaimer-gated, tabbed interface, desktop + mobile compatible.
  */
 import { createElement } from '../components/utils.js';
-import { buildPinPad, requireAuth } from '../components/pinpad.js';
+import { buildPinPad, requireAuth, triggerBypassOverloadSequence } from '../components/pinpad.js';
 import { saveImageToGallery, getAllGalleryImages } from '../components/vision_db.js';
 import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
@@ -1114,10 +1114,7 @@ function buildTxt2Img() {
       }
 
       if (!sessionStorage.getItem('generate_authenticated')) {
-        setStatus(wrap, '#t2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute stream generation.', 'error');
-        import('../components/pinpad.js').then(({ openLoginModal }) => {
-          openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO EXECUTE GENERATION' });
-        });
+        triggerBypassOverloadSequence();
         return;
       }
 
@@ -1254,10 +1251,7 @@ function buildTxt2Img() {
   // Generate (Standard)
   wrap.querySelector('#t2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#t2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image generation.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE IMAGES' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
     const prompt = wrap.querySelector('#t2i-prompt').value.trim();
@@ -1459,6 +1453,7 @@ function buildTxt2Img() {
 function buildImg2Img() {
   const settings = getModalSettings();
   const isArchitect = settings.isArchitect;
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
   const maxBatchCount = isArchitect ? Infinity : 5;
 
   const wrap = document.createElement('div');
@@ -2385,10 +2380,7 @@ function buildImg2Img() {
 
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#i2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image editing.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO EDIT IMAGES' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
     const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model || 'qwen';
@@ -3012,10 +3004,7 @@ export function buildOmniGen() {
   // Execution Handler
   wrap.querySelector('#omni-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#omni-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute multimodal synthesis.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR OMNIGEN SYNTHESIS' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
 
@@ -3738,17 +3727,14 @@ function buildUpscaler() {
 
   // EXECUTE UPSCALE
   execBtn.onclick = async () => {
-    if (!currentSourceB64) {
-      setStatus(wrap, '#upscale-status', 'ERROR: Please upload or load an image first.', 'error');
+    const modelName = wrap.querySelector('#upscale-model-select').value;
+    if (modelName !== 'dsp-fast' && !sessionStorage.getItem('generate_authenticated')) {
+      triggerBypassOverloadSequence();
       return;
     }
 
-    const modelName = wrap.querySelector('#upscale-model-select').value;
-    if (modelName !== 'dsp-fast' && !sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#upscale-status', 'GUEST PREVIEW MODE: Neural GPU upscalers require an authenticated profile PIN. DSP-Fast 4x is available without login.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR NEURAL GPU UPSCALER' });
-      });
+    if (!currentSourceB64) {
+      setStatus(wrap, '#upscale-status', 'ERROR: Please upload or load an image first.', 'error');
       return;
     }
     const isTileCreative = modelName === 'tile-creative';
@@ -4193,10 +4179,7 @@ function buildTxt2Vid() {
 
   wrap.querySelector('#t2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#t2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE VIDEO' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
     const prompt = wrap.querySelector('#t2v-prompt').value.trim();
@@ -4552,10 +4535,7 @@ function buildImg2Vid() {
 
   wrap.querySelector('#i2v-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#i2v-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute video generation.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO GENERATE VIDEO' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
     const file = fileInput._droppedFile || fileInput.files[0];
@@ -5027,10 +5007,7 @@ function buildControlNetForge() {
   // Generate Map
   wrap.querySelector('#cn-generate-btn').onclick = async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      alert("GUEST PREVIEW MODE: Please log in with a profile PIN to use GPU preprocessors.");
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR GPU PREPROCESSORS' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
     if (!base64Image) { alert("Please upload or load a base image first."); return; }
@@ -5399,10 +5376,7 @@ function buildVid2Audio() {
   // Generate Action
   wrap.querySelector('#v2a-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
-      setStatus(wrap, '#v2a-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to synthesize audio.', 'error');
-      import('../components/pinpad.js').then(({ openLoginModal }) => {
-        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR AUDIO SYNTHESIS' });
-      });
+      triggerBypassOverloadSequence();
       return;
     }
 

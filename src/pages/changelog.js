@@ -9,6 +9,20 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.2.2 BUILD 193',
+    date: '2026.10.17',
+    badge: 'KERNEL PANIC BREACH PROTOCOL // UNIVERSAL GUEST & ROLE HARDENING',
+    badgeColor: '#ff003c',
+    title: 'KERNEL CRASH OVERLOAD SIMULATION FOR UNAUTHORIZED OPERATIONS, STRICT COGNITIVE CORE GUEST GATING & ROLE-BASED ROUTE LOCKDOWN',
+    summary: 'Hardened system-wide permission enforcement triggering the cracked-screen kernel overload and panic reboot sequence (triggerBypassOverloadSequence) whenever guests or registered operators attempt unauthorized operations or restricted route navigation. Enforced strict Cognitive Core lockout for guest preview mode while preserving CPU endpoints (DSP-Fast 4x neural upscaler) for open preview.',
+    changes: [
+      'Universal Kernel Crash Overload Sequence: Gated all forbidden operations to trigger the cracked-screen kernel overload sequence (triggerBypassOverloadSequence), engaging the 5-second red cracked glass canvas fracture, audio bypass alarm, overload progress bar, and 404 KERNEL PANIC reboot screen.',
+      'Strict Guest Cognitive Core Lockdown: Completely barred guest preview sessions from executing transmissions, voice mic streams, live neural bridge connections, or file attachments in Cognitive Core (/cognitive, /promptlab), triggering immediate kernel crash sequence on invocation or route navigation.',
+      'Role-Based Route Interception: Hardened router canNavigateTo() to intercept unauthorized page transitions (guests accessing /recon, /mugshots, /admin, /vault, or /placeholder; non-admin operators accessing /admin or /logs; non-vault operators accessing /vault; non-architect or non-darkness operators accessing /placeholder), immediately aborting navigation into kernel panic.',
+      'Execution Privilege Enforcement: Gated all GPU-intensive modal synthesis actions (Txt2Img, Stream Generation, Img2Img, OmniGen, Txt2Vid, Img2Vid, Vid2Audio, ControlNet Preprocessors, Ace-Step Music, and RVC Voice Cloner) behind generate_authenticated clearance with kernel crash triggering on unauthenticated execution, while preserving client-side CPU endpoints (dsp-fast 4x upscaler).'
+    ]
+  },
+  {
     version: 'v5.2.1 BUILD 192',
     date: '2026.10.17',
     badge: 'STRIPE LINK PAYMENT GATEWAY, GUEST GPU GATING & PROTOCOL HARDENING',

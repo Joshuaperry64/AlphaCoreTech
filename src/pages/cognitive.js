@@ -6,6 +6,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
 import { saveFileToVault } from './vault.js';
 import { supabase } from '../lib/supabase.js';
+import { triggerBypassOverloadSequence } from '../components/pinpad.js';
 
 class TacticalAudioEngine {
   constructor() {
@@ -1030,6 +1031,10 @@ export default function CognitiveUplink() {
     if (micBtn) {
       micBtn.onclick = async () => {
         sfx.play('click');
+        if (isGuest) {
+          triggerBypassOverloadSequence();
+          return;
+        }
         if (!liveSession) {
           appendMessage('SYSTEM', 'Connecting live link before voice transmission...', 'system-msg');
           await connectLiveAPI();
@@ -1605,13 +1610,27 @@ export default function CognitiveUplink() {
       }
     }
 
-    connectBtn.onclick = () => { sfx.play('click'); connectLiveAPI(); };
+    connectBtn.onclick = () => { 
+      sfx.play('click'); 
+      if (isGuest) {
+        triggerBypassOverloadSequence();
+        return;
+      }
+      connectLiveAPI(); 
+    };
     disconnectBtn.onclick = () => { sfx.play('click'); disconnectLiveAPI(); };
 
     const uploadBtn = container.querySelector('#chat-upload-btn');
     const fileInput = container.querySelector('#chat-file-input');
     
-    uploadBtn.onclick = () => { sfx.play('click'); fileInput.click(); };
+    uploadBtn.onclick = () => { 
+      sfx.play('click'); 
+      if (isGuest) {
+        triggerBypassOverloadSequence();
+        return;
+      }
+      fileInput.click(); 
+    };
     
     fileInput.onchange = async (e) => {
       const files = e.target.files;
@@ -1678,6 +1697,11 @@ export default function CognitiveUplink() {
     };
 
     sendBtn.onclick = async () => {
+      if (isGuest) {
+        triggerBypassOverloadSequence();
+        return;
+      }
+
       const text = chatInput.value.trim();
       if (!text) return;
 

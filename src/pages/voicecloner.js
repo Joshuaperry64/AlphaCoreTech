@@ -8,6 +8,7 @@ import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
+import { triggerBypassOverloadSequence } from '../components/pinpad.js';
 
 export default function VoiceClonerPage() {
   const container = createElement('div', { class: 'voicecloner-page slide-up' });
@@ -304,11 +305,8 @@ export default function VoiceClonerPage() {
     const btnExecute = container.querySelector('#btn-execute-pipeline');
     if (btnExecute) {
       btnExecute.onclick = async () => {
-        if (!sessionStorage.getItem('generate_authenticated') && currentProfile === 'guest') {
-          showToast('GUEST PREVIEW MODE', 'Please log in with a profile PIN to execute voice cloning.');
-          import('../components/pinpad.js').then(({ openLoginModal }) => {
-            openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR VOICE CLONING' });
-          });
+        if (!sessionStorage.getItem('generate_authenticated')) {
+          triggerBypassOverloadSequence();
           return;
         }
         const statusBox = container.querySelector('#pipeline-status');
@@ -420,26 +418,32 @@ export default function VoiceClonerPage() {
   }
 
   // Load genuine backend custom profiles (if any) and merge with saved profiles
-  fetch(`${MAIN_API_BASE}/api/voice/profiles`).then(r => r.json()).then(data => {
-    const customList = (data.custom_profiles || []).map(c => ({
-      name: typeof c === 'string' ? c : c.name,
-      label: (typeof c === 'string' ? c : (c.label || c.name)).toUpperCase(),
-      desc: 'Cloud RVC Profile',
-      icon: '☁️'
-    }));
-    const local = getSavedProfiles();
-    const combined = [...local];
-    customList.forEach(cp => {
-      if (!combined.some(p => p.name === cp.name)) {
-        combined.push(cp);
-      }
-    });
-    voiceProfiles = combined;
-    if (!activeProfile && voiceProfiles.length > 0) {
-      activeProfile = voiceProfiles[0].name;
+  try {
+    const resPromise = fetch(`${MAIN_API_BASE}/api/voice/profiles`);
+    if (resPromise && typeof resPromise.then === 'function') {
+      resPromise.then(r => r && r.json ? r.json() : null).then(data => {
+        if (!data) return;
+        const customList = (data.custom_profiles || []).map(c => ({
+          name: typeof c === 'string' ? c : c.name,
+          label: (typeof c === 'string' ? c : (c.label || c.name)).toUpperCase(),
+          desc: 'Cloud RVC Profile',
+          icon: '☁️'
+        }));
+        const local = getSavedProfiles();
+        const combined = [...local];
+        customList.forEach(cp => {
+          if (!combined.some(p => p.name === cp.name)) {
+            combined.push(cp);
+          }
+        });
+        voiceProfiles = combined;
+        if (!activeProfile && voiceProfiles.length > 0) {
+          activeProfile = voiceProfiles[0].name;
+        }
+        render();
+      }).catch(() => {});
     }
-    render();
-  }).catch(() => {});
+  } catch (_) {}
 
   render();
   return container;
