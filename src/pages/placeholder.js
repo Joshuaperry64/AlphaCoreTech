@@ -91,6 +91,7 @@ export default function PlaceholderPage() {
         <option value="Cowgirl.safetensors">Cowgirl</option>
         <option value="Missionary.safetensors">Missionary</option>
         <option value="SpyCam.safetensors">SpyCam</option>
+        <option value="lezcunbkv2.safetensors">Licking Lesbians</option>
       </optgroup>
     `;
 
@@ -130,7 +131,7 @@ export default function PlaceholderPage() {
           <div class="panel" style="border-color: rgba(255, 0, 60, 0.5); background: rgba(20, 5, 14, 0.9);">
             <div class="panel-title" style="color: #ff003c;">HYPER-GENERATION ENGINE</div>
             <textarea id="sz-prompt" class="aim-input" rows="4" placeholder="e.g. a shy, petite (younger:1.3) schoolgirl..."></textarea>
-            <select id="sz-model" class="aim-input" style="margin-top:12px;"><option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (Unfiltered)</option><option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option><option value="realisticVisionV60B1_v60B1VAE.safetensors">Realistic Vision V6.0</option></select>
+            <select id="sz-model" class="aim-input" style="margin-top:12px;"><option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (Unfiltered)</option><option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option><option value="cyberrealisticPony_v180Coreshift.safetensors">CyberRealistic Pony V18</option><option value="realvisxlV50_v50Bakedvae.safetensors">RealVisXL V5.0</option></select>
             <select id="sz-lora" class="aim-input" style="margin-top:12px;" multiple size="6">${LORA_OPTIONS}</select>
             <button id="sz-generate-btn" class="aim-btn sz-action-btn">💖 MANIFEST</button>
             <div id="sz-generate-output" style="margin-top: 16px;"></div>

@@ -39,7 +39,8 @@ WEBSITE_CHECKPOINTS = {
     "lustifyNSFWCheckpoint_zenithV9.safetensors": "3112728",
     "epicrealismXL_pureFix.safetensors": "2514955",
     "intorealism_sdxlV4.safetensors": "2650268",
-    "realisticVisionV60B1_v60B1VAE.safetensors": "245598",
+    "cyberrealisticPony_v180Coreshift.safetensors": "2884631",
+    "realvisxlV50_v50Bakedvae.safetensors": "789646",
 }
 
 WEBSITE_LORAS = {
@@ -51,6 +52,7 @@ WEBSITE_LORAS = {
     "Missionary.safetensors": "144818",
     "SpyCam.safetensors": "545059",
     "detailifier.safetensors": "623945",
+    "lezcunbkv2.safetensors": "252053",
 }
 
 def _get_secrets():
@@ -123,8 +125,13 @@ class AssetSync:
             except Exception as me:
                 print(f"[MANIFEST] Read note: {me}")
 
-        def save_manifest_entry(fname, vid, vname=""):
-            manifest[fname] = {"version_id": str(vid), "name": vname, "updated_at": time.time()}
+        def save_manifest_entry(fname, vid, vname="", size_mb=0.0):
+            manifest[fname] = {
+                "version_id": str(vid),
+                "name": vname,
+                "size_mb": round(size_mb, 2) if size_mb else None,
+                "updated_at": time.time()
+            }
             try:
                 with open(manifest_path, "w", encoding="utf-8") as mf:
                     json.dump(manifest, mf, indent=2)
@@ -149,17 +156,22 @@ class AssetSync:
             return None
 
         def check_for_upstream_update(current_version_id, category_name, filename):
-            """Checks CivitAI parent model for newer versions with matching SDXL architecture."""
+            """Checks CivitAI parent model for newer versions with matching architecture."""
             try:
                 # If we have an on-volume recorded version for this file, use it as baseline
-                effective_curr_vid = manifest.get(filename, {}).get("version_id", str(current_version_id))
+                manifest_entry = manifest.get(filename, {})
+                if isinstance(manifest_entry, dict):
+                    effective_curr_vid = str(manifest_entry.get("version_id", current_version_id))
+                else:
+                    effective_curr_vid = str(manifest_entry)
+
                 v_data = fetch_version_meta(effective_curr_vid)
                 if not v_data:
                     v_data = fetch_version_meta(current_version_id)
                 if not v_data:
                     return None
                 model_id = v_data.get("modelId")
-                curr_base = (v_data.get("baseModel") or "SDXL").strip().upper()
+                curr_base = (v_data.get("baseModel") or "SDXL").strip().lower()
                 curr_created = v_data.get("createdAt")
 
                 if not model_id:
@@ -173,15 +185,35 @@ class AssetSync:
                 all_versions = m_data.get("modelVersions", [])
                 candidates = []
                 for v in all_versions:
-                    v_base = (v.get("baseModel") or "").strip().upper()
-                    # Ensure same base model architecture family (e.g. SDXL)
-                    if "SDXL" in curr_base and "SDXL" not in v_base:
+                    v_id_str = str(v.get("id"))
+                    # If this version matches currently installed/recorded version, skip
+                    if v_id_str == str(effective_curr_vid):
                         continue
-                    if str(v.get("id")) != str(effective_curr_vid):
-                        v_created = v.get("createdAt")
-                        # Compare release timestamp if present
-                        if v_created and curr_created and v_created > curr_created:
-                            candidates.append(v)
+
+                    # Must have published status
+                    if v.get("status") and v.get("status").lower() not in ("published", "active"):
+                        continue
+
+                    # Must have downloadable files
+                    v_files = v.get("files", [])
+                    if not any(f.get("downloadUrl") for f in v_files):
+                        continue
+
+                    v_base = (v.get("baseModel") or "").strip().lower()
+                    # Architecture family consistency check:
+                    if "sdxl" in curr_base and "sdxl" not in v_base:
+                        continue
+                    if "pony" in curr_base and "pony" not in v_base:
+                        continue
+                    if "noob" in curr_base and "noob" not in v_base:
+                        continue
+                    if "1.5" in curr_base and "1.5" not in v_base:
+                        continue
+
+                    v_created = v.get("createdAt")
+                    # Compare release timestamp if present
+                    if v_created and curr_created and v_created > curr_created:
+                        candidates.append(v)
 
                 if candidates:
                     # Sort candidates so the newest version by createdAt is selected
@@ -222,29 +254,21 @@ class AssetSync:
             # If not an update, check if current file already exists and is healthy
             if not is_an_update and not force and dest_path.exists():
                 size_mb = dest_path.stat().st_size / (1024 * 1024)
-                if size_mb > 1.0:
-                    print(f"[{category_name}] {filename} exists ({size_mb:.2f} MB). Skipping.")
+                min_valid_mb = 10.0 if category_key == "checkpoints" else 1.0
+                if size_mb > min_valid_mb:
+                    print(f"[{category_name}] {filename} exists ({size_mb:.2f} MB, version {manifest.get(filename, {}).get('version_id', version_id)}). Skipping.")
                     if filename not in manifest:
-                        save_manifest_entry(filename, version_id)
+                        save_manifest_entry(filename, version_id, size_mb=size_mb)
                     summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
                     return
 
-            # If it's an update, delete the existing file (and variants) to prepare for clean download
-            if is_an_update and dest_path.exists():
-                try:
-                    old_size_mb = dest_path.stat().st_size / (1024 * 1024)
-                    dest_path.unlink()
-                    print(f"♻️ [{category_name}] Purged older {filename} ({old_size_mb:.2f} MB) to install newer version {effective_version_id}.")
-                except Exception as del_err:
-                    print(f"⚠️ [{category_name}] Note deleting old {filename}: {del_err}")
-
-            # Check for existing variants/aliases (e.g. juggernautXL_ragnarokBy.safetensors) only if not updating
+            # Check for existing variants/aliases only if not updating
             if not is_an_update and not force:
                 stem = filename.replace(".safetensors", "")
                 for existing in target_dir.glob(f"{stem}*.safetensors"):
                     if existing.is_file() and existing != dest_path and not existing.name.endswith(".tmp"):
                         size_mb = existing.stat().st_size / (1024 * 1024)
-                        if size_mb > 1.0:
+                        if size_mb > (10.0 if category_key == "checkpoints" else 1.0):
                             print(f"[{category_name}] Found existing variant {existing.name} ({size_mb:.2f} MB) for {filename}. Linking...")
                             try:
                                 os.link(str(existing), str(dest_path))
@@ -255,6 +279,7 @@ class AssetSync:
                                     import shutil
                                     shutil.copyfile(str(existing), str(dest_path))
                             cache_volume.commit()
+                            save_manifest_entry(filename, version_id, size_mb=size_mb)
                             summary[category_key]["already_present"].append({"file": filename, "size_mb": round(size_mb, 2)})
                             return
 
@@ -316,13 +341,14 @@ class AssetSync:
                     summary[category_key]["failed"].append({"file": filename, "error": err})
                     return
 
-                tmp_path.rename(dest_path)
+                # Atomic replacement: guarantees dest_path is never wiped if download failed
+                tmp_path.replace(dest_path)
                 cache_volume.commit()
                 actual_mb = dest_path.stat().st_size / (1024 * 1024)
                 print(f"  -> [SAVED] {dest_path} ({actual_mb:.2f} MB)")
                 
                 v_name = update_meta.get("newer_version_name", "") if update_meta else meta_data.get("name", "")
-                save_manifest_entry(filename, effective_version_id, v_name)
+                save_manifest_entry(filename, effective_version_id, v_name, size_mb=actual_mb)
 
                 if is_an_update:
                     summary[category_key]["updated"].append({
@@ -341,14 +367,15 @@ class AssetSync:
         print("=" * 60)
         print("ALPHACORE: SCANNING & SYNCING CHECKPOINTS...")
         print("=" * 60)
-        # Purge obsolete unholy sinister checkpoint if present to reclaim volume storage
-        obsolete_unholy = ckpt_dir / "unholyDesireMixSinister_v80.safetensors"
-        if obsolete_unholy.exists():
-            try:
-                obsolete_unholy.unlink()
-                print("[AssetSync] ♻️ Replaced/purged obsolete unholyDesireMixSinister_v80.safetensors")
-            except Exception as e:
-                print(f"[AssetSync] Note purging obsolete unholy checkpoint: {e}")
+        # Purge obsolete checkpoints if present to reclaim volume storage
+        for obsolete_fn in ["unholyDesireMixSinister_v80.safetensors", "realisticVisionV60B1_v60B1VAE.safetensors"]:
+            obsolete_file = ckpt_dir / obsolete_fn
+            if obsolete_file.exists():
+                try:
+                    obsolete_file.unlink()
+                    print(f"[AssetSync] ♻️ Replaced/purged obsolete {obsolete_fn}")
+                except Exception as e:
+                    print(f"[AssetSync] Note purging obsolete checkpoint {obsolete_fn}: {e}")
 
         for fn, vid in WEBSITE_CHECKPOINTS.items():
             process_item(fn, vid, ckpt_dir, "checkpoints")
@@ -358,6 +385,18 @@ class AssetSync:
         print("=" * 60)
         for fn, vid in WEBSITE_LORAS.items():
             process_item(fn, vid, lora_dir, "loras")
+
+        # Provide friendly alias licking_lesbians.safetensors pointing to lezcunbkv2.safetensors
+        lez_file = lora_dir / "lezcunbkv2.safetensors"
+        lez_alias = lora_dir / "licking_lesbians.safetensors"
+        if lez_file.exists() and not lez_alias.exists():
+            try:
+                os.link(str(lez_file), str(lez_alias))
+            except Exception:
+                try:
+                    os.symlink(str(lez_file), str(lez_alias))
+                except Exception:
+                    pass
 
         for tmp_file in list(ckpt_dir.glob("*.tmp")) + list(lora_dir.glob("*.tmp")):
             try:

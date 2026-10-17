@@ -20,6 +20,7 @@ export function getLoraOptions() {
   <option value="Cowgirl.safetensors">COWGIRL</option>
   <option value="Missionary.safetensors">MISSIONARY</option>
   <option value="SpyCam.safetensors">SPYCAM</option>
+  <option value="lezcunbkv2.safetensors">LICKING LESBIANS</option>
 `;
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
   if (currentProfile !== 'guest') {
@@ -217,18 +218,24 @@ function updateProgress(loader, step, maxSteps, extraText = '') {
 }
 
 /* ─── RESULT PANEL ──────────────────────────────────────────── */
-export function buildResult(urls = []) {
+export function buildResult(urls = [], options = {}) {
   const el = document.createElement('div');
   el.className = 'aim-result hidden';
   if (!Array.isArray(urls)) urls = [urls];
   if (urls.length === 0) return el;
   let currentIdx = 0;
+  const isComic = typeof options === 'boolean' ? options : Boolean(options && options.isComic);
+
+  const getPageLabel = (idx, total) => {
+    if (total <= 1) return '';
+    return isComic ? `📖 COMIC BOOK // PAGE ${idx + 1} OF ${total}` : `${idx + 1} / ${total}`;
+  };
 
   el.innerHTML = `
     <div class="aim-result-label" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" id="aim-result-toggle">
-      <span>// OUTPUT_ARTIFACT</span>
+      <span>${isComic && urls.length > 1 ? '// COMIC_BOOK_ARTIFACT' : '// OUTPUT_ARTIFACT'}</span>
       <div>
-        <span class="aim-batch-count" style="opacity:0.7; margin-right:10px;">${urls.length > 1 ? '1 / ' + urls.length : ''}</span>
+        <span class="aim-batch-count" style="opacity:0.85; margin-right:10px; ${isComic ? 'color:#00b8ff; font-weight:600;' : ''}">${getPageLabel(0, urls.length)}</span>
         <span id="aim-result-toggle-icon">▼</span>
       </div>
     </div>
@@ -238,9 +245,9 @@ export function buildResult(urls = []) {
       </div>
       <div class="aim-result-actions" style="display:flex; justify-content:space-between; align-items:center;">
         <div class="aim-batch-nav" style="display:${urls.length > 1 ? 'flex' : 'none'}; gap:6px; align-items:center;">
-          <button class="aim-btn aim-btn-dl" id="aim-prev-btn">◀ PREV</button>
+          <button class="aim-btn aim-btn-dl" id="aim-prev-btn">${isComic ? '◀ PREV PAGE' : '◀ PREV'}</button>
           <button class="aim-btn aim-btn-dl" id="aim-slideshow-btn" title="Toggle Auto Slideshow">▶ AUTO</button>
-          <button class="aim-btn aim-btn-dl" id="aim-next-btn">NEXT ▶</button>
+          <button class="aim-btn aim-btn-dl" id="aim-next-btn">${isComic ? 'NEXT PAGE ▶' : 'NEXT ▶'}</button>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center;">
           <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; margin-right:4px;">// SYNTHESIS CHAIN:</span>
@@ -298,7 +305,7 @@ export function buildResult(urls = []) {
     function advanceSlide() {
       currentIdx = (currentIdx + 1) % urls.length;
       imgEl.src = urls[currentIdx];
-      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      countEl.textContent = getPageLabel(currentIdx, urls.length);
       Array.from(thumbContainer.children).forEach((t, i) => {
         t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent';
       });
@@ -331,7 +338,7 @@ export function buildResult(urls = []) {
         stopSlideshow();
         currentIdx = idx;
         imgEl.src = urls[currentIdx];
-        countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+        countEl.textContent = getPageLabel(currentIdx, urls.length);
         Array.from(thumbContainer.children).forEach((t, i) => {
           t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent';
         });
@@ -345,7 +352,7 @@ export function buildResult(urls = []) {
       stopSlideshow();
       currentIdx = (currentIdx - 1 + urls.length) % urls.length;
       imgEl.src = urls[currentIdx];
-      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      countEl.textContent = getPageLabel(currentIdx, urls.length);
       Array.from(thumbContainer.children).forEach((t, i) => t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent');
     };
     
@@ -353,7 +360,7 @@ export function buildResult(urls = []) {
       stopSlideshow();
       currentIdx = (currentIdx + 1) % urls.length;
       imgEl.src = urls[currentIdx];
-      countEl.textContent = `${currentIdx + 1} / ${urls.length}`;
+      countEl.textContent = getPageLabel(currentIdx, urls.length);
       Array.from(thumbContainer.children).forEach((t, i) => t.style.border = i === currentIdx ? '2px solid var(--accent)' : '2px solid transparent');
     };
 
@@ -915,13 +922,20 @@ function buildTxt2Img() {
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
           <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
-          <option value="realisticVisionV60B1_v60B1VAE.safetensors">REALISTIC VISION V6.0</option>
+          <option value="cyberrealisticPony_v180Coreshift.safetensors">CYBERREALISTIC PONY</option>
+          <option value="realvisxlV50_v50Bakedvae.safetensors">REALVISXL V5.0</option>
           <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
     </div>
 
-    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; width:100%;">
+    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; align-items:center; gap:20px; width:100%;">
+      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+        <span style="margin-right:8px; font-weight:600; color:var(--accent);">📖 COMIC MODE:</span>
+        <div id="t2i-comic-mode-btn" data-active="false" title="Toggle Comic Mode: speech/thought bubbles & multi-page storybook when batch > 1" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid rgba(0, 184, 255, 0.4); border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:var(--text-muted); border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
+        </div>
+      </label>
       <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
         <span style="margin-right:8px;">DETAILIFIER:</span>
         <div id="t2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
@@ -1035,6 +1049,28 @@ function buildTxt2Img() {
   const cfgInput = wrap.querySelector('#t2i-cfg');
   const cfgVal = wrap.querySelector('#t2i-cfg-val');
   if (cfgInput && cfgVal) cfgInput.addEventListener('input', () => { cfgVal.textContent = parseFloat(cfgInput.value); });
+
+  const comicBtn = wrap.querySelector('#t2i-comic-mode-btn');
+  if (comicBtn) {
+    comicBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = comicBtn.dataset.active === 'true';
+      const newState = !isActive;
+      comicBtn.dataset.active = newState ? 'true' : 'false';
+      comicBtn.style.background = newState ? 'rgba(0, 184, 255, 0.35)' : 'rgba(0,0,0,0.5)';
+      comicBtn.style.borderColor = newState ? '#00b8ff' : 'rgba(0, 184, 255, 0.4)';
+      const knob = comicBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = newState ? '18px' : '2px';
+        knob.style.background = newState ? '#00b8ff' : 'var(--text-muted)';
+      }
+      if (newState) {
+        setStatus(wrap, '#t2i-status', '📖 COMIC MODE ENGAGED: Speech/thought bubbles & sequential continuation enabled.', 'ok');
+      } else {
+        setStatus(wrap, '#t2i-status', 'COMIC MODE DISENGAGED.', 'info');
+      }
+    });
+  }
 
   const detailifierBtn = wrap.querySelector('#t2i-detailifier-btn');
   if (detailifierBtn) {
@@ -1233,6 +1269,16 @@ function buildTxt2Img() {
       lora = lora ? lora + ',detailifier.safetensors' : 'detailifier.safetensors';
     }
 
+    const isComicMode = comicBtn && comicBtn.dataset.active === 'true';
+    if (isComicMode) {
+      const comicTags = "comic book page, comic panel layout, dynamic graphic novel art, clean legible speech bubbles, white dialogue balloons with bold black typography, dialogue text in speech bubbles, clear thought bubble with crisp text, professional comic lettering, sharp ink outlines, sound effects onomatopoeia";
+      if (!prompt.toLowerCase().includes('comic')) {
+        prompt = `${comicTags}, ${prompt}`;
+      }
+      const comicNeg = "illegible text, gibberish lettering, smeared speech bubbles, unreadable typography, messy pseudo-letters, blurry captions, distorted balloons, cut off text, watermark, bad anatomy, photorealistic, 3d render";
+      neg = neg ? `${neg}, ${comicNeg}` : comicNeg;
+    }
+
     if (sessionStorage.getItem('darkness_mode_active') === 'true') {
       neg = ''; 
     }
@@ -1242,12 +1288,14 @@ function buildTxt2Img() {
     const genBtn = wrap.querySelector('#t2i-gen-btn');
 
     genBtn.disabled = true;
-    setStatus(wrap, '#t2i-status', 'ROUTING TO GPU NODE...', 'info');
-    const loader = buildLoader('SYNTHESIZING IMAGE...');
+    setStatus(wrap, '#t2i-status', isComicMode && batchSize > 1 ? `GENERATING COMIC BOOK (${batchSize} PAGES)...` : 'ROUTING TO GPU NODE...', 'info');
+    const loader = buildLoader(isComicMode && batchSize > 1 ? 'ILLUSTRATING COMIC BOOK...' : 'SYNTHESIZING IMAGE...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
 
-    const loaderMessages = ['SYNTHESIZING IMAGE...','DENOISING LATENTS...','RENDERING ARTIFACT...','FINALIZING OUTPUT...'];
+    const loaderMessages = isComicMode && batchSize > 1
+      ? ['ILLUSTRATING COMIC BOOK...', 'INSCRIBING SPEECH BUBBLES...', 'INKING PANELS & PAGES...', 'BINDING COMIC BOOK ISSUE...']
+      : ['SYNTHESIZING IMAGE...', 'DENOISING LATENTS...', 'RENDERING ARTIFACT...', 'FINALIZING OUTPUT...'];
     let msgIdx = 0;
     const msgInterval = setInterval(() => {
       msgIdx = (msgIdx + 1) % loaderMessages.length;
@@ -1277,6 +1325,7 @@ function buildTxt2Img() {
         num_inference_steps: steps,
         batch_size: batchSize,
         lora: lora,
+        comic_mode: isComicMode ? '1' : '0',
         scheduler: scheduler,
         sampler: scheduler,
         clip_skip: clipSkip,
@@ -1324,7 +1373,7 @@ function buildTxt2Img() {
                 url.push(...partialUrls);
                 
                 resultSlot.innerHTML = '';
-                const resultEl = buildResult(url);
+                const resultEl = buildResult(url, { isComic: isComicMode });
                 resultEl.classList.remove('hidden');
                 resultSlot.appendChild(resultEl);
               } else if (data.image_b64) {
@@ -1357,7 +1406,7 @@ function buildTxt2Img() {
       clearInterval(msgInterval);
       loaderSlot.innerHTML = '';
 
-      const resultEl = buildResult(url);
+      const resultEl = buildResult(url, { isComic: isComicMode });
       resultEl.classList.remove('hidden');
       resultSlot.innerHTML = '';
       resultSlot.appendChild(resultEl);
@@ -1632,7 +1681,8 @@ function buildImg2Img() {
         <option value="lustifyNSFWCheckpoint_zenithV9">lustifyNSFWCheckpoint_zenithV9 (Unfiltered High-Aesthetic)</option>
         <option value="dreamshaperXL_alpha2Xl10">dreamshaperXL_alpha2Xl10 (Creative Concept & Digital Art)</option>
         <option value="intorealism_sdxlV4">intorealism_sdxlV4 (Hyper-Realistic Skin & Lighting)</option>
-        <option value="realisticVisionV60B1_v60B1VAE">realisticVisionV60B1_v60B1VAE (Photorealism & Portraiture)</option>
+        <option value="cyberrealisticPony_v180Coreshift">cyberrealisticPony_v180Coreshift (CyberRealistic Pony V18)</option>
+        <option value="realvisxlV50_v50Bakedvae">realvisxlV50_v50Bakedvae (RealVisXL V5.0 Photorealism)</option>
       </select>
     </div>
 

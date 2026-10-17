@@ -152,14 +152,18 @@ class Txt2Vid:
             model_file = "unholyDesireMixCrimson_v50.safetensors"
         elif model_name.lower().startswith("lust"):
             model_file = "lustifyNSFWCheckpoint_zenithV9.safetensors"
+        elif ("pony" in model_name.lower() and "cyber" in model_name.lower()) or "cyberrealisticpony" in model_name.lower().replace(" ", "").replace("_", ""):
+            model_file = "cyberrealisticPony_v180Coreshift.safetensors"
         elif model_name.lower().startswith("autism") or model_name.lower().startswith("pony"):
             model_file = "autismmixSDXL_autismmixPony.safetensors"
         elif model_name.lower().startswith("0x7"):
             model_file = "0x7RealisticFreedom_omegaSDXL.safetensors"
+        elif "realvis" in model_name.lower() or "realvisxl" in model_name.lower():
+            model_file = "realvisxlV50_v50Bakedvae.safetensors"
         elif model_name.lower().startswith("into") or "realism" in model_name.lower() and "epic" not in model_name.lower() and "vision" not in model_name.lower():
             model_file = "intorealism_sdxlV4.safetensors"
         elif "vision" in model_name.lower() or "realisticvision" in model_name.lower().replace(" ", "").replace("_", ""):
-            model_file = "realisticVisionV60B1_v60B1VAE.safetensors"
+            model_file = "realvisxlV50_v50Bakedvae.safetensors"
         else:
             model_file = "juggernautXL_ragnarok.safetensors"
 

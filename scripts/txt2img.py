@@ -97,7 +97,10 @@ class Txt2Img:
             str(model_path),
             torch_dtype=torch.bfloat16,
             use_safetensors=True,
+            add_watermarker=False,
         ).to("cuda")
+        if hasattr(self.pipe, "watermark"):
+            self.pipe.watermark = None
             
         self.current_model = model_filename
 
@@ -152,6 +155,7 @@ class Txt2Img:
         scheduler: str = "Euler", 
         sampler: str = "",
         amateur: int = 0,
+        comic_mode: int = 0,
         seed: int = -1,
         lora: str = "none"
     ) -> list[bytes]:
@@ -170,14 +174,18 @@ class Txt2Img:
             model_file = "unholyDesireMixCrimson_v50.safetensors"
         elif Lustify == 1 or model_name.lower().startswith("lust"):
             model_file = "lustifyNSFWCheckpoint_zenithV9.safetensors"
+        elif ("pony" in model_name.lower() and "cyber" in model_name.lower()) or "cyberrealisticpony" in model_name.lower().replace(" ", "").replace("_", ""):
+            model_file = "cyberrealisticPony_v180Coreshift.safetensors"
         elif AutismPony == 1 or model_name.lower().startswith("autism") or model_name.lower().startswith("pony"):
             model_file = "autismmixSDXL_autismmixPony.safetensors"
         elif model_name.lower().startswith("0x7"):
             model_file = "0x7RealisticFreedom_omegaSDXL.safetensors"
+        elif "realvis" in model_name.lower() or "realvisxl" in model_name.lower():
+            model_file = "realvisxlV50_v50Bakedvae.safetensors"
         elif model_name.lower().startswith("into") or "realism" in model_name.lower() and "epic" not in model_name.lower() and "vision" not in model_name.lower():
             model_file = "intorealism_sdxlV4.safetensors"
         elif "vision" in model_name.lower() or "realisticvision" in model_name.lower().replace(" ", "").replace("_", ""):
-            model_file = "realisticVisionV60B1_v60B1VAE.safetensors"
+            model_file = "realvisxlV50_v50Bakedvae.safetensors"
         else:
             model_file = "juggernautXL_ragnarok.safetensors"
             
@@ -321,9 +329,30 @@ class Txt2Img:
             import base64
             all_images_b64 = []
             try:
+                # Comic Mode prompt & negative prompt adaptations
+                base_prompt = prompt
+                effective_neg = negative_prompt or ""
+                if comic_mode == 1:
+                    comic_neg = "illegible text, gibberish lettering, smeared speech bubbles, unreadable typography, messy pseudo-letters, blurry captions, distorted dialogue balloons, cut off text, watermark, bad anatomy, photorealistic, 3d render"
+                    effective_neg = (effective_neg + ", " + comic_neg) if effective_neg else comic_neg
+
                 images_completed = 0
                 while images_completed < batch_size:
-                    current_batch_size = min(batch_size - images_completed, 10)
+                    current_page = images_completed + 1
+                    if comic_mode == 1 and batch_size > 1:
+                        if current_page == 1:
+                            current_prompt = f"Page 1 of {batch_size}, opening chapter, establishing scene: {base_prompt}, dynamic comic book page layout, narrative introduction caption box, character dialogue speech bubble with bold legible comic text, crisp graphic novel inks, vibrant cell shading"
+                        elif current_page < batch_size:
+                            current_prompt = f"Page {current_page} of {batch_size}, scene continuation, rising action and dialogue exchange: {base_prompt}, expressive character reactions, conversation speech balloons with bold legible text, clear thought bubble, dramatic panel transitions"
+                        else:
+                            current_prompt = f"Page {current_page} of {batch_size}, final concluding comic book page, climactic moment and resolution: {base_prompt}, dramatic character face-off, final dialogue balloons with crisp legible lettering, concluding narrative caption 'TO BE CONTINUED...', epic graphic novel finale"
+                        current_batch_size = 1
+                    else:
+                        current_prompt = (
+                            f"comic book page, comic panel layout, dynamic graphic novel art, clean legible speech bubbles, white dialogue balloons with bold black typography, clear thought bubble with crisp text, sound effects onomatopoeia: {base_prompt}"
+                            if comic_mode == 1 else base_prompt
+                        )
+                        current_batch_size = min(batch_size - images_completed, 10)
 
                     def chunk_callback(pipe, step_index, timestep, callback_kwargs):
                         q.put({"step": step_index, "max_steps": num_inference_steps, "images_completed": images_completed, "total_images": batch_size})
@@ -335,8 +364,8 @@ class Txt2Img:
                         kwargs["controlnet_conditioning_scale"] = float(controlnet_conditioning_scale)
                         
                     chunk_images = run_pipe(
-                        prompt=prompt,
-                        negative_prompt=negative_prompt if negative_prompt else None,
+                        prompt=current_prompt,
+                        negative_prompt=effective_neg if effective_neg else None,
                         num_images_per_prompt=current_batch_size,
                         num_inference_steps=num_inference_steps,
                         guidance_scale=g_scale_float,
@@ -353,7 +382,13 @@ class Txt2Img:
                             all_images_b64.append(b64)
                     
                     images_completed += current_batch_size
-                    q.put({"image_b64_partial": chunk_b64, "images_completed": images_completed, "total_images": batch_size})
+                    q.put({
+                        "image_b64_partial": chunk_b64, 
+                        "images_completed": images_completed, 
+                        "total_images": batch_size,
+                        "current_page": current_page if (comic_mode == 1 and batch_size > 1) else None,
+                        "is_comic_book": bool(comic_mode == 1 and batch_size > 1)
+                    })
 
                 torch.cuda.empty_cache()
                 if lora and lora.lower() != "none":
@@ -476,6 +511,7 @@ class Txt2Img:
             scheduler: str = "Euler", 
             sampler: str = "",
             amateur: int = 0,
+            comic_mode: int = 0,
             seed: int = -1,
             batch_size: int = 1,
             lora: str = "none"
@@ -500,6 +536,7 @@ class Txt2Img:
                     scheduler=scheduler,
                     sampler=sampler,
                     amateur=amateur,
+                    comic_mode=comic_mode,
                     seed=seed,
                     lora=lora,
                 ):

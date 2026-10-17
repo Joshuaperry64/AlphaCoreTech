@@ -9,7 +9,7 @@ import { initSidebar } from './components/sidebar.js';
 import { initModal } from './components/modal.js';
 import { createElement } from './components/utils.js';
 import createIntro from './components/intro.js';
-import { syncFromServer } from './components/db_sync.js';
+import { syncFromServer, initRealtimeSync } from './components/db_sync.js';
 import { buildPinPad } from './components/pinpad.js';
 import { toggleAudio, initGlobalAudio, getGlobalAudio, setAudioPlaying, playSFX, initAudioVisualizer } from './components/audio.js';
 import { initThemeSwitcher } from './components/theme-switcher.js';
@@ -349,6 +349,8 @@ function initApp() {
   initSidebar();
   initModal();
   a11y.init();
+  initRealtimeSync();
+  syncFromServer();
 
   // Restore Synthwave Overdrive Theme if previously unlocked
   if (localStorage.getItem('alphacore_synthwave_active') === '1') {

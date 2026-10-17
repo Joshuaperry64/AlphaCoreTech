@@ -9,6 +9,21 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.2.0 BUILD 190',
+    date: '2026.10.17',
+    badge: 'COMIC BOOK ENGINE // SUPABASE REALTIME PERSISTENCE & ASSET LOCKING',
+    badgeColor: '#00e5ff',
+    title: 'SEQUENTIAL COMIC BOOK GENERATOR, SUPABASE CROSS-DEVICE PERSISTENCE & ASSET REINFORCEMENT',
+    summary: 'Major system upgrade introducing an interactive Comic Mode with sequential multi-page comic book generation in Txt2Img, full cross-device state persistence powered by Supabase Realtime (synchronizing PIN access, system settings, endpoint URLs, and operative chat history), model catalog consolidation standardizing on RealVisXL V5.0, and hardened AssetSync deduplication with manifest version locking.',
+    changes: [
+      'Comic Mode & Multi-Page Comic Book Generator: Added dedicated cybernetic "COMIC MODE" toggle in Txt2Img. Injects comic linework, layout, white speech/thought bubbles, and legible bold black lettering, coupled with negative prompt filtering to suppress pseudo-gibberish text. When batch size > 1, chronologically orchestrates sequential multi-page comic books (Page 1 establishing shot, dialogue confrontation escalation, climax/cliffhanger ending) with interactive "📖 COMIC BOOK // PAGE X OF Y" navigation.',
+      'Supabase Cross-Device Persistence & Realtime Mesh: Integrated direct cloud substrate sync via Supabase PostgreSQL tables (alphacore_pins, alphacore_settings, alphacore_chat) with Row Level Security (RLS) policies. PIN modifications, role permissions, custom Modal endpoint URLs, and system settings instantly propagate to all active operative devices via websocket channels.',
+      'Cognitive Core Supabase Chat Synchrony: Cognitive uplink chat history seamlessly persists and streams in real time across operative devices. Global Comm Link and Private Uplink threads load from the cloud substrate with graceful fallback to Express/Netlify APIs and encrypted localStorage.',
+      'Model Catalog Consolidation & Legacy Purge: Completely purged legacy Realistic Vision V6.0 B1 (Model 4201) across Modal deployment volumes and frontend selectors, establishing RealVisXL V5.0 (Model 139562) as the unified photorealistic SDXL checkpoint.',
+      'AssetSync Deduplication & Version Locking: Hardened Modal AssetSync upstream update detection with base architecture family consistency checks (SDXL, Pony, NoobAI, SD1.5) and published version validation. Implemented atomic .tmp file staging and persistent models_manifest.json version locking to permanently eliminate redundant re-downloads.'
+    ]
+  },
+  {
     version: 'v5.1.0 BUILD 185',
     date: '2026.10.17',
     badge: 'CORE MATRIX REVISION // MOBILE HUD, COIN CHANGER & STUDIO OVERHAUL',
@@ -27,7 +42,8 @@ const CHANGELOG_DATA = [
       'Administration & Event Logging: Fine-grained per-profile access permissions; custom access PIN assignments with "Require new PIN reset on next entry"; removed Impersonate function; renamed Roles tab to Access; removed deprecated Lucy and stealth sliders from Classified Directives; and unified Media Logs capturing user prompt invocations across all backend endpoints.',
       'Cyber Synthesizer Music Studio: Overhauled Music Generator into a complete composition workstation featuring genre presets, mood matrices, BPM/duration controls, and real-time generation.',
       'Voice Cloner Clean-up: Purged hardcoded mock voice profiles from RVC Voice Cloner to display only authenticated user voice profiles.',
-      'Civitai Model Asset Sync & Checkpoint Catalog: Upgraded Unholy Desire to Crimson Seduction v5.0 (Model 1494558 / Version 2200584) with automatic purge of legacy Sinister v8.0, and integrated Realistic Vision V6.0 B1 (Model 4201 / Version 245598) across AssetSync, Txt2Img, Img2Img, and Hyper-Generation matrices.'
+      'Civitai Model Asset Sync & Checkpoint Catalog: Upgraded Unholy Desire to Crimson Seduction v5.0 (Model 1494558), integrated Realistic Vision V6.0 B1 (Model 4201), CyberRealistic Pony V18 (Model 443821), RealVisXL V5.0 (Model 139562), and Licking Lesbians v2.0 (Model 221018) across AssetSync, Txt2Img, Img2Img, and Hyper-Generation matrices.',
+      'Watermark & Scanline Line Artifact Neutralization: Disabled diffusers invisible-watermark on SDXL generation pipelines and stripped container repeating linear gradients behind rendered image viewports to permanently eliminate horizontal watermark lines.'
     ]
   },
   {

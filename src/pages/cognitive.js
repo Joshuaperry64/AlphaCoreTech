@@ -5,6 +5,7 @@ import { pushToServer } from '../components/db_sync.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
 import { saveFileToVault } from './vault.js';
+import { supabase } from '../lib/supabase.js';
 
 class TacticalAudioEngine {
   constructor() {
@@ -907,18 +908,42 @@ export default function CognitiveUplink() {
     }
 
     async function saveMessageToHistory(role, text, author = null) {
+      const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const effectiveAuthor = author || profile.toUpperCase();
+
+      // 1. Primary: Direct Cloud Substrate Sync via Supabase
+      if (supabase && typeof supabase.from === 'function') {
+        try {
+          supabase.from('alphacore_chat').insert({
+            id: msgId,
+            channel: currentChannel,
+            thread_id: currentChannel === 'private' ? (currentThreadId || 'default') : 'shared_main',
+            profile: profile.toUpperCase(),
+            author: effectiveAuthor,
+            role: role || 'user',
+            text: text,
+            created_at: new Date().toISOString()
+          }).then((res) => {
+            if (res && res.error) console.warn('[SUPABASE_CHAT] Save note:', res.error.message);
+          }).catch(() => {});
+        } catch (sbErr) {
+          console.warn('[SUPABASE_CHAT] Dispatch note:', sbErr.message || sbErr);
+        }
+      }
+
+      // 2. Secondary: Fallback to Server API or LocalStorage
       if (currentChannel === 'shared') {
         try {
           await fetch(apiUrl('/api/chat'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ author: author || profile.toUpperCase(), text, role })
+            body: JSON.stringify({ id: msgId, author: effectiveAuthor, text, role })
           });
         } catch(e) {}
       } else {
         const storageKey = getMessagesKey(currentThreadId);
         let history = JSON.parse(localStorage.getItem(storageKey)) || [];
-        history.push({ role, text, author });
+        history.push({ id: msgId, role, text, author: effectiveAuthor });
         localStorage.setItem(storageKey, JSON.stringify(history));
       }
     }
@@ -926,15 +951,39 @@ export default function CognitiveUplink() {
     async function loadMessages() {
       chatMessages.innerHTML = '';
       let history = [];
-      if (currentChannel === 'shared') {
+      let loadedFromSupabase = false;
+
+      // 1. Primary: Load from Supabase Cloud Substrate
+      if (supabase && typeof supabase.from === 'function') {
         try {
-          const res = await fetch(apiUrl('/api/chat/history'));
-          if (res && typeof res.json === 'function') {
-            history = await res.json();
+          let query = supabase.from('alphacore_chat').select('*').order('created_at', { ascending: true });
+          if (currentChannel === 'shared') {
+            query = query.eq('channel', 'shared');
+          } else {
+            query = query.eq('channel', 'private').eq('thread_id', currentThreadId || 'default');
           }
-        } catch(e) {}
-      } else {
-        history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
+          const { data, error } = await query;
+          if (!error && Array.isArray(data) && data.length > 0) {
+            history = data;
+            loadedFromSupabase = true;
+          }
+        } catch (sbErr) {
+          console.warn('[SUPABASE_CHAT] Load note:', sbErr.message || sbErr);
+        }
+      }
+
+      // 2. Secondary: Fallback to Server API / LocalStorage
+      if (!loadedFromSupabase) {
+        if (currentChannel === 'shared') {
+          try {
+            const res = await fetch(apiUrl('/api/chat/history'));
+            if (res && typeof res.json === 'function') {
+              history = await res.json();
+            }
+          } catch(e) {}
+        } else {
+          history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
+        }
       }
 
       const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
@@ -1704,6 +1753,40 @@ export default function CognitiveUplink() {
         };
       }
     } catch(e){}
+
+    // Realtime Supabase Cross-Device Sync Listener
+    const onRemoteChatMessage = (ev) => {
+      const msg = ev.detail;
+      if (!msg || !msg.text) return;
+
+      // Only display messages matching active channel & thread
+      if (msg.channel && msg.channel !== currentChannel) return;
+      if (currentChannel === 'private' && msg.thread_id && msg.thread_id !== currentThreadId) return;
+
+      const cleanText = msg.text.trim();
+      const sig = `${msg.author || msg.role}_${cleanText}`;
+      const existingSig = chatMessages.querySelector(`[data-sig="${encodeURIComponent(sig)}"]`);
+      const existingId = msg.id ? chatMessages.querySelector(`[data-msg-id="${msg.id}"]`) : null;
+      if (existingSig || existingId) return;
+
+      if (msg.author) {
+        activeOperatives.set(msg.author.toUpperCase(), Date.now());
+        renderOperativesPresence();
+      }
+
+      const isAlpha = msg.role === 'model' || msg.author === 'ALPHA';
+      const className = msg.role === 'system' ? 'system-msg' : (isAlpha ? 'alpha-msg' : 'user-msg');
+      const author = msg.author || (isAlpha ? 'ALPHA' : 'USER');
+
+      const rendered = appendMessage(author, msg.text, className);
+      if (rendered) {
+        rendered.setAttribute('data-sig', encodeURIComponent(sig));
+        if (msg.id) rendered.setAttribute('data-msg-id', msg.id);
+      }
+      sfx.play('message');
+    };
+
+    window.addEventListener('alphacore_chat_message', onRemoteChatMessage);
 
     updateTitleAndAlpha();
     loadThreads();

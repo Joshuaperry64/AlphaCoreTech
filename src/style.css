@@ -2664,7 +2664,11 @@ input:focus, textarea:focus {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0,0,0,0.3);
+  background: #030712 !important;
+  background-image: none !important;
+}
+.aim-result, .aim-result-img {
+  background-image: none !important;
 }
 .aim-result-img {
   max-width: 100%;
@@ -2672,6 +2676,7 @@ input:focus, textarea:focus {
   object-fit: contain;
   border-radius: var(--radius);
   box-shadow: 0 0 30px rgba(0,184,255,0.15);
+  background: #030712;
 }
 .aim-result-actions {
   padding: 12px 14px;

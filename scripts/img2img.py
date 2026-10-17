@@ -71,7 +71,9 @@ SDXL_CHECKPOINTS = {
     "lustifyNSFWCheckpoint_zenithV9": "lustifyNSFWCheckpoint_zenithV9.safetensors",
     "dreamshaperXL_alpha2Xl10": "dreamshaperXL_alpha2Xl10.safetensors",
     "intorealism_sdxlV4": "intorealism_sdxlV4.safetensors",
-    "realisticVisionV60B1_v60B1VAE": "realisticVisionV60B1_v60B1VAE.safetensors",
+    "realisticVisionV60B1_v60B1VAE": "realvisxlV50_v50Bakedvae.safetensors",
+    "cyberrealisticPony_v180Coreshift": "cyberrealisticPony_v180Coreshift.safetensors",
+    "realvisxlV50_v50Bakedvae": "realvisxlV50_v50Bakedvae.safetensors",
 }
 
 
@@ -260,8 +262,11 @@ class Img2Img:
                         torch_dtype=torch.bfloat16,
                         use_safetensors=True,
                         cache_dir=CACHE_DIR,
-                        token=token
+                        token=token,
+                        add_watermarker=False
                     ).to("cuda")
+                    if hasattr(self.pipe, "watermark"):
+                        self.pipe.watermark = None
                     loaded = True
                     print(f"[SDXL] Successfully loaded custom checkpoint {ckpt_filename} into VRAM.")
                 except Exception as ex:
@@ -273,8 +278,11 @@ class Img2Img:
                     SDXL_BASE,
                     torch_dtype=torch.bfloat16,
                     cache_dir=CACHE_DIR,
-                    token=token
+                    token=token,
+                    add_watermarker=False
                 ).to("cuda")
+                if hasattr(self.pipe, "watermark"):
+                    self.pipe.watermark = None
                 print(f"[SDXL] Pretrained fallback base model loaded successfully.")
 
             try:
