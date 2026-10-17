@@ -2,23 +2,16 @@ node_modules
 node_modules/
 dist/
 dist
+/dist
 coverage/
 data.json
 .env
 .env.*
 *.local
 server_mipsle
-
 __pycache__/
 *.pyc
 .agents/
 scratch/
-
 /scripts/__pycache__
-
-# Local Netlify folder
 .netlify
-/dist
-/src/ports/jcac10003
-/src/ports/alphalive
-/src/ports/forbiddenarchive
