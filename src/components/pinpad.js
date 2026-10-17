@@ -147,7 +147,7 @@ export function buildPinPad({
   isLoginScreen = false
 } = {}) {
   const wrap = document.createElement('div');
-  wrap.className = 'aim-pin-wrap';
+  wrap.className = `aim-pin-wrap${isLoginScreen ? ' aim-login-terminal-screen' : ''}`;
 
   let titleHtml = title;
   if (!title || title.includes('IDENTITY_VERIFICATION') || title.includes('IDENTITY VERIFICATION') || title.includes('ALPHACORE')) {
@@ -155,59 +155,239 @@ export function buildPinPad({
   }
 
   wrap.innerHTML = `
-    <div class="aim-pin-box">
+    <style>
+      .aim-login-terminal-screen {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .aim-forbidden-terminal-box {
+        max-width: 1100px !important;
+        width: 95% !important;
+        background: rgba(0, 10, 20, 0.78) !important;
+        border: 1px solid rgba(0, 255, 204, 0.35) !important;
+        box-shadow: 0 0 50px rgba(0, 255, 204, 0.15), inset 0 0 30px rgba(0, 184, 255, 0.08) !important;
+        backdrop-filter: blur(12px) !important;
+        padding: 35px 40px !important;
+        border-radius: 8px !important;
+      }
+      .aim-forbidden-brand {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+      .aim-forbidden-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.85rem;
+        font-weight: 900;
+        letter-spacing: 12px;
+        color: #ffffff;
+        margin: 4px 0;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+      }
+      .aim-forbidden-subtitle {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.85rem;
+        letter-spacing: 5px;
+        color: #00ffcc;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+      }
+      .aim-forbidden-columns {
+        display: flex;
+        gap: 60px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
+      .aim-forbidden-col-left {
+        flex: 1.15;
+        max-width: 500px;
+        text-align: left;
+      }
+      .aim-forbidden-col-right {
+        flex: 0.85;
+        max-width: 360px;
+      }
+      .aim-forbidden-label {
+        display: block;
+        color: #00ffcc;
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 2.5px;
+        font-family: 'Share Tech Mono', monospace;
+        margin-bottom: 8px;
+        text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);
+      }
+      .aim-forbidden-select {
+        min-height: 50px;
+        background: rgba(0, 25, 40, 0.65) !important;
+        color: #00ffcc !important;
+        border: 1px solid rgba(0, 255, 204, 0.4) !important;
+        border-radius: 4px !important;
+        padding: 12px 16px !important;
+        font-size: 0.95rem !important;
+        font-weight: bold !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 2px !important;
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+      .aim-forbidden-select:hover {
+        border-color: #00ffcc !important;
+        background: rgba(0, 35, 55, 0.85) !important;
+      }
+      .aim-forbidden-auth-btn {
+        width: 100%;
+        min-height: 64px;
+        margin-top: 22px;
+        background: linear-gradient(90deg, rgba(0, 255, 204, 0.18), rgba(0, 184, 255, 0.28)) !important;
+        border: 2px solid #00ffcc !important;
+        color: #ffffff !important;
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 1.15rem !important;
+        font-weight: 900 !important;
+        letter-spacing: 4px !important;
+        cursor: pointer;
+        border-radius: 6px !important;
+        text-shadow: 0 0 12px #00ffcc !important;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.25) !important;
+        transition: all 0.2s ease !important;
+      }
+      .aim-forbidden-auth-btn:hover {
+        background: linear-gradient(90deg, rgba(0, 255, 204, 0.35), rgba(0, 184, 255, 0.45)) !important;
+        box-shadow: 0 0 30px rgba(0, 255, 204, 0.5) !important;
+        transform: translateY(-1px);
+      }
+      @media (max-width: 860px) {
+        .aim-forbidden-columns {
+          flex-direction: column !important;
+          gap: 25px !important;
+        }
+        .aim-forbidden-col-left, .aim-forbidden-col-right {
+          max-width: 100% !important;
+          width: 100% !important;
+        }
+      }
+    </style>
+
+    <div class="aim-pin-box ${isLoginScreen ? 'aim-forbidden-terminal-box' : ''}">
       <!-- Main PIN Pad View -->
       <form id="pin-login-form" class="aim-pin-box-inner" autocomplete="off" onsubmit="return false;">
-        ${icon ? `<div class="aim-pin-icon" aria-hidden="true">${icon}</div>` : ''}
-        <h2 class="aim-pin-title">${titleHtml}</h2>
-        <p class="aim-pin-subtitle">${subtitle}</p>
+        ${isLoginScreen ? `
+          <div class="aim-forbidden-brand">
+            <img src="/Images/ALPHA-LOGO.png" class="aim-pin-wolf-icon intro-logo-glow" alt="AlphaCore Logo" style="width: 100px; height: 100px; object-fit: contain; margin-bottom: 8px;" />
+            <h1 class="aim-forbidden-title">FORBIDDEN ARCHIVE</h1>
+            <div class="aim-forbidden-subtitle">SECURE ACCESS TERMINAL</div>
+          </div>
+          <div class="aim-forbidden-columns">
+            <div class="aim-forbidden-col-left">
+              <div class="aim-forbidden-field">
+                <label class="aim-forbidden-label" for="operator-selector">▶ OPERATOR IDENTIFIER</label>
+                <select id="operator-selector" class="aim-input aim-forbidden-select">
+                  <option value="Architect" selected>Joshua (Architect)</option>
+                  <option value="DoeBoy">DoeBoy</option>
+                  <option value="J. P.">J. P.</option>
+                  <option value="Fisherman">Fisherman</option>
+                  <option value="Guest">Guest (Preview Mode)</option>
+                </select>
+              </div>
 
-        <!-- Native hidden input for browser automation & physical keyboard synchronization -->
-        <input 
-          type="password" 
-          id="secure-pin-input" 
-          name="pin" 
-          autocomplete="off" 
-          maxlength="12"
-          inputmode="numeric"
-          tabindex="0"
-          aria-label="Secure Access PIN"
-          style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px; pointer-events: none;"
-        />
+              <div class="aim-forbidden-field" style="margin-top: 18px;">
+                <label class="aim-forbidden-label">▶ SECURITY AUTHENTICATION PIN</label>
+                <input 
+                  type="password" 
+                  id="secure-pin-input" 
+                  name="pin" 
+                  autocomplete="off" 
+                  maxlength="12"
+                  inputmode="numeric"
+                  tabindex="0"
+                  aria-label="Secure Access PIN"
+                  style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px; pointer-events: none;"
+                />
+                <div class="aim-pin-display-wrap" style="margin-top: 6px;">
+                  <div class="aim-pin-display" id="aim-pin-display" aria-hidden="true"></div>
+                  <div class="aim-pin-feedback" id="aim-pin-feedback" aria-live="polite" role="status">> AWAITING INPUT</div>
+                </div>
+              </div>
 
-        <div class="aim-pin-display-wrap">
-          <div class="aim-pin-display" id="aim-pin-display" aria-hidden="true"></div>
-          <div class="aim-pin-feedback" id="aim-pin-feedback" aria-live="polite" role="status">> AWAITING INPUT</div>
-        </div>
-        <div class="aim-pinpad-grid" role="group" aria-label="PIN Keypad">
-          <button type="button" class="aim-pad-btn" data-val="1" aria-label="Digit 1">1</button>
-          <button type="button" class="aim-pad-btn" data-val="2" aria-label="Digit 2">2</button>
-          <button type="button" class="aim-pad-btn" data-val="3" aria-label="Digit 3">3</button>
-          <button type="button" class="aim-pad-btn" data-val="4" aria-label="Digit 4">4</button>
-          <button type="button" class="aim-pad-btn" data-val="5" aria-label="Digit 5">5</button>
-          <button type="button" class="aim-pad-btn" data-val="6" aria-label="Digit 6">6</button>
-          <button type="button" class="aim-pad-btn" data-val="7" aria-label="Digit 7">7</button>
-          <button type="button" class="aim-pad-btn" data-val="8" aria-label="Digit 8">8</button>
-          <button type="button" class="aim-pad-btn" data-val="9" aria-label="Digit 9">9</button>
-          <button type="button" class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear" aria-label="Clear Input">CLR</button>
-          <button type="button" class="aim-pad-btn" data-val="0" aria-label="Digit 0">0</button>
-          <button type="button" class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back" aria-label="Backspace">⌫</button>
+              <button type="submit" class="aim-btn aim-pad-btn-action aim-forbidden-auth-btn" id="aim-pad-enter" aria-label="Submit PIN">
+                ◢  AUTHENTICATE  ◣
+              </button>
 
-          <!-- Row 5: Bypass button under CLR (Col 1), Enter button under 0 and ⌫ (Cols 2-3) -->
-          <button type="button" class="aim-btn aim-pad-btn-action" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="grid-column: 1; padding: 10px 4px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
-            ⚡ BYPASS
-          </button>
-          <button type="submit" class="aim-btn aim-pad-btn-action" id="aim-pad-enter" aria-label="Submit PIN" style="grid-column: 2 / span 2; padding: 10px 4px; background: rgba(0, 255, 100, 0.12); border: 1px solid rgba(0, 255, 100, 0.45); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
-            ENTER
-          </button>
+              <div style="display: flex; gap: 10px; margin-top: 14px; width: 100%;">
+                <button type="button" class="aim-btn" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #00b8ff; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; border-radius: 4px; cursor: pointer;">
+                  ⚡ BYPASS
+                </button>
+                <button type="button" class="aim-btn" id="aim-pin-request-btn" aria-label="Request Access Profile" style="flex: 1; padding: 10px; background: rgba(255, 150, 0, 0.1); border: 1px solid rgba(255, 150, 0, 0.4); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; border-radius: 4px; cursor: pointer;">
+                  📝 REQUEST ACCESS
+                </button>
+              </div>
+            </div>
 
-          <!-- Row 6: Subtle long skinny Request Access button below both -->
-          ${isLoginScreen ? `
-          <button type="button" class="aim-btn" id="aim-pin-request-btn" aria-label="Request Access Profile" style="grid-column: 1 / -1; margin-top: 4px; padding: 6px 10px; background: rgba(255, 150, 0, 0.08); border: 1px solid rgba(255, 150, 0, 0.3); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; letter-spacing: 1.5px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 4px; opacity: 0.85;">
-            📝 REQUEST ACCESS
-          </button>
-          ` : ''}
-        </div>
+            <div class="aim-forbidden-col-right">
+              <div class="aim-pinpad-grid" role="group" aria-label="PIN Keypad" style="gap: 12px;">
+                <button type="button" class="aim-pad-btn" data-val="1" aria-label="Digit 1">1</button>
+                <button type="button" class="aim-pad-btn" data-val="2" aria-label="Digit 2">2</button>
+                <button type="button" class="aim-pad-btn" data-val="3" aria-label="Digit 3">3</button>
+                <button type="button" class="aim-pad-btn" data-val="4" aria-label="Digit 4">4</button>
+                <button type="button" class="aim-pad-btn" data-val="5" aria-label="Digit 5">5</button>
+                <button type="button" class="aim-pad-btn" data-val="6" aria-label="Digit 6">6</button>
+                <button type="button" class="aim-pad-btn" data-val="7" aria-label="Digit 7">7</button>
+                <button type="button" class="aim-pad-btn" data-val="8" aria-label="Digit 8">8</button>
+                <button type="button" class="aim-pad-btn" data-val="9" aria-label="Digit 9">9</button>
+                <button type="button" class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear" aria-label="Clear Input">CLR</button>
+                <button type="button" class="aim-pad-btn" data-val="0" aria-label="Digit 0">0</button>
+                <button type="button" class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back" aria-label="Backspace">⌫</button>
+              </div>
+            </div>
+          </div>
+        ` : `
+          ${icon ? `<div class="aim-pin-icon" aria-hidden="true">${icon}</div>` : ''}
+          <h2 class="aim-pin-title">${titleHtml}</h2>
+          <p class="aim-pin-subtitle">${subtitle}</p>
+
+          <!-- Native hidden input for browser automation & physical keyboard synchronization -->
+          <input 
+            type="password" 
+            id="secure-pin-input" 
+            name="pin" 
+            autocomplete="off" 
+            maxlength="12"
+            inputmode="numeric"
+            tabindex="0"
+            aria-label="Secure Access PIN"
+            style="opacity: 0; position: absolute; z-index: -1; width: 1px; height: 1px; pointer-events: none;"
+          />
+
+          <div class="aim-pin-display-wrap">
+            <div class="aim-pin-display" id="aim-pin-display" aria-hidden="true"></div>
+            <div class="aim-pin-feedback" id="aim-pin-feedback" aria-live="polite" role="status">> AWAITING INPUT</div>
+          </div>
+          <div class="aim-pinpad-grid" role="group" aria-label="PIN Keypad">
+            <button type="button" class="aim-pad-btn" data-val="1" aria-label="Digit 1">1</button>
+            <button type="button" class="aim-pad-btn" data-val="2" aria-label="Digit 2">2</button>
+            <button type="button" class="aim-pad-btn" data-val="3" aria-label="Digit 3">3</button>
+            <button type="button" class="aim-pad-btn" data-val="4" aria-label="Digit 4">4</button>
+            <button type="button" class="aim-pad-btn" data-val="5" aria-label="Digit 5">5</button>
+            <button type="button" class="aim-pad-btn" data-val="6" aria-label="Digit 6">6</button>
+            <button type="button" class="aim-pad-btn" data-val="7" aria-label="Digit 7">7</button>
+            <button type="button" class="aim-pad-btn" data-val="8" aria-label="Digit 8">8</button>
+            <button type="button" class="aim-pad-btn" data-val="9" aria-label="Digit 9">9</button>
+            <button type="button" class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear" aria-label="Clear Input">CLR</button>
+            <button type="button" class="aim-pad-btn" data-val="0" aria-label="Digit 0">0</button>
+            <button type="button" class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back" aria-label="Backspace">⌫</button>
+
+            <!-- Row 5: Bypass button under CLR (Col 1), Enter button under 0 and ⌫ (Cols 2-3) -->
+            <button type="button" class="aim-btn aim-pad-btn-action" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="grid-column: 1; padding: 10px 4px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
+              ⚡ BYPASS
+            </button>
+            <button type="submit" class="aim-btn aim-pad-btn-action" id="aim-pad-enter" aria-label="Submit PIN" style="grid-column: 2 / span 2; padding: 10px 4px; background: rgba(0, 255, 100, 0.12); border: 1px solid rgba(0, 255, 100, 0.45); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
+              ENTER
+            </button>
+          </div>
+        `}
       </form>
 
       <!-- Request Access View -->
@@ -349,6 +529,38 @@ export function buildPinPad({
   display.onclick = () => {
     try { pinInput.focus(); } catch (_) {}
   };
+
+  const operatorSel = wrap.querySelector('#operator-selector');
+  if (operatorSel) {
+    try {
+      const pins = getPins();
+      const distinctLabels = [...new Set(pins.map(p => p.label).filter(Boolean))];
+      if (distinctLabels.length > 0) {
+        operatorSel.innerHTML = '';
+        distinctLabels.forEach(lbl => {
+          const opt = document.createElement('option');
+          opt.value = lbl;
+          opt.textContent = lbl === 'Architect' ? 'Joshua (Architect)' : lbl;
+          if (lbl === 'Architect') opt.selected = true;
+          operatorSel.appendChild(opt);
+        });
+        const guestOpt = document.createElement('option');
+        guestOpt.value = 'Guest';
+        guestOpt.textContent = 'Guest (Preview Mode)';
+        operatorSel.appendChild(guestOpt);
+      }
+    } catch (_) {}
+
+    operatorSel.addEventListener('change', () => {
+      const selected = operatorSel.value;
+      if (selected === 'Guest') {
+        const bypassBtn = wrap.querySelector('#aim-pin-bypass-btn');
+        if (bypassBtn) bypassBtn.click();
+      } else {
+        sessionStorage.setItem('current_profile', selected);
+      }
+    });
+  }
 
   async function handleEnter() {
     if (locked || !currentPin) {

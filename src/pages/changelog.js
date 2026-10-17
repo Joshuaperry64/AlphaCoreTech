@@ -9,6 +9,20 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.2.4 BUILD 195',
+    date: '2026.10.17',
+    badge: 'FORBIDDEN ARCHIVE BOOT REVOLUTION // VIDEO & CANVAS VISUALIZER MATRIX',
+    badgeColor: '#00ffcc',
+    title: 'FORBIDDEN ARCHIVE STARTUP VIDEO SCREEN, LEGAL DISCLAIMER MODAL & REAL-TIME AUDIO VISUALIZER TERMINAL',
+    summary: 'Ported and integrated the full Forbidden Archive boot sequence directly into AlphaCoreTech: interactive Touch-To-Start prompt, fullscreen terminal.mp4 video with typewriter title & telemetry stage progress bar, auto-advancing golden Legal Disclaimer modal, and dual-column Secure Access Terminal backed by a real-time audio-reactive Canvas visualizer and Login_background.wav ambient stream.',
+    changes: [
+      'Forbidden Video Boot Sequence: Integrated fullscreen /terminal.mp4 video with glowing Alpha Wolf logo, typewriter title ("◢ FORBIDDEN ARCHIVE ◣"), and telemetry progress bar cycling through real-time kernel stages (INITIALISING NEURAL MATRIX -> READY).',
+      'Legal Disclaimer Modal: Replicated the golden cybernetic legal disclaimer dialog with gold borders (#AA8800), wolf logo, warning header, formal operator responsibility clause, and manual "■ I UNDERSTAND – PROCEED" override.',
+      'Audio-Reactive Canvas Visualizer: Built native HTML5 canvas visualizer port of AudioVisualizerWidget, drawing real-time cyan/red corner radar dials, spanning central oscilloscope waveform, background grid data stream, vertical sweep scanline, and bottom frequency spectrum equalizers.',
+      'Two-Column Secure Access Terminal: Redesigned the primary login screen with Operator Identifier selector (Joshua/Architect, DoeBoy, J. P., Fisherman, Guest), large Authenticate button, and 3x4 cyber touch keypad with haptic sound feedback.'
+    ]
+  },
+  {
     version: 'v5.2.3 BUILD 194',
     date: '2026.10.17',
     badge: 'CHECKPOINT & LORA EXPANSION // SECTOR ZERO & AI MODALS',

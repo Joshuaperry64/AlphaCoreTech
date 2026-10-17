@@ -7,7 +7,7 @@ import modal
 # =====================================================================
 # CONFIGURATION
 # =====================================================================
-# Best 12B Abliterated Vision-Language Model (4-bit AWQ for T4 16GB)
+# Best 12B Abliterated Vision-Language Model (4-bit AWQ for L4)
 MODEL_ID = "nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ"
 # Alternative 9B VL option if you want larger context windows:
 # MODEL_ID = "nicklas373/Huihui-Qwen3.5-9B-abliterated-AWQ"
@@ -24,7 +24,7 @@ model_volume = modal.Volume.from_name("abliterated-vlm-cache", create_if_missing
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install(
-        "vllm>=0.8.0",
+        "vllm>=0.31.0",  # native Gemma4Unified + quantization fixes (absent in <=0.22.1)
         "gradio>=5.0.0",
         "fastapi[standard]",
         "httpx",
@@ -50,8 +50,9 @@ except ImportError:
 # Labeled 'cognitive core' (No _eco endpoint needed)
 # =====================================================================
 @app.function(
-    gpu="T4",
-    max_containers=1,               # Hard limit: 1 container max
+    image=image,
+    gpu="L4",
+    max_containers=1,                # Hard limit: 1 container max
     scaledown_window=300,           # Shut down after 5 mins of inactivity
     timeout=3600,
     volumes={MODEL_DIR: model_volume},
@@ -76,7 +77,7 @@ def cognitive_core():
         "--gpu-memory-utilization", "0.92",
         "--max-model-len", str(MAX_MODEL_LEN),
         "--trust-remote-code",
-        "--limit-mm-per-prompt", "image=2",    # Allow up to 2 images per prompt
+        "--limit-mm-per-prompt", '{"image": 2}', # Allow up to 2 images per prompt
     ]
 
     print(f"Booting vLLM in Eager Mode with {MODEL_ID}...")

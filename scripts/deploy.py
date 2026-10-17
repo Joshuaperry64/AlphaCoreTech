@@ -2,6 +2,7 @@ import modal
 import base64
 import time
 import os
+import httpx
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
@@ -771,7 +772,7 @@ web_app_eco = create_aio_api(is_eco=True)
 # 4. Expose the FastAPI apps to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "stripe")
+    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "httpx", "stripe")
     .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio", "stripe_transfer")
 )
 
