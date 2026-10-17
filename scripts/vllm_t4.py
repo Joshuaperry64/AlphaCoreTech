@@ -39,7 +39,6 @@ image = (
         "VLLM_USE_FLASHINFER_SAMPLER": "0",
         "VLLM_USE_V1": "0",
     })
-    .add_local_python_source("shared_app")
 )
 
 def download_model():
@@ -55,9 +54,12 @@ def download_model():
     except Exception:
         pass
 
-image = image.run_function(
-    download_model,
-    volumes={MODEL_DIR: model_volume},
+image = (
+    image.run_function(
+        download_model,
+        volumes={MODEL_DIR: model_volume},
+    )
+    .add_local_python_source("shared_app")
 )
 
 try:
