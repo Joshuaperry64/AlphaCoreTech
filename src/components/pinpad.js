@@ -36,7 +36,7 @@ export function savePins(pins) {
   } catch {}
 }
 
-export function addPin({ pin, type, label, roles = [], durationSeconds = 300 }) {
+export function addPin({ pin, type, label, roles = [], durationSeconds = 300, mustChangePin = false }) {
   const pins = getPins();
   const newPinObj = {
     pin,
@@ -45,6 +45,10 @@ export function addPin({ pin, type, label, roles = [], durationSeconds = 300 }) 
     roles: Array.isArray(roles) ? roles : [],
     createdAt: Date.now()
   };
+
+  if (mustChangePin) {
+    newPinObj.mustChangePin = true;
+  }
 
   if (type === 'one-time') {
     newPinObj.used = false;
@@ -57,6 +61,17 @@ export function addPin({ pin, type, label, roles = [], durationSeconds = 300 }) 
   pins.push(newPinObj);
   savePins(pins);
   return newPinObj;
+}
+
+export function updatePin(pinVal, updates) {
+  const pins = getPins();
+  const idx = pins.findIndex(p => p.pin === pinVal);
+  if (idx !== -1) {
+    pins[idx] = { ...pins[idx], ...updates };
+    savePins(pins);
+    return pins[idx];
+  }
+  return null;
 }
 
 export function revokePin(pinVal) {
@@ -94,6 +109,10 @@ export async function validatePin(pinVal, requiredRole = null) {
 
   if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
     return { valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` };
+  }
+
+  if (found.mustChangePin) {
+    return { valid: true, pinObj: found, requireNewPin: true };
   }
 
   if (found.type === 'one-time') {
@@ -346,6 +365,23 @@ export function buildPinPad({
     const result = await validatePin(currentPin, requiredRole);
 
     if (result.valid) {
+      if (result.requireNewPin) {
+        setFeedback('MANDATORY NEW PIN REQUIRED', 'warn');
+        const newPin = (typeof window !== 'undefined' && window.prompt) ? window.prompt('ALPHACORE SECURITY // NEW PIN DIRECTIVE\nEnter a new 8 or 9 digit PIN for this profile:') : null;
+        if (newPin && /^\d{8,9}$/.test(newPin.trim())) {
+          const cleanNewPin = newPin.trim();
+          updatePin(currentPin, { pin: cleanNewPin, mustChangePin: false });
+          result.pinObj.pin = cleanNewPin;
+          result.pinObj.mustChangePin = false;
+          currentPin = cleanNewPin;
+          try { logAction('PIN_RESET_COMPLETED', { label: result.pinObj?.label }); } catch {}
+        } else {
+          setFeedback('INVALID NEW PIN (8-9 DIGITS REQUIRED)', 'error');
+          locked = false;
+          return;
+        }
+      }
+
       playSFX('login', 0.8); // Add success sound effect
       setFeedback('ACCESS GRANTED. DECRYPTING...', 'ok');
       pinBox.classList.add('aim-access-granted');
@@ -358,7 +394,7 @@ export function buildPinPad({
       try { logAction('AUTH_SUCCESS', { label: result.pinObj?.label }); } catch {}
 
       setTimeout(() => {
-        const allKnownRoles = ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'];
+        const allKnownRoles = ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics', 'upscaler', 'video', 'director', 'assets', 'voice', 'music', 'subroutines', 'research', 'lore', 'thelab', 'laundry', 'cognitive'];
         allKnownRoles.forEach(r => sessionStorage.removeItem(r + '_authenticated'));
 
         if (authKey) sessionStorage.setItem(authKey, '1');

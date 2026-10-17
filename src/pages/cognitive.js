@@ -4,21 +4,88 @@ import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instructio
 import { pushToServer } from '../components/db_sync.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
+import { saveFileToVault } from './vault.js';
+
+class TacticalAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
+
+  init() {
+    if (!this.ctx && typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+  }
+
+  play(type) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } else if (type === 'message') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.setValueAtTime(780, now + 0.05);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'core') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.16);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } else if (type === 'purge') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(640, now);
+        osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+    } catch (e) {}
+  }
+}
+
+const sfx = new TacticalAudioEngine();
 
 export default function CognitiveUplink() {
   const container = createElement('div', { class: 'cognitive-page' });
   
   container.innerHTML = `
-    <div class="section-header">
-      <h1 class="glitch" data-text="// COGNITIVE_CORE_LIVE">// COGNITIVE_CORE_LIVE</h1>
-      <div class="header-line"></div>
-    </div>
+    <!-- COMPACT TOP BAR & MODE NAVIGATION -->
+    <div class="cog-hud-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="aim-header-badge" style="font-size: 0.65rem; padding: 2px 6px;">[NODE] // COGNITIVE_CORE</span>
+        <h2 class="glitch aim-title" data-text="// COGNITIVE_CORE" style="font-size: 1.05rem; margin: 0; line-height: 1;">// COGNITIVE_CORE</h2>
+      </div>
 
-    <div class="aim-row" style="margin-bottom: 20px; margin-top: 15px;">
-      <div class="aim-seg aim-seg-3" id="cog-tabs">
-        <button class="aim-seg-btn active" data-target="cog-chat-shared">GLOBAL COMM LINK</button>
-        <button class="aim-seg-btn" data-target="cog-chat-private">PRIVATE UPLINK</button>
-        <button class="aim-seg-btn" data-target="cog-api-config">CORE CONFIG</button>
+      <div class="aim-seg aim-seg-3" id="cog-tabs" style="margin: 0; padding: 2px; max-width: 460px; width: 100%;">
+        <button class="aim-seg-btn active" data-target="cog-chat-shared" style="padding: 5px 10px; font-size: 0.72rem;">GLOBAL COMM LINK</button>
+        <button class="aim-seg-btn" data-target="cog-chat-private" style="padding: 5px 10px; font-size: 0.72rem;">PRIVATE UPLINK</button>
+        <button class="aim-seg-btn" data-target="cog-api-config" style="padding: 5px 10px; font-size: 0.72rem;">CORE CONFIG</button>
       </div>
     </div>
 
@@ -28,55 +95,96 @@ export default function CognitiveUplink() {
     </div>
 
     <!-- CHAT VIEW FRAME -->
-    <div class="uplink-grid cog-view active" id="cog-chat-view" style="display: flex; gap: 15px; height: 65vh; min-height: 500px;">
+    <div class="uplink-grid cog-view active" id="cog-chat-view" style="display: flex; gap: 10px; height: calc(100vh - 165px); min-height: 580px;">
       
-      <!-- Threads Sidebar -->
-      <div class="panel" id="threads-sidebar" style="width: 250px; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;">
-        <div class="panel-title" style="margin-bottom: 10px;">// SESSIONS</div>
-        <button id="new-thread-btn" class="aim-btn aim-btn-accept" style="margin-bottom: 15px; font-size: 0.8rem; padding: 10px;">+ NEW SESSION</button>
-        <div id="threads-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px;"></div>
+      <!-- Threads Sidebar (Collapsible in Private Uplink) -->
+      <div class="panel" id="threads-sidebar" style="width: 220px; display: none; flex-direction: column; overflow: hidden; flex-shrink: 0; transition: width 0.3s ease; position: relative; padding: 10px;">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.75rem;">
+          <span>// SESSIONS</span>
+          <button id="collapse-threads-btn" class="aim-btn aim-btn-sm" style="padding: 2px 6px; font-size: 0.7rem;" title="Collapse Sessions Drawer">◂</button>
+        </div>
+        <button id="new-thread-btn" class="aim-btn aim-btn-accept" style="margin-bottom: 10px; font-size: 0.72rem; padding: 6px;">+ NEW SESSION</button>
+        <div id="threads-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px;"></div>
       </div>
 
       <!-- Main Chat Area -->
-      <div class="panel chat-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
-        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding-bottom: 10px; border-bottom: 1px solid rgba(6,182,212,0.2); flex-wrap: wrap; gap: 8px;">
-          <span id="chat-channel-title">// GLOBAL_COMM_LINK [SHARED MATRIX // ALPHA ENFORCED]</span>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button id="toggle-alphacore-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;">ALPHA PROTOCOL: OFF</button>
-            <button id="toggle-rag-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;">VAULT RAG: OFF</button>
-            <button id="toggle-tts-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem;" title="Text-to-Speech Output">TTS: OFF</button>
-            <button id="cmd-clear-chat" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; color: #ff003c;">DELETE SESSION</button>
+      <div class="panel chat-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; padding: 10px 12px;">
+        
+        <!-- Private Key Required Notice Banner (Collapsible) -->
+        <div id="private-key-banner" style="display: none; background: rgba(0, 184, 255, 0.08); border: 1px solid var(--accent); border-radius: 4px; padding: 8px 12px; margin-bottom: 8px; font-size: 0.8rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="color: var(--accent); font-weight: bold; font-family: var(--font-hud); font-size: 0.78rem;">⚠️ PRIVATE UPLINK // PERSONAL API KEY REQUIRED</span>
+            <button id="close-key-banner-btn" class="aim-btn aim-btn-sm" style="padding: 1px 6px; font-size: 0.65rem;">✕</button>
+          </div>
+          <div style="color: var(--text-muted); font-size: 0.72rem; margin-bottom: 6px; line-height: 1.3;">
+            Private Uplink routes through isolated encrypted channels. All users must supply their own Private Uplink API Key. Master key applies only to Global Comm Link.
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <input type="password" id="quick-user-key" class="aim-input" placeholder="Enter Private Uplink API Key (AIzaSy...)" style="flex: 1; min-width: 170px; padding: 4px 8px; font-size: 0.75rem;">
+            <button id="save-quick-user-key" class="aim-btn aim-btn-accept" style="padding: 4px 10px; font-size: 0.7rem;">💾 SAVE KEY</button>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="aim-btn" style="padding: 4px 10px; font-size: 0.7rem; text-decoration: none;">🔑 GET KEY ↗</a>
           </div>
         </div>
-        
-        <div class="chat-status-bar" style="margin-top: 10px;">
-          <div class="chat-status-dot online" id="chat-status-dot"></div>
-          <span class="chat-status-text" id="chat-status-text">SYSTEM READY</span>
-          <button id="connect-live-btn" class="aim-btn aim-btn-sm" style="margin-left: 10px; font-size: 0.7rem;">ESTABLISH LIVE LINK</button>
-          <button id="disconnect-live-btn" class="aim-btn aim-btn-sm" style="margin-left: 10px; font-size: 0.7rem; display: none;">SEVER LINK</button>
+
+        <!-- Chat Header Bar -->
+        <div class="chat-top-bar" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; border-bottom: 1px solid rgba(6,182,212,0.25); flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <button id="expand-threads-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; display: none; padding: 2px 6px;" title="Show Sessions Drawer">☰ SESSIONS</button>
+            <span id="chat-channel-title" style="font-family: var(--font-hud); font-size: 0.8rem; color: var(--accent); font-weight: bold;">// GLOBAL_COMM_LINK</span>
+            <div class="chat-status-dot online" id="chat-status-dot" style="width: 7px; height: 7px;"></div>
+            <span class="chat-status-text" id="chat-status-text" style="font-size: 0.68rem; color: var(--blue-dim); font-family: monospace;">SYSTEM READY</span>
+          </div>
+
+          <div class="chat-actions-cluster" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <button id="connect-live-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px; border-color: var(--accent); color: var(--accent);">ESTABLISH LIVE LINK</button>
+            <button id="disconnect-live-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px; display: none; border-color: #ff003c; color: #ff003c;">SEVER LINK</button>
+            <button id="toggle-alphacore-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px;">ALPHA PROTOCOL: OFF</button>
+            <button id="toggle-rag-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px;">VAULT CONTEXT: OFF</button>
+            <button id="toggle-tts-btn" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px; color: #00ff8c; background: rgba(0,255,140,0.15); border-color: #00ff8c;" title="Text-to-Speech Output">TTS: ON</button>
+            <button id="cmd-clear-chat" class="aim-btn aim-btn-sm" style="font-size: 0.65rem; padding: 3px 7px; color: #ff003c; display: none;">DELETE SESSION</button>
+          </div>
+        </div>
+
+        <!-- Global Comms Matrix Mesh Operative Presence Bar -->
+        <div id="mesh-presence-bar" style="display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(0, 184, 255, 0.04); border-bottom: 1px solid rgba(6,182,212,0.18); font-family: monospace; font-size: 0.7rem; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="color: var(--accent); font-weight: bold; font-family: var(--font-hud); font-size: 0.68rem; letter-spacing: 0.5px;">MESH OPERATIVES:</span>
+            <div id="mesh-operatives-list" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;"></div>
+          </div>
+          <span id="mesh-mode-status" style="color: var(--blue-dim); font-size: 0.65rem;">PEER TRANSMISSIONS READY // AI STANDBY</span>
         </div>
         
-        <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 10px;"></div>
+        <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 8px 4px; margin-bottom: 6px;"></div>
         
-        <div class="chat-input-wrap" style="position: relative; display: flex; align-items: flex-end; gap: 8px;">
-          <button id="chat-mic-btn" class="aim-btn" title="VOICE TRANSMISSION" style="padding: 15px; font-size: 1.2rem; height: 50px;">&#x1F3A4;</button>
-          <button id="chat-upload-btn" class="aim-btn" title="UPLOAD FILE" style="padding: 15px; font-size: 1.2rem; height: 50px;">&#x1F4CE;</button>
+        <div class="chat-input-wrap" style="position: relative; display: flex; align-items: flex-end; gap: 6px;">
+          <button id="chat-mic-btn" class="aim-btn aim-cyber-btn-icon" title="VOICE TRANSMISSION" style="padding: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(0, 184, 255, 0.08); border: 1px solid var(--border-dim); border-radius: 4px; color: var(--accent);">
+            <svg class="cyber-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
+          <button id="chat-upload-btn" class="aim-btn aim-cyber-btn-icon" title="ATTACH FILE TO TRANSMISSION & VAULT" style="padding: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(0, 184, 255, 0.08); border: 1px solid var(--border-dim); border-radius: 4px; color: var(--accent);">
+            <svg class="cyber-svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
+          </button>
           <input type="file" id="chat-file-input" style="display: none;" multiple>
-          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Initialize transmission..." maxlength="10000" style="flex: 1; padding: 15px; font-size: 1.1rem; resize: none; overflow-y: auto; max-height: 150px; height: 50px; border-radius: 4px;"></textarea>
-          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 15px; font-size: 1.5rem; height: 50px;">&#x27E9;</button>
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Initialize transmission..." maxlength="10000" style="flex: 1; padding: 10px 12px; font-size: 0.95rem; line-height: 1.4; resize: none; overflow-y: hidden; min-height: 42px; max-height: 150px; height: 42px; border-radius: 4px; box-sizing: border-box;"></textarea>
+          <button class="chat-send-btn" id="chat-send-btn" title="TRANSMIT" style="padding: 8px; width: 42px; height: 42px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">&#x27E9;</button>
         </div>
       </div>
     </div>
   `;
 
-  setTimeout(() => {
-    const profile = sessionStorage.getItem('current_profile') || 'Guest';
+  const profile = sessionStorage.getItem('current_profile') || 'Guest';
     const isArchitect = profile.toLowerCase() === 'architect';
     const isGuest = profile.toLowerCase() === 'guest';
     
     let currentChannel = 'shared'; 
     let currentThreadId = null;
-    let ttsEnabled = false;
+    let ttsEnabled = true; // Default TTS to ON
     let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
 
     // Master Gemini API Key for registered users in Global Comm Link
@@ -109,14 +217,22 @@ export default function CognitiveUplink() {
       }
     } catch(e){}
 
-    let coreBackend = globalSettings.coreBackend || 'gemini_live';
+    // Restore persistent backend engine across all workspaces
+    const persistentBackend = localStorage.getItem('alphacore_backend_engine') || globalSettings.coreBackend || 'gemini_live';
+    let coreBackend = persistentBackend;
+    globalSettings.coreBackend = coreBackend;
+
     let masterApiKey = globalSettings.masterApiKey || MASTER_GEMINI_API_KEY;
     let guestApiKey = localStorage.getItem('gemini_api_key_guest') || '';
     const userKeyStorageKey = `gemini_user_api_key_${profile.toLowerCase().replace(/\s+/g, '_')}`;
     let userApiKey = localStorage.getItem(userKeyStorageKey) || (isGuest ? (localStorage.getItem('gemini_api_key_guest') || '') : '');
 
     function getApiKey() { 
-      // User-specific API key takes priority for BOTH private and global com links if set
+      // Private Uplink strictly requires personal API key for all users
+      if (currentChannel === 'private') {
+        return (userApiKey && userApiKey.trim()) ? userApiKey.trim() : '';
+      }
+      // Global Comm Link: user-specific API key if set, else guest key if guest, else master key
       if (userApiKey && userApiKey.trim()) {
         return userApiKey.trim();
       }
@@ -127,139 +243,221 @@ export default function CognitiveUplink() {
     }
 
     const configContent = container.querySelector('#config-content');
-    if (isArchitect) {
-      configContent.innerHTML = `
-        <div class="panel-title">// ARCHITECT GLOBAL & PERSONAL CONTROLS</div>
-        <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
-          <label class="aim-label">MASTER GEMINI API KEY (Default for all registered users across global & private links)</label>
-          <input type="password" id="master-api-key" class="aim-input" value="${masterApiKey}" style="width: 100%; margin-bottom: 15px;">
+    if (configContent) {
+      if (isArchitect) {
+        configContent.innerHTML = `
+          <div class="panel-title">// ARCHITECT GLOBAL & PERSONAL CONTROLS</div>
+          <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
+            <label class="aim-label">GLOBAL MASTER COMMLINK API KEY</label>
+            <input type="password" id="master-api-key" class="aim-input" value="${masterApiKey}" style="width: 100%; margin-bottom: 15px;">
 
-          <label class="aim-label">YOUR PERSONAL GEMINI API KEY (Optional override for Architect - applies to Private & Global Comm Links)</label>
-          <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Leave blank to use Master Key..." style="width: 100%; margin-bottom: 15px;">
+            <label class="aim-label">PRIVATE UPLINK API KEY (Mandatory for Private Uplink)</label>
+            <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Enter Private Uplink API Key..." style="width: 100%; margin-bottom: 15px;">
 
-          <label class="aim-label">GLOBAL SYSTEM INSTRUCTION (Applies to all sessions)</label>
-          <textarea id="system-instruction" class="aim-input" style="width: 100%; height: 100px; margin-bottom: 15px; resize: vertical; padding: 10px; font-family: monospace;" placeholder="Enter system instructions to govern AI behavior..."></textarea>
-          
-          <label class="aim-label">BACKEND ENGINE</label>
-          <select id="core-backend" class="aim-input" style="width: 100%; margin-bottom: 15px;">
-            <option value="gemini_live" ${coreBackend === 'gemini_live' ? 'selected' : ''}>Gemini Live API (WebSockets)</option>
-            <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Local Server</option>
-          </select>
+            <label class="aim-label">SYSTEM INSTRUCTIONS (PRIVATE UPLINK // CUSTOM OVERRIDE)</label>
+            <textarea id="system-instruction" class="aim-input" style="width: 100%; height: 90px; margin-bottom: 15px; resize: vertical; padding: 10px; font-family: monospace;" placeholder="Enter system instructions to govern AI behavior in Private Uplink..."></textarea>
+            
+            <label class="aim-label">BACKEND ENGINE (Applies Across All Workspaces)</label>
+            <select id="core-backend" class="aim-input" style="width: 100%; margin-bottom: 15px;">
+              <option value="gemini_live" ${coreBackend === 'gemini_live' ? 'selected' : ''}>Gemini Live API (WebSockets)</option>
+              <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Local Server</option>
+            </select>
 
-          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:5px;">
-            <button id="save-config-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE CONFIGURATION</button>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:5px;">
+              <button id="save-config-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE CONFIGURATION</button>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="aim-btn aim-btn-neutral" id="get-api-key-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">&#x1F511; GET API KEY</a>
+            </div>
+            <div id="config-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim); font-family: monospace;"></div>
           </div>
-          <div id="config-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim); font-family: monospace;"></div>
-        </div>
-      `;
-      setTimeout(() => { if(container.querySelector('#system-instruction')) container.querySelector('#system-instruction').value = globalSettings.systemInstruction || ''; }, 50);
-      container.querySelector('#save-config-btn').onclick = () => {
-        const masterInput = container.querySelector('#master-api-key');
-        const userInput = container.querySelector('#user-api-key');
-        globalSettings.masterApiKey = masterInput ? (masterInput.value.trim() || MASTER_GEMINI_API_KEY) : MASTER_GEMINI_API_KEY;
-        globalSettings.systemInstruction = container.querySelector('#system-instruction').value.trim();
-        globalSettings.coreBackend = container.querySelector('#core-backend').value;
-        masterApiKey = globalSettings.masterApiKey;
-        coreBackend = globalSettings.coreBackend;
 
-        if (userInput) {
-          userApiKey = userInput.value.trim();
-          if (userApiKey) {
-            localStorage.setItem(userKeyStorageKey, userApiKey);
-          } else {
+          <!-- MODAL PIPELINE ENDPOINTS & ACCOUNT ROUTING -->
+          <div class="panel-title" style="margin-top:20px;">// MODAL PIPELINE ENDPOINTS & ACCOUNT ROUTING</div>
+          <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+              Directly configure Modal pipeline endpoints and target account. Edits persist across devices and apply to all synthesis studios. You can also edit <code>config.json</code> directly.
+            </p>
+            <label class="aim-label">MODAL ACCOUNT / SUBDOMAIN</label>
+            <input type="text" id="modal-account-input" class="aim-input" value="${globalSettings.modalAccount || 'alphacoreprogramming-ai'}" style="width: 100%; margin-bottom: 12px;">
+
+            <label class="aim-label">TEXT TO IMAGE ENDPOINT (txt2img)</label>
+            <input type="text" id="modal-txt2img-input" class="aim-input" value="${globalSettings.txt2imgUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
+
+            <label class="aim-label">IMAGE TO IMAGE ENDPOINT (img2img)</label>
+            <input type="text" id="modal-img2img-input" class="aim-input" value="${globalSettings.img2imgUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
+
+            <label class="aim-label">TEXT TO VIDEO ENDPOINT (txt2vid)</label>
+            <input type="text" id="modal-txt2vid-input" class="aim-input" value="${globalSettings.txt2vidUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
+
+            <label class="aim-label">OMNIGEN ENDPOINT (omnigen)</label>
+            <input type="text" id="modal-omnigen-input" class="aim-input" value="${globalSettings.omnigenUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 15px;">
+
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+              <button id="save-modal-endpoints-btn" class="aim-btn aim-btn-generate">⚡ UPDATE MODAL PIPELINES</button>
+            </div>
+            <div id="modal-endpoints-status" style="margin-top: 10px; font-size: 0.85rem; color: var(--blue-dim); font-family: monospace;"></div>
+          </div>
+        `;
+        setTimeout(() => { if(container.querySelector('#system-instruction')) container.querySelector('#system-instruction').value = globalSettings.systemInstruction || ''; }, 50);
+        const saveConfigBtn = container.querySelector('#save-config-btn');
+        if (saveConfigBtn) {
+          saveConfigBtn.onclick = () => {
+            const masterInput = container.querySelector('#master-api-key');
+            const userInput = container.querySelector('#user-api-key');
+            globalSettings.masterApiKey = masterInput ? (masterInput.value.trim() || MASTER_GEMINI_API_KEY) : MASTER_GEMINI_API_KEY;
+            const sysInst = container.querySelector('#system-instruction');
+            if (sysInst) globalSettings.systemInstruction = sysInst.value.trim();
+            const coreSelect = container.querySelector('#core-backend');
+            if (coreSelect) globalSettings.coreBackend = coreSelect.value;
+            masterApiKey = globalSettings.masterApiKey;
+            coreBackend = globalSettings.coreBackend;
+
+            if (userInput) {
+              userApiKey = userInput.value.trim();
+              if (userApiKey) {
+                localStorage.setItem(userKeyStorageKey, userApiKey);
+              } else {
+                localStorage.removeItem(userKeyStorageKey);
+              }
+            }
+
+            // Apply persistent backend engine across workspaces
+            localStorage.setItem('alphacore_backend_engine', coreBackend);
+            localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings));
+            pushToServer('settings', globalSettings);
+            if (typeof BroadcastChannel !== 'undefined') {
+              try {
+                new BroadcastChannel('alphacore_system_config').postMessage({ type: 'backend_update', backend: coreBackend });
+              } catch(e){}
+            }
+
+            sfx.play('click');
+            const statusEl = container.querySelector('#config-status');
+            if (statusEl) {
+              statusEl.textContent = 'Configuration saved! Applied to all workspaces and comm links.';
+              statusEl.style.color = '#00ff8c';
+            }
+          };
+        }
+
+        const saveModalBtn = container.querySelector('#save-modal-endpoints-btn');
+        if (saveModalBtn) {
+          saveModalBtn.onclick = () => {
+            const acc = container.querySelector('#modal-account-input')?.value.trim();
+            const t2i = container.querySelector('#modal-txt2img-input')?.value.trim();
+            const i2i = container.querySelector('#modal-img2img-input')?.value.trim();
+            const t2v = container.querySelector('#modal-txt2vid-input')?.value.trim();
+            const omni = container.querySelector('#modal-omnigen-input')?.value.trim();
+
+            if (acc) globalSettings.modalAccount = acc;
+            if (t2i) globalSettings.txt2imgUrl = t2i;
+            if (i2i) globalSettings.img2imgUrl = i2i;
+            if (t2v) globalSettings.txt2vidUrl = t2v;
+            if (omni) globalSettings.omnigenUrl = omni;
+
+            localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings));
+            pushToServer('settings', globalSettings);
+            sfx.play('click');
+            const statusEl = container.querySelector('#modal-endpoints-status');
+            if (statusEl) {
+              statusEl.textContent = 'Modal pipeline endpoints saved! Applied across all workspaces.';
+              statusEl.style.color = '#00ff8c';
+            }
+          };
+        }
+      } else if (isGuest) {
+        configContent.innerHTML = `
+          <div class="panel-title">// GUEST API CONFIGURATION</div>
+          <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px;">
+            <label class="aim-label">PRIVATE UPLINK API KEY (Required for Private Uplink)</label>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+              Specify your Gemini API key to access isolated private channels. When saved, this key applies to your <strong>Private Uplink</strong>.
+            </p>
+            <input type="password" id="guest-api-key" class="aim-input" value="${userApiKey || guestApiKey}" placeholder="Enter Gemini API key..." style="width: 100%; margin-bottom: 15px;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+              <button id="save-guest-key" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="aim-btn aim-btn-neutral" id="get-api-key-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">&#x1F511; GET API KEY</a>
+            </div>
+            <div id="guest-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey || guestApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
+              ${userApiKey || guestApiKey ? 'STATUS: Personal API key active.' : 'STATUS: No key configured.'}
+            </div>
+          </div>
+        `;
+        const saveGuestBtn = container.querySelector('#save-guest-key');
+        if (saveGuestBtn) {
+          saveGuestBtn.onclick = () => {
+            const guestInput = container.querySelector('#guest-api-key');
+            const key = guestInput ? guestInput.value.trim() : '';
+            guestApiKey = key;
+            userApiKey = key;
+            localStorage.setItem('gemini_api_key_guest', key);
+            localStorage.setItem(userKeyStorageKey, key);
+            sfx.play('click');
+            const statusEl = container.querySelector('#guest-key-status');
+            if (statusEl) {
+              statusEl.textContent = 'API key saved! Applied to your Private Uplink.';
+              statusEl.style.color = '#00ff8c';
+            }
+          };
+        }
+      } else {
+        configContent.innerHTML = `
+          <div class="panel-title">// OPERATOR COGNITIVE CONFIGURATION [${profile.toUpperCase()}]</div>
+          <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
+            <label class="aim-label">PRIVATE UPLINK API KEY (Mandatory for Private Uplink)</label>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
+              Specify your own personal Gemini API key. Personal keys are strictly required to use <strong>Private Uplink</strong>. Global Comm Link uses the system master key.
+            </p>
+            <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Enter your Gemini API key..." style="width: 100%; margin-bottom: 15px;">
+            
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px;">
+              <button id="save-user-key-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="aim-btn aim-btn-neutral" id="get-api-key-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">&#x1F511; GET API KEY</a>
+              <button id="clear-user-key-btn" class="aim-btn aim-btn-neutral">&#x274C; CLEAR KEY</button>
+            </div>
+            <div id="user-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
+              ${userApiKey ? 'STATUS: Personal Private Uplink API key active.' : 'STATUS: No personal key set (Required for Private Uplink).'}
+            </div>
+          </div>
+        `;
+        const saveUserBtn = container.querySelector('#save-user-key-btn');
+        if (saveUserBtn) {
+          saveUserBtn.onclick = () => {
+            const userInput = container.querySelector('#user-api-key');
+            userApiKey = userInput ? userInput.value.trim() : '';
+            if (userApiKey) {
+              localStorage.setItem(userKeyStorageKey, userApiKey);
+              const statusEl = container.querySelector('#user-key-status');
+              if (statusEl) {
+                statusEl.textContent = 'Personal API key saved! Applied to your Private Uplink.';
+                statusEl.style.color = '#00ff8c';
+              }
+            } else {
+              localStorage.removeItem(userKeyStorageKey);
+              const statusEl = container.querySelector('#user-key-status');
+              if (statusEl) {
+                statusEl.textContent = 'Cleared custom key. Private Uplink will require a key before transmitting.';
+                statusEl.style.color = 'var(--blue-dim)';
+              }
+            }
+            sfx.play('click');
+          };
+        }
+        const clearUserBtn = container.querySelector('#clear-user-key-btn');
+        if (clearUserBtn) {
+          clearUserBtn.onclick = () => {
+            const userInput = container.querySelector('#user-api-key');
+            if (userInput) userInput.value = '';
+            userApiKey = '';
             localStorage.removeItem(userKeyStorageKey);
-          }
+            const statusEl = container.querySelector('#user-key-status');
+            if (statusEl) {
+              statusEl.textContent = 'Cleared custom key. Private Uplink will require a key before transmitting.';
+              statusEl.style.color = 'var(--blue-dim)';
+            }
+            sfx.play('click');
+          };
         }
-
-        localStorage.setItem('alphacore_modal_settings', JSON.stringify(globalSettings));
-        pushToServer('settings', globalSettings);
-        sfx.play('click');
-        const statusEl = container.querySelector('#config-status');
-        if (statusEl) {
-          statusEl.textContent = 'Configuration saved! Applied to your Global Comm Link and Private Uplink.';
-          statusEl.style.color = '#00ff8c';
-        }
-      };
-    } else if (isGuest) {
-      configContent.innerHTML = `
-        <div class="panel-title">// GUEST API CONFIGURATION</div>
-        <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px;">
-          <label class="aim-label">YOUR GEMINI API KEY</label>
-          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
-            Specify your Gemini API key to establish cognitive uplink. When saved, this key applies to both your <strong>Global Comm Link</strong> and <strong>Private Uplink</strong>.
-          </p>
-          <input type="password" id="guest-api-key" class="aim-input" value="${userApiKey || guestApiKey}" placeholder="Enter Gemini API key..." style="width: 100%; margin-bottom: 15px;">
-          <button id="save-guest-key" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
-          <div id="guest-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey || guestApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
-            ${userApiKey || guestApiKey ? 'STATUS: Personal API key active (Applied to Global & Private Links).' : 'STATUS: No key configured.'}
-          </div>
-        </div>
-      `;
-      container.querySelector('#save-guest-key').onclick = () => {
-        const guestInput = container.querySelector('#guest-api-key');
-        const key = guestInput ? guestInput.value.trim() : '';
-        guestApiKey = key;
-        userApiKey = key;
-        localStorage.setItem('gemini_api_key_guest', key);
-        localStorage.setItem(userKeyStorageKey, key);
-        sfx.play('click');
-        const statusEl = container.querySelector('#guest-key-status');
-        if (statusEl) {
-          statusEl.textContent = 'API key saved! Applied to your Global Comm Link and Private Uplink.';
-          statusEl.style.color = '#00ff8c';
-        }
-      };
-    } else {
-      configContent.innerHTML = `
-        <div class="panel-title">// OPERATOR COGNITIVE CONFIGURATION [${profile.toUpperCase()}]</div>
-        <div style="background:rgba(0,184,255,0.05); border:1px solid var(--border); padding:20px; border-radius:4px; margin-bottom:20px;">
-          <label class="aim-label">YOUR PERSONAL GEMINI API KEY (Optional)</label>
-          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.4;">
-            Specify your own personal Gemini API key. When saved, this key will automatically apply to both your <strong>Global Comm Link</strong> and <strong>Private Uplink</strong>. If left blank, the system master key will be used automatically.
-          </p>
-          <input type="password" id="user-api-key" class="aim-input" value="${userApiKey}" placeholder="Enter your Gemini API key (optional)..." style="width: 100%; margin-bottom: 15px;">
-          
-          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px;">
-            <button id="save-user-key-btn" class="aim-btn aim-btn-accept">&#x1F4BE; SAVE API KEY</button>
-            <button id="clear-user-key-btn" class="aim-btn aim-btn-neutral">&#x274C; USE MASTER DEFAULT</button>
-          </div>
-          <div id="user-key-status" style="margin-top: 10px; font-size: 0.85rem; color: ${userApiKey ? '#00ff8c' : 'var(--blue-dim)'}; font-family: monospace;">
-            ${userApiKey ? 'STATUS: Custom personal API key active (Applied to Global & Private Links).' : 'STATUS: System master API key active (Default).'}
-          </div>
-        </div>
-      `;
-      container.querySelector('#save-user-key-btn').onclick = () => {
-        const userInput = container.querySelector('#user-api-key');
-        userApiKey = userInput ? userInput.value.trim() : '';
-        if (userApiKey) {
-          localStorage.setItem(userKeyStorageKey, userApiKey);
-          const statusEl = container.querySelector('#user-key-status');
-          if (statusEl) {
-            statusEl.textContent = 'Personal API key saved! Applied to your Global Comm Link and Private Uplink.';
-            statusEl.style.color = '#00ff8c';
-          }
-        } else {
-          localStorage.removeItem(userKeyStorageKey);
-          const statusEl = container.querySelector('#user-key-status');
-          if (statusEl) {
-            statusEl.textContent = 'Cleared custom key. System master key active for Global Comm Link and Private Uplink.';
-            statusEl.style.color = 'var(--blue-dim)';
-          }
-        }
-        sfx.play('click');
-      };
-      container.querySelector('#clear-user-key-btn').onclick = () => {
-        const userInput = container.querySelector('#user-api-key');
-        if (userInput) userInput.value = '';
-        userApiKey = '';
-        localStorage.removeItem(userKeyStorageKey);
-        const statusEl = container.querySelector('#user-key-status');
-        if (statusEl) {
-          statusEl.textContent = 'Cleared custom key. System master key active for Global Comm Link and Private Uplink.';
-          statusEl.style.color = 'var(--blue-dim)';
-        }
-        sfx.play('click');
-      };
+      }
     }
 
     const tabs = container.querySelectorAll('.aim-seg-btn');
@@ -269,24 +467,122 @@ export default function CognitiveUplink() {
     const toggleAlphaCoreBtn = container.querySelector('#toggle-alphacore-btn');
     const toggleTtsBtn = container.querySelector('#toggle-tts-btn');
     const toggleRagBtn = container.querySelector('#toggle-rag-btn');
+    const clearChatBtn = container.querySelector('#cmd-clear-chat');
+    const threadsSidebar = container.querySelector('#threads-sidebar');
+    const threadsList = container.querySelector('#threads-list');
+    const collapseThreadsBtn = container.querySelector('#collapse-threads-btn');
+    const expandThreadsBtn = container.querySelector('#expand-threads-btn');
+    const keyBanner = container.querySelector('#private-key-banner');
+    const closeKeyBannerBtn = container.querySelector('#close-key-banner-btn');
+    const saveQuickKeyBtn = container.querySelector('#save-quick-user-key');
+    const quickKeyInput = container.querySelector('#quick-user-key');
+
     let useVaultRag = false;
 
-    toggleTtsBtn.onclick = () => { 
-      ttsEnabled = !ttsEnabled; 
-      toggleTtsBtn.textContent = 'TTS: ' + (ttsEnabled ? 'ON' : 'OFF'); 
-      toggleTtsBtn.style.color = ttsEnabled ? '#00ff8c' : 'var(--text-muted)'; 
-      toggleTtsBtn.style.background = ttsEnabled ? 'rgba(0,255,140,0.15)' : 'transparent'; 
-    };
+    // TTS Button Listener
+    if (toggleTtsBtn) {
+      toggleTtsBtn.onclick = () => { 
+        ttsEnabled = !ttsEnabled; 
+        toggleTtsBtn.textContent = 'TTS: ' + (ttsEnabled ? 'ON' : 'OFF'); 
+        toggleTtsBtn.style.color = ttsEnabled ? '#00ff8c' : 'var(--text-muted)'; 
+        toggleTtsBtn.style.background = ttsEnabled ? 'rgba(0,255,140,0.15)' : 'transparent'; 
+        toggleTtsBtn.style.borderColor = ttsEnabled ? '#00ff8c' : '';
+      };
+    }
 
+    // Global Comms Matrix Mesh: Operative Presence State & Heartbeat
+    const activeOperatives = new Map();
+    const currentOperative = (profile || 'GUEST').toUpperCase();
+    activeOperatives.set(currentOperative, Date.now());
+
+    function renderOperativesPresence() {
+      const listEl = container.querySelector('#mesh-operatives-list');
+      if (!listEl) return;
+      const now = Date.now();
+      activeOperatives.set(currentOperative, now);
+      
+      const knownProfiles = ['ARCHITECT', 'J.P.', 'DOEBOY', 'FISHERMAN'];
+      listEl.innerHTML = '';
+      const allProfiles = Array.from(new Set([currentOperative, ...activeOperatives.keys(), ...knownProfiles]));
+      
+      allProfiles.forEach(opName => {
+        if (!opName || opName === 'GUEST') return;
+        const isOnline = activeOperatives.has(opName) && (now - activeOperatives.get(opName) < 300000);
+        const pill = document.createElement('span');
+        pill.className = `mesh-op-badge ${isOnline ? 'online' : 'standby'}`;
+        pill.setAttribute('data-operative', opName);
+        pill.style.cssText = `display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 3px; font-size: 0.66rem; font-family: monospace; ${
+          isOnline 
+            ? 'background: rgba(0, 255, 140, 0.12); border: 1px solid rgba(0, 255, 140, 0.4); color: #00ff8c;'
+            : 'background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); opacity: 0.65;'
+        }`;
+        pill.innerHTML = `<span style="width: 6px; height: 6px; border-radius: 50%; background: ${isOnline ? '#00ff8c' : 'rgba(255,255,255,0.3)'}; ${isOnline ? 'box-shadow: 0 0 6px #00ff8c;' : ''}"></span>${opName}`;
+        listEl.appendChild(pill);
+      });
+    }
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const presenceBc = new BroadcastChannel('alphacore_global_presence');
+        presenceBc.postMessage({ operative: currentOperative, type: 'ping', timestamp: Date.now() });
+        presenceBc.onmessage = (ev) => {
+          if (ev.data && ev.data.operative) {
+            activeOperatives.set(ev.data.operative.toUpperCase(), Date.now());
+            renderOperativesPresence();
+            if (ev.data.type === 'ping') {
+              try { presenceBc.postMessage({ operative: currentOperative, type: 'pong', timestamp: Date.now() }); } catch(e){}
+            }
+          }
+        };
+      }
+    } catch(e){}
+
+    // Vault Context Toggle (renamed from Vault RAG)
     if (toggleRagBtn) {
       toggleRagBtn.onclick = () => {
         useVaultRag = !useVaultRag;
-        toggleRagBtn.textContent = 'VAULT RAG: ' + (useVaultRag ? 'ON' : 'OFF');
+        toggleRagBtn.textContent = 'VAULT CONTEXT: ' + (useVaultRag ? 'ON' : 'OFF');
         toggleRagBtn.style.color = useVaultRag ? '#00e5ff' : 'var(--text-muted)';
         toggleRagBtn.style.background = useVaultRag ? 'rgba(0, 229, 255, 0.15)' : 'transparent';
         toggleRagBtn.style.borderColor = useVaultRag ? '#00e5ff' : '';
         try { playSFX('button', 0.3); } catch(e){}
-        appendMessage('SYSTEM', useVaultRag ? 'VAULT RAG ACTIVE: Decrypted vault documents indexed into live neural context.' : 'VAULT RAG DEACTIVATED.', 'system-msg');
+        appendMessage('SYSTEM', useVaultRag ? 'VAULT CONTEXT ACTIVE: Decrypted vault documents indexed into live neural context.' : 'VAULT CONTEXT DEACTIVATED.', 'system-msg');
+      };
+    }
+
+    // Sessions Drawer Collapse / Expand Controls
+    if (collapseThreadsBtn) {
+      collapseThreadsBtn.onclick = () => {
+        threadsSidebar.style.display = 'none';
+        if (expandThreadsBtn && currentChannel === 'private') {
+          expandThreadsBtn.style.display = 'inline-block';
+        }
+      };
+    }
+    if (expandThreadsBtn) {
+      expandThreadsBtn.onclick = () => {
+        threadsSidebar.style.display = 'flex';
+        expandThreadsBtn.style.display = 'none';
+      };
+    }
+
+    // Quick Key Banner in Private Uplink
+    if (closeKeyBannerBtn && keyBanner) {
+      closeKeyBannerBtn.onclick = () => {
+        keyBanner.style.display = 'none';
+      };
+    }
+    if (saveQuickKeyBtn && quickKeyInput) {
+      saveQuickKeyBtn.onclick = () => {
+        const val = quickKeyInput.value.trim();
+        if (val) {
+          userApiKey = val;
+          localStorage.setItem(userKeyStorageKey, val);
+          if (isGuest) localStorage.setItem('gemini_api_key_guest', val);
+          if (keyBanner) keyBanner.style.display = 'none';
+          sfx.play('click');
+          appendMessage('SYSTEM', 'Private Uplink API key registered successfully.', 'system-msg');
+        }
       };
     }
 
@@ -327,11 +623,11 @@ export default function CognitiveUplink() {
         btn.classList.add('active');
         const target = btn.dataset.target;
         if (target === 'cog-api-config') {
-          chatView.style.display = 'none';
-          apiConfigView.style.display = 'block';
+          if (chatView) chatView.style.display = 'none';
+          if (apiConfigView) apiConfigView.style.display = 'block';
         } else {
-          apiConfigView.style.display = 'none';
-          chatView.style.display = 'flex';
+          if (apiConfigView) apiConfigView.style.display = 'none';
+          if (chatView) chatView.style.display = 'flex';
           if (target === 'cog-chat-private') {
             currentChannel = 'private';
             updateTitleAndAlpha();
@@ -388,38 +684,61 @@ export default function CognitiveUplink() {
     }
 
     function updateTitleAndAlpha() {
+      const meshPresenceBar = container.querySelector('#mesh-presence-bar');
       if (currentChannel === 'shared') {
         channelTitle.textContent = '// GLOBAL_COMM_LINK [SHARED MATRIX // ALPHA ENFORCED]';
-        toggleAlphaCoreBtn.disabled = true;
-        toggleAlphaCoreBtn.textContent = 'ðŸ”’ ALPHA PROTOCOL: ENFORCED';
-        toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: rgba(0, 255, 140, 0.7); color: #00ff8c; background: rgba(0, 255, 140, 0.15); cursor: not-allowed;';
+        if (toggleAlphaCoreBtn) {
+          toggleAlphaCoreBtn.disabled = true;
+          toggleAlphaCoreBtn.textContent = '🔒 ALPHA PROTOCOL: ENFORCED';
+          toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: rgba(0, 255, 140, 0.7); color: #00ff8c; background: rgba(0, 255, 140, 0.15); cursor: not-allowed;';
+        }
+        if (clearChatBtn) clearChatBtn.style.display = 'none';
+        if (threadsSidebar) threadsSidebar.style.display = 'none';
+        if (expandThreadsBtn) expandThreadsBtn.style.display = 'none';
+        if (keyBanner) keyBanner.style.display = 'none';
+        if (meshPresenceBar) {
+          meshPresenceBar.style.display = 'flex';
+          renderOperativesPresence();
+        }
       } else {
         channelTitle.textContent = `// PRIVATE_UPLINK [${profile.toUpperCase()}]`;
-        toggleAlphaCoreBtn.disabled = false;
-        if (useAlphaCorePrivate) {
-          toggleAlphaCoreBtn.textContent = 'âš¡ ALPHA PROTOCOL: ON';
-          toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: #00ff8c; color: #00ff8c; background: rgba(0, 255, 140, 0.15); cursor: pointer;';
-        } else {
-          toggleAlphaCoreBtn.textContent = 'ALPHA PROTOCOL: OFF';
-          toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; color: var(--text-muted); background: transparent; cursor: pointer;';
+        if (toggleAlphaCoreBtn) {
+          toggleAlphaCoreBtn.disabled = false;
+          if (useAlphaCorePrivate) {
+            toggleAlphaCoreBtn.textContent = '⚡ ALPHA PROTOCOL: ON';
+            toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; border-color: #00ff8c; color: #00ff8c; background: rgba(0, 255, 140, 0.15); cursor: pointer;';
+          } else {
+            toggleAlphaCoreBtn.textContent = 'ALPHA PROTOCOL: OFF';
+            toggleAlphaCoreBtn.style.cssText = 'font-size: 0.65rem; color: var(--text-muted); background: transparent; cursor: pointer;';
+          }
+        }
+        if (clearChatBtn) clearChatBtn.style.display = 'inline-block';
+        if (threadsSidebar) threadsSidebar.style.display = 'flex';
+        if (expandThreadsBtn) expandThreadsBtn.style.display = 'none';
+        if (meshPresenceBar) meshPresenceBar.style.display = 'none';
+
+        // Check if personal API key is configured
+        const hasKey = Boolean(userApiKey && userApiKey.trim());
+        if (keyBanner) {
+          keyBanner.style.display = hasKey ? 'none' : 'block';
         }
       }
     }
 
-    toggleAlphaCoreBtn.addEventListener('click', () => {
-      if (currentChannel === 'shared') return;
-      useAlphaCorePrivate = !useAlphaCorePrivate;
-      localStorage.setItem(`alphacore_instruction_private_${profile}`, useAlphaCorePrivate ? 'true' : 'false');
-      updateTitleAndAlpha();
-    });
+    if (toggleAlphaCoreBtn) {
+      toggleAlphaCoreBtn.addEventListener('click', () => {
+        if (currentChannel === 'shared') return;
+        useAlphaCorePrivate = !useAlphaCorePrivate;
+        localStorage.setItem(`alphacore_instruction_private_${profile}`, useAlphaCorePrivate ? 'true' : 'false');
+        updateTitleAndAlpha();
+      });
+    }
 
     const chatMessages = container.querySelector('#chat-messages');
     const chatInput = container.querySelector('#chat-input');
     const sendBtn = container.querySelector('#chat-send-btn');
     const statusDot = container.querySelector('#chat-status-dot');
     const statusText = container.querySelector('#chat-status-text');
-    const threadsSidebar = container.querySelector('#threads-sidebar');
-    const threadsList = container.querySelector('#threads-list');
 
     function getThreadsKey() { return currentChannel === 'private' ? `gemini_chat_threads_${profile}` : 'gemini_chat_threads_shared'; }
     function getMessagesKey(threadId) { return `gemini_chat_thread_${threadId}`; }
@@ -455,26 +774,32 @@ export default function CognitiveUplink() {
       await loadMessages();
     }
 
-    container.querySelector('#new-thread-btn').onclick = () => {
-      let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
-      currentThreadId = generateId();
-      threads.unshift({ id: currentThreadId, title: 'New Session ' + (threads.length + 1), updatedAt: Date.now() });
-      localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
-      loadThreads();
-    };
+    const newThreadBtn = container.querySelector('#new-thread-btn');
+    if (newThreadBtn) {
+      newThreadBtn.onclick = () => {
+        let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+        currentThreadId = generateId();
+        threads.unshift({ id: currentThreadId, title: 'New Session ' + (threads.length + 1), updatedAt: Date.now() });
+        localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+        loadThreads();
+      };
+    }
 
-    container.querySelector('#cmd-clear-chat').onclick = () => {
-      if (confirm('Delete session?')) {
-        localStorage.removeItem(getMessagesKey(currentThreadId));
-        if (currentChannel === 'private') {
-          let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
-          threads = threads.filter(t => t.id !== currentThreadId);
-          localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
-          currentThreadId = null;
-          loadThreads();
+    const clearChatBtnEl = container.querySelector('#cmd-clear-chat');
+    if (clearChatBtnEl) {
+      clearChatBtnEl.onclick = () => {
+        if (confirm('Delete session?')) {
+          localStorage.removeItem(getMessagesKey(currentThreadId));
+          if (currentChannel === 'private') {
+            let threads = JSON.parse(localStorage.getItem(getThreadsKey())) || [];
+            threads = threads.filter(t => t.id !== currentThreadId);
+            localStorage.setItem(getThreadsKey(), JSON.stringify(threads));
+            currentThreadId = null;
+            loadThreads();
+          }
         }
-      }
-    };
+      };
+    }
 
 
 
@@ -614,7 +939,11 @@ export default function CognitiveUplink() {
 
       const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
       if (history.length === 0) {
-        appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
+        if (liveSession) {
+          appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
+        } else {
+          appendMessage('SYSTEM', 'Global Comm Link standby. Transmit text to matrix or establish live link for Alpha AI.', 'system-msg');
+        }
       } else {
         history.forEach(msg => {
           const author = msg.author || (msg.role === 'user' ? 'USER' : (isAlpha ? 'ALPHA' : 'GEMINI'));
@@ -720,75 +1049,17 @@ export default function CognitiveUplink() {
         }
       };
     }
-    
-    class TacticalAudioEngine {
-      constructor() {
-        this.ctx = null;
-        this.enabled = true;
-      }
-
-      init() {
-        if (!this.ctx && typeof window !== 'undefined') {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (AudioCtx) this.ctx = new AudioCtx();
-        }
-      }
-
-      play(type) {
-        if (!this.enabled || !ttsEnabled) return;
-        try {
-          this.init();
-          if (!this.ctx) return;
-          if (this.ctx.state === 'suspended') this.ctx.resume();
-
-          const now = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-
-          if (type === 'click') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
-            gain.gain.setValueAtTime(0.04, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-            osc.start(now);
-            osc.stop(now + 0.04);
-          } else if (type === 'message') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(520, now);
-            osc.frequency.setValueAtTime(780, now + 0.05);
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-            osc.start(now);
-            osc.stop(now + 0.12);
-          } else if (type === 'core') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, now);
-            osc.frequency.exponentialRampToValueAtTime(660, now + 0.16);
-            gain.gain.setValueAtTime(0.04, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-            osc.start(now);
-            osc.stop(now + 0.18);
-          } else if (type === 'purge') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(640, now);
-            osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
-            gain.gain.setValueAtTime(0.04, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.2);
-          }
-        } catch (e) {}
-      }
-    }
-
-    const sfx = new TacticalAudioEngine();
 
     function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !audioCtx) {
+          audioCtx = new AudioCtx({ sampleRate: 24000 });
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+      } catch (e) {
+        console.warn('initAudio prevented:', e);
+      }
     }
     
     function playPCM(base64Data) {
@@ -1042,6 +1313,15 @@ export default function CognitiveUplink() {
     }
 
     async function connectLiveAPI() {
+      if (currentChannel === 'private') {
+        const pKey = getApiKey();
+        if (!pKey) {
+          appendMessage('ERROR', 'PRIVATE UPLINK REQUIRES A PERSONAL API KEY: Please configure your Private Uplink API Key to connect.', 'system-msg');
+          const banner = container.querySelector('#private-key-banner');
+          if (banner) banner.style.display = 'block';
+          return;
+        }
+      }
       const apiKey = getApiKey();
       if (!apiKey) { 
         appendMessage('SYSTEM', `ERROR: Gemini API Key missing for [${profile.toUpperCase()}]. Please configure your key in CORE CONFIG.`, 'system-msg'); 
@@ -1080,10 +1360,11 @@ export default function CognitiveUplink() {
         const liveCallbacks = {
           onopen: () => {
             sfx.play('core');
-            statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
+            statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // LIVE ACTIVE';
             statusDot.className = 'chat-status-dot online';
             connectBtn.style.display = 'none';
             disconnectBtn.style.display = 'inline-block';
+            appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
           },
           onmessage: async (msg) => {
             const content = msg.serverContent;
@@ -1199,6 +1480,8 @@ export default function CognitiveUplink() {
             connectBtn.style.display = 'inline-block';
             disconnectBtn.style.display = 'none';
             liveSession = null;
+            const meshModeStatus = container.querySelector('#mesh-mode-status');
+            if (meshModeStatus) meshModeStatus.textContent = 'PEER TRANSMISSIONS READY // AI STANDBY';
             if (isRecording) {
               appendMessage('SYSTEM', 'Neural link closed by server. Auto-reconnecting...', 'system-msg');
               setTimeout(() => {
@@ -1221,6 +1504,8 @@ export default function CognitiveUplink() {
             callbacks: liveCallbacks
           });
         }
+        const meshModeStatus = container.querySelector('#mesh-mode-status');
+        if (meshModeStatus) meshModeStatus.textContent = 'ALPHA AI LIVE LINK ACTIVE';
       } catch (err) {
         statusDot.classList.replace('streaming', 'online');
         statusText.textContent = 'SYSTEM READY';
@@ -1234,8 +1519,11 @@ export default function CognitiveUplink() {
         liveSession = null;
         connectBtn.style.display = 'inline-block';
         disconnectBtn.style.display = 'none';
-        statusText.textContent = 'SYSTEM READY';
+        statusText.textContent = 'SYSTEM READY // STANDBY';
+        const meshModeStatus = container.querySelector('#mesh-mode-status');
+        if (meshModeStatus) meshModeStatus.textContent = 'PEER TRANSMISSIONS READY // AI STANDBY';
         sfx.play('purge');
+        appendMessage('SYSTEM', 'Live link severed. Switched to standby commlink.', 'system-msg');
       }
     }
 
@@ -1251,35 +1539,61 @@ export default function CognitiveUplink() {
       const files = e.target.files;
       if (!files || files.length === 0) return;
       
-      if (!liveSession) await connectLiveAPI();
-      
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         appendMessage('SYSTEM', `Processing upload: ${file.name}...`, 'system-msg');
         
-        const reader = new FileReader();
-        if (file.type.startsWith('image/')) {
-          reader.onload = (ev) => {
-            const base64 = ev.target.result.split(',')[1];
-            if (liveSession) {
-              liveSession.sendRealtimeInput({ video: { data: base64, mimeType: file.type } }); statusText.textContent = 'THINKING...'; statusDot.className = 'chat-status-dot streaming';
-              appendMessage('SYSTEM', `Image ${file.name} sent to visual cortex.`, 'system-msg');
-            }
-          };
-          reader.readAsDataURL(file);
+        // Automatically save uploaded file to user's Vault databank
+        try {
+          await saveFileToVault(file);
+          appendMessage('SYSTEM', `[VAULT] Saved "${file.name}" to your encrypted Vault databank.`, 'system-msg');
+        } catch(vaultErr) {
+          console.warn('[Vault Auto-Save Error]', vaultErr);
+        }
+
+        if (liveSession) {
+          const reader = new FileReader();
+          if (file.type.startsWith('image/')) {
+            reader.onload = (ev) => {
+              const base64 = ev.target.result.split(',')[1];
+              if (liveSession) {
+                liveSession.sendRealtimeInput({ video: { data: base64, mimeType: file.type } });
+                statusText.textContent = 'THINKING...';
+                statusDot.className = 'chat-status-dot streaming';
+                appendMessage('SYSTEM', `Image ${file.name} sent to visual cortex.`, 'system-msg');
+              }
+            };
+            reader.readAsDataURL(file);
+          } else {
+            // Read as text
+            reader.onload = (ev) => {
+              const textContent = ev.target.result;
+              if (liveSession) {
+                liveSession.sendClientContent({
+                  turns: [{ role: 'user', parts: [{ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` }] }],
+                  turnComplete: true
+                });
+                appendMessage('SYSTEM', `File ${file.name} injected into data stream.`, 'system-msg');
+              }
+            };
+            reader.readAsText(file);
+          }
         } else {
-          // Read as text
-          reader.onload = (ev) => {
-            const textContent = ev.target.result;
-            if (liveSession) {
-              liveSession.sendClientContent({
-                turns: [{ role: 'user', parts: [{ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` }] }],
-                turnComplete: true
-              });
-              appendMessage('SYSTEM', `File ${file.name} injected into data stream.`, 'system-msg');
-            }
-          };
-          reader.readAsText(file);
+          appendMessage(profile.toUpperCase(), `[ATTACHMENT ARCHIVED TO VAULT: ${file.name}]`, 'user-msg');
+          saveMessageToHistory('user', `[ATTACHMENT ARCHIVED TO VAULT: ${file.name}]`, profile.toUpperCase());
+          if (currentChannel === 'shared') {
+            try {
+              if (typeof BroadcastChannel !== 'undefined') {
+                const bc = new BroadcastChannel('alphacore_global_commlink');
+                bc.postMessage({
+                  author: profile.toUpperCase(),
+                  text: `[ATTACHMENT ARCHIVED TO VAULT: ${file.name}]`,
+                  role: 'user',
+                  id: 'msg_' + Date.now()
+                });
+              }
+            } catch(e){}
+          }
         }
       }
       fileInput.value = '';
@@ -1288,6 +1602,17 @@ export default function CognitiveUplink() {
     sendBtn.onclick = async () => {
       const text = chatInput.value.trim();
       if (!text) return;
+
+      // Personal API key required for Private Uplink
+      if (currentChannel === 'private') {
+        const pKey = getApiKey();
+        if (!pKey) {
+          appendMessage('ERROR', 'PRIVATE UPLINK REQUIRES A PERSONAL API KEY: Please configure your Private Uplink API Key above or in Core Config.', 'system-msg');
+          const banner = container.querySelector('#private-key-banner');
+          if (banner) banner.style.display = 'block';
+          return;
+        }
+      }
       
       interruptAudio();
       const author = profile.toUpperCase();
@@ -1295,19 +1620,35 @@ export default function CognitiveUplink() {
       sfx.play('message');
       saveMessageToHistory('user', text, author);
       chatInput.value = '';
+      chatInput.style.height = '42px';
+      chatInput.style.overflowY = 'hidden';
+
+      // Real-time broadcast to same-device tabs/workspaces on Global Comm Link
+      if (currentChannel === 'shared') {
+        try {
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('alphacore_global_commlink');
+            bc.postMessage({ author, text, role: 'user', id: 'msg_' + Date.now() });
+          }
+        } catch(e){}
+      }
       
+      // If Live Link is not established, do NOT trigger Alpha AI response
+      // Global Comm Link can still be used for users to communicate with each other
+      if (!liveSession) {
+        return;
+      }
+
       const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
       showThinkingIndicator(isAlpha ? 'ALPHA' : 'GEMINI');
 
-      if (!liveSession) await connectLiveAPI();
-      
       if (liveSession) {
         try { 
           let payloadText = text;
           if (useVaultRag) {
             const vaultCtx = getVaultContext();
             if (vaultCtx) {
-              payloadText = `[VAULT RAG CONTEXT INJECTED]\n${vaultCtx}\n[END VAULT CONTEXT]\n\nUSER PROMPT: ${text}`;
+              payloadText = `[VAULT CONTEXT INJECTED]\n${vaultCtx}\n[END VAULT CONTEXT]\n\nUSER PROMPT: ${text}`;
             }
           }
           statusText.textContent = 'PROCESSING PROMPT...'; 
@@ -1330,15 +1671,43 @@ export default function CognitiveUplink() {
       }
     };
     
+    // Auto-resizing textarea: only scrollable once input exceeds max-height
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      const newHeight = Math.min(chatInput.scrollHeight, 150);
+      chatInput.style.height = (newHeight < 42 ? 42 : newHeight) + 'px';
+      chatInput.style.overflowY = chatInput.scrollHeight > 150 ? 'auto' : 'hidden';
+    });
+
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
     });
 
+    // Real-time Cross-Tab Broadcast Listener
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const commBc = new BroadcastChannel('alphacore_global_commlink');
+        commBc.onmessage = (ev) => {
+          if (currentChannel !== 'shared' || !ev.data || !ev.data.text) return;
+          const msg = ev.data;
+          const sig = `${msg.author || msg.role}_${(msg.text || '').trim()}`;
+          if (chatMessages.querySelector(`[data-sig="${encodeURIComponent(sig)}"]`)) return;
+          if (msg.author) {
+            activeOperatives.set(msg.author.toUpperCase(), Date.now());
+            renderOperativesPresence();
+          }
+          const isAlpha = msg.role === 'model' || msg.author === 'ALPHA';
+          const className = msg.role === 'system' ? 'system-msg' : (isAlpha ? 'alpha-msg' : 'user-msg');
+          const rendered = appendMessage(msg.author || 'USER', msg.text, className);
+          if (rendered) rendered.setAttribute('data-sig', encodeURIComponent(sig));
+          sfx.play('message');
+        };
+      }
+    } catch(e){}
+
     updateTitleAndAlpha();
     loadThreads();
     connectSSE();
-
-  }, 50);
 
   return container;
 }

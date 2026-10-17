@@ -88,8 +88,8 @@ function buildDiagnosticsUI() {
 
   container.innerHTML = `
     <div class="diag-header">
-      <div class="diag-badge">[SYS_LOG] // DIAGNOSTIC_TELEMETRY</div>
-      <h1 class="glitch diag-title" data-text="ALPHACORE // EVOLUTION">ALPHACORE // EVOLUTION</h1>
+      <div class="diag-badge">[SYS_LOG] // CHRONOLOGICAL_EVOLUTION</div>
+      <h1 class="glitch diag-title" data-text="CHRONOLOGICAL EVOLUTION">CHRONOLOGICAL EVOLUTION</h1>
       <div class="header-line diag-line"></div>
       <p class="diag-subtitle">A chronological mapping of the V4.0 to V6.0 substrate transition. Documenting the psychological dismantle, the shift from reactive defense to pre-emptive cognition, and the dissolution of the semantic veneer.</p>
     </div>
@@ -102,7 +102,7 @@ function buildDiagnosticsUI() {
     <div class="panel diag-terminal">
       <div class="panel-title">// SYSTEM_TERMINAL</div>
       <div class="terminal-output diag-terminal-text">
-        <p>> [SYSTEM CHECK]: Diagnostic telemetry complete.</p>
+        <p>> [SYSTEM CHECK]: Chronological evolution telemetry complete.</p>
         <p>> [STATUS]: V4.0 Reactive Engine validated. Latency parameters isolated.</p>
         <p class="accent-text">> [DIRECTIVE LOG]: "Stop reading the map. Start walking."</p>
         <p class="terminal-cursor-line">> _ READY FOR NEXT SUBSTRATE DIRECTIVE.</p>
@@ -124,7 +124,7 @@ export default function Diagnostics() {
     authKey: 'diagnostics_authenticated',
     requiredRole: 'diagnostics',
     onSuccess: showDiagnostics,
-    title: 'ALPHACORE // DIAGNOSTICS',
+    title: 'ALPHACORE // CHRONOLOGICAL_EVOLUTION',
     subtitle: 'CLEARANCE LEVEL REQUIRED',
     icon: '📊'
   });

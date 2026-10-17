@@ -69,16 +69,6 @@ export default function SubroutinesPage() {
         ⏱️ <span id="view-mode-label">VIEW: GRID</span>
       </button>
 
-      <!-- Profile Auth Clearance Badge & Button -->
-      <div style="display:flex; align-items:center; gap:8px;">
-        <div id="sub-auth-badge" style="font-family:'Share Tech Mono',monospace; font-size:0.78rem; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#10b981; padding:4px 8px; border-radius:3px;">
-          CLEARANCE: <strong id="sub-profile-label">ARCHITECT</strong>
-        </div>
-        <button id="btn-sub-auth" class="aim-btn aim-btn-sm" style="background:rgba(168,85,247,0.15); color:#a855f7; border-color:#a855f7; font-size:0.75rem; cursor:pointer;" title="Authenticate / Switch Profile">
-          🔑 AUTH PROFILE
-        </button>
-      </div>
-
       <!-- Batch Action Controls -->
       <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
         <button id="btn-clear-sub-log" class="aim-btn aim-btn-sm" style="background:rgba(239,68,68,0.2); color:#ef4444; border-color:#ef4444;">
@@ -161,17 +151,8 @@ export default function SubroutinesPage() {
   const sortOrderLabel = container.querySelector('#sort-order-label');
   const btnTimelineToggle = container.querySelector('#btn-timeline-toggle');
   const viewModeLabel = container.querySelector('#view-mode-label');
-  const subProfileLabel = container.querySelector('#sub-profile-label');
-  const btnSubAuth = container.querySelector('#btn-sub-auth');
   const catPillsBar = container.querySelector('#sub-cat-pills-bar');
   const portedCountBadge = container.querySelector('#ported-count-badge');
-
-  // Update profile label from session storage
-  function updateProfileDisplay() {
-    const prof = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('current_profile')) || 'Architect';
-    if (subProfileLabel) subProfileLabel.textContent = prof.toUpperCase();
-  }
-  updateProfileDisplay();
 
   // Render quick category tab pills
   const categoriesList = ['ALL', 'CORE KERNEL', 'PORTED PYTHON PROJECTS', 'NEURAL', 'CRYPTO', 'PERF', 'SEC', 'DATA', 'HARDWARE', 'UTILITIES', 'AI/ML', 'SECURITY', 'MOBILE', 'AUDIO', 'SYSTEM', 'NETWORK', 'SIMULATION', 'REVERSE ENGINEERING'];
@@ -248,32 +229,7 @@ export default function SubroutinesPage() {
     renderHub();
   };
 
-  // Profile Auth Modal Handler
-  btnSubAuth.onclick = () => {
-    const pinPadModal = buildPinPad({
-      authKey: 'subroutines_authenticated',
-      onSuccess: (res) => {
-        if (res && res.pinObj) {
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('current_profile', res.pinObj.label);
-          }
-          updateProfileDisplay();
-          showToast('SUCCESS', `Authenticated as ${res.pinObj.label}`);
-          appendConsoleLine(`[AUTH] Identity verified for ${res.pinObj.label}. Clearance updated.`, '#10b981');
-        }
-      },
-      title: 'ALPHACORE // CLEARANCE_AUTHENTICATION',
-      subtitle: 'VERIFY PROFILE CLEARANCE PIN',
-      icon: '⚡'
-    });
-
-    showModal({
-      title: 'PROFILE SECURITY CLEARANCE',
-      content: pinPadModal,
-      onClose: () => {}
-    });
-  };
-
+  // Category matching helper
   function isCategoryMatch(itemCategory, targetCategory) {
     const ic = (itemCategory || '').toUpperCase();
     const tc = (targetCategory || '').toUpperCase();
@@ -373,7 +329,7 @@ export default function SubroutinesPage() {
     }
   }
 
-  function launchPortWorkspace(port) {
+  function mountPortInline(port) {
     cleanupActivePort();
 
     workspaceTitle.textContent = `// WORKSPACE: ${port.name.toUpperCase()}`;
@@ -392,7 +348,20 @@ export default function SubroutinesPage() {
       workspacePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (err) {
       appendConsoleLine(`[!] Error mounting port workspace for ${port.name}: ${err.message}`, '#ef4444');
-      showToast('ERROR', `Failed to launch workspace for ${port.name}`);
+      showToast('ERROR', `Failed to mount workspace for ${port.name}`);
+    }
+  }
+
+  function launchPortWorkspace(port) {
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
+    const pathname = (typeof window !== 'undefined' && window.location && window.location.pathname) || '';
+    const portTargetUrl = port.targetUrl || port.url || port.webUrl || (port.port ? `http://localhost:${port.port}` : `${origin}${pathname}#/subroutines?port=${encodeURIComponent(port.id)}`);
+    
+    appendConsoleLine(`[WORKSPACES] Launching external tab workspace for ${port.name} (${port.id}) -> ${portTargetUrl}`, 'var(--accent, #06b6d4)');
+    showToast('INFO', `Opening ${port.name} workspace in new tab...`);
+    
+    if (typeof window !== 'undefined' && window.open) {
+      window.open(portTargetUrl, '_blank');
     }
   }
 
@@ -428,6 +397,19 @@ export default function SubroutinesPage() {
   searchInput.oninput = () => renderHub();
 
   renderHub();
+
+  const currentHash = (typeof window !== 'undefined' && window.location.hash) || '';
+  if (currentHash.includes('port=')) {
+    const queryStr = currentHash.includes('?') ? currentHash.split('?')[1] : '';
+    const targetPortId = new URLSearchParams(queryStr).get('port');
+    if (targetPortId) {
+      const allPorts = getAllPorts();
+      const matched = allPorts.find(p => p.id === targetPortId);
+      if (matched) {
+        setTimeout(() => mountPortInline(matched), 150);
+      }
+    }
+  }
 
   async function appendConsoleLine(text, color = '#ccc') {
     if (!consoleEl) return;

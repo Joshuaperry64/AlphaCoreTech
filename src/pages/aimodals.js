@@ -9,7 +9,8 @@ import { logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
 import { showToast } from '../components/toast.js';
 
-const LORA_OPTIONS = `
+export function getLoraOptions() {
+  let baseOptions = `
   <option value="none">NONE (BASE MODEL ONLY)</option>
   <option value="epiCRealismHelper.safetensors">EPICREALISM HELPER</option>
   <option value="custom_training.safetensors">CUSTOM TRAINING</option>
@@ -20,6 +21,27 @@ const LORA_OPTIONS = `
   <option value="Missionary.safetensors">MISSIONARY</option>
   <option value="SpyCam.safetensors">SPYCAM</option>
 `;
+  const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
+  if (currentProfile !== 'guest') {
+    try {
+      const injected = JSON.parse(localStorage.getItem('alphacore_injected_loras') || '[]');
+      if (Array.isArray(injected) && injected.length > 0) {
+        const activeInjected = injected.slice(0, 3);
+        const injectedOpts = activeInjected.map(lora => {
+          const val = lora.file || lora.name || lora.id;
+          const label = `💉 [INJECTED] ${lora.name || val}`;
+          return `<option value="${val}">${label.toUpperCase()}</option>`;
+        }).join('\n');
+        baseOptions += '\n' + injectedOpts;
+      }
+    } catch (e) {
+      console.warn('Failed parsing injected LoRAs:', e);
+    }
+  }
+  return baseOptions;
+}
+
+const LORA_OPTIONS = getLoraOptions();
 
 function resolveEndpoint(baseUrl, subPath = '') {
   if (!baseUrl) return '';
@@ -915,7 +937,7 @@ function buildTxt2Img() {
         <div class="aim-field" id="t2i-lora-field" style="display: ${sessionStorage.getItem('lora_authenticated') ? 'block' : 'none'};">
           <label class="aim-label" for="t2i-lora">ACTIVE LORAS (CTRL+CLICK) ${sessionStorage.getItem('darkness_mode_active') !== 'true' ? '<span style="color:#ff003c; margin-left:4px;">[LOCKED]</span>' : ''}</label>
           <select class="aim-input aim-lora-select" id="t2i-lora" multiple ${sessionStorage.getItem('darkness_mode_active') === 'true' ? '' : 'disabled'}>
-            ${LORA_OPTIONS}
+            ${getLoraOptions()}
           </select>
         </div>
     </div>
@@ -1341,6 +1363,16 @@ function buildTxt2Img() {
       playSFX('pop', 0.8);
       setStatus(wrap, '#t2i-status', 'ARTIFACT RENDERED SUCCESSFULLY.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'T2I', prompt, batchSize });
+      logAction('MEDIA_GENERATION', {
+        type: 'T2I',
+        prompt,
+        endpoint: resolveEndpoint(settings.txt2imgUrl, 'stream'),
+        model: 'txt2img'
+      }, {
+        category: 'MEDIA',
+        level: 'INFO',
+        message: prompt
+      });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
       clearInterval(msgInterval);
@@ -1369,7 +1401,7 @@ function buildImg2Img() {
       <span class="aim-panel-badge">QWEN EDIT PLUS</span>
     </div>
 
-    <div class="aim-row" style="display:flex; gap:10px;">
+    <div class="aim-row" id="i2i-standard-dropzones" style="display:flex; gap:10px;">
       <div class="aim-field" style="flex:1;">
         <label class="aim-label">PRIMARY IMAGE</label>
         <div class="aim-dropzone" id="i2i-dropzone">
@@ -1390,6 +1422,96 @@ function buildImg2Img() {
             <div class="aim-dz-text">DROP IMAGE</div>
           </div>
           <img class="aim-dz-preview hidden" id="i2i-preview2" alt="preview" />
+        </div>
+      </div>
+    </div>
+
+    <!-- OMNIGEN INTEGRATED CONDITIONING REFERENCES PANEL -->
+    <div id="i2i-omnigen-panel" style="display:none; margin-bottom:12px; background:rgba(6,182,212,0.05); border:1px solid rgba(6,182,212,0.3); padding:12px; border-radius:4px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <label class="aim-label" style="margin:0; color:#06b6d4; font-weight:bold;">
+          <span>🧬</span> OMNIGEN // CONDITIONING REFERENCE IMAGES (UP TO 3 SLOTS)
+        </label>
+        <span style="font-size:0.7rem; color:#88c0d0; font-family:var(--font-mono);">BAAI OMNIGEN-V1 MULTIMODAL</span>
+      </div>
+      <p style="font-size:0.75rem; color:#88c0d0; line-height:1.4; margin-bottom:10px; font-family:var(--font-mono);">
+        Drop up to 3 conditioning images and reference them in prompt using:
+        <span class="omnigen-token-pill i2i-omni-pill" data-token="<img><|image_1|></img>" style="cursor:pointer; background:rgba(6,182,212,0.2); border:1px solid #06b6d4; padding:1px 6px; border-radius:2px; font-weight:bold; color:#fff;">&lt;img&gt;&lt;|image_1|&gt;&lt;/img&gt;</span>,
+        <span class="omnigen-token-pill i2i-omni-pill" data-token="<img><|image_2|></img>" style="cursor:pointer; background:rgba(6,182,212,0.2); border:1px solid #06b6d4; padding:1px 6px; border-radius:2px; font-weight:bold; color:#fff;">&lt;img&gt;&lt;|image_2|&gt;&lt;/img&gt;</span>,
+        <span class="omnigen-token-pill i2i-omni-pill" data-token="<img><|image_3|></img>" style="cursor:pointer; background:rgba(6,182,212,0.2); border:1px solid #06b6d4; padding:1px 6px; border-radius:2px; font-weight:bold; color:#fff;">&lt;img&gt;&lt;|image_3|&gt;&lt;/img&gt;</span>
+      </p>
+
+      <!-- 3 SLOTS GRID -->
+      <div class="omnigen-slots-grid" id="i2i-omnigen-slots" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+        <!-- SLOT 1 -->
+        <div class="omnigen-slot-card" id="i2i-omni-slot-0" data-slot="0" style="background:rgba(0,0,0,0.4); border:1px dashed var(--border); padding:8px; border-radius:4px; text-align:center; position:relative;">
+          <span class="omnigen-slot-badge" style="font-size:0.7rem; color:var(--blue); display:block; margin-bottom:4px;">REF #1: &lt;|image_1|&gt; (Subject)</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="i2i-omni-remove-0" title="Remove image" style="position:absolute; top:4px; right:4px; background:rgba(255,0,0,0.3); border:none; color:#fff; cursor:pointer; border-radius:50%; width:20px; height:20px;">✕</button>
+          <input type="file" class="aim-file-input" id="i2i-omni-file-0" accept="image/*" style="display:none;" />
+          <div class="aim-dropzone-inner" id="i2i-omni-dz-0" style="padding:15px; cursor:pointer;">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text" style="font-size:0.75rem;">DROP REF #1</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="i2i-omni-preview-0" alt="Ref 1 preview" style="max-height:120px; width:auto; margin:0 auto; display:block; border-radius:4px;" />
+          <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" id="i2i-omni-card-insert-0" data-slot="0" data-token="<img><|image_1|></img>" style="width:100%; margin-top:6px; font-size:0.7rem; padding:3px 6px;">
+            + Insert &lt;|image_1|&gt;
+          </button>
+        </div>
+
+        <!-- SLOT 2 -->
+        <div class="omnigen-slot-card" id="i2i-omni-slot-1" data-slot="1" style="background:rgba(0,0,0,0.4); border:1px dashed var(--border); padding:8px; border-radius:4px; text-align:center; position:relative;">
+          <span class="omnigen-slot-badge" style="font-size:0.7rem; color:var(--blue); display:block; margin-bottom:4px;">REF #2: &lt;|image_2|&gt; (Style/Outfit)</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="i2i-omni-remove-1" title="Remove image" style="position:absolute; top:4px; right:4px; background:rgba(255,0,0,0.3); border:none; color:#fff; cursor:pointer; border-radius:50%; width:20px; height:20px;">✕</button>
+          <input type="file" class="aim-file-input" id="i2i-omni-file-1" accept="image/*" style="display:none;" />
+          <div class="aim-dropzone-inner" id="i2i-omni-dz-1" style="padding:15px; cursor:pointer;">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text" style="font-size:0.75rem;">DROP REF #2</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="i2i-omni-preview-1" alt="Ref 2 preview" style="max-height:120px; width:auto; margin:0 auto; display:block; border-radius:4px;" />
+          <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" id="i2i-omni-card-insert-1" data-slot="1" data-token="<img><|image_2|></img>" style="width:100%; margin-top:6px; font-size:0.7rem; padding:3px 6px;">
+            + Insert &lt;|image_2|&gt;
+          </button>
+        </div>
+
+        <!-- SLOT 3 -->
+        <div class="omnigen-slot-card" id="i2i-omni-slot-2" data-slot="2" style="background:rgba(0,0,0,0.4); border:1px dashed var(--border); padding:8px; border-radius:4px; text-align:center; position:relative;">
+          <span class="omnigen-slot-badge" style="font-size:0.7rem; color:var(--blue); display:block; margin-bottom:4px;">REF #3: &lt;|image_3|&gt; (Scene)</span>
+          <button type="button" class="omnigen-slot-remove hidden" id="i2i-omni-remove-2" title="Remove image" style="position:absolute; top:4px; right:4px; background:rgba(255,0,0,0.3); border:none; color:#fff; cursor:pointer; border-radius:50%; width:20px; height:20px;">✕</button>
+          <input type="file" class="aim-file-input" id="i2i-omni-file-2" accept="image/*" style="display:none;" />
+          <div class="aim-dropzone-inner" id="i2i-omni-dz-2" style="padding:15px; cursor:pointer;">
+            <div class="aim-dz-icon">📁</div>
+            <div class="aim-dz-text" style="font-size:0.75rem;">DROP REF #3</div>
+          </div>
+          <img class="omnigen-slot-preview hidden" id="i2i-omni-preview-2" alt="Ref 3 preview" style="max-height:120px; width:auto; margin:0 auto; display:block; border-radius:4px;" />
+          <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" id="i2i-omni-card-insert-2" data-slot="2" data-token="<img><|image_3|></img>" style="width:100%; margin-top:6px; font-size:0.7rem; padding:3px 6px;">
+            + Insert &lt;|image_3|&gt;
+          </button>
+        </div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="omnigen-ref-toolbar" id="i2i-omni-ref-toolbar" style="display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <span style="font-size:0.7rem; color:#88c0d0; font-family:var(--font-hud);">🎯 INSERT REF TOKEN:</span>
+        <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" data-slot="0" data-token="<img><|image_1|></img>" style="padding:3px 8px; font-size:0.7rem;">+ 🖼️ Image 1</button>
+        <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" data-slot="1" data-token="<img><|image_2|></img>" style="padding:3px 8px; font-size:0.7rem;">+ 🖼️ Image 2</button>
+        <button type="button" class="aim-btn aim-btn-sm i2i-omni-insert-btn" data-slot="2" data-token="<img><|image_3|></img>" style="padding:3px 8px; font-size:0.7rem;">+ 🖼️ Image 3</button>
+      </div>
+
+      <!-- GUIDANCE SCALES FOR OMNIGEN -->
+      <div class="aim-row" style="margin-top:10px; display:flex; gap:10px;">
+        <div class="aim-field" style="flex:1;">
+          <label class="aim-label" for="i2i-omni-cfg" style="display:flex; justify-content:space-between;">
+            <span>OMNIGEN TEXT GUIDANCE (CFG)</span>
+            <span class="aim-val-display" id="i2i-omni-cfg-val">2.5</span>
+          </label>
+          <input class="aim-range" type="range" id="i2i-omni-cfg" min="1.0" max="7.0" step="0.5" value="2.5" />
+        </div>
+        <div class="aim-field" style="flex:1;">
+          <label class="aim-label" for="i2i-omni-img-cfg" style="display:flex; justify-content:space-between;">
+            <span>OMNIGEN IMAGE GUIDANCE</span>
+            <span class="aim-val-display" id="i2i-omni-img-cfg-val">1.6</span>
+          </label>
+          <input class="aim-range" type="range" id="i2i-omni-img-cfg" min="1.0" max="4.0" step="0.1" value="1.6" />
         </div>
       </div>
     </div>
@@ -1486,13 +1608,14 @@ function buildImg2Img() {
     <!-- 6 SYNTHESIS ARCHITECTURES SELECTOR -->
     <div class="aim-field" style="margin-top:10px;">
       <label class="aim-label">IMAGE TO IMAGE SYNTHESIS ARCHITECTURE</label>
-      <div class="aim-seg aim-seg-6" id="i2i-model-select">
+      <div class="aim-seg aim-seg-6" id="i2i-model-select" style="display:flex; flex-wrap:wrap; gap:4px;">
         <button type="button" class="aim-seg-btn active" data-model="qwen">🧠 QWEN</button>
         <button type="button" class="aim-seg-btn" data-model="flux">🌀 FLUX.1</button>
         <button type="button" class="aim-seg-btn" data-model="sdxl">⚡ SDXL NATIVE</button>
         <button type="button" class="aim-seg-btn" data-model="flux_fill">🖌️ FLUX.1-FILL</button>
         <button type="button" class="aim-seg-btn" data-model="cosxl">🪄 COSXL EDIT</button>
         <button type="button" class="aim-seg-btn" data-model="sd35">🌌 SD 3.5 LARGE</button>
+        <button type="button" class="aim-seg-btn" data-model="omnigen" id="i2i-model-omnigen" style="border-color:#06b6d4; color:#06b6d4;">🧬 OMNIGEN</button>
       </div>
     </div>
 
@@ -1899,6 +2022,16 @@ function buildImg2Img() {
       if (model === 'flux_fill') setTimeout(initInpaintCanvas, 60);
     }
 
+    const stdDropzones = wrap.querySelector('#i2i-standard-dropzones');
+    const omniPanel = wrap.querySelector('#i2i-omnigen-panel');
+    if (model === 'omnigen') {
+      if (stdDropzones) stdDropzones.style.display = 'none';
+      if (omniPanel) omniPanel.style.display = 'block';
+    } else {
+      if (stdDropzones) stdDropzones.style.display = 'flex';
+      if (omniPanel) omniPanel.style.display = 'none';
+    }
+
     if (model === 'flux') {
       if (speedBtns.length >= 3) {
         speedBtns[0].textContent = '⚡ FAST (4)';
@@ -1953,6 +2086,17 @@ function buildImg2Img() {
       }
       if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '15'; i2iCfgInput.value = '4.5'; }
       if (i2iCfgLabel) i2iCfgLabel.innerHTML = `MMDiT GUIDANCE SCALE: <span class="aim-val-display" id="i2i-cfg-val">4.5</span>`;
+    } else if (model === 'omnigen') {
+      if (speedBtns.length >= 3) {
+        speedBtns[0].textContent = '⚡ FAST (25)';
+        speedBtns[0].dataset.steps = '25';
+        speedBtns[1].textContent = '⚖ NORMAL (35)';
+        speedBtns[1].dataset.steps = '35';
+        speedBtns[2].textContent = '🎯 DETAILED (50)';
+        speedBtns[2].dataset.steps = '50';
+      }
+      if (i2iCfgInput) { i2iCfgInput.min = '1'; i2iCfgInput.max = '10'; i2iCfgInput.value = '2.5'; }
+      if (i2iCfgLabel) i2iCfgLabel.innerHTML = `OMNIGEN GUIDANCE: <span class="aim-val-display" id="i2i-cfg-val">2.5</span>`;
     } else {
       // Default: qwen
       if (speedBtns.length >= 3) {
@@ -1975,6 +2119,95 @@ function buildImg2Img() {
       updateModelUI(btn.dataset.model);
     });
   });
+
+  // OmniGen reference slot management
+  const i2iOmniSlotFiles = [null, null, null];
+  for (let sIdx = 0; sIdx < 3; sIdx++) {
+    const slotCard = wrap.querySelector(`#i2i-omni-slot-${sIdx}`);
+    if (!slotCard) continue;
+    const fileInputEl = wrap.querySelector(`#i2i-omni-file-${sIdx}`);
+    const dzInnerEl = wrap.querySelector(`#i2i-omni-dz-${sIdx}`);
+    const previewEl = wrap.querySelector(`#i2i-omni-preview-${sIdx}`);
+    const removeBtnEl = wrap.querySelector(`#i2i-omni-remove-${sIdx}`);
+
+    const setSlotImage = (f) => {
+      if (!f) return;
+      i2iOmniSlotFiles[sIdx] = f;
+      const url = URL.createObjectURL(f);
+      previewEl.src = url;
+      previewEl.classList.remove('hidden');
+      dzInnerEl.classList.add('hidden');
+      removeBtnEl.classList.remove('hidden');
+      slotCard.classList.add('has-image');
+    };
+
+    if (dzInnerEl && fileInputEl) {
+      dzInnerEl.onclick = () => fileInputEl.click();
+      fileInputEl.onchange = () => { if (fileInputEl.files[0]) setSlotImage(fileInputEl.files[0]); };
+    }
+    if (removeBtnEl && fileInputEl && previewEl && dzInnerEl) {
+      removeBtnEl.onclick = (e) => {
+        e.stopPropagation();
+        i2iOmniSlotFiles[sIdx] = null;
+        previewEl.src = '';
+        previewEl.classList.add('hidden');
+        dzInnerEl.classList.remove('hidden');
+        removeBtnEl.classList.add('hidden');
+        slotCard.classList.remove('has-image');
+        fileInputEl.value = '';
+      };
+    }
+
+    slotCard.ondragover = (e) => { e.preventDefault(); slotCard.classList.add('drag-over'); };
+    slotCard.ondragleave = () => slotCard.classList.remove('drag-over');
+    slotCard.ondrop = (e) => {
+      e.preventDefault();
+      slotCard.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) setSlotImage(f);
+    };
+  }
+
+  // Token insertion into #i2i-prompt
+  const i2iPromptTextarea = wrap.querySelector('#i2i-prompt');
+  function insertI2iRefToken(token) {
+    if (!token || !i2iPromptTextarea) return;
+    const start = typeof i2iPromptTextarea.selectionStart === 'number' ? i2iPromptTextarea.selectionStart : i2iPromptTextarea.value.length;
+    const end = typeof i2iPromptTextarea.selectionEnd === 'number' ? i2iPromptTextarea.selectionEnd : i2iPromptTextarea.value.length;
+    const val = i2iPromptTextarea.value;
+    i2iPromptTextarea.value = val.substring(0, start) + token + val.substring(end);
+    const newPos = start + token.length;
+    i2iPromptTextarea.focus();
+    if (typeof i2iPromptTextarea.setSelectionRange === 'function') {
+      i2iPromptTextarea.setSelectionRange(newPos, newPos);
+    }
+    i2iPromptTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    playSFX('pop', 0.8);
+  }
+
+  wrap.querySelectorAll('.i2i-omni-insert-btn, .i2i-omni-pill').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const token = btn.dataset.token || btn.getAttribute('data-token');
+      insertI2iRefToken(token);
+    });
+  });
+
+  const i2iOmniCfgInput = wrap.querySelector('#i2i-omni-cfg');
+  const i2iOmniCfgVal = wrap.querySelector('#i2i-omni-cfg-val');
+  if (i2iOmniCfgInput && i2iOmniCfgVal) {
+    i2iOmniCfgInput.addEventListener('input', () => {
+      i2iOmniCfgVal.textContent = parseFloat(i2iOmniCfgInput.value).toFixed(1);
+    });
+  }
+
+  const i2iOmniImgCfgInput = wrap.querySelector('#i2i-omni-img-cfg');
+  const i2iOmniImgCfgVal = wrap.querySelector('#i2i-omni-img-cfg-val');
+  if (i2iOmniImgCfgInput && i2iOmniImgCfgVal) {
+    i2iOmniImgCfgInput.addEventListener('input', () => {
+      i2iOmniImgCfgVal.textContent = parseFloat(i2iOmniImgCfgInput.value).toFixed(1);
+    });
+  }
 
   if (i2iCfgInput) {
     i2iCfgInput.addEventListener('input', () => {
@@ -2054,6 +2287,29 @@ function buildImg2Img() {
       .catch(() => {});
   }
 
+  if (window._pending_omnigen_image) {
+    const pendingImg = window._pending_omnigen_image;
+    window._pending_omnigen_image = null;
+    fetch(pendingImg)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'omni_seed_ref.png', { type: blob.type || 'image/png' });
+        const slotCard = wrap.querySelector('#i2i-omni-slot-0');
+        const dzInnerEl = wrap.querySelector('#i2i-omni-dz-0');
+        const previewEl = wrap.querySelector('#i2i-omni-preview-0');
+        const removeBtnEl = wrap.querySelector('#i2i-omni-remove-0');
+        i2iOmniSlotFiles[0] = file;
+        const url = URL.createObjectURL(file);
+        if (previewEl) { previewEl.src = url; previewEl.classList.remove('hidden'); }
+        if (dzInnerEl) dzInnerEl.classList.add('hidden');
+        if (removeBtnEl) removeBtnEl.classList.remove('hidden');
+        if (slotCard) slotCard.classList.add('has-image');
+        const omniModelBtn = wrap.querySelector('#i2i-model-omnigen');
+        if (omniModelBtn) omniModelBtn.click();
+      })
+      .catch(console.warn);
+  }
+
   wrap.querySelector('#i2i-gen-btn').addEventListener('click', async () => {
     if (!sessionStorage.getItem('generate_authenticated')) {
       setStatus(wrap, '#i2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute image editing.', 'error');
@@ -2062,9 +2318,19 @@ function buildImg2Img() {
       });
       return;
     }
+    const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model || 'qwen';
     const file = fileInput._droppedFile || fileInput.files[0];
     const file2 = fileInput2._droppedFile || fileInput2.files[0];
-    if (!file) { setStatus(wrap, '#i2i-status', 'ERROR: No primary image loaded.', 'error'); return; }
+    const hasAnyOmniImage = i2iOmniSlotFiles.some(f => f !== null);
+
+    if (selectedI2iModel !== 'omnigen' && !file) {
+      setStatus(wrap, '#i2i-status', 'ERROR: No primary image loaded.', 'error');
+      return;
+    }
+    if (selectedI2iModel === 'omnigen' && !file && !hasAnyOmniImage && !wrap.querySelector('#i2i-prompt').value.trim() && !wrap.querySelector('#i2i-prompt').dataset.bgPrompt) {
+      setStatus(wrap, '#i2i-status', 'ERROR: Please provide a prompt or at least one reference image.', 'error');
+      return;
+    }
     let prompt = wrap.querySelector('#i2i-prompt').dataset.bgPrompt;
     if (prompt) {
       delete wrap.querySelector('#i2i-prompt').dataset.bgPrompt;
@@ -2116,50 +2382,78 @@ function buildImg2Img() {
     }, 2500);
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      if (file2) formData.append('image2', file2);
-      formData.append('prompt', prompt);
-      formData.append('negative_prompt', neg);
-      formData.append('num_inference_steps', steps);
-      formData.append('true_cfg_scale', cfg);
-      formData.append('lora', lora || 'none');
-      formData.append('batch_size', batchSize);
-      formData.append('scheduler', scheduler);
-      formData.append('sampler', scheduler);
-      formData.append('clip_skip', clipSkip);
-      formData.append('width', w);
-      formData.append('height', h);
-
       const selectedI2iModel = wrap.querySelector('#i2i-model-select .aim-seg-btn.active')?.dataset?.model || 'qwen';
-      formData.append('model', selectedI2iModel);
-      formData.append('model_name', selectedI2iModel);
+      const formData = new FormData();
 
-      // Objective 2: SDXL Native Checkpoint Catalog
-      if (selectedI2iModel === 'sdxl') {
-        const ckpt = wrap.querySelector('#i2i-checkpoint')?.value || 'epicrealismXL_pureFix';
-        formData.append('checkpoint', ckpt);
-      }
+      if (selectedI2iModel === 'omnigen') {
+        formData.append('prompt', prompt || 'A detailed realistic rendering');
+        formData.append('negative_prompt', neg);
+        formData.append('num_inference_steps', steps);
+        const omniCfg = parseFloat(wrap.querySelector('#i2i-omni-cfg')?.value || '2.5');
+        const omniImgCfg = parseFloat(wrap.querySelector('#i2i-omni-img-cfg')?.value || '1.6');
+        formData.append('guidance_scale', omniCfg);
+        formData.append('img_guidance_scale', omniImgCfg);
+        formData.append('width', w);
+        formData.append('height', h);
+        formData.append('batch_size', batchSize);
+        let hasAppended = false;
+        i2iOmniSlotFiles.forEach((f, idx) => {
+          if (f) {
+            formData.append(`image${idx + 1}`, f);
+            formData.append('images', f);
+            hasAppended = true;
+          }
+        });
+        if (!hasAppended && file) {
+          formData.append('image1', file);
+          formData.append('images', file);
+        }
+      } else {
+        formData.append('image', file);
+        if (file2) formData.append('image2', file2);
+        formData.append('prompt', prompt);
+        formData.append('negative_prompt', neg);
+        formData.append('num_inference_steps', steps);
+        formData.append('true_cfg_scale', cfg);
+        formData.append('lora', lora || 'none');
+        formData.append('batch_size', batchSize);
+        formData.append('scheduler', scheduler);
+        formData.append('sampler', scheduler);
+        formData.append('clip_skip', clipSkip);
+        formData.append('width', w);
+        formData.append('height', h);
+        formData.append('model', selectedI2iModel);
+        formData.append('model_name', selectedI2iModel);
 
-      // Objectives 2, 6 & Flux: Denoising Strength
-      const denoiseVal = parseFloat(wrap.querySelector('#i2i-strength')?.value || 0.75);
-      formData.append('strength', denoiseVal);
+        // Objective 2: SDXL Native Checkpoint Catalog
+        if (selectedI2iModel === 'sdxl') {
+          const ckpt = wrap.querySelector('#i2i-checkpoint')?.value || 'epicrealismXL_pureFix';
+          formData.append('checkpoint', ckpt);
+        }
 
-      // Objective 5: CosXL Edit Direct Natural Language Instruction
-      if (selectedI2iModel === 'cosxl') {
-        formData.append('instruction', prompt);
-        const imgG = parseFloat(wrap.querySelector('#i2i-img-guidance')?.value || 1.5);
-        formData.append('image_guidance_scale', imgG);
-      }
+        // Objectives 2, 6 & Flux: Denoising Strength
+        const denoiseVal = parseFloat(wrap.querySelector('#i2i-strength')?.value || 0.75);
+        formData.append('strength', denoiseVal);
 
-      // Objective 3: FLUX.1-Fill Inpainting Canvas Mask Export
-      if (selectedI2iModel === 'flux_fill') {
-        const maskDataUrl = getInpaintMaskDataUrl();
-        if (maskDataUrl) {
-          formData.append('mask_b64', maskDataUrl);
+        // Objective 5: CosXL Edit Direct Natural Language Instruction
+        if (selectedI2iModel === 'cosxl') {
+          formData.append('instruction', prompt);
+          const imgG = parseFloat(wrap.querySelector('#i2i-img-guidance')?.value || 1.5);
+          formData.append('image_guidance_scale', imgG);
+        }
+
+        // Objective 3: FLUX.1-Fill Inpainting Canvas Mask Export
+        if (selectedI2iModel === 'flux_fill') {
+          const maskDataUrl = getInpaintMaskDataUrl();
+          if (maskDataUrl) {
+            formData.append('mask_b64', maskDataUrl);
+          }
         }
       }
-      const i2iEndpoint = resolveEndpoint(settings.img2imgUrl, 'stream');
+
+      const i2iEndpoint = selectedI2iModel === 'omnigen'
+        ? resolveEndpoint(settings.omnigenUrl, 'stream')
+        : resolveEndpoint(settings.img2imgUrl, 'stream');
 
       const res = await fetch(i2iEndpoint, { method: 'POST', body: formData });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -2240,7 +2534,17 @@ function buildImg2Img() {
       resultSlot.appendChild(resultEl);
       playSFX('pop', 0.8);
       setStatus(wrap, '#i2i-status', 'EDIT APPLIED SUCCESSFULLY.', 'ok');
-      logAction('IMAGE_GENERATED', { type: 'I2I', prompt, batchSize });
+      logAction('IMAGE_GENERATED', { type: selectedI2iModel === 'omnigen' ? 'OMNIGEN' : 'I2I', prompt, batchSize });
+      logAction('MEDIA_GENERATION', {
+        type: selectedI2iModel === 'omnigen' ? 'OMNIGEN' : 'I2I',
+        prompt,
+        endpoint: i2iEndpoint,
+        model: selectedI2iModel
+      }, {
+        category: 'MEDIA',
+        level: 'INFO',
+        message: prompt
+      });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
       clearInterval(msgInterval);
@@ -2779,6 +3083,16 @@ export function buildOmniGen() {
       playSFX('pop', 0.8);
       setStatus(wrap, '#omni-status', 'OMNIGEN SYNTHESIS COMPLETE.', 'ok');
       logAction('IMAGE_GENERATED', { type: 'OMNIGEN', prompt: promptText, batchSize });
+      logAction('MEDIA_GENERATION', {
+        type: 'OMNIGEN',
+        prompt: promptText,
+        endpoint: resolveEndpoint(settings.omnigenUrl, 'stream'),
+        model: 'omnigen'
+      }, {
+        category: 'MEDIA',
+        level: 'INFO',
+        message: promptText
+      });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
       clearInterval(msgInterval);
@@ -3543,9 +3857,9 @@ function buildMainUI() {
         <span class="aim-tab-icon">✦</span> TXT2IMG
       </button>
       <button class="aim-tab" data-tab="img2img" id="aim-tab-i2i">
-        <span class="aim-tab-icon">⟁</span> IMG2IMG
+        <span class="aim-tab-icon">🖼️</span> IMG2IMG / OMNIGEN
       </button>
-      <button class="aim-tab" data-tab="omnigen" id="aim-tab-omnigen">
+      <button class="aim-tab" data-tab="omnigen" id="aim-tab-omnigen" style="display:none;">
         <span class="aim-tab-icon">🧬</span> OMNIGEN
       </button>
       <button class="aim-tab" data-tab="upscaler" id="aim-tab-upscale">
@@ -3589,7 +3903,19 @@ function buildMainUI() {
     switch (targetTabName) {
       case 'txt2img': currentPanel = buildTxt2Img(); break;
       case 'img2img': currentPanel = buildImg2Img(); break;
-      case 'omnigen': currentPanel = buildOmniGen(); break;
+      case 'omnigen': {
+        const i2iTab = root.querySelector(`.aim-tab[data-tab="img2img"]`);
+        if (i2iTab) {
+          tabs.forEach(t => t.classList.remove('active'));
+          i2iTab.classList.add('active');
+        }
+        currentPanel = buildImg2Img();
+        setTimeout(() => {
+          const omniBtn = currentPanel.querySelector('#i2i-model-select [data-model="omnigen"]');
+          if (omniBtn) omniBtn.click();
+        }, 10);
+        break;
+      }
       case 'upscaler': currentPanel = buildUpscaler(); break;
       case 'txt2vid': currentPanel = buildTxt2Vid(); break;
       case 'controlnet': currentPanel = buildControlNetForge(); break;
@@ -3951,6 +4277,16 @@ function buildTxt2Vid() {
       }
       playSFX('pop', 0.8);
       setStatus(wrap, '#t2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
+      logAction('MEDIA_GENERATION', {
+        type: 'T2V',
+        prompt,
+        endpoint: endpoint,
+        model: 'txt2vid'
+      }, {
+        category: 'MEDIA',
+        level: 'INFO',
+        message: prompt
+      });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
       clearInterval(msgInterval);
@@ -4315,6 +4651,16 @@ function buildImg2Vid() {
       }
       playSFX('pop', 0.8);
       setStatus(wrap, '#i2v-status', 'VIDEO RENDERED SUCCESSFULLY.', 'ok');
+      logAction('MEDIA_GENERATION', {
+        type: 'I2V',
+        prompt,
+        endpoint: endpoint,
+        model: 'img2vid'
+      }, {
+        category: 'MEDIA',
+        level: 'INFO',
+        message: prompt
+      });
       if (window._aimNotifyWarm) window._aimNotifyWarm();
     } catch (err) {
       clearInterval(msgInterval);

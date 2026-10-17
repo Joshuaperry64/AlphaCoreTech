@@ -9,6 +9,27 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.1.0 BUILD 185',
+    date: '2026.10.17',
+    badge: 'CORE MATRIX REVISION // MOBILE HUD, COIN CHANGER & STUDIO OVERHAUL',
+    badgeColor: '#00ff8c',
+    title: 'MOBILE PORTRAIT HUD, SECTOR 7 COIN CHANGER SPLIT, COGNITIVE MATRIX MESH & STUDIO STREAMLINING',
+    summary: 'Comprehensive system-wide overhaul delivering optimized mobile portrait navigation and PWA dark maskable icons, Sector 7 Laundromat and Hardware Coin Changer separation with multi-stage payment and simulation bypass, Cognitive Core peer-to-peer matrix mesh with live presence indicators and automated Vault archiving, Studio Matrix pipeline consolidation with OmniGen integrated into Img2Img, Civitai quick LoRA injection management, full-featured Cyber Synthesizer Music workstation, and fine-grained administrative security governance.',
+    changes: [
+      'Mobile Portrait Shell & HUD: Native 1-9 PIN pad layout with dedicated bottom row (CLR, 0, ⌫) and subtle Request Access trigger; centered Fast Boot skip button; non-scrolling multi-column sidebar layout; and PWA dark maskable application icons.',
+      'Sector 7 Laundromat & ATM: Added 5-second auto-proceeding Under Development disclaimer; restricted accounts balance inspector strictly to Architect clearance; unified token nomenclature to Matrix Tokens ($1.00 = 4 Matrix Tokens); added source routing matrix; and subtle Donate confirmation modal.',
+      'Hardware Coin Changer Split: Separated the Coin Changer into a dedicated second-stage experience with bank clearance notices (2 business days); instant debit payouts; and a "Sneak into the Laundromat" simulation bypass (+12 tokens).',
+      'Cognitive Core Peer-to-Peer Matrix Mesh: Cybernetic HUD icons for mic and attachments; collapsible HUD dock for Eco Mode and audio toggles; auto-expanding prompt input box without scrollbars; peer-to-peer chat on Global Comm Link without AI triggering (reserving Live Link strictly for Alpha AI); and live multi-operative presence indicators (ARCHITECT, J.P., DOEBOY, FISHERMAN).',
+      'Private Uplink & Security Hardening: Personal API key gating on Private Uplink with direct AI Studio key generator routing; renamed config parameter to global master comlink API key; and automated Vault archiving for all chat media attachments.',
+      'Studio Matrix OmniGen Consolidation: Merged OmniGen multimodal matrix directly into Img2Img Fabricator; eliminated redundant sidebar buttons; and preserved full multi-image conditioning.',
+      'Civitai Quick-Injector & Asset Hub: Added separate Civitai LoRA Injection List supporting up to 3 concurrent active injections for authenticated non-guest profiles; embedded Civitai model explorer; removed legacy volume browser; and added cybernetic parameter tooltips.',
+      'Subroutines & System Evolution: Removed obsolete OS profile button; set Launch Workspace to open remote web ports in clean new tabs; and renamed sidebar Diagnostics to Chronological Evolution.',
+      'Administration & Event Logging: Fine-grained per-profile access permissions; custom access PIN assignments with "Require new PIN reset on next entry"; removed Impersonate function; renamed Roles tab to Access; removed deprecated Lucy and stealth sliders from Classified Directives; and unified Media Logs capturing user prompt invocations across all backend endpoints.',
+      'Cyber Synthesizer Music Studio: Overhauled Music Generator into a complete composition workstation featuring genre presets, mood matrices, BPM/duration controls, and real-time generation.',
+      'Voice Cloner Clean-up: Purged hardcoded mock voice profiles from RVC Voice Cloner to display only authenticated user voice profiles.'
+    ]
+  },
+  {
     version: 'v5.0.0 BUILD 175',
     date: '2026.09.12',
     badge: 'ADVANCED AI SYNTHESIS // 6-ARCHITECTURE SUITE',

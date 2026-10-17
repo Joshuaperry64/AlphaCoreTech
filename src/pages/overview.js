@@ -71,7 +71,7 @@ export default function Overview() {
         <a href="#/recon" class="aim-btn aim-btn-sm" style="text-decoration:none;">👁️ RECON</a>
         <a href="#/mugshots" class="aim-btn aim-btn-sm" style="text-decoration:none;">🏛️ CUSTODY</a>
         <a href="#/vault" class="aim-btn aim-btn-sm" style="text-decoration:none;">🔐 CORE VAULT</a>
-        <a href="#/diagnostics" class="aim-btn aim-btn-sm" style="text-decoration:none;">⍾ DIAGNOSTICS</a>
+        <a href="#/diagnostics" class="aim-btn aim-btn-sm" style="text-decoration:none;">⍾ CHRONO EVOLUTION</a>
       </div>
 
       <!-- 2D Interactive Operative Cyber-Desk Workstation -->

@@ -330,6 +330,22 @@ function initApp() {
     });
   }
 
+  // Setup Collapsible Bottom-Right Controls
+  const brCollapseBtn = document.getElementById('br-collapse-btn');
+  const brControls = document.getElementById('bottom-right-controls') || document.querySelector('.bottom-right-controls');
+  if (brCollapseBtn && brControls) {
+    brCollapseBtn.addEventListener('click', () => {
+      brControls.classList.toggle('collapsed');
+      const isCollapsed = brControls.classList.contains('collapsed');
+      try { localStorage.setItem('alphacore_br_controls_collapsed', isCollapsed ? '1' : '0'); } catch(e){}
+    });
+    try {
+      if (localStorage.getItem('alphacore_br_controls_collapsed') === '1') {
+        brControls.classList.add('collapsed');
+      }
+    } catch(e){}
+  }
+
   initSidebar();
   initModal();
   a11y.init();

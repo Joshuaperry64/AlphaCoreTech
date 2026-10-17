@@ -141,7 +141,8 @@ describe('Laundromat Wallet & Account Balance System', () => {
       expect(el.innerHTML).toContain('🪙 0');
       expect(el.innerHTML).toContain('🫧 0');
       expect(el.innerHTML).toContain('RELOAD CARD AT ATM');
-      expect(el.innerHTML).toContain('SWITCH PROFILE');
+      expect(el.innerHTML).toContain('MATRIX TOKENS');
+      expect(el.innerHTML).not.toContain('SWITCH PROFILE');
     });
 
     it('renders compact mode with quick switcher badge', () => {

@@ -718,20 +718,40 @@ function buildStoragePanel() {
   };
 
   async function loadFiles() {
-    el.innerHTML = '<div style="color: var(--blue); font-family: var(--font-hud); padding: 20px;">> SYNCING CLOUD SUBSTRATE...</div>';
+    el.innerHTML = '<div style="color: var(--blue); font-family: var(--font-hud); padding: 20px;">> SYNCING DATABANKS...</div>';
+    let cloudFiles = [];
     try {
-      const { data, error } = await supabase.from('vault_files').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      files = data || [];
-      renderUI();
+      if (supabase && supabase.from) {
+        const { data, error } = await supabase.from('vault_files').select('*').order('created_at', { ascending: false });
+        if (!error && data) cloudFiles = data;
+      }
     } catch(err) {
-      el.innerHTML = `<div style="color: var(--accent); padding: 20px;">> ERROR SYNCING CLOUD: ${err.message}</div>`;
+      console.warn('[Vault] Cloud substrate notice:', err.message);
     }
+
+    let localFiles = [];
+    try {
+      localFiles = JSON.parse(localStorage.getItem('alphacore_vault_files') || '[]');
+    } catch {}
+
+    const seen = new Set();
+    const merged = [];
+    [...cloudFiles, ...localFiles].forEach(f => {
+      const key = f.id || f.filename;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(f);
+      }
+    });
+
+    files = merged;
+    renderUI();
   }
 
   function renderUI() {
-    const myFiles = files.filter(f => f.owner === currentProfile);
-    const sharedFiles = files.filter(f => f.shared && f.owner !== currentProfile);
+    const curUpper = currentProfile.toUpperCase();
+    const myFiles = files.filter(f => (f.owner || '').toUpperCase() === curUpper);
+    const sharedFiles = files.filter(f => f.shared && (f.owner || '').toUpperCase() !== curUpper);
 
     function renderFileList(list, listTitle, emptyMsg) {
       let html = `<div class="panel-subtitle">// ${listTitle}</div>`;
@@ -742,7 +762,7 @@ function buildStoragePanel() {
         list.forEach(f => {
           const isImage = f.type && f.type.startsWith('image/');
           const isVideo = f.type && f.type.startsWith('video/');
-          const url = getPublicUrl(f.storage_path);
+          const url = (f.storage_path ? getPublicUrl(f.storage_path) : null) || f.dataUrl || '';
           
           let previewBlock = `<div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; font-size:3rem; color:var(--blue-dim);">📄</div>`;
           if (isImage && url) {
@@ -902,15 +922,22 @@ function buildStoragePanel() {
       btn.onclick = async () => {
         const id = btn.getAttribute('data-id');
         const file = files.find(f => f.id === id);
-        if (file && confirm('DELETE CLASSIFIED CLOUD DATA?')) {
+        if (file && confirm('DELETE CLASSIFIED DATA?')) {
           btn.textContent = '...';
           try {
-            await supabase.storage.from('vault_data').remove([file.storage_path]);
-            await supabase.from('vault_files').delete().eq('id', id);
-            loadFiles();
+            if (supabase && supabase.storage && file.storage_path) {
+              await supabase.storage.from('vault_data').remove([file.storage_path]);
+              await supabase.from('vault_files').delete().eq('id', id);
+            }
           } catch (e) {
-            alert('DELETE FAILED: ' + e.message);
+            console.warn('Cloud delete notice:', e);
           }
+          try {
+            const local = JSON.parse(localStorage.getItem('alphacore_vault_files') || '[]');
+            const filtered = local.filter(f => f.id !== id && f.filename !== file.filename);
+            localStorage.setItem('alphacore_vault_files', JSON.stringify(filtered));
+          } catch {}
+          loadFiles();
         }
       };
     });
@@ -920,4 +947,81 @@ function buildStoragePanel() {
   loadFiles();
 
   return el;
+}
+
+// ==========================================
+// PROGRAMMATIC VAULT STORAGE API
+// ==========================================
+export async function saveFileToVault(fileObj, customFilename = null, isShared = false) {
+  const currentProfile = sessionStorage.getItem('current_profile') || 'Architect';
+  const filename = customFilename || (fileObj && fileObj.name) || `ATTACHMENT_${Date.now()}`;
+  const fileType = (fileObj && fileObj.type) || 'application/octet-stream';
+
+  let textContent = null;
+  let dataUrl = null;
+
+  try {
+    if (typeof fileObj.text === 'function' && (fileType.startsWith('text/') || fileType.includes('json') || fileType.includes('xml') || fileType.includes('javascript') || fileType === 'text/plain')) {
+      textContent = await fileObj.text();
+    } else if (typeof FileReader !== 'undefined' && fileObj instanceof Blob) {
+      dataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(fileObj);
+      });
+    }
+  } catch (readErr) {
+    console.warn('[Vault] File content read warning:', readErr);
+  }
+
+  // 1. Persistent Local Databank Cache for instantaneous RAG / Neural indexing
+  const fileId = 'vf_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+  const entry = {
+    id: fileId,
+    filename,
+    name: filename,
+    type: fileType,
+    owner: currentProfile.toUpperCase(),
+    shared: isShared,
+    size: (fileObj && fileObj.size) || (textContent ? textContent.length : 0),
+    content: textContent,
+    dataUrl: dataUrl,
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const localVault = JSON.parse(localStorage.getItem('alphacore_vault_files') || '[]');
+    localVault.unshift(entry);
+    localStorage.setItem('alphacore_vault_files', JSON.stringify(localVault));
+  } catch (cacheErr) {
+    console.warn('[Vault] Local cache write error:', cacheErr);
+  }
+
+  // 2. Cloud Substrate Backup (Supabase) if authenticated / reachable (non-blocking)
+  const isTest = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test';
+  if (!isTest && supabase && supabase.storage) {
+    (async () => {
+      try {
+        const storagePath = `${currentProfile.toLowerCase()}/${Date.now()}_${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from('vault_data')
+          .upload(storagePath, fileObj);
+
+        if (!uploadErr && uploadData) {
+          await supabase.from('vault_files').insert([{
+            filename,
+            type: fileType,
+            owner: currentProfile.toUpperCase(),
+            shared: isShared,
+            storage_path: uploadData.path
+          }]);
+        }
+      } catch (cloudErr) {
+        // Graceful fallback to local vault cache
+      }
+    })();
+  }
+
+  return { success: true, filename, id: fileId, entry };
 }

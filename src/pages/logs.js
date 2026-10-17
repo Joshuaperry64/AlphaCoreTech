@@ -58,6 +58,7 @@ export default function LogsPage() {
             <input type="text" id="log-search" placeholder="Filter logs by keyword or module..." style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 12px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; width:220px;" />
             <select id="log-type-filter" style="background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1); color:var(--accent, #06b6d4); padding:6px 10px; border-radius:4px; font-family:'Share Tech Mono',monospace; font-size:0.85rem;">
               <option value="ALL">ALL CATEGORIES</option>
+              <option value="MEDIA">MEDIA</option>
               <option value="AUTH">AUTH</option>
               <option value="NEURAL">NEURAL</option>
               <option value="PERF">PERF</option>
@@ -103,10 +104,10 @@ export default function LogsPage() {
             <tr style="background:rgba(255,255,255,0.03); color:var(--accent, #06b6d4); border-bottom:1px solid rgba(255,255,255,0.1);">
               <th style="padding:12px 16px;">EVENT ID</th>
               <th style="padding:12px 16px;">TIMESTAMP</th>
-              <th style="padding:12px 16px;">TYPE</th>
+              <th style="padding:12px 16px;">CATEGORY</th>
               <th style="padding:12px 16px;">LEVEL</th>
               <th style="padding:12px 16px;">SOURCE</th>
-              <th style="padding:12px 16px;">MESSAGE</th>
+              <th style="padding:12px 16px;">MESSAGE / INPUT</th>
             </tr>
           </thead>
           <tbody id="logs-tbody"></tbody>
@@ -132,13 +133,29 @@ export default function LogsPage() {
       const rawLogs = getLogs();
 
       const mappedLogs = rawLogs.map((log, index) => {
+        let displayMessage = '';
+        if (log.message) {
+          displayMessage = typeof log.message === 'string' ? log.message : JSON.stringify(log.message);
+        } else if (log.details) {
+          if (typeof log.details === 'string') {
+            displayMessage = log.details;
+          } else if (log.details.prompt) {
+            displayMessage = `[${log.details.type || log.action || 'MEDIA'}] Prompt: "${log.details.prompt}"`;
+            if (log.details.endpoint) displayMessage += ` (Endpoint: ${log.details.endpoint})`;
+          } else {
+            displayMessage = JSON.stringify(log.details);
+          }
+        }
+
+        const category = log.category || (log.action && (log.action.includes('MEDIA') || log.action.includes('IMAGE') || log.action.includes('AUDIO') || log.action.includes('VIDEO')) ? 'MEDIA' : (log.action && log.action.includes('AUTH') ? 'AUTH' : 'SYSTEM'));
+
         return {
           id: `LOG-${rawLogs.length - index}`,
           timestamp: new Date(log.timestamp).toISOString(),
-          type: log.action || 'SYSTEM',
-          level: (log.action && log.action.includes('ERROR')) ? 'ERROR' : (log.action && log.action.includes('WARN')) ? 'WARN' : 'INFO',
+          type: category,
+          level: log.level || ((log.action && log.action.includes('ERROR')) ? 'ERROR' : (log.action && log.action.includes('WARN')) ? 'WARN' : 'INFO'),
           source: log.profile || 'SYSTEM',
-          message: log.details ? JSON.stringify(log.details) : ''
+          message: displayMessage
         };
       });
 

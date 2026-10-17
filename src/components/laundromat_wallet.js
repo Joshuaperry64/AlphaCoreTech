@@ -303,9 +303,6 @@ export function renderLaundromatWallet({
         </div>
         <div style="text-align: right; display: flex; align-items: center; gap: 8px;">
           <span style="font-size: 1.1rem; color: ${wallet.accentColor}; letter-spacing: 2px;" title="Contactless Active">(((•)))</span>
-          <button id="btn-inspect-wallets" class="aim-btn" style="padding: 4px 10px; font-size: 0.72rem; border-color: ${wallet.accentColor}; color: ${wallet.accentColor}; background: ${wallet.accentColor}15; cursor: pointer; border-radius: 4px;">
-            ACCOUNT DIRECTORY ▾
-          </button>
         </div>
       </div>
 
@@ -366,7 +363,7 @@ export function renderLaundromatWallet({
       <!-- Inventory Metrics Bar -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 14px;">
         <div style="background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 6px; padding: 6px 10px; text-align: center;">
-          <div style="font-size: 0.68rem; color: #94a3b8;">HARD TOKENS</div>
+          <div style="font-size: 0.68rem; color: #94a3b8;">MATRIX TOKENS</div>
           <div style="font-size: 1.05rem; font-weight: bold; color: #f59e0b; margin-top: 2px;">
             🪙 ${wallet.tokens}
           </div>
@@ -406,12 +403,9 @@ export function renderLaundromatWallet({
       </div>
 
       <!-- Quick Action Controls -->
-      <div style="display: flex; gap: 8px; margin-top: 12px;">
-        <button id="btn-quick-atm" class="aim-btn" style="flex: 2; padding: 8px 12px; background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 0.8rem; cursor: pointer; border-radius: 4px;">
+      <div style="margin-top: 12px;">
+        <button id="btn-quick-atm" class="aim-btn" style="width: 100%; padding: 10px 14px; background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 0.85rem; cursor: pointer; border-radius: 4px;">
           🏧 RELOAD CARD AT ATM
-        </button>
-        <button id="btn-switch-account" class="aim-btn" style="flex: 1; padding: 8px 12px; background: rgba(6,182,212,0.15); border-color: #06b6d4; color: #38bdf8; font-size: 0.8rem; cursor: pointer; border-radius: 4px;">
-          🔑 SWITCH PROFILE
         </button>
       </div>
     </div>
@@ -547,7 +541,7 @@ export function openWalletInspectorModal({ onProfileSwitched = null } = {}) {
                 $${w.balance.toFixed(2)}
               </div>
               <div style="font-size: 0.75rem; color: #f59e0b; margin-top: 2px;">
-                🪙 ${w.tokens} Hard Tokens
+                🪙 ${w.tokens} Matrix Tokens
               </div>
             </div>
 

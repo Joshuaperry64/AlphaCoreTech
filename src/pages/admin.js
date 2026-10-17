@@ -1,9 +1,10 @@
 import { createElement, escapeHTML } from '../components/utils.js';
-import { buildPinPad, getPins, addPin, revokePin, requireAuth } from '../components/pinpad.js';
-import { getLogs, clearLogs } from '../components/logger.js';
+import { buildPinPad, getPins, addPin, updatePin, revokePin, requireAuth } from '../components/pinpad.js';
+import { getLogs, clearLogs, logAction } from '../components/logger.js';
 import { playSFX } from '../components/audio.js';
 import { apiUrl } from '../components/api.js';
 import { syncFromServer } from '../components/db_sync.js';
+import { showModal } from '../components/modal.js';
 
 export default function AdminPage() {
   const container = createElement('div');
@@ -37,7 +38,7 @@ function buildAdminUI() {
       <div class="aim-header-badge">[SYS_ADMIN] // CORE_CONFIG</div>
       <h1 class="glitch aim-title" data-text="ALPHACORE // ADMINISTRATION">ALPHACORE // ADMINISTRATION</h1>
       <div class="header-line"></div>
-      <p class="aim-subtitle">Manage security PINs, register/revoke role authorization tokens, adopt classified neural directives, and audit system activity logs.</p>
+      <p class="aim-subtitle">Manage security PINs, configure fine-grained access permissions, assign access credentials, and audit system event telemetry.</p>
     </div>
 
     <div class="admin-grid">
@@ -75,13 +76,35 @@ function buildAdminUI() {
           </div>
 
           <div class="aim-field" style="margin-top: 10px;">
-            <label class="aim-label">ACCESS LEVEL / ROLES</label>
-            <div class="flex-row" style="display: flex; gap: 15px; margin-top: 5px; flex-wrap: wrap;">
-              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="aimodals"> AI Modals Access</label>
-              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="generate"> Image Generation</label>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label class="aim-label" style="margin:0;">FINE-GRAINED ACCESS CLEARANCES</label>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="aim-btn aim-btn-sm" id="btn-roles-all" style="font-size:0.65rem; padding:2px 6px;">SELECT ALL</button>
+                <button type="button" class="aim-btn aim-btn-sm" id="btn-roles-clear" style="font-size:0.65rem; padding:2px 6px;">CLEAR</button>
+              </div>
+            </div>
+            <div class="flex-row" style="display: flex; gap: 8px 12px; margin-top: 5px; flex-wrap: wrap;">
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="aimodals"> AI Modals</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="generate"> Image Gen</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="lora"> LoRA Usage</label>
-              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="vault"> Classified Vault</label>
-              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="diagnostics"> Diagnostics Panel</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="upscaler"> Upscaler</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="video"> Video Gen</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="director"> Cyber-Director</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="assets"> Asset Manager</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="voice"> Voice Cloner</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="music"> Music Gen</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="subroutines"> Subroutines</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="vault"> Core Vault</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="research"> Research</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="lore"> System Lore</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="diagnostics"> Chrono Evolution</label>
+              <label style="color: var(--accent, #ff003c); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="admin"> Administrator</label>
+            </div>
+            <div style="margin-top:10px;">
+              <label style="color: var(--accent, #06b6d4); font-size: 0.75rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="new-pin-require-reset" />
+                REQUIRE NEW PIN RESET ON NEXT ENTRY
+              </label>
             </div>
           </div>
 
@@ -102,7 +125,7 @@ function buildAdminUI() {
                 <th>USERNAME</th>
                 <th>EMAIL</th>
                 <th>REQUESTED PIN</th>
-                <th>ROLES TO GRANT</th>
+                <th>ACCESS TO GRANT</th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
@@ -121,10 +144,10 @@ function buildAdminUI() {
               <tr>
                 <th>LABEL</th>
                 <th>PIN</th>
-                <th>ROLES</th>
+                <th>ACCESS</th>
                 <th>TYPE</th>
                 <th>EXPIRES/STATUS</th>
-                <th>ACTION</th>
+                <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody id="pin-list-body">
@@ -199,6 +222,20 @@ function buildAdminUI() {
     }
   };
 
+  // Role selection helper buttons
+  const btnRolesAll = root.querySelector('#btn-roles-all');
+  const btnRolesClear = root.querySelector('#btn-roles-clear');
+  if (btnRolesAll) {
+    btnRolesAll.onclick = () => {
+      root.querySelectorAll('.new-pin-role').forEach(cb => cb.checked = true);
+    };
+  }
+  if (btnRolesClear) {
+    btnRolesClear.onclick = () => {
+      root.querySelectorAll('.new-pin-role').forEach(cb => cb.checked = false);
+    };
+  }
+
   // Generate random 8-9 digit PIN
   genRandBtn.onclick = (e) => {
     e.preventDefault();
@@ -218,6 +255,7 @@ function buildAdminUI() {
     const label = pinLabel.value.trim() || 'Guest Node';
     const type = pinType.value;
     const durationMin = parseInt(pinDuration.value) || 5;
+    const requireReset = root.querySelector('#new-pin-require-reset')?.checked || false;
 
     const roleBoxes = root.querySelectorAll('.new-pin-role:checked');
     const roles = Array.from(roleBoxes).map(b => b.value);
@@ -232,37 +270,138 @@ function buildAdminUI() {
       type,
       durationSeconds: durationMin * 60,
       label,
-      roles
+      roles,
+      mustChangePin: requireReset
     });
 
     pinVal.value = '';
     pinLabel.value = '';
+    const resetCb = root.querySelector('#new-pin-require-reset');
+    if (resetCb) resetCb.checked = false;
     showFeedback(pinFeedback, 'PIN authorized and written to security databank.', 'ok');
+    syncFromServer();
     updatePinList();
   };
 
-  // Global impersonate hook
-  window.impersonateProfile = (pinValue) => {
+  // Fine-grained Edit Access Clearance handler
+  window.editPinAccess = (pinValue) => {
     const pins = getPins();
     const target = pins.find(p => p.pin === pinValue);
     if (!target) return;
-    
-    // Clear existing session roles
-    const allRoles = ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'];
-    allRoles.forEach(r => sessionStorage.removeItem(r + '_authenticated'));
-    
-    // Apply target profile roles
-    if (target.roles) {
-      target.roles.forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
+
+    const allPermissions = [
+      { key: 'aimodals', label: 'AI Modals Pipeline' },
+      { key: 'generate', label: 'Image Generation' },
+      { key: 'lora', label: 'LoRA Usage' },
+      { key: 'upscaler', label: 'Resolution Upscaler' },
+      { key: 'video', label: 'Video Gen (Txt2Vid & Img2Vid)' },
+      { key: 'director', label: 'Cyber-Director Studio' },
+      { key: 'assets', label: 'Modal Asset Manager' },
+      { key: 'voice', label: 'RVC Voice Cloner' },
+      { key: 'music', label: 'Music Generator' },
+      { key: 'subroutines', label: 'Subroutine Console' },
+      { key: 'vault', label: 'Classified Core Vault' },
+      { key: 'research', label: 'Research Center' },
+      { key: 'lore', label: 'System Lore' },
+      { key: 'diagnostics', label: 'Chronological Evolution' },
+      { key: 'admin', label: 'Administrator Superuser' }
+    ];
+
+    const modalBody = document.createElement('div');
+    modalBody.style.cssText = 'padding: 10px 0; font-family: var(--font-mono);';
+
+    let checkboxesHtml = allPermissions.map(p => {
+      const checked = (target.roles || []).includes(p.key) ? 'checked' : '';
+      return `
+        <label style="display:flex; align-items:center; gap:8px; padding:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:3px; font-size:0.75rem; cursor:pointer;">
+          <input type="checkbox" class="modal-role-chk" value="${p.key}" ${checked} />
+          <span style="color:#fff;">${p.label}</span>
+        </label>
+      `;
+    }).join('');
+
+    modalBody.innerHTML = `
+      <p style="font-size:0.8rem; color:#aaa; margin-bottom:12px;">
+        Profile: <strong style="color:var(--accent, #06b6d4);">${target.label}</strong> [PIN: ${target.pin === '672167566' ? '*******' : target.pin}]
+      </p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:300px; overflow-y:auto; padding-right:4px;">
+        ${checkboxesHtml}
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="aim-btn aim-btn-sm" id="modal-sel-all">SELECT ALL</button>
+          <button type="button" class="aim-btn aim-btn-sm" id="modal-sel-none">CLEAR</button>
+        </div>
+        <button type="button" class="aim-btn" id="modal-save-roles" style="background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66; font-weight:bold;">
+          SAVE CLEARANCES
+        </button>
+      </div>
+    `;
+
+    modalBody.querySelector('#modal-sel-all').onclick = () => {
+      modalBody.querySelectorAll('.modal-role-chk').forEach(c => c.checked = true);
+    };
+    modalBody.querySelector('#modal-sel-none').onclick = () => {
+      modalBody.querySelectorAll('.modal-role-chk').forEach(c => c.checked = false);
+    };
+
+    modalBody.querySelector('#modal-save-roles').onclick = () => {
+      const selected = Array.from(modalBody.querySelectorAll('.modal-role-chk:checked')).map(c => c.value);
+      updatePin(target.pin, { roles: selected });
+      showModal({ title: '', content: '' }); // close modal
+      showFeedback(pinFeedback, `ACCESS CLEARANCES UPDATED FOR ${target.label.toUpperCase()}.`, 'ok');
+      syncFromServer();
+      updatePinList();
+    };
+
+    showModal({
+      title: `FINE-GRAINED ACCESS CONTROL // ${target.label.toUpperCase()}`,
+      content: modalBody
+    });
+  };
+
+  // Reassign PIN handler
+  window.reassignPin = (pinValue) => {
+    const pins = getPins();
+    const target = pins.find(p => p.pin === pinValue);
+    if (!target) return;
+
+    if (pinValue === '672167566') {
+      showFeedback(pinFeedback, 'ERROR: Master Architect PIN cannot be reassigned here.', 'error');
+      return;
     }
-    
-    // Set active profile name and PIN
-    sessionStorage.setItem('current_profile', target.label);
-    sessionStorage.setItem('current_pin', target.pin);
-    
-    // Redirect to overview to see what is unlocked
-    window.location.hash = '#/';
-    window.location.reload();
+
+    const newPin = window.prompt(`REASSIGN ACCESS PIN FOR "${target.label}"\nEnter new 8 or 9 digit PIN:`, target.pin);
+    if (!newPin) return;
+
+    if (!/^\d{8,9}$/.test(newPin.trim())) {
+      showFeedback(pinFeedback, 'ERROR: PIN must be exactly 8 or 9 digits.', 'error');
+      return;
+    }
+
+    const cleanNewPin = newPin.trim();
+    if (pins.some(p => p.pin === cleanNewPin && p.pin !== pinValue)) {
+      showFeedback(pinFeedback, 'ERROR: That PIN is already assigned to another profile.', 'error');
+      return;
+    }
+
+    updatePin(pinValue, { pin: cleanNewPin });
+    showFeedback(pinFeedback, `PIN REASSIGNED TO ${cleanNewPin} FOR ${target.label.toUpperCase()}.`, 'ok');
+    syncFromServer();
+    updatePinList();
+  };
+
+  // Toggle Require New PIN on Next Entry
+  window.togglePinReset = (pinValue) => {
+    const pins = getPins();
+    const target = pins.find(p => p.pin === pinValue);
+    if (!target) return;
+
+    const nextState = !target.mustChangePin;
+    updatePin(pinValue, { mustChangePin: nextState });
+    showFeedback(pinFeedback, `PIN RESET DIRECTIVE ${nextState ? 'ACTIVATED' : 'CLEARED'} FOR ${target.label.toUpperCase()}.`, 'ok');
+    syncFromServer();
+    updatePinList();
   };
 
   // Global delete PIN hook for inline click handlers
@@ -394,34 +533,53 @@ function buildAdminUI() {
 
     pins.forEach(p => {
       let statusHtml = '';
+      if (p.mustChangePin) {
+        statusHtml += '<span class="status-amber" style="display:inline-block; margin-bottom:2px; font-weight:bold;">[!] PIN RESET REQ</span><br/>';
+      }
       if (p.type === 'permanent') {
-        statusHtml = '<span class="status-green">NEVER</span>';
+        statusHtml += '<span class="status-green">NEVER</span>';
       } else if (p.type === 'one-time') {
-        statusHtml = p.used ? '<span class="status-red">USED</span>' : '<span class="status-green">ACTIVE (OTP)</span>';
+        statusHtml += p.used ? '<span class="status-red">USED</span>' : '<span class="status-green">ACTIVE (OTP)</span>';
       } else if (p.type === 'temporary') {
         const remaining = p.expiresAt - Date.now();
         if (remaining <= 0) {
-          statusHtml = '<span class="status-red">EXPIRED</span>';
+          statusHtml += '<span class="status-red">EXPIRED</span>';
         } else {
           const m = Math.floor(remaining / 60000);
           const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
-          statusHtml = `<span class="status-amber">Expires in ${m}:${s}</span>`;
+          statusHtml += `<span class="status-amber">Expires in ${m}:${s}</span>`;
         }
       }
 
       const isMaster = p.pin === '672167566';
+      const rolesList = (p.roles || []).map(r => `<span style="display:inline-block; background:rgba(6,182,212,0.15); border:1px solid rgba(6,182,212,0.3); color:#38bdf8; padding:1px 5px; border-radius:2px; margin:1px; font-size:0.6rem;">${r.toUpperCase()}</span>`).join('');
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="table-label">${p.label}</td>
+        <td class="table-label" style="font-weight:bold;">${p.label}</td>
         <td class="table-mono">${isMaster ? '*******' : p.pin}</td>
-        <td class="table-mono" style="font-size:0.55rem; color:var(--blue-dim);">${(p.roles || []).join(', ').toUpperCase()}</td>
-        <td class="table-mono">${p.type.toUpperCase()}</td>
+        <td style="max-width:200px;">
+          <div style="display:flex; flex-wrap:wrap; gap:2px; align-items:center;">
+            ${rolesList || '<span style="color:#666; font-size:0.65rem;">NONE</span>'}
+          </div>
+        </td>
+        <td class="table-mono" style="font-size:0.7rem;">${p.type.toUpperCase()}</td>
         <td>${statusHtml}</td>
         <td>
-          <button class="aim-btn aim-btn-sm" onclick="impersonateProfile('${p.pin}')" style="margin-right: 8px;">IMPERSONATE</button>
-          <button class="aim-btn aim-btn-sm" onclick="revokePin('${p.pin}')" ${isMaster ? 'disabled' : ''} style="border-color:${isMaster ? 'rgba(255,255,255,0.1)' : 'var(--accent, #ff003c)'}; color:${isMaster ? 'rgba(255,255,255,0.2)' : 'var(--accent, #ff003c)'}">
-            REVOKE
-          </button>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+            <button class="aim-btn aim-btn-sm" onclick="editPinAccess('${p.pin}')" style="padding:3px 7px; font-size:0.7rem; color:var(--accent,#06b6d4); border-color:var(--accent,#06b6d4);" title="Configure fine-grained clearances">
+              🛡️ ACCESS
+            </button>
+            <button class="aim-btn aim-btn-sm" onclick="reassignPin('${p.pin}')" ${isMaster ? 'disabled' : ''} style="padding:3px 7px; font-size:0.7rem;" title="Assign or update PIN">
+              🔑 PIN
+            </button>
+            <button class="aim-btn aim-btn-sm" onclick="togglePinReset('${p.pin}')" style="padding:3px 7px; font-size:0.7rem; color:${p.mustChangePin ? '#ef4444' : '#f59e0b'}; border-color:${p.mustChangePin ? '#ef4444' : '#f59e0b'};" title="Require new PIN on next login">
+              ${p.mustChangePin ? '✕ CANCEL REQ' : '🔄 REQ RESET'}
+            </button>
+            <button class="aim-btn aim-btn-sm" onclick="revokePin('${p.pin}')" ${isMaster ? 'disabled' : ''} style="padding:3px 7px; font-size:0.7rem; border-color:${isMaster ? 'rgba(255,255,255,0.1)' : 'var(--accent, #ff003c)'}; color:${isMaster ? 'rgba(255,255,255,0.2)' : 'var(--accent, #ff003c)'}">
+              REVOKE
+            </button>
+          </div>
         </td>
       `;
       pinListBody.appendChild(tr);
@@ -448,19 +606,6 @@ function buildAdminUI() {
         <div class="panel-title" style="color: var(--accent, #ff003c);">[WARNING] // DARKENED_STATE_ACTIVE</div>
         <p class="aim-subtitle" style="color: rgba(255, 0, 60, 0.75);">NSFW neural alignments initialized. Alternate persona Luci persistent overlay is operational.</p>
         
-        <div class="aim-field" style="margin-top: 10px;">
-          <label class="aim-label" style="color: var(--accent, #ff003c);">LUCI ALIGNMENT STRENGTH <span class="aim-val-display" id="dark-str-val" style="color:var(--accent)">100%</span></label>
-          <input class="aim-range" type="range" id="dark-range" min="0" max="100" value="100" style="accent-color: var(--accent, #ff003c);" />
-        </div>
-
-        <div class="aim-field" style="margin-top: 12px;">
-          <label class="aim-label" style="color: var(--accent, #ff003c);">STEALTH OBFUSCATION FREQUENCY</label>
-          <div class="aim-seg aim-seg-3" id="dark-freq-seg">
-            <button class="aim-seg-btn active" data-f="high">HIGH ENTROPY</button>
-            <button class="aim-seg-btn" data-f="mid">VECTOR DRIFT</button>
-            <button class="aim-seg-btn" data-f="low">STEALTH IDLE</button>
-          </div>
-        </div>
         <div class="aim-field" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(255, 0, 60, 0.4);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <label class="aim-label" style="color: var(--accent, #ff003c); margin-bottom: 0;">// CLASSIFIED_SUBSTRATE</label>
@@ -477,10 +622,7 @@ function buildAdminUI() {
         <button class="aim-btn" id="btn-revert-darkness" style="margin-top: 15px; border-color: #555; color: #777; width: 100%;">REVERT TO STANDARD</button>
       </div>
     `;
-    
-    const darkRange = darknessSlot.querySelector('#dark-range');
-    const darkVal = darknessSlot.querySelector('#dark-str-val');
-    const freqBtns = darknessSlot.querySelectorAll('#dark-freq-seg .aim-seg-btn');
+
     const revertBtn = darknessSlot.querySelector('#btn-revert-darkness');
     const placeholderPortalBtn = darknessSlot.querySelector('#btn-portal-placeholder');
 
@@ -489,18 +631,6 @@ function buildAdminUI() {
         playSFX('navigate', 0.6);
       };
     }
-
-    darkRange.oninput = () => {
-      darkVal.textContent = `${darkRange.value}%`;
-    };
-
-    freqBtns.forEach(btn => {
-      btn.onclick = (ev) => {
-        ev.preventDefault();
-        freqBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      };
-    });
 
     revertBtn.onclick = () => {
       sessionStorage.removeItem('darkness_mode_active'); // DEACTIVATE DARKNESS

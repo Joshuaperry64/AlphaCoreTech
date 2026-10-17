@@ -7,7 +7,7 @@ export default function MugshotsPage() {
   
   container.innerHTML = `
     <div class="page-header">
-      <h1 class="glitch" data-text="// LOCAL_CUSTODY">// LOCAL_CUSTODY</h1>
+      <h1 class="glitch" data-text="// RECON / CUSTODY">// RECON / CUSTODY</h1>
       <p class="page-subtitle">AUTOMATED ARREST INTEL &amp; MUGSHOT DOSSIER MATRIX</p>
     </div>
 

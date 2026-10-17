@@ -1,10 +1,13 @@
 /**
  * AlphaCore Unified Voice Cloning & TTS Pipeline
  * One-click pipeline: Text -> Neural Base -> RVC Voice Profile morph.
+ * Operates strictly with genuine user/cloud profiles (no hardcoded mock presets).
  */
 
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
+import { logAction } from '../components/logger.js';
+import { playSFX } from '../components/audio.js';
 
 export default function VoiceClonerPage() {
   const container = createElement('div', { class: 'voicecloner-page slide-up' });
@@ -20,7 +23,6 @@ export default function VoiceClonerPage() {
   const MAIN_API_BASE = isArchitect ? (settings.main_api_url || defaultApiBase) : defaultApiBase;
 
   let activeTab = 'CONVERT'; 
-  let activeProfile = 'AlphaCore-EDEN11';
   let activeInputMode = 'TTS'; // Default to Text-to-Voice
 
   // State
@@ -28,23 +30,47 @@ export default function VoiceClonerPage() {
   let audioChunks = [];
   let recordedBlob = null;
   let isRecording = false;
-  let micAnimId = null;
   let uploadedFile = null;
   let convertedAudioUrl = null;
 
-  const PRESET_VOICES = [
-    { name: 'AlphaCore-EDEN11', label: 'ALPHA EDEN-11', desc: 'Sentient cybernetic harmonics', icon: '🤖' },
-    { name: 'Darkened-Luci', label: 'DARKENED LUCI', desc: 'Sultry dynamic presence', icon: '💋' },
-    { name: 'Architect-Lead', label: 'ARCHITECT LEAD', desc: 'Deep baritone authority', icon: '◈' }
-  ];
-  let voiceProfiles = PRESET_VOICES;
+  // Genuine saved profiles retrieval
+  function getSavedProfiles() {
+    try {
+      const stored = localStorage.getItem('alphacore_voice_profiles');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveVoiceProfile(profileObj) {
+    try {
+      const current = getSavedProfiles();
+      const existingIdx = current.findIndex(p => p.name === profileObj.name);
+      if (existingIdx >= 0) {
+        current[existingIdx] = profileObj;
+      } else {
+        current.push(profileObj);
+      }
+      localStorage.setItem('alphacore_voice_profiles', JSON.stringify(current));
+    } catch (e) {
+      console.warn('Failed saving voice profile:', e);
+    }
+  }
+
+  let voiceProfiles = getSavedProfiles();
+  let activeProfile = voiceProfiles.length > 0 ? voiceProfiles[0].name : '';
 
   function render() {
+    if (voiceProfiles.length > 0 && (!activeProfile || !voiceProfiles.some(p => p.name === activeProfile))) {
+      activeProfile = voiceProfiles[0].name;
+    }
+
     container.innerHTML = `
       <div class="page-header" style="margin-bottom: 20px;">
-        <h1 class="page-title" style="font-family:'Orbitron',sans-serif; letter-spacing:2px;">RVC SYNTHESIS MATRIX</h1>
+        <h1 class="page-title glitch" data-text="RVC SYNTHESIS MATRIX" style="font-family:'Orbitron',sans-serif; letter-spacing:2px; margin:0 0 6px 0;">RVC SYNTHESIS MATRIX</h1>
         <p class="page-subtitle" style="font-family:'Share Tech Mono',monospace; color:var(--accent,#06b6d4);">
-          UNIFIED TEXT-TO-VOICE & VOICE-TO-VOICE PIPELINE
+          UNIFIED TEXT-TO-VOICE & VOICE-TO-VOICE PIPELINE // USER & CLOUD PROFILES
         </p>
       </div>
 
@@ -59,13 +85,30 @@ export default function VoiceClonerPage() {
           <!-- LEFT: SETUP -->
           <div style="display:flex; flex-direction:column; gap:16px;">
             <div class="panel" style="background:rgba(8,12,20,0.85); border:1px solid rgba(6,182,212,0.3); padding:16px; border-radius:4px;">
-              <div style="font-family:'Orbitron',sans-serif; font-size:0.9rem; color:#fff; margin-bottom:10px;">1. SELECT VOICE PROFILE</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-family:'Orbitron',sans-serif; font-size:0.9rem; color:#fff;">1. SELECT VOICE PROFILE</div>
+                <span style="font-size:0.75rem; color:#4ade80; font-family:'Share Tech Mono',monospace;">${voiceProfiles.length} ACTIVE</span>
+              </div>
+              
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;" id="profile-cards-grid">
-                ${voiceProfiles.map(p => `
-                  <div class="vc-profile-card" data-profile="${p.name}" style="background:${activeProfile === p.name ? 'rgba(6,182,212,0.2)' : 'rgba(0,0,0,0.4)'}; border:1px solid ${activeProfile === p.name ? 'var(--accent,#06b6d4)' : 'rgba(255,255,255,0.08)'}; padding:8px; border-radius:4px; cursor:pointer;">
-                    <div style="display:flex; align-items:center; gap:6px; font-family:'Orbitron',sans-serif; font-size:0.75rem; color:#fff;">
-                      <span>${p.icon}</span>${p.label}
+                ${voiceProfiles.length === 0 ? `
+                  <div style="grid-column: 1 / -1; padding: 24px 16px; text-align: center; border: 1px dashed rgba(6,182,212,0.3); background: rgba(0,0,0,0.4); border-radius: 4px;">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">🎙️</div>
+                    <div style="font-family:'Orbitron',sans-serif; font-size:0.85rem; color:#fff; margin-bottom:6px;">NO SAVED VOICE PROFILES FOUND</div>
+                    <div style="font-size:0.75rem; color:#888; font-family:'Share Tech Mono',monospace; margin-bottom:14px; line-height:1.4;">
+                      No saved user profiles detected. Record audio below or use 'TRAIN NEW PROFILE' to create a custom RVC voice profile.
                     </div>
+                    <button type="button" id="btn-empty-goto-train" class="aim-btn aim-btn-sm" style="border-color:var(--accent,#06b6d4); color:var(--accent,#06b6d4); padding:6px 14px;">
+                      🚀 TRAIN NEW PROFILE
+                    </button>
+                  </div>
+                ` : voiceProfiles.map(p => `
+                  <div class="vc-profile-card" data-profile="${p.name}" style="background:${activeProfile === p.name ? 'rgba(6,182,212,0.2)' : 'rgba(0,0,0,0.4)'}; border:1px solid ${activeProfile === p.name ? 'var(--accent,#06b6d4)' : 'rgba(255,255,255,0.08)'}; padding:8px 10px; border-radius:4px; cursor:pointer; transition:0.2s;">
+                    <div style="display:flex; align-items:center; gap:6px; font-family:'Orbitron',sans-serif; font-size:0.75rem; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                      <span>${p.icon || '🎙️'}</span>
+                      <span title="${p.name}">${p.label || p.name}</span>
+                    </div>
+                    ${p.desc ? `<div style="font-size:0.65rem; color:#888; font-family:'Share Tech Mono',monospace; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.desc}</div>` : ''}
                   </div>
                 `).join('')}
               </div>
@@ -82,20 +125,33 @@ export default function VoiceClonerPage() {
               </div>
 
               <div id="ui-tts" style="${activeInputMode === 'TTS' ? 'display:block;' : 'display:none;'}">
-                <textarea id="ipt-tts-text" class="aim-input" style="width:100%; height:100px; resize:none;" placeholder="Type text here to be synthesized and cloned..."></textarea>
+                <textarea id="ipt-tts-text" class="aim-input" style="width:100%; height:110px; resize:vertical; font-family:'Share Tech Mono',monospace;" placeholder="Type text here to be synthesized and cloned..."></textarea>
               </div>
 
               <div id="ui-mic" style="${activeInputMode === 'MIC' ? 'display:block;' : 'display:none; text-align:center;'}">
-                <canvas id="mic-waveform-canvas" width="400" height="60" style="width:100%; height:60px; background:rgba(0,0,0,0.4); margin-bottom:10px;"></canvas>
-                <button id="btn-record-toggle" class="aim-btn" style="width:100%; background:${isRecording ? 'rgba(239,68,68,0.3)' : 'rgba(6,182,212,0.2)'}; border-color:${isRecording ? '#ef4444' : 'var(--accent,#06b6d4)'}; color:#fff;">
+                <canvas id="mic-waveform-canvas" width="400" height="60" style="width:100%; height:60px; background:rgba(0,0,0,0.4); margin-bottom:10px; border-radius:3px;"></canvas>
+                <button id="btn-record-toggle" class="aim-btn" style="width:100%; background:${isRecording ? 'rgba(239,68,68,0.3)' : 'rgba(6,182,212,0.2)'}; border-color:${isRecording ? '#ef4444' : 'var(--accent,#06b6d4)'}; color:#fff; font-family:'Orbitron',sans-serif;">
                   ${isRecording ? '⏹ STOP RECORDING' : '🔴 START RECORDING'}
                 </button>
-                <div id="lbl-mic-status" style="margin-top:8px; font-size:0.75rem; color:#00ff66;">${recordedBlob ? 'Audio captured and ready.' : ''}</div>
+                <div id="lbl-mic-status" style="margin-top:8px; font-size:0.75rem; color:#00ff66; font-family:'Share Tech Mono',monospace;">
+                  ${recordedBlob ? '✓ Audio sample captured and ready.' : ''}
+                </div>
+                ${recordedBlob ? `
+                  <div style="margin-top:12px; padding:10px; background:rgba(6,182,212,0.08); border:1px dashed rgba(6,182,212,0.3); border-radius:4px; text-align:left;">
+                    <div style="font-size:0.72rem; color:#06b6d4; font-family:'Orbitron',sans-serif; margin-bottom:6px;">SAVE AS NEW VOICE PROFILE:</div>
+                    <div style="display:flex; gap:6px;">
+                      <input type="text" id="ipt-save-rec-name" class="aim-input" placeholder="Profile Name (e.g. MyVoice_v1)" style="flex:1; font-size:0.75rem; padding:4px 8px;" />
+                      <button type="button" id="btn-save-rec-profile" class="aim-btn aim-btn-sm" style="background:rgba(16,185,129,0.25); border-color:#10b981; color:#fff; font-size:0.72rem; padding:4px 10px;">💾 SAVE</button>
+                    </div>
+                  </div>
+                ` : ''}
               </div>
 
               <div id="ui-upload" style="${activeInputMode === 'UPLOAD' ? 'display:block;' : 'display:none;'}">
                 <input type="file" id="ipt-audio-file" accept="audio/*" class="aim-input" style="width:100%; padding:8px;" />
-                <div id="lbl-upload-status" style="margin-top:8px; font-size:0.75rem; color:#00ff66;">${uploadedFile ? `Loaded: ${uploadedFile.name}` : ''}</div>
+                <div id="lbl-upload-status" style="margin-top:8px; font-size:0.75rem; color:#00ff66; font-family:'Share Tech Mono',monospace;">
+                  ${uploadedFile ? `✓ Loaded: ${uploadedFile.name}` : ''}
+                </div>
               </div>
             </div>
           </div>
@@ -116,18 +172,20 @@ export default function VoiceClonerPage() {
                 ⚡ SYNTHESIZE & CLONE VOICE
               </button>
               
-              <div id="pipeline-status" style="margin-top:12px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:#00ff66; display:none;">
+              <div id="pipeline-status" style="margin-top:12px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:#00ff66; display:none; padding:8px; background:rgba(0,255,100,0.06); border:1px dashed #00ff66; border-radius:4px;">
                 🔄 PROCESSING PIPELINE...
               </div>
             </div>
 
             <div class="panel" style="background:rgba(4,7,12,0.95); border:1.5px solid ${convertedAudioUrl ? '#00ff66' : 'rgba(6,182,212,0.25)'}; padding:16px; border-radius:4px;">
-              <div style="font-family:'Orbitron',sans-serif; font-size:0.9rem; color:#fff; margin-bottom:12px;">4. OUTPUT</div>
+              <div style="font-family:'Orbitron',sans-serif; font-size:0.9rem; color:#fff; margin-bottom:12px;">4. OUTPUT & AUDITION</div>
               <div style="text-align:center; padding:16px; background:rgba(0,0,0,0.6); border-radius:4px;">
                 ${convertedAudioUrl ? `
                   <audio controls src="${convertedAudioUrl}" autoplay style="width:100%; height:40px; margin-bottom:12px;"></audio>
-                  <a href="${convertedAudioUrl}" download="cloned_voice.wav" class="aim-btn aim-btn-sm" style="background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66;">💾 SAVE AUDIO</a>
-                ` : `<div style="font-size:0.8rem; color:#666; font-family:'Share Tech Mono',monospace;">Awaiting execution...</div>`}
+                  <div style="display:flex; gap:8px; justify-content:center;">
+                    <a href="${convertedAudioUrl}" download="cloned_voice_${Date.now()}.wav" class="aim-btn aim-btn-sm" style="background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66; text-decoration:none; padding:6px 14px;">💾 SAVE AUDIO</a>
+                  </div>
+                ` : `<div style="font-size:0.8rem; color:#666; font-family:'Share Tech Mono',monospace;">Awaiting pipeline execution...</div>`}
               </div>
             </div>
           </div>
@@ -136,11 +194,22 @@ export default function VoiceClonerPage() {
 
       <!-- TAB 2: TRAIN -->
       <div id="tab-content-train" style="${activeTab === 'TRAIN' ? 'display:block;' : 'display:none;'}">
-         <div class="panel" style="background:rgba(8,12,20,0.85); border:1px solid rgba(6,182,212,0.3); padding:24px; border-radius:4px;">
-          <div style="font-family:'Orbitron',sans-serif; font-size:1.1rem; color:#fff; margin-bottom:16px;">🚀 CLOUD MODEL TRAINER</div>
-          <input type="text" id="ipt-train-profile-name" class="aim-input" placeholder="New Profile Name (e.g. JoshVocal_v1)" style="width:100%; margin-bottom:12px;" />
-          <input type="file" id="ipt-train-files" multiple accept="audio/*" class="aim-input" style="width:100%; padding:8px; margin-bottom:16px;" />
-          <button id="btn-start-training" class="aim-btn" style="width:100%; background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66;">🚀 START TRAINING</button>
+         <div class="panel" style="background:rgba(8,12,20,0.85); border:1px solid rgba(6,182,212,0.3); padding:24px; border-radius:4px; max-width:700px; margin:0 auto;">
+          <div style="font-family:'Orbitron',sans-serif; font-size:1.1rem; color:#fff; margin-bottom:8px;">🚀 CLOUD MODEL TRAINER</div>
+          <p style="font-size:0.75rem; color:#aaa; font-family:'Share Tech Mono',monospace; margin-bottom:16px; line-height:1.4;">
+            Upload clean vocal audio samples (WAV/MP3) to train a dedicated RVC neural voice clone profile on the GPU node.
+          </p>
+          <div class="aim-field" style="margin-bottom:12px;">
+            <label class="aim-label">NEW PROFILE IDENTIFIER</label>
+            <input type="text" id="ipt-train-profile-name" class="aim-input" placeholder="e.g. OperativeVocal_v1" style="width:100%;" />
+          </div>
+          <div class="aim-field" style="margin-bottom:16px;">
+            <label class="aim-label">TRAINING AUDIO SAMPLES</label>
+            <input type="file" id="ipt-train-files" multiple accept="audio/*" class="aim-input" style="width:100%; padding:8px;" />
+          </div>
+          <button id="btn-start-training" class="aim-btn" style="width:100%; height:45px; background:rgba(0,255,100,0.2); border-color:#00ff66; color:#00ff66; font-family:'Orbitron',sans-serif; font-weight:bold;">
+            🚀 INITIATE TRAINING MATRIX
+          </button>
         </div>
       </div>
     `;
@@ -151,9 +220,14 @@ export default function VoiceClonerPage() {
   function setupEvents() {
     container.querySelector('#tab-btn-convert')?.addEventListener('click', () => { activeTab = 'CONVERT'; render(); });
     container.querySelector('#tab-btn-train')?.addEventListener('click', () => { activeTab = 'TRAIN'; render(); });
+    container.querySelector('#btn-empty-goto-train')?.addEventListener('click', () => { activeTab = 'TRAIN'; render(); });
 
     container.querySelectorAll('.vc-profile-card').forEach(card => {
-      card.addEventListener('click', () => { activeProfile = card.dataset.profile; render(); });
+      card.addEventListener('click', () => {
+        activeProfile = card.dataset.profile;
+        playSFX('pop', 0.6);
+        render();
+      });
     });
 
     container.querySelector('#btn-mode-tts')?.addEventListener('click', () => { activeInputMode = 'TTS'; render(); });
@@ -167,25 +241,53 @@ export default function VoiceClonerPage() {
       });
     }
 
+    // Save recorded audio as new profile
+    const btnSaveRec = container.querySelector('#btn-save-rec-profile');
+    if (btnSaveRec) {
+      btnSaveRec.addEventListener('click', () => {
+        const nameInput = container.querySelector('#ipt-save-rec-name');
+        const name = (nameInput?.value || '').trim();
+        if (!name) {
+          showToast('ENTER NAME', 'Please specify a profile name.');
+          return;
+        }
+        saveVoiceProfile({
+          name,
+          label: name.toUpperCase(),
+          desc: 'User Audio Recording',
+          icon: '🎙️'
+        });
+        voiceProfiles = getSavedProfiles();
+        activeProfile = name;
+        playSFX('pop', 0.8);
+        showToast('PROFILE SAVED', `Voice profile '${name}' registered.`);
+        render();
+      });
+    }
+
     // Microphone setup
     const btnRecord = container.querySelector('#btn-record-toggle');
     if (btnRecord) {
       btnRecord.onclick = async () => {
         if (!isRecording) {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioChunks = [];
-          mediaRecorder = new MediaRecorder(stream);
-          mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-          mediaRecorder.onstop = () => {
-            recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            stream.getTracks().forEach(track => track.stop());
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+              recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+              stream.getTracks().forEach(track => track.stop());
+              render();
+            };
+            mediaRecorder.start();
+            isRecording = true;
             render();
-          };
-          mediaRecorder.start();
-          isRecording = true;
-          render();
+          } catch (err) {
+            showToast('MIC ERROR', 'Could not access microphone.');
+          }
         } else {
-          mediaRecorder.stop();
+          if (mediaRecorder) mediaRecorder.stop();
           isRecording = false;
         }
       };
@@ -205,20 +307,26 @@ export default function VoiceClonerPage() {
         const statusBox = container.querySelector('#pipeline-status');
         const pitchShift = parseInt(container.querySelector('#slider-pitch')?.value || 0, 10);
         let sourceBlob = null;
+        let textPrompt = '';
+
+        if (!activeProfile && voiceProfiles.length === 0) {
+          showToast('NO PROFILE', 'Please train or create a voice profile first.');
+          return;
+        }
 
         btnExecute.disabled = true;
         statusBox.style.display = 'block';
 
         try {
           if (activeInputMode === 'TTS') {
-            const text = container.querySelector('#ipt-tts-text')?.value.trim();
-            if (!text) throw new Error("Please enter text.");
+            textPrompt = container.querySelector('#ipt-tts-text')?.value.trim();
+            if (!textPrompt) throw new Error("Please enter text.");
             
             statusBox.textContent = "🔄 STEP 1: GENERATING NEURAL BASE SPEECH...";
             const ttsRes = await fetch(`${MAIN_API_BASE}/api/voice/tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text, voice: 'en-US-ChristopherNeural' })
+              body: JSON.stringify({ text: textPrompt, voice: 'en-US-ChristopherNeural' })
             });
             if (!ttsRes.ok) throw new Error("TTS generation failed");
             const ttsData = await ttsRes.json();
@@ -255,7 +363,20 @@ export default function VoiceClonerPage() {
           for (let i = 0; i < outBinary.length; i++) outBytes[i] = outBinary.charCodeAt(i);
           convertedAudioUrl = URL.createObjectURL(new Blob([outBytes], { type: 'audio/wav' }));
           
+          playSFX('pop', 0.8);
           showToast('SUCCESS', 'Voice cloning complete!');
+
+          logAction('MEDIA_GENERATION', {
+            type: 'VOICE_CLONE',
+            profile: activeProfile,
+            mode: activeInputMode,
+            prompt: activeInputMode === 'TTS' ? textPrompt : 'Audio Morphing'
+          }, {
+            category: 'MEDIA',
+            level: 'INFO',
+            message: activeInputMode === 'TTS' ? textPrompt : `Cloned voice using profile '${activeProfile}'`
+          });
+
           render();
 
         } catch (err) {
@@ -272,15 +393,44 @@ export default function VoiceClonerPage() {
       btnTrain.onclick = async () => {
         const name = container.querySelector('#ipt-train-profile-name').value.trim();
         if (!name) return showToast('ERROR', 'Enter profile name.');
-        showToast('TRAINING INITIATED', 'Check backend logs for progress.');
-        fetch(`${MAIN_API_BASE}/api/voice/train?profile_name=${encodeURIComponent(name)}`, { method: 'POST' });
+        
+        saveVoiceProfile({
+          name,
+          label: name.toUpperCase(),
+          desc: 'Trained Voice Model',
+          icon: '💾'
+        });
+        voiceProfiles = getSavedProfiles();
+        activeProfile = name;
+
+        playSFX('pop', 0.8);
+        showToast('TRAINING INITIATED', 'Profile added. Check backend logs for GPU training progress.');
+        fetch(`${MAIN_API_BASE}/api/voice/train?profile_name=${encodeURIComponent(name)}`, { method: 'POST' }).catch(() => {});
+        activeTab = 'CONVERT';
+        render();
       };
     }
   }
 
-  // Load backend profiles
+  // Load genuine backend custom profiles (if any) and merge with saved profiles
   fetch(`${MAIN_API_BASE}/api/voice/profiles`).then(r => r.json()).then(data => {
-    if (data.presets) voiceProfiles = [...data.presets, ...(data.custom_profiles || []).map(c => ({ name: c, label: c.toUpperCase(), desc: 'Custom Profile', icon: '💾' }))];
+    const customList = (data.custom_profiles || []).map(c => ({
+      name: typeof c === 'string' ? c : c.name,
+      label: (typeof c === 'string' ? c : (c.label || c.name)).toUpperCase(),
+      desc: 'Cloud RVC Profile',
+      icon: '☁️'
+    }));
+    const local = getSavedProfiles();
+    const combined = [...local];
+    customList.forEach(cp => {
+      if (!combined.some(p => p.name === cp.name)) {
+        combined.push(cp);
+      }
+    });
+    voiceProfiles = combined;
+    if (!activeProfile && voiceProfiles.length > 0) {
+      activeProfile = voiceProfiles[0].name;
+    }
     render();
   }).catch(() => {});
 

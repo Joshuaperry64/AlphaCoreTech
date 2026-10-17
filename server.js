@@ -322,6 +322,7 @@ app.post('/api/pending-profiles/reject', authenticate, async (req, res) => {
 });
 
 
+app.get('/api/pins', authenticate, async (req, res) => res.json((await readDB()).pins));
 app.post('/api/pins', authenticate, async (req, res) => {
   const db = await readDB();
   db.pins = req.body;
@@ -361,6 +362,10 @@ app.post('/api/auth', async (req, res) => {
 
   if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
     return res.json({ valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` });
+  }
+
+  if (found.mustChangePin) {
+    return res.json({ valid: true, pinObj: found, requireNewPin: true });
   }
 
   if (found.type === 'one-time') {

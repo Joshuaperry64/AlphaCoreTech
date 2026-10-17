@@ -178,6 +178,24 @@ export function getGlobalAudio() {
   return globalAudio;
 }
 
+export function pauseGlobalAudio() {
+  if (globalAudio && !globalAudio.paused) {
+    try {
+      globalAudio.pause();
+      isPlaying = false;
+      const playBtn = document.getElementById('play-audio-btn');
+      if (playBtn) {
+        playBtn.innerHTML = '&#9658;';
+        playBtn.title = "Play Music";
+      }
+      return true;
+    } catch (e) {
+      console.warn("Global audio pause error:", e);
+    }
+  }
+  return false;
+}
+
 export function initAudioVisualizer() {
   const visCanvas = document.getElementById('audio-vis-canvas');
   if (!visCanvas) return;

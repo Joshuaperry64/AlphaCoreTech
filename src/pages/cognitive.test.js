@@ -2,10 +2,26 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import CognitiveUplink, { resolveProfileDossier, buildContextualPrefix, sanitizeArchitectOutput } from './cognitive.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 
+vi.mock('@google/genai', () => ({
+  GoogleGenAI: vi.fn().mockImplementation(function() {
+    return {
+      live: {
+        connect: vi.fn().mockResolvedValue({
+          sendClientContent: vi.fn(),
+          sendRealtimeInput: vi.fn(),
+          close: vi.fn()
+        })
+      }
+    };
+  }),
+  Type: {}
+}));
+
 describe('Cognitive Core & Global Comm Link API Key Routing', () => {
   beforeEach(() => {
     sessionStorage.clear();
     localStorage.clear();
+    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
@@ -67,7 +83,7 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(channelTitle.textContent).toContain('GLOBAL_COMM_LINK');
   });
 
-  it('reflects user input in visual chat and displays active thinking indicator', async () => {
+  it('handles peer transmissions in Global Comm Link without AI thinking bubble', async () => {
     sessionStorage.setItem('current_profile', 'Architect');
     sessionStorage.setItem('current_pin', '672167566');
 
@@ -88,6 +104,32 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(userMsg.textContent).toContain('[ARCHITECT]');
     expect(userMsg.textContent).toContain('Status report on neural grid.');
 
+    // In standby Global Comm Link, thinking indicator is NOT triggered (inter-operator transmission)
+    const thinking = chatMessages.querySelector('.thinking-bubble');
+    expect(thinking).toBeNull();
+
+    el.remove();
+  });
+
+  it('reflects user input in visual chat and displays active thinking indicator when Live Link is established', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const connectBtn = el.querySelector('#connect-live-btn');
+    const chatInput = el.querySelector('#chat-input');
+    const sendBtn = el.querySelector('#chat-send-btn');
+    const chatMessages = el.querySelector('#chat-messages');
+
+    connectBtn.click();
+    await new Promise(r => setTimeout(r, 50));
+
+    chatInput.value = 'Status report on neural grid.';
+    sendBtn.click();
+
     // Verify thinking indicator is displayed
     const thinking = chatMessages.querySelector('.thinking-bubble');
     expect(thinking).toBeTruthy();
@@ -102,7 +144,7 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("ALWAYS address and refer to him strictly and exclusively as 'Architect'");
   });
 
-  it('toggles Vault RAG mode on and off with visual and system feedback', async () => {
+  it('toggles Vault Context mode on and off with visual and system feedback', async () => {
     const el = CognitiveUplink();
     document.body.appendChild(el);
     await new Promise(r => setTimeout(r, 60));
@@ -110,17 +152,17 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     const toggleRagBtn = el.querySelector('#toggle-rag-btn');
     const chatMessages = el.querySelector('#chat-messages');
     expect(toggleRagBtn).toBeTruthy();
-    expect(toggleRagBtn.textContent).toBe('VAULT RAG: OFF');
+    expect(toggleRagBtn.textContent).toBe('VAULT CONTEXT: OFF');
 
     // Click to turn ON
     toggleRagBtn.click();
-    expect(toggleRagBtn.textContent).toBe('VAULT RAG: ON');
-    expect(chatMessages.textContent).toContain('VAULT RAG ACTIVE');
+    expect(toggleRagBtn.textContent).toBe('VAULT CONTEXT: ON');
+    expect(chatMessages.textContent).toContain('VAULT CONTEXT ACTIVE');
 
     // Click to turn OFF
     toggleRagBtn.click();
-    expect(toggleRagBtn.textContent).toBe('VAULT RAG: OFF');
-    expect(chatMessages.textContent).toContain('VAULT RAG DEACTIVATED');
+    expect(toggleRagBtn.textContent).toBe('VAULT CONTEXT: OFF');
+    expect(chatMessages.textContent).toContain('VAULT CONTEXT DEACTIVATED');
 
     el.remove();
   });
@@ -246,5 +288,139 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
   it('sanitizes Architect civilian name while preserving J.P. handle', () => {
     expect(sanitizeArchitectOutput('Hello Josh, how are you?')).toBe('Hello Architect, how are you?');
     expect(sanitizeArchitectOutput('Operator J.P. has logged into node 3.')).toBe('Operator J.P. has logged into node 3.');
+  });
+
+  it('defaults TTS to ON with active cyan badge styling', async () => {
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const toggleTtsBtn = el.querySelector('#toggle-tts-btn');
+    expect(toggleTtsBtn).toBeTruthy();
+    expect(toggleTtsBtn.textContent).toBe('TTS: ON');
+
+    // Toggle off
+    toggleTtsBtn.click();
+    expect(toggleTtsBtn.textContent).toBe('TTS: OFF');
+
+    // Toggle back on
+    toggleTtsBtn.click();
+    expect(toggleTtsBtn.textContent).toBe('TTS: ON');
+
+    el.remove();
+  });
+
+  it('renders Global Comms Matrix Mesh presence bar and operative badges', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const presenceBar = el.querySelector('#mesh-presence-bar');
+    expect(presenceBar).toBeTruthy();
+    expect(presenceBar.style.display).not.toBe('none');
+
+    const operativesList = el.querySelector('#mesh-operatives-list');
+    expect(operativesList).toBeTruthy();
+
+    const archBadge = operativesList.querySelector('[data-operative="ARCHITECT"]');
+    expect(archBadge).toBeTruthy();
+    expect(archBadge.classList.contains('online')).toBe(true);
+
+    // Switch to Private Uplink: presence bar must hide
+    const privateTab = el.querySelector('[data-target="cog-chat-private"]');
+    privateTab.click();
+    expect(presenceBar.style.display).toBe('none');
+
+    // Switch back to Global Comm Link: presence bar reappears
+    const sharedTab = el.querySelector('[data-target="cog-chat-shared"]');
+    sharedTab.click();
+    expect(presenceBar.style.display).toBe('flex');
+
+    el.remove();
+  });
+
+  it('mandates personal API key for Private Uplink and displays banner when unset', async () => {
+    sessionStorage.setItem('current_profile', 'DoeBoy');
+    sessionStorage.setItem('current_pin', '6969');
+    localStorage.removeItem('gemini_user_api_key_doeboy');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    // Switch to Private Uplink
+    const privateTab = el.querySelector('[data-target="cog-chat-private"]');
+    privateTab.click();
+
+    const keyBanner = el.querySelector('#private-key-banner');
+    expect(keyBanner).toBeTruthy();
+    expect(keyBanner.style.display).toBe('block');
+
+    const chatInput = el.querySelector('#chat-input');
+    const sendBtn = el.querySelector('#chat-send-btn');
+    const chatMessages = el.querySelector('#chat-messages');
+
+    chatInput.value = 'Encrypted inquiry.';
+    sendBtn.click();
+
+    expect(chatMessages.textContent).toContain('PRIVATE UPLINK REQUIRES A PERSONAL API KEY');
+
+    el.remove();
+  });
+
+  it('supports collapsing and expanding sessions drawer in Private Uplink', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const privateTab = el.querySelector('[data-target="cog-chat-private"]');
+    privateTab.click();
+
+    const threadsSidebar = el.querySelector('#threads-sidebar');
+    const collapseBtn = el.querySelector('#collapse-threads-btn');
+    const expandBtn = el.querySelector('#expand-threads-btn');
+
+    expect(threadsSidebar.style.display).toBe('flex');
+
+    collapseBtn.click();
+    expect(threadsSidebar.style.display).toBe('none');
+    expect(expandBtn.style.display).toBe('inline-block');
+
+    expandBtn.click();
+    expect(threadsSidebar.style.display).toBe('flex');
+    expect(expandBtn.style.display).toBe('none');
+
+    el.remove();
+  });
+
+  it('automatically archives chat file uploads to Vault databank', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const fileInput = el.querySelector('#chat-file-input');
+    const fakeFile = new File(['alpha test confidential data'], 'alpha_protocol_notes.txt', { type: 'text/plain' });
+
+    Object.defineProperty(fileInput, 'files', {
+      value: [fakeFile],
+      writable: true
+    });
+
+    fileInput.dispatchEvent(new Event('change'));
+    await new Promise(r => setTimeout(r, 80));
+
+    const vaultFiles = JSON.parse(localStorage.getItem('alphacore_vault_files') || '[]');
+    expect(vaultFiles.some(f => (f.name || f.filename) === 'alpha_protocol_notes.txt')).toBe(true);
+
+    el.remove();
   });
 });

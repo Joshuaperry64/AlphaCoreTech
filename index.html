@@ -85,52 +85,48 @@
           <span class="nav-icon">🎨</span>
           <span class="nav-label">Txt2Img Pipeline</span>
         </a>
-        <a href="#/aimodals?tab=img2img" class="nav-item nav-item-pair nav-sub-item" data-tab="img2img" data-route="/aimodals" data-label="Image to Image Fabricator" title="Image to Image Fabricator">
+        <a href="#/aimodals?tab=img2img" class="nav-item nav-item-pair nav-sub-item" data-tab="img2img" data-route="/aimodals" data-label="Img2Img / OmniGen" title="Image to Image & OmniGen Matrix">
           <span class="nav-icon">🖼️</span>
-          <span class="nav-label">Img2Img Fabricator</span>
+          <span class="nav-label">Img2Img / OmniGen</span>
         </a>
 
         <a href="#/aimodals?tab=controlnet" class="nav-item nav-item-pair nav-sub-item" data-tab="controlnet" data-route="/aimodals" data-label="ControlNet Forge" title="ControlNet Forge">
           <span class="nav-icon">🦾</span>
           <span class="nav-label">ControlNet Forge</span>
         </a>
-        <a href="#/aimodals?tab=omnigen" class="nav-item nav-item-pair nav-sub-item" data-tab="omnigen" data-route="/aimodals" data-label="OmniGen Matrix" title="OmniGen Matrix">
-          <span class="nav-icon">🧬</span>
-          <span class="nav-label">OmniGen Matrix</span>
-        </a>
-
         <a href="#/aimodals?tab=txt2vid" class="nav-item nav-item-pair nav-sub-item" data-tab="txt2vid" data-route="/aimodals" data-label="Txt2Video Engine" title="Txt2Video Engine">
           <span class="nav-icon">🎬</span>
           <span class="nav-label">Txt2Vid Engine</span>
         </a>
+
         <a href="#/aimodals?tab=img2vid" class="nav-item nav-item-pair nav-sub-item" data-tab="img2vid" data-route="/aimodals" data-label="Image to Video Socket" title="Image to Video Socket">
           <span class="nav-icon">🎥</span>
           <span class="nav-label">Img2Vid Socket</span>
         </a>
-
         <a href="#/aimodals?tab=vid2audio" class="nav-item nav-item-pair nav-sub-item" data-tab="vid2audio" data-route="/aimodals" data-label="Vid2Audio Sync" title="Vid2Audio Sync">
           <span class="nav-icon">🔊</span>
           <span class="nav-label">Vid2Audio Sync</span>
         </a>
+
         <a href="#/aimodals?tab=upscaler" class="nav-item nav-item-pair nav-sub-item" data-tab="upscaler" data-route="/aimodals" data-label="Resolution Upscaler" title="Resolution Upscaler">
           <span class="nav-icon">🔍</span>
           <span class="nav-label">Res Upscaler</span>
         </a>
-
         <a href="#/director" class="nav-item nav-item-pair" data-route="/director" data-label="Cyber-Director" title="Cyber-Director">
           <span class="nav-icon">🎬</span>
           <span class="nav-label">Cyber-Director</span>
         </a>
+
         <a href="#/assets" class="nav-item nav-item-pair" data-route="/assets" data-label="Asset Manager" title="Asset Manager">
           <span class="nav-icon">💾</span>
           <span class="nav-label">Asset Manager</span>
         </a>
-
         <a href="#/voice" class="nav-item nav-item-pair" data-route="/voice" data-label="RVC Voice Cloner" title="RVC Voice Cloner">
           <span class="nav-icon">🎙️</span>
           <span class="nav-label">RVC Voice Cloner</span>
         </a>
-        <a href="#/music" class="nav-item nav-item-pair" data-route="/music" data-label="Music Generator" title="Music Generator">
+
+        <a href="#/music" class="nav-item nav-item-pair" data-route="/music" data-label="Music Generator" title="Music Generator" style="grid-column: span 2;">
           <span class="nav-icon">🎵</span>
           <span class="nav-label">Music Generator</span>
         </a>
@@ -165,9 +161,9 @@
           <span class="nav-icon">⚡</span>
           <span class="nav-label">Subroutines</span>
         </a>
-        <a href="#/diagnostics" class="nav-item nav-item-pair" data-route="/diagnostics" data-label="Diagnostics">
+        <a href="#/diagnostics" class="nav-item nav-item-pair" data-route="/diagnostics" data-label="Chronological Evolution" title="Chronological Evolution">
           <span class="nav-icon">⍾</span>
-          <span class="nav-label">Diagnostics</span>
+          <span class="nav-label">Chrono Evolution</span>
         </a>
 
         <a href="#/changelog" class="nav-item nav-item-pair" data-route="/changelog" data-label="Changelog">
@@ -201,13 +197,18 @@
   
   <main class="main-content" id="app" role="main" aria-label="AlphaCore Interface Page Content" tabindex="-1"></main>
 
-  <div class="bottom-right-controls" style="display: none;" role="toolbar" aria-label="Quick System Controls">
-    <button id="play-audio-btn" class="play-audio-btn" title="Toggle Audio Playback" aria-label="Toggle Cyberpunk Audio Stream">
-      &#9658;
+  <div class="bottom-right-controls" id="bottom-right-controls" style="display: none;" role="toolbar" aria-label="Quick System Controls">
+    <button id="br-collapse-btn" class="br-collapse-toggle" title="Collapse / Expand Controls" aria-label="Collapse Quick Controls">
+      <span class="br-collapse-arrow">›</span>
     </button>
-    <button id="eco-mode-btn" class="eco-mode-btn" title="Toggle Eco or Performance Mode" aria-label="Toggle Eco and Performance GPU Mode">
-      <span class="eco-icon" aria-hidden="true">⚡</span>
-    </button>
+    <div class="br-controls-inner">
+      <button id="play-audio-btn" class="play-audio-btn" title="Toggle Audio Playback" aria-label="Toggle Cyberpunk Audio Stream">
+        &#9658;
+      </button>
+      <button id="eco-mode-btn" class="eco-mode-btn" title="Toggle Eco or Performance Mode" aria-label="Toggle Eco and Performance GPU Mode">
+        <span class="eco-icon" aria-hidden="true">⚡</span>
+      </button>
+    </div>
   </div>
   
   <div id="stat-modal" class="stat-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display: none;"></div>

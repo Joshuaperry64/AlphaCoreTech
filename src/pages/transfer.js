@@ -1,5 +1,5 @@
 import { createElement } from '../components/utils.js';
-import { playSFX } from '../components/audio.js';
+import { playSFX, pauseGlobalAudio } from '../components/audio.js';
 import {
   getProfileWallet,
   creditWallet,
@@ -63,6 +63,7 @@ class LaundromatAudioEngine {
 
   // ─── Lo-Fi Laundromat Music Generator ─────────────────────────────────────
   startMusic() {
+    pauseGlobalAudio();
     this.init();
     if (!this.ctx || this.isMusicPlaying) return;
     this.isMusicPlaying = true;
@@ -598,10 +599,64 @@ const laundromatAudio = new LaundromatAudioEngine();
     } catch(e) {}
   };
 
-  laundromatAudio.playMachineStart = playMachineStart;
-  laundromatAudio.playTimeTravel = playTimeTravel;
-  laundromatAudio.playCoinDrop = playCoinDrop;
+// ─── Under Development Disclaimer Modal (Modal Studio Style) ───────────────
+function buildLaundromatDisclaimer(onAccept) {
+  const wrap = createElement('div', { className: 'laundry-disclaimer-wrap' });
+  let timeLeft = 5;
+  let timerId = null;
 
+  wrap.innerHTML = `
+    <div class="laundry-disclaimer-box">
+      <div style="font-size: 2.8rem; margin-bottom: 8px;">⚠</div>
+      <div style="font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: #06b6d4; font-weight: bold; margin-bottom: 6px;">
+        // LAUNDROMAT_ADVISORY
+      </div>
+      <div style="display: inline-block; font-size: 0.75rem; color: #f59e0b; background: rgba(245,158,11,0.15); border: 1px solid #f59e0b; padding: 3px 10px; border-radius: 4px; font-weight: bold; margin-bottom: 14px;">
+        NOTICE // UNDER DEVELOPMENT
+      </div>
+      <div style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.6; text-align: left; background: rgba(0,0,0,0.5); padding: 14px; border-radius: 6px; border: 1px solid #334155; margin-bottom: 16px;">
+        <p style="margin: 0 0 10px 0;">This feature is currently <strong>under development</strong>. The 24/7 coin-op simulation, matrix token dispenser, wash cycles, and direct debit payouts are active in experimental preview mode.</p>
+        <p style="margin: 0; color: #94a3b8; font-size: 0.82rem;">By continuing, you acknowledge that features and network integrations are actively being tested.</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button id="laundry-disc-accept" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; background: rgba(16,185,129,0.25); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 0.95rem; cursor: pointer; border-radius: 4px;">
+          ACCEPT &amp; PROCEED (<span id="laundry-disc-timer">5</span>s)
+        </button>
+      </div>
+    </div>
+  `;
+
+  const cleanupAndAccept = () => {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+    try {
+      sessionStorage.setItem('laundromat_disclaimer_accepted', '1');
+    } catch {}
+    if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    if (typeof onAccept === 'function') onAccept();
+  };
+
+  const btnAccept = wrap.querySelector('#laundry-disc-accept');
+  if (btnAccept) {
+    btnAccept.onclick = () => {
+      playSFX('click');
+      cleanupAndAccept();
+    };
+  }
+
+  const timerSpan = wrap.querySelector('#laundry-disc-timer');
+  timerId = setInterval(() => {
+    timeLeft--;
+    if (timerSpan) timerSpan.textContent = String(timeLeft);
+    if (timeLeft <= 0) {
+      cleanupAndAccept();
+    }
+  }, 1000);
+
+  return wrap;
+}
 
 export default function TransferPage() {
   const container = createElement('div', { className: 'page-container laundry-page' });
@@ -733,9 +788,11 @@ export default function TransferPage() {
   const initialWallet = getProfileWallet(activeProfile);
 
   let state = {
-    stage: 'wash_laundry', // 'wash_laundry' | 'laundromat_hub' | 'cash_to_coin' | 'washing_machines' | 'dryer_machines' | 'receive_laundry'
+    stage: 'wash_laundry', // 'wash_laundry' | 'laundromat_hub' | 'cash_to_coin' | 'coin_changer' | 'washing_machines' | 'dryer_machines' | 'receive_laundry'
     amount: 25.00,
     paymentAuthorized: false,
+    cardInsertedSuccess: false,
+    transactionProcessed: false,
     tokensHeld: 0,
     inventory: {
       coins: initialWallet.tokens || 0,
@@ -772,58 +829,6 @@ export default function TransferPage() {
       margin: 0 auto;
       padding-bottom: 40px;
     }
-    .laundry-stepper {
-      display: flex;
-      justify-content: flex-start;
-      background: #060b13;
-      border: 1px solid #1f2937;
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 14px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #06b6d4 #030712;
-      gap: 6px;
-      scroll-snap-type: x mandatory;
-    }
-    .laundry-stepper::-webkit-scrollbar {
-      height: 4px;
-    }
-    .laundry-stepper::-webkit-scrollbar-track {
-      background: #030712;
-    }
-    .laundry-stepper::-webkit-scrollbar-thumb {
-      background: #06b6d4;
-      border-radius: 2px;
-    }
-    .laundry-step-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      color: #6b7280;
-      white-space: nowrap;
-      cursor: pointer;
-      padding: 8px 12px;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      scroll-snap-align: start;
-      user-select: none;
-      flex-shrink: 0;
-      min-height: 36px;
-    }
-    .laundry-step-item.active {
-      background: rgba(16, 185, 129, 0.16);
-      color: #10b981;
-      border: 1px solid #10b981;
-      font-weight: bold;
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
-    }
-    .laundry-step-item.completed {
-      color: #06b6d4;
-      background: rgba(6, 182, 212, 0.05);
-    }
     .laundry-radio-bar {
       display: flex;
       justify-content: space-between;
@@ -831,17 +836,55 @@ export default function TransferPage() {
       background: #030712;
       border: 1px solid #1e293b;
       border-radius: 6px;
-      padding: 8px 12px;
-      margin-bottom: 16px;
-      font-size: 0.8rem;
+      padding: 4px 10px;
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      gap: 6px;
+      flex-wrap: wrap;
     }
     .radio-dot {
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #10b981;
       animation: radio-pulse 1.5s infinite alternate;
+    }
+    .btn-glowing-pulse {
+      animation: pulse-glow 1.5s infinite alternate ease-in-out;
+    }
+    @keyframes pulse-glow {
+      0% {
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+        transform: scale(1);
+      }
+      100% {
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.8), 0 0 40px rgba(16, 185, 129, 0.5);
+        transform: scale(1.02);
+      }
+    }
+    .laundry-disclaimer-wrap {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.94);
+      backdrop-filter: blur(10px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .laundry-disclaimer-box {
+      background: #090e1a;
+      border: 2px solid #06b6d4;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 35px rgba(6,182,212,0.3);
+      text-align: center;
+      position: relative;
     }
     @keyframes radio-pulse {
       0% { opacity: 0.4; transform: scale(0.9); }
@@ -987,6 +1030,8 @@ export default function TransferPage() {
     const curProfile = canonicalProfileName(sessionStorage.getItem('current_profile') || 'Guest');
     const curWallet = getProfileWallet(curProfile);
 
+    const isArchitect = curProfile.toLowerCase() === 'architect';
+
     // ─── Top Header ─────────────────────────────────────────────────────────
     const headerEl = createElement('div', { style: 'display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #1e293b; padding-bottom:12px; flex-wrap:wrap; gap:8px;' });
     headerEl.innerHTML = `
@@ -997,13 +1042,22 @@ export default function TransferPage() {
         </h1>
       </div>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-        <button id="btn-header-wallet" class="aim-btn" style="display:flex; align-items:center; gap:6px; background:#070d17; border:1px solid ${curWallet.accentColor}; padding:6px 12px; border-radius:4px; font-size:0.75rem; cursor:pointer;" title="Inspect Account Wallets">
-          <span style="font-size:0.95rem;">💳</span>
-          <span style="color:${curWallet.accentColor}; font-weight:bold; font-family:'Orbitron',sans-serif;">${curWallet.cardId}</span>
-          <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)}</span>
-          <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens}</span>
-          <span style="color:#06b6d4; font-size:0.68rem; margin-left:2px;">ACCOUNTS ▾</span>
-        </button>
+        ${isArchitect ? `
+          <button id="btn-header-wallet" class="aim-btn" style="display:flex; align-items:center; gap:6px; background:#070d17; border:1px solid ${curWallet.accentColor}; padding:6px 12px; border-radius:4px; font-size:0.75rem; cursor:pointer;" title="Inspect Account Wallets">
+            <span style="font-size:0.95rem;">💳</span>
+            <span style="color:${curWallet.accentColor}; font-weight:bold; font-family:'Orbitron',sans-serif;">${curWallet.cardId}</span>
+            <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)}</span>
+            <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens}</span>
+            <span style="color:#06b6d4; font-size:0.68rem; margin-left:2px;">ACCOUNTS ▾</span>
+          </button>
+        ` : `
+          <div id="btn-header-wallet" style="display:flex; align-items:center; gap:6px; background:#070d17; border:1px solid ${curWallet.accentColor}; padding:6px 12px; border-radius:4px; font-size:0.75rem;">
+            <span style="font-size:0.95rem;">💳</span>
+            <span style="color:${curWallet.accentColor}; font-weight:bold; font-family:'Orbitron',sans-serif;">${curWallet.cardId}</span>
+            <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)}</span>
+            <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens}</span>
+          </div>
+        `}
         <span style="display:inline-block; font-size:0.75rem; padding:4px 10px; border-radius:3px; font-weight:bold; border:1px solid ${feeConfig.badgeColor}; color:${feeConfig.badgeColor}; background:${feeConfig.badgeColor}15;">
           ${feeConfig.badge}
         </span>
@@ -1011,7 +1065,7 @@ export default function TransferPage() {
     `;
 
     const btnHdrWallet = headerEl.querySelector('#btn-header-wallet');
-    if (btnHdrWallet) {
+    if (btnHdrWallet && isArchitect) {
       btnHdrWallet.onclick = () => {
         playSFX('click');
         openWalletInspectorModal({ onProfileSwitched: () => render() });
@@ -1019,58 +1073,22 @@ export default function TransferPage() {
     }
     container.appendChild(headerEl);
 
-    // ─── Top Stepper Progress Bar ───────────────────────────────────────────
-    const steps = [
-      { id: 'wash_laundry', label: '1. Wash Laundry', icon: '🧺' },
-      { id: 'laundromat_hub', label: '2. Laundro-mat', icon: '🏪' },
-      { id: 'cash_to_coin', label: '3. Coin Changer', icon: '🪙' },
-      { id: 'washing_machines', label: '4. Washer', icon: '🫧' },
-      { id: 'dryer_machines', label: '5. Dryer', icon: '🔥' },
-      { id: 'receive_laundry', label: '6. Clean Pickup', icon: '✨' }
-    ];
-
-    const stepperEl = createElement('div', { className: 'laundry-stepper' });
-    const stageIdx = steps.findIndex(s => s.id === state.stage);
-
-    steps.forEach((step, idx) => {
-      const stepItem = createElement('div', {
-        className: `laundry-step-item ${state.stage === step.id ? 'active' : ''} ${idx < stageIdx ? 'completed' : ''}`,
-        innerHTML: `<span>${idx < stageIdx ? '✓' : step.icon}</span> ${step.label}`
-      });
-      stepItem.onclick = () => {
-        laundromatAudio.init();
-        playSFX('click');
-        state.stage = step.id;
-        render();
-      };
-      stepperEl.appendChild(stepItem);
-    });
-    container.appendChild(stepperEl);
-
-    // Auto-scroll active stepper item into center view on mobile touch devices
-    setTimeout(() => {
-      const activeStep = stepperEl.querySelector('.laundry-step-item.active');
-      if (activeStep && typeof activeStep.scrollIntoView === 'function') {
-        activeStep.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }
-    }, 60);
-
-    // ─── Laundro-mat Radio Bar (Cozy Lo-Fi Music In Background) ──────────────
+    // ─── Laundro-mat Radio Bar (Compact Lo-Fi Ambient Audio) ───────────────
     const radioBar = createElement('div', { className: 'laundry-radio-bar' });
     radioBar.innerHTML = `
-      <div class="laundry-radio-bar-left" style="display:flex; align-items:center; gap:8px;">
+      <div style="display:flex; align-items:center; gap:6px;">
         <span class="radio-dot" style="${!laundromatAudio.isMusicPlaying ? 'background:#64748b; animation:none;' : ''}"></span>
-        <span style="color:#06b6d4; font-weight:bold;">📻 LAUNDRO-MAT RADIO:</span>
-        <span style="color:${laundromatAudio.isMusicPlaying ? '#38bdf8' : '#64748b'}; font-size:0.78rem;">
-          ${laundromatAudio.isMusicPlaying ? '24/7 Neon-Spin Lo-Fi Chillhop [80 BPM]' : 'Radio Paused'}
+        <span style="color:#06b6d4; font-weight:bold; font-size:0.72rem;">📻 RADIO:</span>
+        <span style="color:${laundromatAudio.isMusicPlaying ? '#38bdf8' : '#64748b'}; font-size:0.72rem;">
+          ${laundromatAudio.isMusicPlaying ? '24/7 Lo-Fi [80 BPM]' : 'Paused'}
         </span>
       </div>
-      <div class="laundry-radio-bar-right" style="display:flex; align-items:center; gap:8px;">
-        <button id="radio-btn-toggle" class="aim-btn" style="padding:6px 12px; font-size:0.75rem; background:${laundromatAudio.isMusicPlaying ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border-color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; cursor:pointer; min-height:36px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button id="radio-btn-toggle" class="aim-btn" style="padding:2px 8px; font-size:0.7rem; background:${laundromatAudio.isMusicPlaying ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'}; border-color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; color:${laundromatAudio.isMusicPlaying ? '#ef4444' : '#10b981'}; cursor:pointer; min-height:28px; border-radius:4px;">
           ${laundromatAudio.isMusicPlaying ? '⏸ PAUSE' : '▶ PLAY'}
         </button>
-        <span style="font-size:0.75rem; color:#64748b;">VOL</span>
-        <input type="range" id="radio-vol-slider" min="0" max="1" step="0.05" value="${laundromatAudio.musicVolume}" style="width:65px; height:24px; accent-color:#06b6d4; cursor:pointer;" title="Laundro-mat Radio Volume">
+        <span style="font-size:0.68rem; color:#64748b;">VOL</span>
+        <input type="range" id="radio-vol-slider" min="0" max="1" step="0.05" value="${laundromatAudio.musicVolume}" style="width:48px; height:18px; accent-color:#06b6d4; cursor:pointer;" title="Radio Volume">
       </div>
     `;
 
@@ -1140,10 +1158,14 @@ export default function TransferPage() {
           <button id="btn-goto-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 16px; font-size: 1rem; background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; min-height: 48px;">
             🧺 GRAB YOUR DIRTY LOAD FIRMLY & ENTER LAUNDRO-MAT ➔
           </button>
+          <button id="btn-sneak-laundromat" class="aim-btn" style="width: 100%; max-width: 450px; padding: 10px; font-size: 0.85rem; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-weight: bold; cursor: pointer; margin-top: 8px;">
+            🥷 SNEAK INTO LAUNDROMAT (FREEPLAY SIMULATION ➔)
+          </button>
         </div>
       `;
 
       bodyBox.querySelector('#btn-goto-laundromat').onclick = () => {
+        pauseGlobalAudio();
         laundromatAudio.init();
         laundromatAudio.playDoorChime();
         laundromatAudio.startMusic();
@@ -1151,6 +1173,23 @@ export default function TransferPage() {
         state.stage = 'laundromat_hub';
         render();
       };
+
+      const btnSneakHamper = bodyBox.querySelector('#btn-sneak-laundromat');
+      if (btnSneakHamper) {
+        btnSneakHamper.onclick = () => {
+          pauseGlobalAudio();
+          laundromatAudio.init();
+          laundromatAudio.startMusic();
+          playSFX('bypass');
+          if ((curWallet.tokens || 0) < 12) {
+            creditWallet(feeConfig.profileName, { tokensDelta: 12 });
+            state.inventory.coins = Math.max(state.inventory.coins, 12);
+            state.tokensHeld = Math.max(state.tokensHeld, 12);
+          }
+          state.stage = 'washing_machines';
+          render();
+        };
+      }
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -1166,7 +1205,7 @@ export default function TransferPage() {
             THE LAUNDRO-MAT MAIN FLOOR
           </h2>
           <p style="color: #94a3b8; font-size: 0.95rem; max-width: 480px; margin: 0 auto 20px auto; line-height: 1.5;">
-            Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide hard coin tokens in. Head over to the cash changer and slide your bills in.
+            Look at all these vibrating machines humming in the neon glow. The commercial washers are tight and won't accept anything until you slide matrix tokens in. Head over to the cash changer and slide your bills in.
           </p>
 
           <!-- Operative Smartcard & Account Balance Mount -->
@@ -1176,11 +1215,11 @@ export default function TransferPage() {
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">CURRENT STATUS</div>
               <div style="font-size: 1rem; color: #10b981; font-weight: bold; margin-top: 4px;">🧺 ${curWallet.cleanLoads} CLEAN / 1 DIRTY</div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for coin lube</div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Waiting for token lube</div>
             </div>
             <div style="background: #0b1322; border: 1px solid #1e293b; padding: 12px; border-radius: 6px;">
               <div style="font-size: 0.75rem; color: #888;">TOKEN SACK</div>
-              <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 ${curWallet.tokens} TOKENS</div>
+              <div style="font-size: 1rem; color: #f59e0b; font-weight: bold; margin-top: 4px;">🪙 ${curWallet.tokens} MATRIX TOKENS</div>
               <div style="font-size: 0.75rem; color: ${curWallet.tokens > 0 ? '#10b981' : '#ef4444'}; margin-top: 2px;">${curWallet.tokens > 0 ? 'Ready for machine insertion' : 'Needs ATM deposit'}</div>
             </div>
           </div>
@@ -1190,9 +1229,13 @@ export default function TransferPage() {
               ⬅ BACK
             </button>
             <button id="btn-goto-changer" class="aim-btn" style="flex: 2; padding: 14px; background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer;">
-              🪙 SLIDE OVER TO CASH CHANGER ➔
+              🪙 SLIDE OVER TO ATM &amp; CASH CHANGER ➔
             </button>
           </div>
+
+          <button id="btn-sneak-floor" class="aim-btn" style="max-width: 480px; width: 100%; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.82rem; font-weight: bold; cursor: pointer; margin-bottom: 8px;">
+            🥷 SNEAK TO WASHING MACHINES (TEST RUNTIME ➔)
+          </button>
 
           <button id="btn-lost-found" class="aim-btn" style="max-width: 480px; width: 100%; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.82rem; font-weight: bold; cursor: pointer;">
             👙 RUMMAGE THROUGH ABANDONED LOST & FOUND BASKET
@@ -1225,6 +1268,19 @@ export default function TransferPage() {
         state.stage = 'cash_to_coin';
         render();
       };
+      const btnSneakFloor = bodyBox.querySelector('#btn-sneak-floor');
+      if (btnSneakFloor) {
+        btnSneakFloor.onclick = () => {
+          playSFX('bypass');
+          if ((curWallet.tokens || 0) < 12) {
+            creditWallet(feeConfig.profileName, { tokensDelta: 12 });
+            state.inventory.coins = Math.max(state.inventory.coins, 12);
+            state.tokensHeld = Math.max(state.tokensHeld, 12);
+          }
+          state.stage = 'washing_machines';
+          render();
+        };
+      }
       const btnLostFound = bodyBox.querySelector('#btn-lost-found');
       if (btnLostFound) {
         btnLostFound.onclick = () => {
@@ -1271,7 +1327,7 @@ export default function TransferPage() {
             <div>
               <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; letter-spacing: 2px;">// SECTOR 07 HARDWARE CHANGER</span>
               <h3 style="font-family: 'Orbitron', sans-serif; margin: 4px 0 0 0; color: #fff; font-size: clamp(1.1rem, 3.5vw, 1.35rem); display: flex; align-items: center; gap: 8px;">
-                <span>🏧</span> ALPHA-ATM 9000 & COIN TERMINAL
+                <span>🏧</span> ALPHA-ATM 9000 &amp; COIN TERMINAL
               </h3>
             </div>
             <div style="text-align: right;">
@@ -1283,9 +1339,9 @@ export default function TransferPage() {
 
           <!-- CRT Display Terminal Screen -->
           <div class="atm-crt-screen">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 12px;">
-              <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">[TERMINAL STATUS: READY FOR INSERTION]</span>
-              <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">EXCHANGE RATE: $1.00 = 4 HARD TOKENS</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">[TERMINAL STATUS: ${state.cardInsertedSuccess ? 'CARD AUTHORIZED' : 'READY FOR INSERTION'}]</span>
+              <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">EXCHANGE RATE: $1.00 = 4 MATRIX TOKENS</span>
             </div>
 
             <!-- DOCKED OPERATIVE LAUNDRY SMARTCARD -->
@@ -1305,55 +1361,50 @@ export default function TransferPage() {
                 <div style="font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: #10b981; font-weight: bold; text-shadow: 0 0 8px rgba(16,185,129,0.3);">
                   $${curWallet.balance.toFixed(2)} <span style="font-size: 0.72rem; color: #94a3b8;">USD</span>
                 </div>
-                <div style="font-size: 0.72rem; color: #f59e0b; margin-top: 1px;">🪙 ${curWallet.tokens} Hard Tokens</div>
+                <div style="font-size: 0.72rem; color: #f59e0b; margin-top: 1px;">🪙 ${curWallet.tokens} Matrix Tokens</div>
               </div>
             </div>
 
-            <!-- SOURCE & DESTINATION MATRIX (High Visibility) -->
+            <!-- SOURCE ROUTING MATRIX -->
             <div style="background: rgba(0,0,0,0.6); border: 1px solid rgba(6,182,212,0.3); border-radius: 6px; padding: 14px; margin-bottom: 16px;">
-              <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">
-                // SOURCE & DESTINATION ROUTING MATRIX
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; letter-spacing: 1px;">
+                  // SOURCE ROUTING MATRIX
+                </div>
+                <button id="btn-donate-toggle" class="aim-btn" style="padding: 4px 10px; font-size: 0.72rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#f59e0b' : '#334155'}; color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#fbbf24' : '#94a3b8'}; cursor: pointer; border-radius: 4px;">
+                  💝 Donate to AlphaCore (Optional) ${state.selectedDestination === DONATION_ACCOUNT_ID ? '✓ [ACTIVE]' : ''}
+                </button>
               </div>
 
               <!-- Source -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 4px 0;">
                 <span style="color: #94a3b8;">SOURCE (FUNDING INSTRUMENT):</span>
                 <span style="color: #fff; font-weight: bold;">💳 Card / Cash App (Instant Capture)</span>
               </div>
-
-              <!-- Destination Routing Choice -->
-              <div style="font-size: 0.85rem; margin-top: 10px;">
-                <div style="color: #94a3b8; margin-bottom: 6px;">DESTINATION (PAYOUT RECIPIENT):</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
-                  <button id="dest-mode-vault" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination === DONATION_ACCOUNT_ID ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination === DONATION_ACCOUNT_ID ? '#10b981' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
-                    <div style="font-weight: bold; color: #10b981;">🏦 Donate Alpha Core</div>
-                    <div style="font-size: 0.7rem; color: #94a3b8;">Support the Platform</div>
-                  </button>
-                  <button id="dest-mode-pushtocard" class="aim-btn" style="padding: 10px; font-size: 0.78rem; background: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${state.selectedDestination !== DONATION_ACCOUNT_ID ? '#06b6d4' : '#334155'}; color: #fff; cursor: pointer; text-align: left;">
-                    <div style="font-weight: bold; color: #06b6d4;">💳 Instant Push-to-Card</div>
-                    <div style="font-size: 0.7rem; color: #94a3b8;">Direct Debit Card Payout</div>
-                  </button>
+              ${state.selectedDestination === DONATION_ACCOUNT_ID ? `
+                <div style="margin-top: 6px; font-size: 0.75rem; color: #fbbf24; background: rgba(245,158,11,0.1); padding: 4px 8px; border-radius: 4px;">
+                  ⚠️ Voluntary Donation Active: Payout will route to AlphaCore Development Vault.
                 </div>
-              </div>
+              ` : ''}
             </div>
 
             <!-- ATM Cash Deposit Input & Token Yield -->
             <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 6px; margin-bottom: 16px;">
               <div style="display:flex; justify-content:space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER CASH DEPOSIT AMOUNT (USD) [MIN $10]:</label>
+                <label style="color: #94a3b8; font-size: 0.85rem; font-weight: bold;">ENTER CASH DEPOSIT AMOUNT:</label>
                 <span id="token-count-display" style="color: #f59e0b; font-weight: bold; font-size: 0.95rem;">
-                  🪙 ${activeFeeData.tokens} HARD TOKENS
+                  🪙 ${activeFeeData.tokens} MATRIX TOKENS
                 </span>
               </div>
               <div style="position: relative; margin-bottom: 10px;">
                 <span style="position: absolute; left: 14px; top: 11px; font-size: 1.5rem; color: #10b981;">$</span>
-                <input type="number" id="cash-amount-input" value="${state.amount || ''}" placeholder="10.00" min="10" step="1"
+                <input type="number" id="cash-amount-input" value="${state.amount || 25}" placeholder="10.00 minimum" min="10" step="1"
                   style="width: 100%; min-height: 52px; background: #000; border: 1px solid #10b981; color: #10b981; padding: 12px 12px 12px 35px; font-size: 1.5rem; font-family: 'Share Tech Mono', monospace; outline: none; box-sizing: border-box; border-radius: 4px;">
               </div>
               <!-- Quick Presets -->
               <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                ${[1, 5, 10, 25, 50, 100].map(val => `
-                  <button class="aim-btn btn-preset" data-val="${val}" style="padding: 4px 10px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border-color: #334155; color: #cbd5e1; cursor: pointer;">
+                ${[10, 20, 25, 30, 50, 75].map(val => `
+                  <button class="aim-btn btn-preset" data-val="${val}" style="padding: 4px 10px; font-size: 0.75rem; background: ${Number(state.amount) === val ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; border-color: ${Number(state.amount) === val ? '#10b981' : '#334155'}; color: ${Number(state.amount) === val ? '#10b981' : '#cbd5e1'}; cursor: pointer;">
                     $${val}.00
                   </button>
                 `).join('')}
@@ -1364,12 +1415,11 @@ export default function TransferPage() {
             <div style="background: rgba(0,0,0,0.5); border: 1px solid #1e293b; padding: 14px; border-radius: 6px; margin-bottom: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #1f293d; padding-bottom: 6px;">
                 <span style="font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: #06b6d4; font-weight: bold;">
-                  THEMATIC LAUNDRO-MAT FEES & VALUE LEDGER
+                  THEMATIC LAUNDRO-MAT FEES &amp; VALUE LEDGER
                 </span>
-                <span style="font-size: 0.75rem; color: ${feeConfig.badgeColor};">${feeConfig.badge}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #888; font-size: 0.82rem;">
-                <span>Water & Machine Capture (Stripe 2.9% + $0.30):</span>
+                <span>Water &amp; Machine Capture (Stripe 2.9% + $0.30):</span>
                 <span id="fee-capture" style="color:#cbd5e1;">-$${activeFeeData.captureFee.toFixed(2)}</span>
               </div>
               <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; color: ${feeConfig.isExempt ? '#10b981' : '#888'};">
@@ -1386,77 +1436,52 @@ export default function TransferPage() {
               </div>
             </div>
 
-            <!-- Animated Card Insertion Slot Area -->
-            <div class="atm-card-slot-wrap">
-              <div id="card-graphic" class="animated-credit-card ${state.cardInserting ? 'card-inserting' : ''}">
+            <!-- Centered Animated Card Insertion Slot Area -->
+            <div class="atm-card-slot-wrap" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin: 16px auto;">
+              <div id="card-graphic" class="animated-credit-card ${state.cardInserting ? 'card-inserting' : ''}" style="margin: 0 auto 6px auto;">
                 <span>CHIP // VISA</span>
               </div>
-              <div class="atm-card-slot"></div>
+              <div class="atm-card-slot" style="margin: 0 auto;"></div>
               <div style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; margin-top: 6px;">
-                ${state.cardInserting ? '⚡ READING CARD DATA & ENCRYPTING...' : '▼ CARD INSERTION SLOT ▼'}
+                ${state.cardInserting ? '⚡ READING CARD DATA & ENCRYPTING...' : (state.cardInsertedSuccess ? '✅ CARD DOCKED IN SLOT' : '▼ CARD INSERTION SLOT ▼')}
               </div>
             </div>
           </div>
 
           <!-- Action Buttons Area -->
           <div style="margin-bottom: 16px;">
-            <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 10) ? 'disabled' : ''}>
-              💳 INSERT CARD & DEPOSIT $${state.amount ? Number(state.amount).toFixed(2) : '0.00'}
-            </button>
+            ${state.cardInsertedSuccess ? `
+              <div style="background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 12px; font-weight: bold; color: #10b981; font-size: 1rem;">
+                ✅ CARD INSERTED SUCCESSFULLY
+              </div>
+              <button id="btn-goto-coin-changer" class="aim-btn btn-glowing-pulse" style="width: 100%; min-height: 52px; padding: 14px; background: rgba(16,185,129,0.25); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 1.05rem; cursor: pointer; border-radius: 6px;">
+                CONTINUE TO THE COIN CHANGER ➔
+              </button>
+            ` : `
+              <button id="btn-initiate-deposit" class="aim-btn" style="width: 100%; min-height: 52px; padding: 14px; font-size: 1.05rem; background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; font-weight: bold; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" ${(!activeFeeData || activeFeeData.rawVal < 10) ? 'disabled' : ''}>
+                💳 Insert card
+              </button>
+            `}
 
             <!-- Stripe Card Element Mount Container -->
             <div id="stripe-ui-container" style="display: none; margin-top: 14px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 8px;">
               <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// ENTER SOURCE PAYMENT CARD DETAILS:</div>
               <div id="payment-element"></div>
               <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer; border-radius: 4px;">
-                CONFIRM DEPOSIT & DISPENSE TOKENS
+                CONFIRM CARD &amp; AUTHORIZE
               </button>
               <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
             </div>
           </div>
 
-          <!-- Animated Coin Dispenser Tray -->
-          <div class="atm-dispenser-tray">
-            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">
-              HARD COIN TOKEN DISPENSER TRAY
-            </div>
-            <div id="dispenser-coins" style="font-size: 2.2rem; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              ${state.tokensHeld > 0 ? '<span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span>' : '<span style="font-size:0.85rem; color:#475569;">[TRAY EMPTY // AWAITING DEPOSIT]</span>'}
-            </div>
-            ${state.tokensHeld > 0 ? `
-              <button id="btn-collect-proceed" class="aim-btn" style="margin-top: 10px; padding: 10px 20px; background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fbbf24; font-weight: bold; cursor: pointer; border-radius: 4px;">
-                🪙 COLLECT ${state.tokensHeld} TOKENS & PROCEED TO WASHERS ➔
-              </button>
-            ` : ''}
-          </div>
-
-          <!-- Push-to-Card Instant Payout Direct Gateway (The Coin Changer Cash-Out) -->
-          <div style="margin-top: 20px; background: #050912; border: 1px solid #1e293b; padding: 18px; border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
-              <div>
-                <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold;">// COIN CHANGER & CASH-OUT</span>
-                <h4 style="font-family: 'Orbitron', sans-serif; margin: 2px 0 0 0; color: #fff; font-size: 1rem;">
-                  INSTANT PUSH-TO-CARD DEBIT PAYOUT
-                </h4>
-              </div>
-            </div>
-            <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 14px 0; line-height: 1.4;">
-              Ready to cash out clean laundry? Enter any Visa or Mastercard debit card (including Cash App Cash Card or Chime). Funds arrive in under 60 seconds.
-            </p>
-            
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 12px;" class="mobile-stack-columns">
-              <input type="text" id="payout-card-num" placeholder="Debit Card Number (16 Digits)" maxlength="19"
-                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
-              <input type="text" id="payout-card-exp" placeholder="MM/YY" maxlength="5"
-                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
-              <input type="text" id="payout-card-cvc" placeholder="CVC" maxlength="4"
-                style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none;">
-            </div>
-
-            <button id="btn-execute-push-payout" class="aim-btn" style="width: 100%; min-height: 48px; padding: 12px; background: rgba(6,182,212,0.2); border-color: #06b6d4; color: #06b6d4; font-weight: bold; cursor: pointer; border-radius: 4px;">
-              ⚡ EXECUTE INSTANT PAYOUT ($${activeFeeData.payout.toFixed(2)}) TO DEBIT CARD
+          <!-- Bottom Navigation Controls -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btn-back-hub" class="aim-btn" style="flex: 1; padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.85rem; cursor: pointer;">
+              ⬅ Back to Floor
             </button>
-            <div id="payout-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
+            <button id="btn-sneak-atm" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.82rem; font-weight: bold; cursor: pointer;">
+              🥷 SNEAK INTO LAUNDROMAT (FREEPLAY SIMULATION ➔)
+            </button>
           </div>
         </div>
 
@@ -1492,20 +1517,12 @@ export default function TransferPage() {
         ` : ''}
       `;
 
-      // Wire Up Destination Selection
-      const btnDestVault = bodyBox.querySelector('#dest-mode-vault');
-      const btnDestCard = bodyBox.querySelector('#dest-mode-pushtocard');
-      if (btnDestVault) {
-        btnDestVault.onclick = () => {
+      // Wire Up Donation Toggle
+      const btnDonate = bodyBox.querySelector('#btn-donate-toggle');
+      if (btnDonate) {
+        btnDonate.onclick = () => {
           playSFX('click');
-          state.selectedDestination = DONATION_ACCOUNT_ID;
-          render();
-        };
-      }
-      if (btnDestCard) {
-        btnDestCard.onclick = () => {
-          playSFX('click');
-          state.selectedDestination = 'pushtocard';
+          state.donationConfirmModalActive = true;
           render();
         };
       }
@@ -1533,23 +1550,29 @@ export default function TransferPage() {
           state.amount = val;
           const calc = calculateFees(val, feeConfig.rate);
           if (!calc) {
-            tokenDisplay.textContent = '🪙 0 TOKENS';
-            elCapture.textContent = '-$0.00';
-            elAlpha.textContent = feeConfig.isExempt ? '$0.00' : '-$0.00';
-            elConnect.textContent = '-$0.00';
-            elPayout.textContent = '$0.00';
-            elPayout.style.color = '#ef4444';
-            btnDeposit.disabled = true;
+            tokenDisplay.textContent = '🪙 0 MATRIX TOKENS';
+            if (elCapture) elCapture.textContent = '-$0.00';
+            if (elAlpha) elAlpha.textContent = feeConfig.isExempt ? '$0.00' : '-$0.00';
+            if (elConnect) elConnect.textContent = '-$0.00';
+            if (elPayout) {
+              elPayout.textContent = '$0.00';
+              elPayout.style.color = '#ef4444';
+            }
+            if (btnDeposit) btnDeposit.disabled = true;
             return;
           }
-          tokenDisplay.textContent = `🪙 ${calc.tokens} HARD TOKENS`;
-          elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
-          elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${calc.platformFee.toFixed(2)}`;
-          elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
-          elPayout.textContent = `$${calc.payout.toFixed(2)}`;
-          elPayout.style.color = '#10b981';
-          btnDeposit.disabled = false;
-          btnDeposit.textContent = `💳 INSERT CARD & DEPOSIT $${Number(val).toFixed(2)}`;
+          tokenDisplay.textContent = `🪙 ${calc.tokens} MATRIX TOKENS`;
+          if (elCapture) elCapture.textContent = `-$${calc.captureFee.toFixed(2)}`;
+          if (elAlpha) elAlpha.textContent = feeConfig.isExempt ? '$0.00 (VIP EXEMPT)' : `-$${calc.platformFee.toFixed(2)}`;
+          if (elConnect) elConnect.textContent = `-$${calc.connectFee.toFixed(2)}`;
+          if (elPayout) {
+            elPayout.textContent = `$${calc.payout.toFixed(2)}`;
+            elPayout.style.color = '#10b981';
+          }
+          if (btnDeposit) {
+            btnDeposit.disabled = false;
+            btnDeposit.textContent = '💳 Insert card';
+          }
         };
       }
 
@@ -1584,8 +1607,43 @@ export default function TransferPage() {
         };
       }
 
+      // Continue to Coin Changer Button
+      const btnGotoCoinChanger = bodyBox.querySelector('#btn-goto-coin-changer');
+      if (btnGotoCoinChanger) {
+        btnGotoCoinChanger.onclick = () => {
+          laundromatAudio.playCoinClink();
+          playSFX('navigate');
+          state.stage = 'coin_changer';
+          render();
+        };
+      }
+
+      // Sneak & Back buttons on ATM
+      const btnSneakAtm = bodyBox.querySelector('#btn-sneak-atm');
+      if (btnSneakAtm) {
+        btnSneakAtm.onclick = () => {
+          playSFX('bypass');
+          if ((curWallet.tokens || 0) < 12) {
+            creditWallet(feeConfig.profileName, { tokensDelta: 12 });
+            state.inventory.coins = Math.max(state.inventory.coins, 12);
+            state.tokensHeld = Math.max(state.tokensHeld, 12);
+          }
+          state.stage = 'washing_machines';
+          render();
+        };
+      }
+
+      const btnBackHub = bodyBox.querySelector('#btn-back-hub');
+      if (btnBackHub) {
+        btnBackHub.onclick = () => {
+          playSFX('click');
+          state.stage = 'laundromat_hub';
+          render();
+        };
+      }
+
       // Card Insertion & Stripe Elements Execution
-      async function triggerCardInsertion() {
+      function triggerCardInsertion() {
         state.cardInserting = true;
         laundromatAudio.init();
         laundromatAudio.playBillWhir();
@@ -1593,43 +1651,48 @@ export default function TransferPage() {
         const cardGfx = bodyBox.querySelector('#card-graphic');
         if (cardGfx) cardGfx.classList.add('card-inserting');
 
-        const stripeBox = bodyBox.querySelector('#stripe-ui-container');
-        if (stripeBox) stripeBox.style.display = 'block';
-
-        btnDeposit.disabled = true;
-        btnDeposit.textContent = '⚡ ESTABLISHING SECURE STRIPE UPLINK...';
+        if (btnDeposit) {
+          btnDeposit.disabled = true;
+          btnDeposit.textContent = '⚡ READING CARD & AUTHORIZING...';
+        }
 
         try {
-          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: state.amount,
-              profile: rawProfile,
-              is_guest: isGuest
-            })
-          });
-
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data.detail || 'ATM Deposit rejected by backend.');
-
-          state.depositId = data.depositId;
-
-          if (data.clientSecret && window.Stripe) {
-            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
-            elementsInstance = stripeInstance.elements({
-              clientSecret: data.clientSecret,
-              appearance: { theme: 'night' }
+          if (typeof fetch === 'function') {
+            const req = fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                amount: state.amount,
+                profile: rawProfile,
+                is_guest: isGuest
+              })
             });
-            const paymentElement = elementsInstance.create('payment');
-            paymentElement.mount('#payment-element');
-            btnDeposit.textContent = '💳 PAYMENT CARD INSERTED // COMPLETE BELOW';
+            if (req && typeof req.then === 'function') {
+              req.then(r => r && typeof r.json === 'function' ? r.json() : null).then(data => {
+                if (data && data.depositId) state.depositId = data.depositId;
+                if (data && data.clientSecret && window.Stripe) {
+                  const stripeBox = bodyBox.querySelector('#stripe-ui-container');
+                  if (stripeBox) stripeBox.style.display = 'block';
+                  stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
+                  elementsInstance = stripeInstance.elements({
+                    clientSecret: data.clientSecret,
+                    appearance: { theme: 'night' }
+                  });
+                  const paymentElement = elementsInstance.create('payment');
+                  paymentElement.mount('#payment-element');
+                  if (btnDeposit) btnDeposit.textContent = '💳 PAYMENT CARD INSERTED // COMPLETE BELOW';
+                }
+              }).catch(() => {});
+            }
           }
-        } catch (err) {
-          btnDeposit.disabled = false;
-          btnDeposit.textContent = `❌ ERROR: ${err.message}`;
-          playSFX('incorrect');
-        }
+        } catch {}
+
+        setTimeout(() => {
+          state.cardInserting = false;
+          state.cardInsertedSuccess = true;
+          playSFX('success');
+          render();
+        }, 500);
       }
 
       // Wire Up Payment Submission
@@ -1656,7 +1719,6 @@ export default function TransferPage() {
             }
             playSFX('incorrect');
           } else {
-            // Confirm deposit on backend
             try {
               await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
                 method: 'POST',
@@ -1673,29 +1735,194 @@ export default function TransferPage() {
               console.warn('Backend confirmation note:', e);
             }
 
-            state.paymentAuthorized = true;
-            const dispensedTokens = maxTokens(state.amount);
-            state.tokensHeld += dispensedTokens;
-            if (state.inventory) {
-                state.inventory.coins += dispensedTokens;
-            }
-            creditWallet(feeConfig.profileName, {
-              balanceDelta: state.amount,
-              tokensDelta: dispensedTokens
-            });
-            laundromatAudio.playCoinClink();
+            state.cardInserting = false;
+            state.cardInsertedSuccess = true;
             playSFX('success');
             render();
           }
         };
       }
+    }
 
-      // Helper function for max tokens
+    // ────────────────────────────────────────────────────────────────────────
+    // STAGE 4: COIN CHANGER & PAYOUT DISPENSER
+    // ────────────────────────────────────────────────────────────────────────
+    else if (state.stage === 'coin_changer') {
+      const activeFeeData = calculateFees(state.amount, feeConfig.rate) || {
+        rawVal: Number(state.amount) || 25,
+        captureFee: 1.03,
+        platformFee: 2.50,
+        instantFee: 0.50,
+        connectFee: 0.31,
+        payout: 20.66,
+        totalFees: 4.34,
+        tokens: Math.max(1, Math.floor((Number(state.amount) || 25) * 4))
+      };
+
+      const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
+
+      bodyBox.innerHTML = `
+        <div class="atm-cabinet">
+          <!-- Marquee Header -->
+          <div class="atm-marquee">
+            <div>
+              <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; letter-spacing: 2px;">// SECTOR 07 COIN-OP HARDWARE</span>
+              <h3 style="font-family: 'Orbitron', sans-serif; margin: 4px 0 0 0; color: #fff; font-size: clamp(1.1rem, 3.5vw, 1.35rem); display: flex; align-items: center; gap: 8px;">
+                <span>🪙</span> COIN CHANGER &amp; PAYOUT DISPENSER
+              </h3>
+            </div>
+            <div style="text-align: right;">
+              <span style="display: inline-block; font-size: 0.75rem; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.15); border: 1px solid #10b981; padding: 3px 8px; border-radius: 4px;">
+                ● HOPPER LOADED (READY)
+              </span>
+            </div>
+          </div>
+
+          <!-- CRT Screen -->
+          <div class="atm-crt-screen">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+              <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace;">[CHANGER STATUS: DEPOSIT STAGED]</span>
+              <span style="font-size: 0.85rem; color: #f59e0b; font-weight: bold;">EXCHANGE RATE: $1.00 = 4 MATRIX TOKENS</span>
+            </div>
+
+            <!-- Staged Deposit & Stored Summary -->
+            <div style="background: rgba(0,0,0,0.65); border: 1px solid ${curWallet.accentColor}; border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <div style="font-size: 0.68rem; color: #94a3b8;">STAGED TRANSACTION DEPOSIT:</div>
+                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.25rem; color: #10b981; font-weight: bold;">
+                  $${Number(state.amount || 25).toFixed(2)} <span style="font-size: 0.75rem; color: #94a3b8;">USD</span>
+                </div>
+                <div style="font-size: 0.72rem; color: #64748b;">Smartcard: ${curWallet.cardId} (${curWallet.profile})</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.68rem; color: #94a3b8;">DISPENSE ESTIMATE:</div>
+                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.25rem; color: #f59e0b; font-weight: bold;">
+                  🪙 ${activeFeeData.tokens} MATRIX TOKENS
+                </div>
+                <div style="font-size: 0.72rem; color: #10b981;">Net Payout: $${activeFeeData.payout.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <!-- Payout Destination Fields -->
+            <div style="background: #050912; border: 1px solid #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 14px;">
+              <div style="font-size: 0.8rem; color: #06b6d4; font-weight: bold; margin-bottom: 4px;">
+                // INSTANT PUSH-TO-CARD DEBIT PAYOUT DESTINATION
+              </div>
+              <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 12px 0; line-height: 1.4;">
+                Enter any Visa or Mastercard debit card (including Cash App Cash Card or Chime) for net clean payout ($${activeFeeData.payout.toFixed(2)}).
+              </p>
+
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 10px;" class="mobile-stack-columns">
+                <input type="text" id="payout-card-num" placeholder="Debit Card Number (16 Digits)" maxlength="19"
+                  style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none; font-size: 0.85rem;">
+                <input type="text" id="payout-card-exp" placeholder="MM/YY" maxlength="5"
+                  style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none; font-size: 0.85rem;">
+                <input type="text" id="payout-card-cvc" placeholder="CVC" maxlength="4"
+                  style="background: #000; border: 1px solid #334155; color: #fff; padding: 10px; font-family: monospace; border-radius: 4px; outline: none; font-size: 0.85rem;">
+              </div>
+
+              <!-- Clearance Notice -->
+              <div style="background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25); border-radius: 4px; padding: 8px 12px; font-size: 0.8rem; color: #38bdf8; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <span>ℹ️ Depending on your bank, it may take 2 or so days for the funds to actually clear.</span>
+              </div>
+
+              <button id="btn-process-changer" class="aim-btn" style="width: 100%; min-height: 50px; padding: 14px; background: rgba(16,185,129,0.2); border-color: #10b981; color: #10b981; font-weight: bold; font-size: 0.95rem; cursor: pointer; border-radius: 4px;" ${state.transactionProcessed ? 'disabled' : ''}>
+                ${state.transactionProcessed ? '✅ TRANSACTION COMPLETE // TOKENS DISPENSED' : '⚡ PROCESS TRANSACTION &amp; DISPENSE MATRIX TOKENS'}
+              </button>
+              <div id="changer-status-msg" style="margin-top: 10px; font-size: 0.85rem; ${state.transactionProcessed ? 'display: block; color: #10b981;' : 'display: none;'}">
+                ${state.transactionProcessed ? `✅ <strong>TRANSACTION COMPLETE:</strong> ${state.tokensHeld} Matrix Tokens dispensed to tray! Collect below.` : ''}
+              </div>
+            </div>
+
+            <!-- Animated Matrix Token Dispenser Tray -->
+            <div class="atm-dispenser-tray">
+              <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; margin-bottom: 6px; letter-spacing: 1px;">
+                MATRIX TOKEN DISPENSER TRAY
+              </div>
+              <div id="dispenser-coins" style="font-size: 2.2rem; min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                ${state.tokensHeld > 0 ? '<span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span><span class="coin-dispensing">🪙</span>' : '<span style="font-size:0.85rem; color:#475569;">[TRAY EMPTY // AWAITING TRANSACTION PROCESSING]</span>'}
+              </div>
+              ${state.tokensHeld > 0 ? `
+                <button id="btn-collect-proceed" class="aim-btn btn-glowing-pulse" style="margin-top: 10px; padding: 12px 20px; background: rgba(245,158,11,0.25); border-color: #f59e0b; color: #fbbf24; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 0.95rem;">
+                  🪙 COLLECT ${state.tokensHeld} MATRIX TOKENS &amp; PROCEED TO WASHERS ➔
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Bottom Controls -->
+          <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+            <button id="btn-back-atm" class="aim-btn" style="flex: 1; padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.85rem; cursor: pointer;">
+              ⬅ Back to ATM
+            </button>
+            <button id="btn-sneak-changer" class="aim-btn" style="flex: 1; padding: 10px; background: rgba(168, 85, 247, 0.12); border-color: #a855f7; color: #c084fc; font-size: 0.82rem; font-weight: bold; cursor: pointer;">
+              🥷 SNEAK INTO LAUNDROMAT (FREEPLAY SIMULATION ➔)
+            </button>
+          </div>
+        </div>
+      `;
+
       function maxTokens(amt) {
         return Math.max(1, Math.floor(Number(amt) * 4));
       }
 
-      // Wire Up Collect Tokens Button
+      // Process Transaction & Dispense
+      const btnProcess = bodyBox.querySelector('#btn-process-changer');
+      const cardNumInput = bodyBox.querySelector('#payout-card-num');
+      const cardExpInput = bodyBox.querySelector('#payout-card-exp');
+      const cardCvcInput = bodyBox.querySelector('#payout-card-cvc');
+      const changerStatusMsg = bodyBox.querySelector('#changer-status-msg');
+
+      if (btnProcess) {
+        btnProcess.onclick = async () => {
+          btnProcess.disabled = true;
+          btnProcess.textContent = '⚡ PROCESSING TRANSACTION & DISPENSING...';
+          laundromatAudio.playBillWhir();
+
+          const cardNum = (cardNumInput?.value || '').replace(/\s+/g, '');
+          const cardExp = (cardExpInput?.value || '').trim();
+          const cardCvc = (cardCvcInput?.value || '').trim();
+
+          if (cardNum.length >= 15 && cardExp.includes('/') && cardCvc.length >= 3) {
+            try {
+              const [expMonth, expYear] = cardExp.split('/');
+              await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/changer-payout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  amount: activeFeeData.payout,
+                  profile: rawProfile,
+                  depositId: state.depositId,
+                  cardNumber: cardNum,
+                  expMonth: parseInt(expMonth, 10),
+                  expYear: parseInt(expYear.length === 2 ? `20${expYear}` : expYear, 10),
+                  cvc: cardCvc
+                })
+              });
+            } catch (err) {
+              console.warn('Payout backend note:', err);
+            }
+          }
+
+          state.transactionProcessed = true;
+          const dispensedTokens = maxTokens(state.amount);
+          state.tokensHeld += dispensedTokens;
+          if (state.inventory) {
+            state.inventory.coins += dispensedTokens;
+          }
+          creditWallet(feeConfig.profileName, {
+            balanceDelta: state.amount,
+            tokensDelta: dispensedTokens
+          });
+
+          laundromatAudio.playCoinClink();
+          playSFX('success');
+
+          render();
+        };
+      }
+
+      // Collect Tokens & Proceed to Washers
       const btnCollectProceed = bodyBox.querySelector('#btn-collect-proceed');
       if (btnCollectProceed) {
         btnCollectProceed.onclick = () => {
@@ -1706,72 +1933,28 @@ export default function TransferPage() {
         };
       }
 
-      // Wire Up Push-to-Card Instant Payout
-      const btnPushPayout = bodyBox.querySelector('#btn-execute-push-payout');
-      const cardNumInput = bodyBox.querySelector('#payout-card-num');
-      const cardExpInput = bodyBox.querySelector('#payout-card-exp');
-      const cardCvcInput = bodyBox.querySelector('#payout-card-cvc');
-      const payoutStatusMsg = bodyBox.querySelector('#payout-status-msg');
+      // Back to ATM
+      const btnBackAtm = bodyBox.querySelector('#btn-back-atm');
+      if (btnBackAtm) {
+        btnBackAtm.onclick = () => {
+          playSFX('click');
+          state.stage = 'cash_to_coin';
+          render();
+        };
+      }
 
-      if (btnPushPayout) {
-        btnPushPayout.onclick = async () => {
-          const cardNum = (cardNumInput?.value || '').replace(/\s+/g, '');
-          const cardExp = (cardExpInput?.value || '').trim();
-          const cardCvc = (cardCvcInput?.value || '').trim();
-
-          if (cardNum.length < 15 || !cardExp.includes('/') || cardCvc.length < 3) {
-            alert('Please enter a valid 16-digit debit card number, MM/YY expiration, and 3-digit CVC.');
-            return;
+      // Sneak from Changer
+      const btnSneakChanger = bodyBox.querySelector('#btn-sneak-changer');
+      if (btnSneakChanger) {
+        btnSneakChanger.onclick = () => {
+          playSFX('bypass');
+          if ((curWallet.tokens || 0) < 12) {
+            creditWallet(feeConfig.profileName, { tokensDelta: 12 });
+            state.inventory.coins = Math.max(state.inventory.coins, 12);
+            state.tokensHeld = Math.max(state.tokensHeld, 12);
           }
-
-          const [expMonth, expYear] = cardExp.split('/');
-          btnPushPayout.disabled = true;
-          btnPushPayout.textContent = '⚡ PUSHING FUNDS TO DEBIT CARD...';
-          laundromatAudio.playBillWhir();
-
-          try {
-            const payoutResp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/changer-payout', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                amount: activeFeeData.payout,
-                profile: rawProfile,
-                depositId: state.depositId,
-                cardNumber: cardNum,
-                expMonth: parseInt(expMonth, 10),
-                expYear: parseInt(expYear.length === 2 ? `20${expYear}` : expYear, 10),
-                cvc: cardCvc
-              })
-            });
-
-            const payoutData = await payoutResp.json();
-            if (!payoutResp.ok) throw new Error(payoutData.detail || 'Push-to-card payout failed.');
-
-            // Debit clean payout from active profile wallet
-            debitWallet(feeConfig.profileName, {
-              balanceDelta: activeFeeData.payout
-            });
-
-            laundromatAudio.playCleanSparkle();
-            laundromatAudio.playReceiptPrinter();
-            playSFX('login');
-
-            if (payoutStatusMsg) {
-              payoutStatusMsg.style.display = 'block';
-              payoutStatusMsg.style.color = '#10b981';
-              payoutStatusMsg.innerHTML = `✅ <strong>PAYOUT SUCCESSFUL:</strong> $${activeFeeData.payout.toFixed(2)} sent directly to card ending in ${cardNum.slice(-4)} (Payout ID: ${payoutData.payoutId || 'instant_card'}).`;
-            }
-            btnPushPayout.textContent = '✅ PAYOUT DISPATCHED TO DEBIT CARD';
-          } catch (err) {
-            btnPushPayout.disabled = false;
-            btnPushPayout.textContent = '⚡ RETRY PUSH-TO-CARD PAYOUT';
-            if (payoutStatusMsg) {
-              payoutStatusMsg.style.display = 'block';
-              payoutStatusMsg.style.color = '#ef4444';
-              payoutStatusMsg.textContent = `❌ ${err.message}`;
-            }
-            playSFX('incorrect');
-          }
+          state.stage = 'washing_machines';
+          render();
         };
       }
     }
@@ -1811,11 +1994,11 @@ export default function TransferPage() {
           <div style="margin-bottom: 20px;">
             <div style="font-size: 0.85rem; color: #94a3b8;">
               STATUS: <strong style="color: ${state.washerTraveled ? '#10b981' : (state.washerLoaded ? '#06b6d4' : '#f59e0b')};">
-                ${!state.washerLoaded ? 'DRUM IS GAPING // AWAITING YOUR FULL LOAD & HARD TOKENS' : (state.washerTraveled ? 'INTENSE SPIN COMPLETE // EVERYTHING DRIPPING AT 1400 RPM' : 'VORTEX CHURN ACTIVE // SOAKING WET & FOAMING AT THE RIM')}
+                ${!state.washerLoaded ? 'DRUM IS GAPING // AWAITING YOUR FULL LOAD & MATRIX TOKENS' : (state.washerTraveled ? 'INTENSE SPIN COMPLETE // EVERYTHING DRIPPING AT 1400 RPM' : 'VORTEX CHURN ACTIVE // SOAKING WET & FOAMING AT THE RIM')}
               </strong>
             </div>
             <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-              ${state.washerTraveled ? 'TIME ELAPSED: 60:00 (1 HOUR OF VIOLENT VIBRATIONS FINISHED)' : (state.washerLoaded ? 'TIME REMAINING: 59:58 (1 HOUR OF CHURNING)' : `NEEDS: ${tokensNeeded} HARD TOKENS TO UNLOCK`)}
+              ${state.washerTraveled ? 'TIME ELAPSED: 60:00 (1 HOUR OF VIOLENT VIBRATIONS FINISHED)' : (state.washerLoaded ? 'TIME REMAINING: 59:58 (1 HOUR OF CHURNING)' : `NEEDS: ${tokensNeeded} MATRIX TOKENS TO UNLOCK`)}
             </div>
           </div>
 
@@ -1921,7 +2104,7 @@ export default function TransferPage() {
       if (btnBack) {
         btnBack.onclick = () => {
           playSFX('click');
-          state.stage = 'cash_to_coin';
+          state.stage = 'coin_changer';
           render();
         };
       }
@@ -2202,7 +2385,7 @@ export default function TransferPage() {
               <span>Available Balance:</span> <span style="color:#10b981; font-weight:bold;">$${curWallet.balance.toFixed(2)} USD</span>
             </div>
             <div style="display: flex; justify-content: space-between; color: #cbd5e1; margin-bottom: 2px;">
-              <span>Tokens Remaining:</span> <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens} Hard Tokens</span>
+              <span>Tokens Remaining:</span> <span style="color:#f59e0b; font-weight:bold;">🪙 ${curWallet.tokens} Matrix Tokens</span>
             </div>
             <div style="display: flex; justify-content: space-between; color: #cbd5e1;">
               <span>Lifetime Clean Loads:</span> <span style="color:#10b981; font-weight:bold;">✨ ${curWallet.cleanLoads} Loads Completed</span>
@@ -2300,7 +2483,7 @@ export default function TransferPage() {
             🔄 DROP ANOTHER DIRTY LOAD (START OVER)
           </button>
           <button id="btn-changer-return" class="aim-btn" style="padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.85rem; cursor: pointer;">
-            🪙 Return to Cash-to-Coin Changer
+            🪙 Return to Coin Changer
           </button>
         </div>
       `;
@@ -2345,10 +2528,10 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
         render();
       };
 
-      // Return to Cash-to-Coin
+      // Return to Coin Changer
       bodyBox.querySelector('#btn-changer-return').onclick = () => {
         laundromatAudio.playCoinClink();
-        state.stage = 'cash_to_coin';
+        state.stage = 'coin_changer';
         render();
       };
     }
@@ -2558,7 +2741,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
             </div>
 
             <div style="color: #fbbf24; font-size: 1.05rem; font-weight: bold; line-height: 1.5; border-top: 1px dashed rgba(245, 158, 11, 0.4); padding-top: 12px;">
-              ⚠️ The money goes to AlphaCore. Are you sure this is your expected function?
+              ⚠️ This is a donation and you will not receive any of the funds. Are you sure this is your expected function?
             </div>
           </div>
 
@@ -2600,6 +2783,11 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
       };
 
       container.appendChild(donationModal);
+    }
+
+    // ─── Development Disclaimer Modal ───────────────────────────────────────
+    if (!sessionStorage.getItem('laundromat_disclaimer_accepted')) {
+      container.appendChild(buildLaundromatDisclaimer(() => render()));
     }
   };
 
