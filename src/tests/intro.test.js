@@ -8,7 +8,7 @@ describe('Intro Animation Boot Sequence', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders intro overlay, FITS terminal, and skip button', async () => {
+  it('renders intro overlay, skip button brings user to disclaimer, and disclaimer must be accepted', async () => {
     const app = document.createElement('div');
     app.id = 'app';
     document.body.appendChild(app);
@@ -17,12 +17,22 @@ describe('Intro Animation Boot Sequence', () => {
     const overlay = document.getElementById('intro-overlay');
     expect(overlay).toBeTruthy();
 
-    const skipBtn = overlay.querySelector('button');
+    const skipBtn = overlay.querySelector('.intro-skip-btn');
     expect(skipBtn).toBeTruthy();
     expect(skipBtn.textContent).toContain('FAST BOOT / SKIP');
 
-    // Clicking skip finishes boot and resolves
+    // Clicking skip reveals the disclaimer and cannot bypass it directly
     skipBtn.click();
+    const disclaimerOverlay = overlay.querySelector('.intro-disclaimer-overlay');
+    expect(disclaimerOverlay).toBeTruthy();
+    expect(disclaimerOverlay.style.display).toBe('flex');
+
+    // The disclaimer accept button must be clicked to finish boot
+    const acceptBtn = disclaimerOverlay.querySelector('button');
+    expect(acceptBtn).toBeTruthy();
+    expect(acceptBtn.textContent).toContain('I UNDERSTAND – PROCEED');
+
+    acceptBtn.click();
     const result = await introPromise;
     expect(result.introContainer).toBeTruthy();
     expect(result.cleanup).toBeTypeOf('function');
@@ -50,10 +60,15 @@ describe('Intro Animation Boot Sequence', () => {
     // Legacy flag was cleared from localStorage
     expect(localStorage.getItem('alphacore_intro_complete')).toBeNull();
 
-    // Skip button can still be clicked to finish when desired
+    // Fast boot button brings user to disclaimer
     const overlay = document.getElementById('intro-overlay');
-    const skipBtn = overlay.querySelector('button');
+    const skipBtn = overlay.querySelector('.intro-skip-btn');
     skipBtn.click();
+
+    // Click accept to complete boot
+    const disclaimerOverlay = overlay.querySelector('.intro-disclaimer-overlay');
+    const acceptBtn = disclaimerOverlay.querySelector('button');
+    acceptBtn.click();
 
     const result = await introPromise;
     expect(result.introContainer).toBeTruthy();

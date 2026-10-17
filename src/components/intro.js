@@ -5,10 +5,11 @@
  *   • Typewriter title & real-time telemetry stage progress bar
  *   • Auto-advancing golden Legal Disclaimer modal with manual override
  *   • Real-time audio reactive visualizer canvas (corner dials, oscilloscope wave, equalizers)
- *   • Ambient background audio playback (/Login_background.wav)
- *   • Fast boot / skip bypass at all stages
+ *   • Ambient background audio playback (/skybeat.webm)
+ *   • Fast boot / skip to mandatory Legal Disclaimer acknowledgment
  */
 import { createElement } from './utils.js';
+import { initGlobalAudio, getAudioContext, getGlobalAudio } from './audio.js';
 
 export default function createIntro(container) {
   return new Promise((resolve) => {
@@ -65,11 +66,7 @@ export default function createIntro(container) {
     };
     intro.appendChild(bgVideo);
 
-    // ─── Audio Element (/Login_background.wav) ───────────────────────
-    const loginAudio = document.createElement('audio');
-    loginAudio.src = '/Login_background.wav';
-    loginAudio.loop = true;
-    loginAudio.preload = 'auto';
+
 
     // ─── Canvas Visualizer Layer (for Secure Access Terminal) ────────
     const visCanvas = document.createElement('canvas');
@@ -292,14 +289,17 @@ export default function createIntro(container) {
       try { bgVideo.pause(); } catch (_) {}
 
       visCanvas.style.display = 'block';
-      visualizerController = mountVisualizer(visCanvas, loginAudio);
+      const gAudio = getGlobalAudio() || initGlobalAudio();
+      visualizerController = mountVisualizer(visCanvas, gAudio);
 
-      // Start audio playback
+      // Start global ambient audio stream in sync
       try {
-        loginAudio.volume = 0.45;
-        const playPromise = loginAudio.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {});
+        if (gAudio) {
+          gAudio.volume = 0.35;
+          const playPromise = gAudio.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
         }
       } catch (_) {}
 
@@ -309,7 +309,12 @@ export default function createIntro(container) {
       resolve({ introContainer: mainWrap, cleanup });
     }
 
-    skipBtn.onclick = finishBoot;
+    // Fast boot / skip navigates to disclaimer; disclaimer MUST be explicitly accepted
+    skipBtn.onclick = () => {
+      if (disclaimerOverlay.style.display !== 'flex') {
+        showDisclaimer();
+      }
+    };
     acceptBtn.onclick = finishBoot;
 
     // ─── Sequence: Touch -> Startup Video -> Disclaimer -> Finish ──────
@@ -358,13 +363,13 @@ export default function createIntro(container) {
 
     function showDisclaimer() {
       if (booted) return;
+      if (progressTimer) clearInterval(progressTimer);
+      if (typeTimer) clearInterval(typeTimer);
+      touchPrompt.style.display = 'none';
       startupOverlay.style.display = 'none';
+      skipBtn.style.display = 'none'; // User cannot skip past the disclaimer
       disclaimerOverlay.style.display = 'flex';
-
-      // Auto-advance after 5 seconds
-      disclaimerTimer = setTimeout(() => {
-        finishBoot();
-      }, 5000);
+      // User must explicitly click acceptBtn to proceed — no auto-advance bypass
     }
 
     // Interaction triggers for touch prompt
@@ -389,10 +394,6 @@ export default function createIntro(container) {
       if (visualizerController) visualizerController.stop();
 
       try {
-        loginAudio.pause();
-        loginAudio.remove();
-      } catch (_) {}
-      try {
         bgVideo.pause();
         bgVideo.remove();
       } catch (_) {}
@@ -416,15 +417,21 @@ function mountVisualizer(canvas, audioEl) {
   let dataArray = null;
 
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx && audioEl) {
-      const actx = new AudioCtx();
-      const src = actx.createMediaElementSource(audioEl);
-      analyser = actx.createAnalyser();
-      analyser.fftSize = 64;
-      src.connect(analyser);
-      analyser.connect(actx.destination);
+    const audioData = getAudioContext();
+    if (audioData && audioData.analyser) {
+      analyser = audioData.analyser;
       dataArray = new Uint8Array(analyser.frequencyBinCount);
+    } else {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx && audioEl) {
+        const actx = new AudioCtx();
+        const src = actx.createMediaElementSource(audioEl);
+        analyser = actx.createAnalyser();
+        analyser.fftSize = 64;
+        src.connect(analyser);
+        analyser.connect(actx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
     }
   } catch (_) {}
 
