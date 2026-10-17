@@ -16,6 +16,9 @@ from shared_app import app
 
 CACHE_DIR = "/hf-hub-cache"
 
+# Checkpoints built on SD1.5 (loaded with StableDiffusionPipeline instead of SDXL)
+SD15_CHECKPOINTS = {"realisticComicBook_v10.safetensors"}
+
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install(
@@ -93,12 +96,21 @@ class Txt2Img:
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at: {model_path}. Did you upload it?")
 
-        self.pipe = StableDiffusionXLPipeline.from_single_file(
-            str(model_path),
-            torch_dtype=torch.bfloat16,
-            use_safetensors=True,
-            add_watermarker=False,
-        ).to("cuda")
+        if model_filename in SD15_CHECKPOINTS:
+            from diffusers import StableDiffusionPipeline
+            self.pipe = StableDiffusionPipeline.from_single_file(
+                str(model_path),
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+                safety_checker=None,
+            ).to("cuda")
+        else:
+            self.pipe = StableDiffusionXLPipeline.from_single_file(
+                str(model_path),
+                torch_dtype=torch.bfloat16,
+                use_safetensors=True,
+                add_watermarker=False,
+            ).to("cuda")
         if hasattr(self.pipe, "watermark"):
             self.pipe.watermark = None
             
@@ -178,6 +190,10 @@ class Txt2Img:
             model_file = "cyberrealisticPony_v180Coreshift.safetensors"
         elif AutismPony == 1 or model_name.lower().startswith("autism") or model_name.lower().startswith("pony"):
             model_file = "autismmixSDXL_autismmixPony.safetensors"
+        elif "comicbook" in model_name.lower().replace(" ", "").replace("_", ""):
+            model_file = "realisticComicBook_v10.safetensors"
+        elif model_name.lower().startswith("juicy"):
+            model_file = "juicyDreams_v10.safetensors"
         elif model_name.lower().startswith("0x7"):
             model_file = "0x7RealisticFreedom_omegaSDXL.safetensors"
         elif "realvis" in model_name.lower() or "realvisxl" in model_name.lower():

@@ -933,6 +933,8 @@ function buildTxt2Img() {
           <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
           <option value="cyberrealisticPony_v180Coreshift.safetensors">CYBERREALISTIC PONY</option>
           <option value="realvisxlV50_v50Bakedvae.safetensors">REALVISXL V5.0</option>
+          <option value="realisticComicBook_v10.safetensors">REALISTIC COMIC BOOK (SD1.5)</option>
+          <option value="juicyDreams_v10.safetensors">JUICY DREAMS</option>
           <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
@@ -1692,6 +1694,8 @@ function buildImg2Img() {
         <option value="intorealism_sdxlV4">intorealism_sdxlV4 (Hyper-Realistic Skin & Lighting)</option>
         <option value="cyberrealisticPony_v180Coreshift">cyberrealisticPony_v180Coreshift (CyberRealistic Pony V18)</option>
         <option value="realvisxlV50_v50Bakedvae">realvisxlV50_v50Bakedvae (RealVisXL V5.0 Photorealism)</option>
+        <option value="realisticComicBook_v10">realisticComicBook_v10 (Comic Book Realism, SD1.5)</option>
+        <option value="juicyDreams_v10">juicyDreams_v10 (Juicy Dreams SDXL)</option>
       </select>
     </div>
 

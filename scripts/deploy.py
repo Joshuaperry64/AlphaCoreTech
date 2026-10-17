@@ -42,6 +42,8 @@ WEBSITE_CHECKPOINTS = {
     "intorealism_sdxlV4.safetensors": "2650268",
     "cyberrealisticPony_v180Coreshift.safetensors": "2884631",
     "realvisxlV50_v50Bakedvae.safetensors": "798204",
+    "realisticComicBook_v10.safetensors": "271085",
+    "juicyDreams_v10.safetensors": "3381025",
 }
 
 WEBSITE_LORAS = {

@@ -74,6 +74,8 @@ SDXL_CHECKPOINTS = {
     "realisticVisionV60B1_v60B1VAE": "realvisxlV50_v50Bakedvae.safetensors",
     "cyberrealisticPony_v180Coreshift": "cyberrealisticPony_v180Coreshift.safetensors",
     "realvisxlV50_v50Bakedvae": "realvisxlV50_v50Bakedvae.safetensors",
+    "realisticComicBook_v10": "realisticComicBook_v10.safetensors",
+    "juicyDreams_v10": "juicyDreams_v10.safetensors",
 }
 
 
