@@ -1,5 +1,5 @@
 /**
- * AlphaCore SPA Intro — Forbidden Archive Cyber Boot Sequence
+ * AlphaCore SPA Intro — Cyber Boot Sequence
  * Features:
  *   • Fullscreen /terminal.mp4 video playback with Alpha Wolf logo overlay
  *   • Typewriter title & real-time telemetry stage progress bar
@@ -114,7 +114,7 @@ export default function createIntro(container) {
     });
     touchPrompt.innerHTML = `
       <div style="font-family:'Share Tech Mono', monospace; font-size:1.1rem; color:#00ffcc; letter-spacing:3px; margin-bottom:12px; text-shadow:0 0 10px #00ffcc;">
-        TOUCH THE SCREEN TO INITIALIZE FORBIDDEN EXECUTION...
+        TOUCH THE SCREEN TO INITIALIZE ALPHACORE EXECUTION...
       </div>
       <div style="font-family:'Orbitron', sans-serif; font-size:0.8rem; color:#94a3b8; letter-spacing:2px; animation:blink 1.2s infinite;">
         [ CLICK ANYWHERE OR PRESS ANY KEY TO INITIALIZE ]
@@ -261,8 +261,8 @@ export default function createIntro(container) {
     let progressTimer = null;
     let typeTimer = null;
 
-    // Full title & stages matching Forbidden Archive
-    const fullTitle = '◢  FORBIDDEN ARCHIVE  ◣';
+    // Full title & stages for AlphaCore Tech boot
+    const fullTitle = '◢  ALPHACORE TECH  ◣';
     const subTitleText = 'ADVANCED CYBER INTELLIGENCE PLATFORM  //  v5.2';
     const stages = [
       { pct: 0,  label: 'INITIALISING NEURAL MATRIX' },
