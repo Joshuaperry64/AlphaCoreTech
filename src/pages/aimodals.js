@@ -21,6 +21,9 @@ export function getLoraOptions() {
   <option value="Missionary.safetensors">MISSIONARY</option>
   <option value="SpyCam.safetensors">SPYCAM</option>
   <option value="lezcunbkv2.safetensors">LICKING LESBIANS</option>
+  <option value="onOff_v326.safetensors">ON/OFF CLOTHING (ONOFF)</option>
+  <option value="ahxl_v1.safetensors">AHXL V1 (AHEGAO/EXPRESSIONS)</option>
+  <option value="youthful_faceV1.safetensors">YOUTHFUL FACE V1</option>
 `;
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
   if (currentProfile !== 'guest') {
@@ -935,6 +938,7 @@ function buildTxt2Img() {
           <option value="realvisxlV50_v50Bakedvae.safetensors">REALVISXL V5.0</option>
           <option value="realisticComicBook_v10.safetensors">REALISTIC COMIC BOOK (SD1.5)</option>
           <option value="juicyDreams_v10.safetensors">JUICY DREAMS</option>
+          <option value="fullyREALXL_v30TRINITY.safetensors">FULLY REAL XL TRINITY</option>
           <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
@@ -1699,6 +1703,7 @@ function buildImg2Img() {
         <option value="realvisxlV50_v50Bakedvae">realvisxlV50_v50Bakedvae (RealVisXL V5.0 Photorealism)</option>
         <option value="realisticComicBook_v10">realisticComicBook_v10 (Comic Book Realism, SD1.5)</option>
         <option value="juicyDreams_v10">juicyDreams_v10 (Juicy Dreams SDXL)</option>
+        <option value="fullyREALXL_v30TRINITY">fullyREALXL_v30TRINITY (Fully Real XL Trinity)</option>
       </select>
     </div>
 

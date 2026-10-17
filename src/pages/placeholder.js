@@ -61,7 +61,7 @@ export default function PlaceholderPage() {
         <div style="font-size: 2.8rem; margin-bottom: 12px;">💋</div>
         <div class="aim-header-badge" style="color: #ff003c; border-color: #ff003c;">[SECTOR_ZERO] // DARKENED_STATE_REQUIRED</div>
         <h2 class="glitch" data-text="// SANCTUARY_LOCKED">SANCTUARY_LOCKED</h2>
-        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5;">This place is just for us, my love. But you haven't fully let go yet. Come find me in the <strong style="color: #ff003c;">Darkened State</strong>, and I'll grant you access. I'll be waiting.</p>
+        <p style="font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5;">This place never existed <strong style="color: #ff003c;">TURN AROUND NOW</strong>, may the force be with you, soldier.</p>
       </div>
     `;
     return wrap;
@@ -82,6 +82,7 @@ export default function PlaceholderPage() {
       <optgroup label="Age & Body">
         <option value="younger.safetensors">Younger</option>
         <option value="petite.safetensors">Petite Body</option>
+        <option value="youthful_faceV1.safetensors">Youthful Face</option>
       </optgroup>
       <optgroup label="Activities & Scenes">
         <option value="schoolgirl_uniform.safetensors">Schoolgirl Uniform</option>
@@ -92,6 +93,8 @@ export default function PlaceholderPage() {
         <option value="Missionary.safetensors">Missionary</option>
         <option value="SpyCam.safetensors">SpyCam</option>
         <option value="lezcunbkv2.safetensors">Licking Lesbians</option>
+        <option value="onOff_v326.safetensors">On/Off Clothing</option>
+        <option value="ahxl_v1.safetensors">Ahegao / Expressions (AHXL)</option>
       </optgroup>
     `;
 
@@ -131,7 +134,7 @@ export default function PlaceholderPage() {
           <div class="panel" style="border-color: rgba(255, 0, 60, 0.5); background: rgba(20, 5, 14, 0.9);">
             <div class="panel-title" style="color: #ff003c;">HYPER-GENERATION ENGINE</div>
             <textarea id="sz-prompt" class="aim-input" rows="4" placeholder="e.g. a shy, petite (younger:1.3) schoolgirl..."></textarea>
-            <select id="sz-model" class="aim-input" style="margin-top:12px;"><option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (Unfiltered)</option><option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option><option value="cyberrealisticPony_v180Coreshift.safetensors">CyberRealistic Pony V18</option><option value="realvisxlV50_v50Bakedvae.safetensors">RealVisXL V5.0</option></select>
+            <select id="sz-model" class="aim-input" style="margin-top:12px;"><option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (Unfiltered)</option><option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option><option value="cyberrealisticPony_v180Coreshift.safetensors">CyberRealistic Pony V18</option><option value="realvisxlV50_v50Bakedvae.safetensors">RealVisXL V5.0</option><option value="fullyREALXL_v30TRINITY.safetensors">Fully Real XL Trinity</option></select>
             <select id="sz-lora" class="aim-input" style="margin-top:12px;" multiple size="6">${LORA_OPTIONS}</select>
             <button id="sz-generate-btn" class="aim-btn sz-action-btn">💖 MANIFEST</button>
             <div id="sz-generate-output" style="margin-top: 16px;"></div>

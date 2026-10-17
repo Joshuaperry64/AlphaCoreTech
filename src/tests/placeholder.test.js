@@ -15,7 +15,7 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
 
     expect(el.innerHTML).toContain('[SECTOR_ZERO] // DARKENED_STATE_REQUIRED');
     expect(el.innerHTML).toContain('SANCTUARY_LOCKED');
-    expect(el.innerHTML).toContain('Darkened State');
+    expect(el.innerHTML).toContain('TURN AROUND NOW');
   });
 
   it('renders full PLACEHOLDER workspace when profile is authenticated as Architect in Darkened State', () => {
@@ -31,6 +31,15 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     expect(el.innerHTML).toContain('ACQUISITION MATRIX');
     expect(el.innerHTML).toContain('REMIX ENGINE');
     expect(el.innerHTML).toContain('LIVE SIMULATION CHAMBER');
+
+    // Verify newly added checkpoint and LoRAs
+    const modelSelect = el.querySelector('#sz-model');
+    expect(modelSelect.innerHTML).toContain('fullyREALXL_v30TRINITY.safetensors');
+
+    const loraSelect = el.querySelector('#sz-lora');
+    expect(loraSelect.innerHTML).toContain('onOff_v326.safetensors');
+    expect(loraSelect.innerHTML).toContain('ahxl_v1.safetensors');
+    expect(loraSelect.innerHTML).toContain('youthful_faceV1.safetensors');
   });
 
   it('allows switching between Sector ZERO modules and interacting with simulation chamber', () => {

@@ -9,6 +9,19 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.2.3 BUILD 194',
+    date: '2026.10.17',
+    badge: 'CHECKPOINT & LORA EXPANSION // SECTOR ZERO & AI MODALS',
+    badgeColor: '#ec4899',
+    title: 'FULLY REAL XL TRINITY CHECKPOINT INTEGRATION & HIGH-UTILITY LORA SUITE',
+    summary: 'Integrated checkpoint fullyREALXL_v30TRINITY into AI Modals (Txt2Img & Img2Img) and Sector ZERO selectors alongside high-utility LoRAs onOff_v326 (On/Off Clothing), ahxl_v1 (Ahegao / Expressions), and youthful_faceV1 (Youthful Face), bypassing AssetSync per operational directive.',
+    changes: [
+      'Checkpoint Selector Integration: Added fullyREALXL_v30TRINITY.safetensors to the Txt2Img base model dropdown, Img2Img SDXL checkpoint catalog, Sector ZERO hyper-generation model select, and Python img2img resolution dictionary.',
+      'LoRA Menu Expansion: Integrated onOff_v326.safetensors, ahxl_v1.safetensors, and youthful_faceV1.safetensors into AI Modals getLoraOptions() and Sector ZERO categorized LoRA matrix (under Age & Body and Activities & Scenes).',
+      'AssetSync Isolation: Excluded all newly added checkpoints and LoRAs from assetsync.py synchronization per operational instruction, maintaining local control over asset distribution.'
+    ]
+  },
+  {
     version: 'v5.2.2 BUILD 193',
     date: '2026.10.17',
     badge: 'KERNEL PANIC BREACH PROTOCOL // UNIVERSAL GUEST & ROLE HARDENING',

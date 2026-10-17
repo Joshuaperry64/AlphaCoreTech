@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildResult } from '../pages/aimodals.js';
+import AIModalsPage, { buildResult, getLoraOptions } from '../pages/aimodals.js';
 
 describe('AI Modals Synthesis Chain Cross-Modal Handoff', () => {
   beforeEach(() => {
@@ -72,5 +72,27 @@ describe('AI Modals Synthesis Chain Cross-Modal Handoff', () => {
     omnigenBtn.click();
 
     expect(window._pending_omnigen_image).toBe(dummyUrl);
+  });
+
+  it('includes newly added LoRAs and checkpoints in aimodals selectors', () => {
+    const loraOpts = getLoraOptions();
+    expect(loraOpts).toContain('onOff_v326.safetensors');
+    expect(loraOpts).toContain('ahxl_v1.safetensors');
+    expect(loraOpts).toContain('youthful_faceV1.safetensors');
+
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('aimodals_authenticated', '1');
+    sessionStorage.setItem('aim_disclaimer_accepted', '1');
+    const page = AIModalsPage();
+    const t2iModelSelect = page.querySelector('#t2i-model-select');
+    expect(t2iModelSelect).toBeTruthy();
+    expect(t2iModelSelect.innerHTML).toContain('fullyREALXL_v30TRINITY.safetensors');
+
+    const i2iTab = page.querySelector('.aim-tab[data-tab="img2img"]');
+    if (i2iTab) i2iTab.click();
+    const i2iCheckpointSelect = page.querySelector('#i2i-checkpoint');
+    expect(i2iCheckpointSelect).toBeTruthy();
+    expect(i2iCheckpointSelect.innerHTML).toContain('fullyREALXL_v30TRINITY');
   });
 });
