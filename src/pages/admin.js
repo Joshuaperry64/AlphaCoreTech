@@ -5,6 +5,7 @@ import { playSFX } from '../components/audio.js';
 import { apiUrl } from '../components/api.js';
 import { syncFromServer } from '../components/db_sync.js';
 import { showModal } from '../components/modal.js';
+import { dispatchBroadcast, getNotificationPermission, requestNotificationPermission } from '../components/notifications.js';
 
 export default function AdminPage() {
   const container = createElement('div');
@@ -165,6 +166,57 @@ function buildAdminUI() {
           HIJACK NEURAL MATRIX
         </button>
         <div id="darkness-menu-slot"></div>
+      </div>
+
+      <!-- Notification & Broadcast Prompt Manager -->
+      <div class="panel" style="border-color: rgba(0, 255, 204, 0.4); box-shadow: 0 0 15px rgba(0, 255, 204, 0.1);">
+        <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; color:#00ffcc;">
+          <span>// BROADCAST_HUB // PROMPT_MANAGER</span>
+          <span id="notif-client-perm-badge" class="aim-tag" style="background:rgba(0, 255, 204, 0.1); border:1px solid rgba(0, 255, 204, 0.4); color:#00ffcc; font-size:0.7rem;">STATUS: CHECKING...</span>
+        </div>
+        <p class="aim-subtitle" style="margin-bottom: 15px;">Dispatch instant encrypted system notifications and broadcast alerts directly to all authorized browser subscribers.</p>
+
+        <div class="aim-field" style="margin-bottom: 12px;">
+          <label class="aim-label" for="broadcast-title-input">TRANSMISSION HEADER / TITLE</label>
+          <input type="text" id="broadcast-title-input" class="aim-input" value="◢ ALPHACORE TECH // SYSTEM ALERT ◣" placeholder="Transmission header..." style="width: 100%; box-sizing: border-box;" />
+        </div>
+
+        <div class="aim-field" style="margin-bottom: 12px;">
+          <label class="aim-label" for="broadcast-msg-input">BROADCAST PROMPT / TRANSMISSION MESSAGE</label>
+          <textarea id="broadcast-msg-input" class="aim-input" rows="3" placeholder="Enter broadcast message to send to all operators with notifications enabled..." style="width: 100%; box-sizing: border-box; resize: vertical; font-family: 'Share Tech Mono', monospace;"></textarea>
+        </div>
+
+        <div class="aim-row" style="margin-bottom: 14px;">
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="broadcast-target-select">TARGET AUDIENCE</label>
+            <select id="broadcast-target-select" class="aim-select" style="width: 100%;">
+              <option value="ALL">ALL OPERATORS & VISITORS (BROADCAST)</option>
+              <option value="Architect">ARCHITECT (CREATOR PRIORITY)</option>
+              <option value="DoeBoy">DOEBOY (ADMIN OPERATIVE)</option>
+              <option value="john">JOHN (REGISTERED OPERATOR)</option>
+              <option value="Fisherman">FISHERMAN (REGISTERED OPERATOR)</option>
+              <option value="Guest">GUEST USERS (ESCROW/UNAUTHENTICATED)</option>
+            </select>
+          </div>
+          <div class="aim-field aim-field-half">
+            <label class="aim-label" for="broadcast-urgency-select">URGENCY LEVEL</label>
+            <select id="broadcast-urgency-select" class="aim-select" style="width: 100%;">
+              <option value="STANDARD">STANDARD SYSTEM DISPATCH</option>
+              <option value="HIGH">HIGH PRIORITY TRANSMISSION</option>
+              <option value="CRITICAL">CRITICAL RED DIRECTIVE</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="aim-btn aim-btn-generate" id="btn-send-broadcast" style="flex:1; background:linear-gradient(90deg, rgba(0, 255, 204, 0.2), rgba(0, 184, 255, 0.25)); border-color:#00ffcc; color:#00ffcc; font-weight:700; letter-spacing:1.5px; padding:12px;">
+            ⚡ DISPATCH NOTIFICATION BROADCAST
+          </button>
+          <button type="button" class="aim-btn aim-btn-sm" id="btn-test-notif" style="border-color:#38bdf8; color:#38bdf8; padding:10px 14px;">
+            TEST MY BROWSER
+          </button>
+        </div>
+        <div class="admin-feedback" id="broadcast-feedback" style="margin-top:10px;"></div>
       </div>
     </div>
 
@@ -727,6 +779,94 @@ function buildAdminUI() {
       a.download = `alphacore_event_logs_${Date.now()}.json`;
       a.click();
     });
+  }
+
+  // ─── Broadcast Prompt Manager Logic ───────────────────────────────
+  const notifBadge = root.querySelector('#notif-client-perm-badge');
+  const broadcastTitle = root.querySelector('#broadcast-title-input');
+  const broadcastMsg = root.querySelector('#broadcast-msg-input');
+  const broadcastTarget = root.querySelector('#broadcast-target-select');
+  const broadcastUrgency = root.querySelector('#broadcast-urgency-select');
+  const sendBroadcastBtn = root.querySelector('#btn-send-broadcast');
+  const testNotifBtn = root.querySelector('#btn-test-notif');
+  const broadcastFeedback = root.querySelector('#broadcast-feedback');
+
+  function updateNotifBadge() {
+    if (!notifBadge) return;
+    const perm = getNotificationPermission();
+    if (perm === 'granted') {
+      notifBadge.textContent = 'STATUS: ACTIVE (ENABLED)';
+      notifBadge.style.color = '#10b981';
+      notifBadge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+      notifBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+    } else if (perm === 'denied') {
+      notifBadge.textContent = 'STATUS: BLOCKED (BROWSER)';
+      notifBadge.style.color = '#ef4444';
+      notifBadge.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+      notifBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+    } else {
+      notifBadge.textContent = 'STATUS: AWAITING PERMISSION';
+      notifBadge.style.color = '#f59e0b';
+      notifBadge.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+      notifBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+    }
+  }
+  updateNotifBadge();
+
+  if (testNotifBtn) {
+    testNotifBtn.onclick = async () => {
+      const perm = await requestNotificationPermission();
+      updateNotifBadge();
+      if (perm === 'granted') {
+        broadcastFeedback.textContent = 'TEST NOTIFICATION SENT TO ACTIVE CLIENT.';
+        broadcastFeedback.style.color = '#10b981';
+      } else {
+        broadcastFeedback.textContent = 'BROWSER NOTIFICATION PERMISSION NOT GRANTED.';
+        broadcastFeedback.style.color = '#ef4444';
+      }
+    };
+  }
+
+  if (sendBroadcastBtn) {
+    sendBroadcastBtn.onclick = async () => {
+      const title = (broadcastTitle.value || '').trim();
+      const message = (broadcastMsg.value || '').trim();
+      const target = broadcastTarget.value;
+      const urgency = broadcastUrgency.value;
+
+      if (!message) {
+        broadcastFeedback.textContent = 'ERROR: BROADCAST MESSAGE CONTENT REQUIRED.';
+        broadcastFeedback.style.color = '#ef4444';
+        return;
+      }
+
+      sendBroadcastBtn.disabled = true;
+      sendBroadcastBtn.textContent = 'DISPATCHING BROADCAST...';
+      broadcastFeedback.textContent = '';
+
+      try {
+        await dispatchBroadcast({
+          title: title || '◢ ALPHACORE TECH // ALERT ◣',
+          message,
+          target,
+          urgency,
+          url: '/#/overview'
+        });
+
+        playSFX('response', 0.8);
+        logAction('BROADCAST_DISPATCHED', { title, target, urgency, preview: message.slice(0, 50) });
+        broadcastFeedback.textContent = `SUCCESS: TRANSMISSION DISPATCHED TO [${target}].`;
+        broadcastFeedback.style.color = '#00ffcc';
+        broadcastMsg.value = '';
+        renderLogs();
+      } catch (err) {
+        broadcastFeedback.textContent = `DISPATCH FAILED: ${err.message || 'Transmission error'}`;
+        broadcastFeedback.style.color = '#ef4444';
+      } finally {
+        sendBroadcastBtn.disabled = false;
+        sendBroadcastBtn.textContent = '⚡ DISPATCH NOTIFICATION BROADCAST';
+      }
+    };
   }
 
   return root;

@@ -89,6 +89,30 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
+-- 5b. Broadcasts & Notification Subscribers
+CREATE TABLE IF NOT EXISTS public.alphacore_broadcasts (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    target TEXT DEFAULT 'ALL',
+    urgency TEXT DEFAULT 'STANDARD',
+    url TEXT DEFAULT '/#/overview',
+    sender TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.alphacore_subscribers (
+    profile TEXT PRIMARY KEY,
+    user_agent TEXT,
+    enabled_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+DO $$
+BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.alphacore_broadcasts;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 -- 6. Seed Default PINs & Settings
 INSERT INTO public.alphacore_pins (pin, label, type, roles, must_change_pin)
 VALUES 

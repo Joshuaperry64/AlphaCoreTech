@@ -16,6 +16,7 @@ import { initThemeSwitcher } from './components/theme-switcher.js';
 import { initCommandPalette } from './components/command-palette.js';
 import { showToast } from './components/toast.js';
 import { a11y } from './components/a11y-engine.js';
+import { promptNotificationPermissionIfNeeded, initBroadcastListener } from './components/notifications.js';
 
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
@@ -201,6 +202,9 @@ async function renderRoute() {
         if (brControls) brControls.style.display = '';
         window.location.hash = '#/overview';
         renderRoute();
+        setTimeout(() => {
+          promptNotificationPermissionIfNeeded();
+        }, 1200);
       },
       title: '// ALPHACORE \\\\ [IDENTITY VERIFICATION]',
       subtitle: 'ENTER SECURE ACCESS PIN'
@@ -384,6 +388,14 @@ function initApp() {
   a11y.init();
   initRealtimeSync();
   syncFromServer();
+  initBroadcastListener();
+
+  // If already authenticated and not in intro mode, check if notification prompt is needed
+  if (!document.body.classList.contains('intro-mode')) {
+    setTimeout(() => {
+      promptNotificationPermissionIfNeeded();
+    }, 1500);
+  }
 
   // Restore Synthwave Overdrive Theme if previously unlocked
   if (localStorage.getItem('alphacore_synthwave_active') === '1') {
