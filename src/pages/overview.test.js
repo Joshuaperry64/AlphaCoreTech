@@ -7,17 +7,19 @@ describe('Overview Page & 2D Interactive Cyber-Desk', () => {
     localStorage.clear();
   });
 
-  it('renders the 2D Cyber-Desk workstation container and view controls', () => {
+  it('renders the 2D Cyber-Desk workstation container and title', () => {
     const el = Overview();
     expect(el).toBeTruthy();
 
     const desk = el.querySelector('#cyber-desk-workstation');
     expect(desk).toBeTruthy();
 
-    const viewDeskBtn = el.querySelector('#view-desk-btn');
-    const viewHudBtn = el.querySelector('#view-hud-btn');
-    expect(viewDeskBtn).toBeTruthy();
-    expect(viewHudBtn).toBeTruthy();
+    const surface = el.querySelector('#cyber-desk-surface');
+    expect(surface).toBeTruthy();
+
+    const title = el.querySelector('.matrix-command-hub-title');
+    expect(title).toBeTruthy();
+    expect(title.textContent).toBe('MATRIX COMMAND HUB');
   });
 
   it('renders all 8 tactical physical desk props with correct routes and actions', () => {
@@ -55,27 +57,32 @@ describe('Overview Page & 2D Interactive Cyber-Desk', () => {
     expect(mug).toBeTruthy();
   });
 
-  it('toggles view mode between 2D desk and HUD telemetry', () => {
+  it('renders updated quick navigation links and dismissible nav hint', () => {
     const el = Overview();
-    const deskSurface = el.querySelector('#cyber-desk-surface');
-    const telemMount = el.querySelector('#telemetry-hud-mount');
-    const viewDeskBtn = el.querySelector('#view-desk-btn');
-    const viewHudBtn = el.querySelector('#view-hud-btn');
+    const navHint = el.querySelector('#overview-nav-hint');
+    expect(navHint).toBeTruthy();
+    expect(navHint.textContent).toContain('Click here for the full navigation menu');
 
-    // Default is desk
-    expect(deskSurface.style.display).not.toBe('none');
+    const dismissBtn = el.querySelector('#dismiss-nav-hint');
+    expect(dismissBtn).toBeTruthy();
+    dismissBtn.click();
+    expect(navHint.style.display).toBe('none');
+    expect(sessionStorage.getItem('alphacore_nav_hint_seen')).toBe('1');
 
-    // Switch to HUD
-    viewHudBtn.click();
-    expect(deskSurface.style.display).toBe('none');
-    expect(telemMount.style.display).toBe('block');
-    expect(localStorage.getItem('alphacore_overview_view_mode')).toBe('hud');
-
-    // Switch back to desk
-    viewDeskBtn.click();
-    expect(deskSurface.style.display).toBe('block');
-    expect(telemMount.style.display).toBe('none');
-    expect(localStorage.getItem('alphacore_overview_view_mode')).toBe('desk');
+    // Quick navigation checks
+    const quickNavPanel = Array.from(el.querySelectorAll('.panel')).find(p => p.textContent.includes('QUICK NAV:'));
+    expect(quickNavPanel).toBeTruthy();
+    const quickNavText = quickNavPanel.textContent;
+    expect(quickNavText).toContain('THE LAB');
+    expect(quickNavText).toContain('LAUNDROMAT');
+    expect(quickNavText).toContain('COGNITIVE CORE');
+    expect(quickNavText).toContain('STUDIO MATRIX');
+    expect(quickNavText).toContain('VOICE');
+    expect(quickNavText).toContain('RECON');
+    expect(quickNavText).toContain('CUSTODY');
+    expect(quickNavText).toContain('CORE VAULT');
+    expect(quickNavText).not.toContain('ADMINISTRATION');
+    expect(quickNavText).not.toContain('SUBROUTINES');
   });
 
   it('renders interactive cyber-desk radio and toggles playback state', () => {

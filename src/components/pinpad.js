@@ -122,20 +122,25 @@ export function buildPinPad({
   onSuccess,
   authKey = null,
   requiredRole = null,
-  title = '// IDENTITY_VERIFICATION',
+  title = '// ALPHACORE \\\\ [IDENTITY VERIFICATION]',
   subtitle = 'ENTER YOUR ACCESS PIN',
-  icon = '⟁',
+  icon = '<img src="/Images/ALPHA-LOGO.png" class="aim-pin-wolf-icon" alt="AlphaCore" style="width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 184, 255, 0.7)); display: inline-block; vertical-align: middle;" />',
   isLoginScreen = false
 } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'aim-pin-wrap';
+
+  let titleHtml = title;
+  if (!title || title.includes('IDENTITY_VERIFICATION') || title.includes('IDENTITY VERIFICATION') || title.includes('ALPHACORE')) {
+    titleHtml = `<div class="aim-pin-title-row">// ALPHACORE \\\\</div><div class="glitch" data-text="[IDENTITY VERIFICATION]">[IDENTITY VERIFICATION]</div>`;
+  }
 
   wrap.innerHTML = `
     <div class="aim-pin-box">
       <!-- Main PIN Pad View -->
       <form id="pin-login-form" class="aim-pin-box-inner" autocomplete="off" onsubmit="return false;">
         ${icon ? `<div class="aim-pin-icon" aria-hidden="true">${icon}</div>` : ''}
-        <h2 class="aim-pin-title">${title}</h2>
+        <h2 class="aim-pin-title">${titleHtml}</h2>
         <p class="aim-pin-subtitle">${subtitle}</p>
 
         <!-- Native hidden input for browser automation & physical keyboard synchronization -->
@@ -168,17 +173,18 @@ export function buildPinPad({
           <button type="button" class="aim-pad-btn aim-pad-btn-clear" id="aim-pad-clear" aria-label="Clear Input">CLR</button>
           <button type="button" class="aim-pad-btn" data-val="0" aria-label="Digit 0">0</button>
           <button type="button" class="aim-pad-btn aim-pad-btn-back" id="aim-pad-back" aria-label="Backspace">⌫</button>
-        </div>
 
-        <div style="margin-top: 12px; display: flex; flex-direction: row; gap: 8px;">
-          <button type="submit" class="aim-btn" id="aim-pad-enter" aria-label="Submit PIN" style="flex: 1; padding: 10px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.4); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
-            ENTER
-          </button>
-          <button type="button" class="aim-btn" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="flex: 1; padding: 10px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          <!-- Row 5: Bypass button under CLR (Col 1), Enter button under 0 and ⌫ (Cols 2-3) -->
+          <button type="button" class="aim-btn aim-pad-btn-action" id="aim-pin-bypass-btn" aria-label="Bypass Authentication" style="grid-column: 1; padding: 10px 4px; background: rgba(0, 150, 255, 0.1); border: 1px solid rgba(0, 150, 255, 0.4); color: #0096ff; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
             ⚡ BYPASS
           </button>
+          <button type="submit" class="aim-btn aim-pad-btn-action" id="aim-pad-enter" aria-label="Submit PIN" style="grid-column: 2 / span 2; padding: 10px 4px; background: rgba(0, 255, 100, 0.12); border: 1px solid rgba(0, 255, 100, 0.45); color: #00ff64; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 6px;">
+            ENTER
+          </button>
+
+          <!-- Row 6: Subtle long skinny Request Access button below both -->
           ${isLoginScreen ? `
-          <button type="button" class="aim-btn" id="aim-pin-request-btn" aria-label="Request Access Profile" style="flex: 1; padding: 10px; background: rgba(255, 150, 0, 0.1); border: 1px solid rgba(255, 150, 0, 0.4); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; text-align: center;">
+          <button type="button" class="aim-btn" id="aim-pin-request-btn" aria-label="Request Access Profile" style="grid-column: 1 / -1; margin-top: 4px; padding: 6px 10px; background: rgba(255, 150, 0, 0.08); border: 1px solid rgba(255, 150, 0, 0.3); color: #ff9600; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; letter-spacing: 1.5px; cursor: pointer; transition: all 0.3s; text-align: center; border-radius: 4px; opacity: 0.85;">
             📝 REQUEST ACCESS
           </button>
           ` : ''}
@@ -266,9 +272,7 @@ export function buildPinPad({
     renderDots();
 
     if (currentPin.length > 0) {
-      const stars = '* '.repeat(currentPin.length).trim();
       const countMsg = `${currentPin.length} digit${currentPin.length > 1 ? 's' : ''} entered`;
-      setFeedback(stars);
       feedback.setAttribute('aria-label', countMsg);
       if (notifyAudio && currentPin.length > oldLen) {
         playSFX('click', 0.4);
@@ -306,11 +310,26 @@ export function buildPinPad({
   pinInput.addEventListener('input', () => {
     syncFromNativeInput(false);
   });
+  pinInput.addEventListener('change', () => {
+    syncFromNativeInput(false);
+  });
 
-  // Focus native input by default if visible in DOM
-  setTimeout(() => {
+  // Pre-fill saved PIN if previously stored, so user only has to tap Enter
+  try {
+    const remembered = localStorage.getItem('alphacore_saved_pin');
+    if (remembered) {
+      pinInput.value = remembered;
+      currentPin = remembered;
+      renderDots();
+      setFeedback('SAVED PIN READY // PRESS ENTER');
+    }
+  } catch (_) {}
+
+  // Allow clicking dot display to summon keyboard if explicitly desired
+  display.style.cursor = 'pointer';
+  display.onclick = () => {
     try { pinInput.focus(); } catch (_) {}
-  }, 50);
+  };
 
   async function handleEnter() {
     if (locked || !currentPin) {
@@ -332,6 +351,10 @@ export function buildPinPad({
       pinBox.classList.add('aim-access-granted');
       window.removeEventListener('keydown', keyHandler);
 
+      try { 
+        localStorage.setItem('alphacore_saved_pin', currentPin);
+      } catch (_) {}
+
       try { logAction('AUTH_SUCCESS', { label: result.pinObj?.label }); } catch {}
 
       setTimeout(() => {
@@ -351,6 +374,13 @@ export function buildPinPad({
       playSFX('incorrect', 0.7);
       setFeedback(result.reason || 'ACCESS DENIED', 'error');
       pinBox.classList.add('aim-shake');
+
+      // Highlight bypass and request access buttons so they stand out brightly
+      const bypassBtn = wrap.querySelector('#aim-pin-bypass-btn');
+      const reqBtn = wrap.querySelector('#aim-pin-request-btn');
+      if (bypassBtn) bypassBtn.classList.add('aim-btn-highlight-glow');
+      if (reqBtn) reqBtn.classList.add('aim-btn-request-glow');
+
       setTimeout(() => {
         pinBox.classList.remove('aim-shake');
         pinInput.value = '';
@@ -540,13 +570,19 @@ export function buildPinPad({
   }
   window.addEventListener('keydown', keyHandler);
 
-  const observer = new MutationObserver(() => {
-    if (!document.body.contains(wrap)) {
-      window.removeEventListener('keydown', keyHandler);
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  if (typeof document !== 'undefined' && document.body) {
+    const observer = new MutationObserver(() => {
+      try {
+        if (typeof document === 'undefined' || !document?.body || !document.body.contains(wrap)) {
+          window.removeEventListener('keydown', keyHandler);
+          observer.disconnect();
+        }
+      } catch (_) {
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
   return wrap;
 }

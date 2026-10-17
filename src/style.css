@@ -247,14 +247,72 @@ html, body {
 
 /* Nav section divider titles */
 .nav-section-title {
-  font-size: 0.52rem;
-  letter-spacing: 3px;
-  color: rgba(0,184,255,0.22);
-  padding: 10px 12px 3px;
+  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+  color: rgba(0, 220, 255, 0.65);
+  padding: 6px 8px 2px;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
+  overflow: visible;
+  font-family: var(--font-hud);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Sidebar compact grid and button sizing */
+.nav-row-pair, .nav-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  width: 100%;
+}
+.nav-item-pair {
+  padding: 5px 6px !important;
+  font-size: 0.72rem !important;
+  gap: 5px !important;
+  letter-spacing: 0.5px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  border-radius: 4px !important;
+}
+.nav-item-pair .nav-icon {
+  font-size: 0.85rem !important;
+  min-width: 14px !important;
+}
+.nav-item-pair .nav-label {
   overflow: hidden;
-  transition: opacity 0.2s, height 0.3s;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-item-tall {
+  padding: 8px 6px !important;
+  font-size: 0.76rem !important;
+}
+.nav-item-full {
+  width: 100%;
+  box-sizing: border-box;
+}
+.nav-item-skinny {
+  padding: 6px 10px !important;
+  font-size: 0.78rem !important;
+}
+.nav-item-ultra-skinny {
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+}
+
+/* Blinking cursor on BUILD 135 */
+.blinking-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--blue, #00b8ff);
+  font-weight: bold;
+  animation: blink-cursor-anim 1s step-start infinite;
+}
+@keyframes blink-cursor-anim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 /* ====== SIDEBAR ACCORDION & SUB-NAV ====== */
@@ -4641,3 +4699,72 @@ body.synthwave-overdrive :focus-visible {
   margin-top: 4px;
 }
 
+
+
+/* ====== OVERHAUL: COMPACT SIDEBAR FOOTER & STATUS ====== */
+.sidebar-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: rgba(3, 4, 8, 0.98);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.status-compact-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+.status-compact-sub {
+  font-size: 0.65rem;
+  color: #64748b;
+  opacity: 0.85;
+}
+
+/* ====== OVERHAUL: MATRIX COMMAND HUB & MOBILE NAV HINT ====== */
+.matrix-command-hub-title {
+  font-size: 1.4rem !important;
+  letter-spacing: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.overview-nav-hint {
+  animation: page-fade-glitch 0.3s ease-out;
+}
+.overview-nav-hint:hover {
+  border-color: var(--blue, #00b8ff) !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
+
+/* ====== OVERHAUL: PIN PAD GLOW & TITLE ROW ====== */
+.aim-btn-highlight-glow {
+  box-shadow: 0 0 16px rgba(0, 150, 255, 0.85), 0 0 30px rgba(0, 150, 255, 0.45) !important;
+  border-color: #00f0ff !important;
+  color: #fff !important;
+  animation: bypass-pulse 1.2s infinite alternate;
+}
+.aim-btn-request-glow {
+  box-shadow: 0 0 14px rgba(255, 150, 0, 0.85), 0 0 25px rgba(255, 150, 0, 0.45) !important;
+  border-color: #ff9600 !important;
+  color: #fff !important;
+  animation: bypass-pulse 1.2s infinite alternate;
+}
+@keyframes bypass-pulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  100% { transform: scale(1.02); filter: brightness(1.25); }
+}
+.aim-pin-title-row {
+  font-size: 1.1rem;
+  letter-spacing: 2.5px;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.aim-pin-wolf-icon {
+  animation: pulse-glow 2s infinite alternate;
+}

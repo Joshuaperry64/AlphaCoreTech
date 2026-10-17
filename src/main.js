@@ -20,14 +20,12 @@ import { a11y } from './components/a11y-engine.js';
 import Overview from './pages/overview.js';
 import Lore from './pages/lore.js';
 import Diagnostics from './pages/diagnostics.js';
-import ArchitectProfile from './pages/creator.js';
 import CognitiveUplink from './pages/cognitive.js';
 import AdminPanel from './pages/admin.js';
 import AiModals from './pages/aimodals.js';
 import VaultPage from './pages/vault.js';
 import Research from './pages/research.js';
 import VisionProcessor from './pages/vision.js';
-import LogsPage from './pages/logs.js';
 import SubroutinesPage from './pages/subroutines.js';
 import MusicPage from './pages/music.js';
 import AssetManagerPage from './pages/assets.js';
@@ -49,7 +47,6 @@ const routes = {
   '/laundry': TransferPage,
   '/lore': Lore,
   '/diagnostics': Diagnostics,
-  '/architect': ArchitectProfile,
   '/cognitive': CognitiveUplink,
   '/admin': AdminPanel,
   '/director': CyberDirectorPage,
@@ -68,7 +65,7 @@ const routes = {
   '/vault': VaultPage,
   '/research': Research,
   '/vision': VisionProcessor,
-  '/logs': LogsPage,
+  '/logs': AdminPanel,
   '/subroutines': SubroutinesPage,
   '/promptlab': CognitiveUplink,
   '/recon': ReconPage,
@@ -87,26 +84,22 @@ function updateActiveNav(hash) {
   const searchParams = new URLSearchParams(query);
   const activeTab = searchParams.get('tab');
 
-  // Update primary nav items
+  // Update nav items
   document.querySelectorAll('#sidebar-nav .nav-item').forEach(item => {
     const route = item.getAttribute('data-route');
-    const isMatch = route === cleanPath || 
-      ((cleanPath === '/laundry' || cleanPath === '/transfer') && (route === '/laundry' || route === '/transfer')) ||
-      (cleanPath === '/aimodals' && route === '/aimodals');
-    item.classList.toggle('active', isMatch);
-  });
-
-  // Update sub-items inside accordion
-  document.querySelectorAll('#sidebar-nav .nav-sub-item').forEach(subItem => {
-    const subRoute = subItem.getAttribute('data-route');
-    const subTab = subItem.getAttribute('data-tab');
-    let isSubMatch = false;
-    if (subRoute && subRoute === cleanPath) {
-      isSubMatch = true;
-    } else if (cleanPath === '/aimodals' && subTab && activeTab === subTab) {
-      isSubMatch = true;
+    const tab = item.getAttribute('data-tab');
+    let isMatch = false;
+    if (cleanPath === '/aimodals') {
+      if (tab) {
+        isMatch = (activeTab ? activeTab === tab : tab === 'txt2img');
+      } else {
+        isMatch = route === '/aimodals';
+      }
+    } else if (route) {
+      isMatch = route === cleanPath || 
+        ((cleanPath === '/laundry' || cleanPath === '/transfer') && (route === '/laundry' || route === '/transfer'));
     }
-    subItem.classList.toggle('active', isSubMatch);
+    item.classList.toggle('active', isMatch);
   });
 
   // Auto-expand accordion if on an aimodals or director route
@@ -172,7 +165,7 @@ async function renderRoute() {
         window.location.hash = '#/overview';
         renderRoute();
       },
-      title: '// ALPHACORE IDENTITY_VERIFICATION',
+      title: '// ALPHACORE \\\\ [IDENTITY VERIFICATION]',
       subtitle: 'ENTER SECURE ACCESS PIN'
     });
     

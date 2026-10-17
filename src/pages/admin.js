@@ -145,13 +145,19 @@ function buildAdminUI() {
       </div>
     </div>
 
-    <!-- User Logs section -->
+    <!-- Integrated System Event Logs section -->
     <div class="panel" style="margin-top: 20px;">
-      <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>// SYSTEM_USER_LOGS</span>
-        <button class="aim-btn aim-btn-sm" id="btn-clear-logs" style="color:var(--accent, #ff003c); border-color:var(--accent, #ff003c);">CLEAR LOGS</button>
+      <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <span>// SYSTEM_EVENT_LOGS</span>
+        <div style="display:flex; gap:8px;">
+          <button class="aim-btn aim-btn-sm" id="btn-export-logs" style="color:#10b981; border-color:#10b981;">💾 EXPORT LOGS</button>
+          <button class="aim-btn aim-btn-sm" id="btn-clear-logs" style="color:var(--accent, #ff003c); border-color:var(--accent, #ff003c);">CLEAR LOGS</button>
+        </div>
       </div>
-      <div class="pin-list-wrap" style="max-height: 300px; overflow-y: auto;">
+      <div style="margin: 10px 0 12px 0; display:flex; gap:10px; align-items:center;">
+        <input type="text" id="admin-log-search" placeholder="Filter logs by keyword or profile..." class="aim-input" style="width:100%; box-sizing:border-box;" />
+      </div>
+      <div class="pin-list-wrap" style="max-height: 320px; overflow-y: auto;">
         <table class="admin-table">
           <thead>
             <tr>
@@ -523,14 +529,31 @@ function buildAdminUI() {
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  const logSearchInput = root.querySelector('#admin-log-search');
+  if (logSearchInput) {
+    logSearchInput.addEventListener('input', () => {
+      renderLogs();
+    });
+  }
+
   renderLogs();
 
   function renderLogs() {
     const logsBody = root.querySelector('#user-logs-body');
-    const logs = getLogs();
+    let logs = getLogs();
+    const query = (logSearchInput?.value || '').trim().toLowerCase();
     
+    if (query) {
+      logs = logs.filter(l => {
+        const p = (l.profile || '').toLowerCase();
+        const a = (l.action || '').toLowerCase();
+        const d = JSON.stringify(l.details || '').toLowerCase();
+        return p.includes(query) || a.includes(query) || d.includes(query);
+      });
+    }
+
     if (logs.length === 0) {
-      logsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">NO LOGS FOUND IN SYSTEM.</td></tr>';
+      logsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">NO LOGS MATCHING CRITERIA.</td></tr>';
       return;
     }
     
@@ -561,6 +584,20 @@ function buildAdminUI() {
       renderLogs();
     }
   });
+
+  // Export Logs
+  const exportLogsBtn = root.querySelector('#btn-export-logs');
+  if (exportLogsBtn) {
+    exportLogsBtn.addEventListener('click', () => {
+      const logs = getLogs();
+      const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `alphacore_event_logs_${Date.now()}.json`;
+      a.click();
+    });
+  }
 
   return root;
 }

@@ -81,15 +81,18 @@ export default function createIntro(container) {
 
     // Skip / Fast Boot Button
     const skipBtn = createElement('button', { 
-      class: 'aim-btn aim-btn-sm',
+      class: 'aim-btn aim-btn-sm intro-skip-btn',
       'aria-label': 'Skip boot sequence and go directly to identity verification'
     }, '⚡ FAST BOOT / SKIP');
     Object.assign(skipBtn.style, {
-      position: 'absolute', top: '20px', right: '20px', zIndex: '100',
-      background: 'rgba(6,182,212,0.15)', border: '1px solid #06b6d4', color: '#06b6d4',
-      fontFamily: "'Orbitron', sans-serif", fontSize: '0.75rem', padding: '6px 14px',
-      cursor: 'pointer', letterSpacing: '1px', borderRadius: '4px'
+      position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: '100',
+      background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.35)', color: 'rgba(6,182,212,0.85)',
+      fontFamily: "'Orbitron', sans-serif", fontSize: '0.75rem', padding: '8px 24px',
+      cursor: 'pointer', letterSpacing: '1px', borderRadius: '20px', backdropFilter: 'blur(6px)',
+      opacity: '0.65', transition: 'all 0.2s ease', whiteSpace: 'nowrap'
     });
+    skipBtn.onmouseenter = () => { skipBtn.style.opacity = '1'; skipBtn.style.background = 'rgba(6,182,212,0.2)'; };
+    skipBtn.onmouseleave = () => { skipBtn.style.opacity = '0.65'; skipBtn.style.background = 'rgba(6,182,212,0.1)'; };
     intro.appendChild(skipBtn);
 
     // FITS Terminal (Phase 1)
@@ -226,7 +229,7 @@ export default function createIntro(container) {
       logoImg.style.marginBottom = '10px';
       logoImg.style.filter = 'drop-shadow(0 0 10px rgba(6,182,212,0.4))'; // Slight audio reactive glow hint
       
-      statusTitle.textContent = 'IDENTITY VERIFICATION';
+      statusTitle.textContent = '- SECURITY TERMINAL -';
       mainWrap.style.display = 'flex';
       
       resolve({ introContainer: mainWrap, cleanup });

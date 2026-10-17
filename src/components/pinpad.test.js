@@ -376,12 +376,14 @@ describe('buildPinPad automation and accessibility', () => {
 
     expect(input.value).toBe('123');
     expect(inputSpy).toHaveBeenCalledTimes(3);
-    expect(feedback.textContent).toBe('> * * *');
+    expect(feedback.textContent).not.toContain('*');
+    expect(feedback.getAttribute('aria-label')).toBe('3 digits entered');
 
     // Backspace
     el.querySelector('#aim-pad-back').click();
     expect(input.value).toBe('12');
-    expect(feedback.textContent).toBe('> * *');
+    expect(feedback.textContent).not.toContain('*');
+    expect(feedback.getAttribute('aria-label')).toBe('2 digits entered');
 
     // Clear
     el.querySelector('#aim-pad-clear').click();
@@ -404,7 +406,7 @@ describe('buildPinPad automation and accessibility', () => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
 
     expect(display.querySelectorAll('.aim-pin-dot.filled').length).toBe(4);
-    expect(feedback.textContent).toBe('> * * * *');
+    expect(feedback.textContent).not.toContain('*');
     expect(feedback.getAttribute('aria-label')).toBe('4 digits entered');
 
     el.remove();

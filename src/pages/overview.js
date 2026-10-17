@@ -4,7 +4,6 @@
  */
 import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
-import { buildTelemetryHUD } from '../components/telemetry.js';
 import { showToast } from '../components/toast.js';
 import { playSFX, initGlobalAudio, toggleAudio, getGlobalAudio } from '../components/audio.js';
 import { getAllGalleryImages } from '../components/vision_db.js';
@@ -36,9 +35,18 @@ export default function Overview() {
   const container = createElement('div', { class: 'overview-page' });
   container.innerHTML = `
     <section class="view-section active">
+      <!-- First landing Navigation Menu Hint -->
+      <div id="overview-nav-hint" class="overview-nav-hint" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; margin-bottom:15px; background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.4); border-radius:6px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:#00f0ff;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.1rem; color:var(--accent,#06b6d4); font-weight:bold;">↖</span>
+          <span>Click here for the full navigation menu</span>
+        </div>
+        <button type="button" id="dismiss-nav-hint" style="background:transparent; border:none; color:rgba(255,255,255,0.7); cursor:pointer; font-size:1rem; padding:0 4px;" aria-label="Dismiss menu tip">✕</button>
+      </div>
+
       <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div>
-          <h1 class="glitch" data-text="[A]LPHA_CORE // COMMAND_HUB">[A]LPHA_CORE // COMMAND_HUB</h1>
+        <div style="flex: 1; min-width: 250px;">
+          <h1 class="glitch matrix-command-hub-title" data-text="MATRIX COMMAND HUB" style="font-size:1.4rem; letter-spacing:3px; white-space:nowrap; margin:0;">MATRIX COMMAND HUB</h1>
           <div class="header-line"></div>
         </div>
 
@@ -49,9 +57,6 @@ export default function Overview() {
           <button id="btn-export-env" class="aim-btn aim-btn-sm" style="background:rgba(16,185,129,0.15); border-color:#10b981; color:#10b981;">
             💾 BACKUP STATE
           </button>
-          <button id="btn-lock-session" class="aim-btn aim-btn-sm" style="background:rgba(239,68,68,0.15); border-color:#ef4444; color:#ef4444;">
-            🔒 LOCK SESSION
-          </button>
         </div>
       </div>
 
@@ -59,15 +64,15 @@ export default function Overview() {
       <div class="panel" style="margin-bottom:20px; padding:12px 18px; background:rgba(10,15,25,0.85); border:1px solid rgba(6,182,212,0.3); display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <span style="font-family:'Orbitron',sans-serif; font-size:0.8rem; color:var(--accent,#06b6d4); font-weight:bold;">QUICK NAV:</span>
         <a href="#/thelab" class="aim-btn aim-btn-sm" style="text-decoration:none; border-color:var(--accent,#06b6d4); color:var(--accent,#06b6d4);">🔬 THE LAB</a>
+        <a href="#/laundry" class="aim-btn aim-btn-sm" style="text-decoration:none;">🧺 LAUNDROMAT</a>
         <a href="#/cognitive" class="aim-btn aim-btn-sm" style="text-decoration:none;">⟁ COGNITIVE CORE</a>
-        <a href="#/aimodals" class="aim-btn aim-btn-sm" style="text-decoration:none;">✦ AI MODALS</a>
-        <a href="#/subroutines" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚡ SUBROUTINES</a>
-        <a href="#/vault" class="aim-btn aim-btn-sm" style="text-decoration:none;">🔐 CLASSIFIED VAULT</a>
+        <a href="#/aimodals" class="aim-btn aim-btn-sm" style="text-decoration:none;">✦ STUDIO MATRIX</a>
+        <a href="#/voice" class="aim-btn aim-btn-sm" style="text-decoration:none;">🎙️ VOICE</a>
+        <a href="#/recon" class="aim-btn aim-btn-sm" style="text-decoration:none;">👁️ RECON</a>
+        <a href="#/mugshots" class="aim-btn aim-btn-sm" style="text-decoration:none;">🏛️ CUSTODY</a>
+        <a href="#/vault" class="aim-btn aim-btn-sm" style="text-decoration:none;">🔐 CORE VAULT</a>
         <a href="#/diagnostics" class="aim-btn aim-btn-sm" style="text-decoration:none;">⍾ DIAGNOSTICS</a>
-        <a href="#/admin" class="aim-btn aim-btn-sm" style="text-decoration:none;">⚙ ADMINISTRATION</a>
       </div>
-
-
 
       <!-- 2D Interactive Operative Cyber-Desk Workstation -->
       <div class="cyber-desk-wrapper" id="cyber-desk-workstation">
@@ -76,10 +81,6 @@ export default function Overview() {
             <span class="desk-live-dot"></span>
             <span>OPERATIVE WORKSTATION // TACTICAL CYBER-DESK</span>
             <span style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#64748b; font-weight:normal; margin-left:6px;">[CLEARANCE: LEVEL 5]</span>
-          </div>
-          <div class="desk-view-switchers">
-            <button type="button" class="desk-view-btn active" id="view-desk-btn">🖥️ 2D CYBER-DESK</button>
-            <button type="button" class="desk-view-btn" id="view-hud-btn">📊 TELEMETRY HUD</button>
           </div>
         </div>
 
@@ -281,8 +282,6 @@ export default function Overview() {
         </div>
       </div>
 
-      <div id="telemetry-hud-mount"></div>
-
       <div class="hub-grid">
         <div class="panel terminal-panel">
           <div class="panel-title flex-between" style="display:flex; justify-content:space-between; align-items:center;">
@@ -326,48 +325,19 @@ export default function Overview() {
     </section>
   `;
 
-  // Mount Telemetry HUD
-  const telemMount = container.querySelector('#telemetry-hud-mount');
-  if (telemMount) {
-    telemMount.appendChild(buildTelemetryHUD());
-  }
-
-  // ─── 2D INTERACTIVE CYBER-DESK WORKSTATION LOGIC ──────────────────
-  const deskSurface = container.querySelector('#cyber-desk-surface');
-  const viewDeskBtn = container.querySelector('#view-desk-btn');
-  const viewHudBtn = container.querySelector('#view-hud-btn');
-
-  function setOverviewMode(mode) {
-    if (mode === 'hud') {
-      if (deskSurface) deskSurface.style.display = 'none';
-      if (telemMount) telemMount.style.display = 'block';
-      viewDeskBtn?.classList.remove('active');
-      viewHudBtn?.classList.add('active');
+  // First landing navigation hint handler
+  const navHint = container.querySelector('#overview-nav-hint');
+  const dismissBtn = container.querySelector('#dismiss-nav-hint');
+  if (navHint) {
+    if (sessionStorage.getItem('alphacore_nav_hint_seen')) {
+      navHint.style.display = 'none';
     } else {
-      if (deskSurface) deskSurface.style.display = 'block';
-      if (telemMount) telemMount.style.display = 'none';
-      viewDeskBtn?.classList.add('active');
-      viewHudBtn?.classList.remove('active');
+      dismissBtn?.addEventListener('click', () => {
+        navHint.style.display = 'none';
+        sessionStorage.setItem('alphacore_nav_hint_seen', '1');
+      });
     }
-    localStorage.setItem('alphacore_overview_view_mode', mode);
   }
-
-  if (viewDeskBtn) {
-    viewDeskBtn.onclick = () => {
-      playSFX('click', 0.4);
-      setOverviewMode('desk');
-    };
-  }
-  if (viewHudBtn) {
-    viewHudBtn.onclick = () => {
-      playSFX('click', 0.4);
-      setOverviewMode('hud');
-    };
-  }
-
-  // Restore saved view preference (default to desk)
-  const savedView = localStorage.getItem('alphacore_overview_view_mode') || 'desk';
-  setOverviewMode(savedView);
 
   // Prop card hover SFX and direct navigation
   container.querySelectorAll('.desk-prop-card').forEach(card => {
@@ -574,14 +544,6 @@ export default function Overview() {
     a.download = `alphacore_state_backup_${Date.now()}.json`;
     a.click();
     showToast('SUCCESS', 'System state backup downloaded.');
-  };
-
-  container.querySelector('#btn-lock-session').onclick = () => {
-    if (confirm('Lock active profile session? You will need to re-verify credentials.')) {
-      sessionStorage.clear();
-      window.location.hash = '#/';
-      window.location.reload();
-    }
   };
 
   function runBootSequence() {

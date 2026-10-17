@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   <!-- Stripe Elements -->
   <script src="https://js.stripe.com/v3/"></script>
-  <script type="module" crossorigin src="/assets/index-BP9Oy-W1.js"></script>
+  <script type="module" crossorigin src="/assets/index-CfqYb2qa.js"></script>
 </head>
 <body style="background-color: #030308; margin: 0; color: #fff;">
   <section id="startup-status" role="status" style="position:fixed; inset:0; z-index:1000000; display:grid; place-content:center; padding:24px; background:#030308; color:#00b8ff; font-family:'Share Tech Mono',monospace; text-align:center;">
@@ -51,160 +51,147 @@
       <img src="/Images/ALPHA-LOGO.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
-        <div class="brand-version">v4.7 BUILD 135</div>
+        <div class="brand-version">v4.7 BUILD 135<span class="blinking-cursor">_</span></div>
       </div>
     </div>
     
     <nav class="sidebar-nav" id="sidebar-nav">
+      <!-- Section 1: CORE COMMAND -->
       <div class="nav-section-title">CORE COMMAND</div>
-      <a href="#/" class="nav-item" data-route="/" data-label="Overview">
+      <a href="#/" class="nav-item nav-item-full nav-item-skinny" data-route="/" data-label="Overview">
         <span class="nav-icon">⎔</span>
         <span class="nav-label">Overview</span>
       </a>
-      <a href="#/laundry" class="nav-item" data-route="/laundry" data-label="Laundro-mat">
-        <span class="nav-icon">🧺</span>
-        <span class="nav-label">Laundro-mat</span>
-      </a>
-      <a href="#/thelab" class="nav-item" data-route="/thelab" data-label="The Lab">
-        <span class="nav-icon">🔬</span>
-        <span class="nav-label">The Lab</span>
-      </a>
-      <a href="#/cognitive" class="nav-item" data-route="/cognitive" data-label="Cognitive Core">
+
+      <div class="nav-row-pair">
+        <a href="#/thelab" class="nav-item nav-item-pair nav-item-tall" data-route="/thelab" data-label="The Lab">
+          <span class="nav-icon">🔬</span>
+          <span class="nav-label">The Lab</span>
+        </a>
+        <a href="#/laundry" class="nav-item nav-item-pair nav-item-tall" data-route="/laundry" data-label="Laundromat">
+          <span class="nav-icon">🧺</span>
+          <span class="nav-label">Laundromat</span>
+        </a>
+      </div>
+
+      <a href="#/cognitive" class="nav-item nav-item-full nav-item-ultra-skinny" data-route="/cognitive" data-label="Cognitive Core">
         <span class="nav-icon">⟁</span>
         <span class="nav-label">Cognitive Core</span>
       </a>
 
-      <div class="nav-section-title">NEURAL SYNTHESIS LABS</div>
-      
-      <!-- Collapsible AI Modals Suite -->
-      <div class="nav-group open" id="nav-group-synthesis">
-        <div class="nav-group-header">
-          <a href="#/aimodals" class="nav-item nav-item-parent" data-route="/aimodals" data-label="AI Modals Studio" style="flex:1;">
-            <span class="nav-icon">✨</span>
-            <span class="nav-label">AI Modals Studio</span>
-            <span class="nav-badge-pill">9 ENGINES</span>
-          </a>
-          <button type="button" class="nav-sub-toggle-btn" id="toggle-synthesis-sub" title="Toggle AI Modal engines" aria-label="Toggle AI Modals">
-            <span class="toggle-arrow">▾</span>
-          </button>
-        </div>
-        <div class="nav-sub-items" id="synthesis-sub-items">
-          <a href="#/aimodals?tab=txt2img" class="nav-sub-item" data-tab="txt2img" title="Text to Image Synthesis">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🎨</span>
-            <span class="sub-label">Txt2Img Studio</span>
-          </a>
-          <a href="#/aimodals?tab=img2img" class="nav-sub-item" data-tab="img2img" title="Image to Image Synthesis">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🖼️</span>
-            <span class="sub-label">Img2Img Studio</span>
-          </a>
-          <a href="#/aimodals?tab=omnigen" class="nav-sub-item" data-tab="omnigen" title="OmniGen Unified Multi-Modal">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🧬</span>
-            <span class="sub-label">OmniGen Matrix</span>
-          </a>
-          <a href="#/aimodals?tab=upscaler" class="nav-sub-item" data-tab="upscaler" title="Neural Super-Resolution Upscaler">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🔍</span>
-            <span class="sub-label">Super-Res Upscaler</span>
-          </a>
-          <a href="#/aimodals?tab=txt2vid" class="nav-sub-item" data-tab="txt2vid" title="Text to Video Synthesis">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🎬</span>
-            <span class="sub-label">Txt2Video Engine</span>
-          </a>
-          <a href="#/aimodals?tab=img2vid" class="nav-sub-item" data-tab="img2vid" title="Image to Video Synthesis">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🎥</span>
-            <span class="sub-label">Img2Video Engine</span>
-          </a>
-          <a href="#/aimodals?tab=controlnet" class="nav-sub-item" data-tab="controlnet" title="ControlNet Preprocessors Forge">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🦾</span>
-            <span class="sub-label">ControlNet Forge</span>
-          </a>
-          <a href="#/aimodals?tab=vid2audio" class="nav-sub-item" data-tab="vid2audio" title="Video to Audio Synchronizer">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🔊</span>
-            <span class="sub-label">Vid2Audio Sync</span>
-          </a>
-          <a href="#/aimodals?tab=framepack" class="nav-sub-item" data-tab="framepack" title="FramePack Video Interpolation">
-            <span class="sub-dot"></span>
-            <span class="sub-icon">🎞️</span>
-            <span class="sub-label">FramePack Sequencer</span>
-          </a>
-        </div>
+      <!-- Section 2: STUDIO MATRIX -->
+      <div class="nav-section-title">STUDIO MATRIX</div>
+      <div class="nav-grid-2col" id="synthesis-sub-items">
+        <a href="#/aimodals?tab=txt2img" class="nav-item nav-item-pair nav-sub-item" data-tab="txt2img" data-route="/aimodals" data-label="Text to Image Pipeline" title="Text to Image Pipeline">
+          <span class="nav-icon">🎨</span>
+          <span class="nav-label">Txt2Img Pipeline</span>
+        </a>
+        <a href="#/aimodals?tab=img2img" class="nav-item nav-item-pair nav-sub-item" data-tab="img2img" data-route="/aimodals" data-label="Image to Image Fabricator" title="Image to Image Fabricator">
+          <span class="nav-icon">🖼️</span>
+          <span class="nav-label">Img2Img Fabricator</span>
+        </a>
+
+        <a href="#/aimodals?tab=controlnet" class="nav-item nav-item-pair nav-sub-item" data-tab="controlnet" data-route="/aimodals" data-label="ControlNet Forge" title="ControlNet Forge">
+          <span class="nav-icon">🦾</span>
+          <span class="nav-label">ControlNet Forge</span>
+        </a>
+        <a href="#/aimodals?tab=omnigen" class="nav-item nav-item-pair nav-sub-item" data-tab="omnigen" data-route="/aimodals" data-label="OmniGen Matrix" title="OmniGen Matrix">
+          <span class="nav-icon">🧬</span>
+          <span class="nav-label">OmniGen Matrix</span>
+        </a>
+
+        <a href="#/aimodals?tab=txt2vid" class="nav-item nav-item-pair nav-sub-item" data-tab="txt2vid" data-route="/aimodals" data-label="Txt2Video Engine" title="Txt2Video Engine">
+          <span class="nav-icon">🎬</span>
+          <span class="nav-label">Txt2Vid Engine</span>
+        </a>
+        <a href="#/aimodals?tab=img2vid" class="nav-item nav-item-pair nav-sub-item" data-tab="img2vid" data-route="/aimodals" data-label="Image to Video Socket" title="Image to Video Socket">
+          <span class="nav-icon">🎥</span>
+          <span class="nav-label">Img2Vid Socket</span>
+        </a>
+
+        <a href="#/aimodals?tab=vid2audio" class="nav-item nav-item-pair nav-sub-item" data-tab="vid2audio" data-route="/aimodals" data-label="Vid2Audio Sync" title="Vid2Audio Sync">
+          <span class="nav-icon">🔊</span>
+          <span class="nav-label">Vid2Audio Sync</span>
+        </a>
+        <a href="#/aimodals?tab=upscaler" class="nav-item nav-item-pair nav-sub-item" data-tab="upscaler" data-route="/aimodals" data-label="Resolution Upscaler" title="Resolution Upscaler">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Res Upscaler</span>
+        </a>
+
+        <a href="#/director" class="nav-item nav-item-pair" data-route="/director" data-label="Cyber-Director" title="Cyber-Director">
+          <span class="nav-icon">🎬</span>
+          <span class="nav-label">Cyber-Director</span>
+        </a>
+        <a href="#/assets" class="nav-item nav-item-pair" data-route="/assets" data-label="Asset Manager" title="Asset Manager">
+          <span class="nav-icon">💾</span>
+          <span class="nav-label">Asset Manager</span>
+        </a>
+
+        <a href="#/voice" class="nav-item nav-item-pair" data-route="/voice" data-label="RVC Voice Cloner" title="RVC Voice Cloner">
+          <span class="nav-icon">🎙️</span>
+          <span class="nav-label">RVC Voice Cloner</span>
+        </a>
+        <a href="#/music" class="nav-item nav-item-pair" data-route="/music" data-label="Music Generator" title="Music Generator">
+          <span class="nav-icon">🎵</span>
+          <span class="nav-label">Music Generator</span>
+        </a>
       </div>
 
-      <a href="#/director" class="nav-item" data-route="/director" data-label="Cyber-Director">
-        <span class="nav-icon">🎬</span>
-        <span class="nav-label">Cyber-Director</span>
-      </a>
-      <a href="#/voice" class="nav-item" data-route="/voice" data-label="Voice Cloner">
-        <span class="nav-icon">🎙️</span>
-        <span class="nav-label">Voice Cloner (RVC)</span>
-      </a>
-      <a href="#/music" class="nav-item" data-route="/music" data-label="Music Generator">
-        <span class="nav-icon">🎵</span>
-        <span class="nav-label">Music Generator</span>
-      <a href="#/assets" class="nav-item" data-route="/assets" data-label="Asset Manager">
-        <span class="nav-icon">💾</span>
-        <span class="nav-label">Asset Manager</span>
-      </a>
-
+      <!-- Section 3: INTELLIGENCE & ARCHIVES -->
       <div class="nav-section-title">INTELLIGENCE & ARCHIVES</div>
-      <a href="#/recon" class="nav-item" data-route="/recon" data-label="Recon & Custody">
-        <span class="nav-icon">👁️</span>
-        <span class="nav-label">Recon & Custody</span>
-      </a>
-      <a href="#/vault" class="nav-item" data-route="/vault" data-label="Classified Vault">
-        <span class="nav-icon">🔐</span>
-        <span class="nav-label">Classified Vault</span>
-      </a>
-      <a href="#/research" class="nav-item" data-route="/research" data-label="Research Center">
-        <span class="nav-icon">⌬</span>
-        <span class="nav-label">Research Center</span>
-      </a>
-      <a href="#/lore" class="nav-item" data-route="/lore" data-label="System Lore">
-        <span class="nav-icon">◬</span>
-        <span class="nav-label">System Lore</span>
-      </a>
-      <a href="#/architect" class="nav-item" data-route="/architect" data-label="Architect Profile">
-        <span class="nav-icon">◈</span>
-        <span class="nav-label">Architect Profile</span>
-      </a>
+      <div class="nav-grid-2col">
+        <a href="#/recon" class="nav-item nav-item-pair" data-route="/recon" data-label="Recon / Custody">
+          <span class="nav-icon">👁️</span>
+          <span class="nav-label">Recon / Custody</span>
+        </a>
+        <a href="#/vault" class="nav-item nav-item-pair" data-route="/vault" data-label="Core Vault">
+          <span class="nav-icon">🔐</span>
+          <span class="nav-label">Core Vault</span>
+        </a>
 
+        <a href="#/research" class="nav-item nav-item-pair" data-route="/research" data-label="Research Center">
+          <span class="nav-icon">⌬</span>
+          <span class="nav-label">Research Center</span>
+        </a>
+        <a href="#/lore" class="nav-item nav-item-pair" data-route="/lore" data-label="System Lore">
+          <span class="nav-icon">◬</span>
+          <span class="nav-label">System Lore</span>
+        </a>
+      </div>
+
+      <!-- Section 4: SYSTEM TELEMETRY -->
       <div class="nav-section-title">SYSTEM TELEMETRY</div>
-      <a href="#/subroutines" class="nav-item" data-route="/subroutines" data-label="Subroutines">
-        <span class="nav-icon">⚡</span>
-        <span class="nav-label">Subroutines</span>
-      </a>
-      <a href="#/diagnostics" class="nav-item" data-route="/diagnostics" data-label="Diagnostics">
-        <span class="nav-icon">⍾</span>
-        <span class="nav-label">Diagnostics</span>
-      </a>
-      <a href="#/logs" class="nav-item" data-route="/logs" data-label="Event Logs">
-        <span class="nav-icon">📑</span>
-        <span class="nav-label">Event Logs</span>
-      </a>
-      <a href="#/changelog" class="nav-item" data-route="/changelog" data-label="Changelog">
-        <span class="nav-icon">📜</span>
-        <span class="nav-label">Changelog</span>
-      </a>
-      <a href="#/admin" class="nav-item" data-route="/admin" data-label="Administration">
-        <span class="nav-icon">⚙</span>
-        <span class="nav-label">Administration</span>
-      </a>
+      <div class="nav-grid-2col">
+        <a href="#/subroutines" class="nav-item nav-item-pair" data-route="/subroutines" data-label="Subroutines">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Subroutines</span>
+        </a>
+        <a href="#/diagnostics" class="nav-item nav-item-pair" data-route="/diagnostics" data-label="Diagnostics">
+          <span class="nav-icon">⍾</span>
+          <span class="nav-label">Diagnostics</span>
+        </a>
+
+        <a href="#/changelog" class="nav-item nav-item-pair" data-route="/changelog" data-label="Changelog">
+          <span class="nav-icon">📜</span>
+          <span class="nav-label">Changelog</span>
+        </a>
+        <a href="#/admin" class="nav-item nav-item-pair" data-route="/admin" data-label="Administration">
+          <span class="nav-icon">⚙</span>
+          <span class="nav-label">Administration</span>
+        </a>
+      </div>
     </nav>
     
     <div class="sidebar-footer" role="region" aria-label="System Telemetry Status">
-      <div class="status-row"><span class="s-label">SYSTEM</span><span class="s-val online">● ONLINE</span></div>
-      <div class="status-row"><span class="s-label">NET SYNC</span><span class="s-val node-active">● SYNCED</span></div>
-      <div class="status-row"><span class="s-label">AUTH</span><span class="s-val accent" id="sidebar-auth-val" role="button" tabindex="0" aria-label="Current Profile: CREATOR. Click or press Enter to switch profile.">CREATOR</span></div>
-      <div class="status-row"><span class="s-label">CORE</span><span class="s-val">ALPHA v4.7</span></div>
-      <div class="status-row"><span class="s-label">STATUS</span><span class="s-val">BYPASSED</span></div>
-      <div class="status-row"><span class="s-label">UPTIME</span><span class="s-val" id="uptime-counter" aria-label="System Uptime">00:00:00</span></div>
+      <div class="status-compact-row">
+        <span class="s-val online">● ONLINE</span>
+        <span class="s-val node-active">● SYNCED</span>
+        <span class="s-val accent" id="sidebar-auth-val" role="button" tabindex="0" aria-label="Current Profile: CREATOR. Click or press Enter to switch profile.">CREATOR</span>
+      </div>
+      <div class="status-compact-row status-compact-sub">
+        <span style="color:#64748b; font-size:0.65rem;">CORE: ALPHA v4.7</span>
+        <span id="uptime-counter" style="color:var(--blue-dim); font-size:0.65rem;" aria-label="System Uptime">00:00:00</span>
+      </div>
     </div>
     
     <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse or Expand Sidebar Menu">
