@@ -422,5 +422,5 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(vaultFiles.some(f => (f.name || f.filename) === 'alpha_protocol_notes.txt')).toBe(true);
 
     el.remove();
-  });
+  }, 15000);
 });

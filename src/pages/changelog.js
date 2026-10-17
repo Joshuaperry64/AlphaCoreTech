@@ -26,7 +26,8 @@ const CHANGELOG_DATA = [
       'Subroutines & System Evolution: Removed obsolete OS profile button; set Launch Workspace to open remote web ports in clean new tabs; and renamed sidebar Diagnostics to Chronological Evolution.',
       'Administration & Event Logging: Fine-grained per-profile access permissions; custom access PIN assignments with "Require new PIN reset on next entry"; removed Impersonate function; renamed Roles tab to Access; removed deprecated Lucy and stealth sliders from Classified Directives; and unified Media Logs capturing user prompt invocations across all backend endpoints.',
       'Cyber Synthesizer Music Studio: Overhauled Music Generator into a complete composition workstation featuring genre presets, mood matrices, BPM/duration controls, and real-time generation.',
-      'Voice Cloner Clean-up: Purged hardcoded mock voice profiles from RVC Voice Cloner to display only authenticated user voice profiles.'
+      'Voice Cloner Clean-up: Purged hardcoded mock voice profiles from RVC Voice Cloner to display only authenticated user voice profiles.',
+      'Civitai Model Asset Sync & Checkpoint Catalog: Upgraded Unholy Desire to Crimson Seduction v5.0 (Model 1494558 / Version 2200584) with automatic purge of legacy Sinister v8.0, and integrated Realistic Vision V6.0 B1 (Model 4201 / Version 245598) across AssetSync, Txt2Img, Img2Img, and Hyper-Generation matrices.'
     ]
   },
   {

@@ -34,11 +34,12 @@ WEBSITE_CHECKPOINTS = {
     "0x7RealisticFreedom_omegaSDXL.safetensors": "1461059",
     "juggernautXL_ragnarok.safetensors": "1759168",
     "cyberrealisticXL_desireV30.safetensors": "2765942",
-    "unholyDesireMixSinister_v80.safetensors": "2824082",
+    "unholyDesireMixCrimson_v50.safetensors": "2200584",
     "dreamshaperXL_alpha2Xl10.safetensors": "128713",
     "lustifyNSFWCheckpoint_zenithV9.safetensors": "3112728",
     "epicrealismXL_pureFix.safetensors": "2514955",
     "intorealism_sdxlV4.safetensors": "2650268",
+    "realisticVisionV60B1_v60B1VAE.safetensors": "245598",
 }
 
 WEBSITE_LORAS = {
@@ -340,6 +341,15 @@ class AssetSync:
         print("=" * 60)
         print("ALPHACORE: SCANNING & SYNCING CHECKPOINTS...")
         print("=" * 60)
+        # Purge obsolete unholy sinister checkpoint if present to reclaim volume storage
+        obsolete_unholy = ckpt_dir / "unholyDesireMixSinister_v80.safetensors"
+        if obsolete_unholy.exists():
+            try:
+                obsolete_unholy.unlink()
+                print("[AssetSync] ♻️ Replaced/purged obsolete unholyDesireMixSinister_v80.safetensors")
+            except Exception as e:
+                print(f"[AssetSync] Note purging obsolete unholy checkpoint: {e}")
+
         for fn, vid in WEBSITE_CHECKPOINTS.items():
             process_item(fn, vid, ckpt_dir, "checkpoints")
 

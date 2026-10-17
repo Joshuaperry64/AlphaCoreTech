@@ -911,10 +911,11 @@ function buildTxt2Img() {
           <option value="0x7RealisticFreedom_omegaSDXL.safetensors">FREEDOM OMEGA</option>
           <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
           <option value="cyberrealisticXL_desireV30.safetensors">CYBER REALISTIC</option>
-          <option value="unholyDesireMixSinister_v80.safetensors">UNHOLY DESIRE</option>
+          <option value="unholyDesireMixCrimson_v50.safetensors">UNHOLY DESIRE (CRIMSON)</option>
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
           <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
           <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
+          <option value="realisticVisionV60B1_v60B1VAE.safetensors">REALISTIC VISION V6.0</option>
           <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM</option>
         </select>
       </div>
@@ -1627,10 +1628,11 @@ function buildImg2Img() {
         <option value="0x7RealisticFreedom_omegaSDXL">0x7RealisticFreedom_omegaSDXL (Hyper-Realistic Freedom)</option>
         <option value="juggernautXL_ragnarok">juggernautXL_ragnarok (Cinematic Lighting & Micro-Details)</option>
         <option value="cyberrealisticXL_desireV30">cyberrealisticXL_desireV30 (Cyberpunk High Dynamic Range)</option>
-        <option value="unholyDesireMixSinister_v80">unholyDesireMixSinister_v80 (Sinister Dark Stylization)</option>
+        <option value="unholyDesireMixCrimson_v50">unholyDesireMixCrimson_v50 (Crimson Seduction)</option>
         <option value="lustifyNSFWCheckpoint_zenithV9">lustifyNSFWCheckpoint_zenithV9 (Unfiltered High-Aesthetic)</option>
         <option value="dreamshaperXL_alpha2Xl10">dreamshaperXL_alpha2Xl10 (Creative Concept & Digital Art)</option>
         <option value="intorealism_sdxlV4">intorealism_sdxlV4 (Hyper-Realistic Skin & Lighting)</option>
+        <option value="realisticVisionV60B1_v60B1VAE">realisticVisionV60B1_v60B1VAE (Photorealism & Portraiture)</option>
       </select>
     </div>
 

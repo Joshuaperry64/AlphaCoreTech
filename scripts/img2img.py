@@ -66,10 +66,12 @@ SDXL_CHECKPOINTS = {
     "0x7RealisticFreedom_omegaSDXL": "0x7RealisticFreedom_omegaSDXL.safetensors",
     "juggernautXL_ragnarok": "juggernautXL_ragnarok.safetensors",
     "cyberrealisticXL_desireV30": "cyberrealisticXL_desireV30.safetensors",
-    "unholyDesireMixSinister_v80": "unholyDesireMixSinister_v80.safetensors",
+    "unholyDesireMixCrimson_v50": "unholyDesireMixCrimson_v50.safetensors",
+    "unholyDesireMixSinister_v80": "unholyDesireMixCrimson_v50.safetensors",
     "lustifyNSFWCheckpoint_zenithV9": "lustifyNSFWCheckpoint_zenithV9.safetensors",
     "dreamshaperXL_alpha2Xl10": "dreamshaperXL_alpha2Xl10.safetensors",
     "intorealism_sdxlV4": "intorealism_sdxlV4.safetensors",
+    "realisticVisionV60B1_v60B1VAE": "realisticVisionV60B1_v60B1VAE.safetensors",
 }
 
 
