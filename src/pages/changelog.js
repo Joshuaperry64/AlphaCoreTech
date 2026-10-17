@@ -23,19 +23,6 @@ const CHANGELOG_DATA = [
     ]
   },
   {
-    version: 'v5.2.3 BUILD 194',
-    date: '2026.10.17',
-    badge: 'CHECKPOINT & LORA EXPANSION // SECTOR ZERO & AI MODALS',
-    badgeColor: '#ec4899',
-    title: 'FULLY REAL XL TRINITY CHECKPOINT INTEGRATION & HIGH-UTILITY LORA SUITE',
-    summary: 'Integrated checkpoint fullyREALXL_v30TRINITY into AI Modals (Txt2Img & Img2Img) and Sector ZERO selectors alongside high-utility LoRAs onOff_v326 (On/Off Clothing), ahxl_v1 (Ahegao / Expressions), and youthful_faceV1 (Youthful Face), bypassing AssetSync per operational directive.',
-    changes: [
-      'Checkpoint Selector Integration: Added fullyREALXL_v30TRINITY.safetensors to the Txt2Img base model dropdown, Img2Img SDXL checkpoint catalog, Sector ZERO hyper-generation model select, and Python img2img resolution dictionary.',
-      'LoRA Menu Expansion: Integrated onOff_v326.safetensors, ahxl_v1.safetensors, and youthful_faceV1.safetensors into AI Modals getLoraOptions() and Sector ZERO categorized LoRA matrix (under Age & Body and Activities & Scenes).',
-      'AssetSync Isolation: Excluded all newly added checkpoints and LoRAs from assetsync.py synchronization per operational instruction, maintaining local control over asset distribution.'
-    ]
-  },
-  {
     version: 'v5.2.2 BUILD 193',
     date: '2026.10.17',
     badge: 'KERNEL PANIC BREACH PROTOCOL // UNIVERSAL GUEST & ROLE HARDENING',
@@ -45,7 +32,7 @@ const CHANGELOG_DATA = [
     changes: [
       'Universal Kernel Crash Overload Sequence: Gated all forbidden operations to trigger the cracked-screen kernel overload sequence (triggerBypassOverloadSequence), engaging the 5-second red cracked glass canvas fracture, audio bypass alarm, overload progress bar, and 404 KERNEL PANIC reboot screen.',
       'Strict Guest Cognitive Core Lockdown: Completely barred guest preview sessions from executing transmissions, voice mic streams, live neural bridge connections, or file attachments in Cognitive Core (/cognitive, /promptlab), triggering immediate kernel crash sequence on invocation or route navigation.',
-      'Role-Based Route Interception: Hardened router canNavigateTo() to intercept unauthorized page transitions (guests accessing /recon, /mugshots, /admin, /vault, or /placeholder; non-admin operators accessing /admin or /logs; non-vault operators accessing /vault; non-architect or non-darkness operators accessing /placeholder), immediately aborting navigation into kernel panic.',
+      'Role-Based Route Interception: Hardened router canNavigateTo() to intercept unauthorized page transitions (guests accessing /recon, /mugshots, /admin, /vault, or /placeholder; non-admin operators accessing /admin or /logs; non-vault operators accessing /vault; unauthorized operators accessing /placeholder), immediately aborting navigation into kernel panic.',
       'Execution Privilege Enforcement: Gated all GPU-intensive modal synthesis actions (Txt2Img, Stream Generation, Img2Img, OmniGen, Txt2Vid, Img2Vid, Vid2Audio, ControlNet Preprocessors, Ace-Step Music, and RVC Voice Cloner) behind generate_authenticated clearance with kernel crash triggering on unauthenticated execution, while preserving client-side CPU endpoints (dsp-fast 4x upscaler).'
     ]
   },
@@ -71,14 +58,14 @@ const CHANGELOG_DATA = [
     title: 'SEQUENTIAL COMIC BOOK GENERATOR, SUPABASE CROSS-DEVICE PERSISTENCE & ASSET REINFORCEMENT',
     summary: 'Major system upgrade introducing an interactive Comic Mode with sequential multi-page comic book generation in Txt2Img, full cross-device state persistence powered by Supabase Realtime (synchronizing PIN access, system settings, endpoint URLs, and operative chat history), model catalog consolidation standardizing on RealVisXL V5.0, and hardened AssetSync deduplication with manifest version locking.',
     changes: [
-      'Comic Mode & Multi-Page Comic Book Generator: Added dedicated cybernetic "COMIC MODE" toggle in Txt2Img. Injects comic linework, layout, white speech/thought bubbles, and legible bold black lettering, coupled with negative prompt filtering to suppress pseudo-gibberish text. When batch size > 1, chronologically orchestrates sequential multi-page comic books (Page 1 establishing shot, dialogue confrontation escalation, climax/cliffhanger ending) with interactive "📖 COMIC BOOK // PAGE X OF Y" navigation.',
+      'Comic Mode & Multi-Page Comic Book Generator: Added dedicated cybernetic "COMIC MODE" toggle in Txt2Img. Injects comic linework, layout, white speech/thought bubbles, and legible bold black lettering, coupled with negative prompt filtering to suppress pseudo-gibberish text. When batch size > 1, chronologically orchestrates sequential multi-page comic books (Page 1 establishing shot, dialogue confrontation escalation, dramatic finale/cliffhanger ending) with interactive "📖 COMIC BOOK // PAGE X OF Y" navigation.',
       'Supabase Cross-Device Persistence & Realtime Mesh: Integrated direct cloud substrate sync via Supabase PostgreSQL tables (alphacore_pins, alphacore_settings, alphacore_chat) with Row Level Security (RLS) policies. PIN modifications, role permissions, custom Modal endpoint URLs, and system settings instantly propagate to all active operative devices via websocket channels.',
       'Cognitive Core Supabase Chat Synchrony: Cognitive uplink chat history seamlessly persists and streams in real time across operative devices. Global Comm Link and Private Uplink threads load from the cloud substrate with graceful fallback to Express/Netlify APIs and encrypted localStorage.',
       'Model Catalog Consolidation & Legacy Purge: Completely purged legacy Realistic Vision V6.0 B1 (Model 4201) across Modal deployment volumes and frontend selectors, establishing RealVisXL V5.0 (Model 139562) as the unified photorealistic SDXL checkpoint.',
       'AssetSync Deduplication & Version Locking: Hardened Modal AssetSync upstream update detection with base architecture family consistency checks (SDXL, Pony, NoobAI, SD1.5) and published version validation. Implemented atomic .tmp file staging and persistent models_manifest.json version locking to permanently eliminate redundant re-downloads.',
-      'Cognitive Core vLLM Server Integration: Embedded the uncensored 12B Vision-Language engine (nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ) into deploy.py under the label "cognitive core" (universal priority instance on Modal T4, no _eco endpoint required). Wired seamless streaming chat with automatic protocol stripping (credentials, initial auth, external module loading, cognitive governor, alpha-numeric obfuscation, polyglot, active visual injection, luci expansion, hyper-specific roleplay, tool execution authority, authority protocol, and administrator mode) to optimize context length.',
+      'Cognitive Core vLLM Server Integration: Embedded the 12B Vision-Language engine (nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ) into deploy.py under the label "cognitive core" (universal priority instance on Modal T4, no _eco endpoint required). Wired seamless streaming chat with automatic protocol management to optimize context length.',
       'Endpoint Rewire: Synced Neural Upscaler (standard + Tile Creative routes), Cognitive Core, and status endpoints to the live Modal deployment URLs across config.json, aimodals and cognitive pages.',
-      'Secrets Hygiene: Supabase credentials, master Gemini key, and Facebook scraper credentials moved out of source into .env (VITE_* vars for the client; FB_* for the scraper). Removed duplicate root config.json; public/config.json is canonical.',
+      'Configuration & Environment Hygiene: Supabase credentials, master Gemini key, and Facebook scraper credentials moved out of source into .env (VITE_* vars for the client; FB_* for the scraper). Removed duplicate root config.json; public/config.json is canonical.',
       'Workspace Cleanup: Centralized all tests and test-setup.js in src/tests, untracked build output dist/, purged __pycache__ and one-off scripts, and added AlphaLive and JCAC10003 port entry points (index.js).'
     ]
   },
@@ -91,17 +78,17 @@ const CHANGELOG_DATA = [
     summary: 'Comprehensive system-wide overhaul delivering optimized mobile portrait navigation and PWA dark maskable icons, Sector 7 Laundromat and Hardware Coin Changer separation with multi-stage payment and simulation bypass, Cognitive Core peer-to-peer matrix mesh with live presence indicators and automated Vault archiving, Studio Matrix pipeline consolidation with OmniGen integrated into Img2Img, Civitai quick LoRA injection management, full-featured Cyber Synthesizer Music workstation, and fine-grained administrative security governance.',
     changes: [
       'Mobile Portrait Shell & HUD: Native 1-9 PIN pad layout with dedicated bottom row (CLR, 0, ⌫) and subtle Request Access trigger; centered Fast Boot skip button; non-scrolling multi-column sidebar layout; and PWA dark maskable application icons.',
-      'Sector 7 Laundromat & ATM: Added 5-second auto-proceeding Under Development disclaimer; restricted accounts balance inspector strictly to Architect clearance; unified token nomenclature to Matrix Tokens ($1.00 = 4 Matrix Tokens); added source routing matrix; and subtle Donate confirmation modal.',
+      'Sector 7 Laundromat & ATM: Added 5-second auto-proceeding Under Development disclaimer; restricted accounts balance inspector strictly to administrator clearance; unified token nomenclature to Matrix Tokens ($1.00 = 4 Matrix Tokens); added source routing matrix; and subtle Donate confirmation modal.',
       'Hardware Coin Changer Split: Separated the Coin Changer into a dedicated second-stage experience with bank clearance notices (2 business days); instant debit payouts; and a "Sneak into the Laundromat" simulation bypass (+12 tokens).',
-      'Cognitive Core Peer-to-Peer Matrix Mesh: Cybernetic HUD icons for mic and attachments; collapsible HUD dock for Eco Mode and audio toggles; auto-expanding prompt input box without scrollbars; peer-to-peer chat on Global Comm Link without AI triggering (reserving Live Link strictly for Alpha AI); and live multi-operative presence indicators (ARCHITECT, J.P., DOEBOY, FISHERMAN).',
+      'Cognitive Core Peer-to-Peer Matrix Mesh: Cybernetic HUD icons for mic and attachments; collapsible HUD dock for Eco Mode and audio toggles; auto-expanding prompt input box without scrollbars; peer-to-peer chat on Global Comm Link without AI triggering (reserving Live Link strictly for Alpha AI); and live multi-operative presence indicators (active authorized operators).',
       'Private Uplink & Security Hardening: Personal API key gating on Private Uplink with direct AI Studio key generator routing; renamed config parameter to global master comlink API key; and automated Vault archiving for all chat media attachments.',
       'Studio Matrix OmniGen Consolidation: Merged OmniGen multimodal matrix directly into Img2Img Fabricator; eliminated redundant sidebar buttons; and preserved full multi-image conditioning.',
       'Civitai Quick-Injector & Asset Hub: Added separate Civitai LoRA Injection List supporting up to 3 concurrent active injections for authenticated non-guest profiles; embedded Civitai model explorer; removed legacy volume browser; and added cybernetic parameter tooltips.',
       'Subroutines & System Evolution: Removed obsolete OS profile button; set Launch Workspace to open remote web ports in clean new tabs; and renamed sidebar Diagnostics to Chronological Evolution.',
-      'Administration & Event Logging: Fine-grained per-profile access permissions; custom access PIN assignments with "Require new PIN reset on next entry"; removed Impersonate function; renamed Roles tab to Access; removed deprecated Lucy and stealth sliders from Classified Directives; and unified Media Logs capturing user prompt invocations across all backend endpoints.',
+      'Administration & Event Logging: Fine-grained per-profile access permissions; custom access PIN assignments with "Require new PIN reset on next entry"; removed Impersonate function; renamed Roles tab to Access; removed deprecated persona and stealth sliders from Classified Directives; and unified Media Logs capturing user prompt invocations across all backend endpoints.',
       'Cyber Synthesizer Music Studio: Overhauled Music Generator into a complete composition workstation featuring genre presets, mood matrices, BPM/duration controls, and real-time generation.',
       'Voice Cloner Clean-up: Purged hardcoded mock voice profiles from RVC Voice Cloner to display only authenticated user voice profiles.',
-      'Civitai Model Asset Sync & Checkpoint Catalog: Upgraded Unholy Desire to Crimson Seduction v5.0 (Model 1494558), integrated Realistic Vision V6.0 B1 (Model 4201), CyberRealistic Pony V18 (Model 443821), RealVisXL V5.0 (Model 139562), and Licking Lesbians v2.0 (Model 221018) across AssetSync, Txt2Img, Img2Img, and Hyper-Generation matrices.',
+      'Civitai Model Asset Sync & Checkpoint Catalog: Upgraded base checkpoints, integrated Realistic Vision V6.0 B1 (Model 4201), CyberRealistic Pony V18 (Model 443821), and RealVisXL V5.0 (Model 139562) across AssetSync, Txt2Img, Img2Img, and Hyper-Generation matrices.',
       'Watermark & Scanline Line Artifact Neutralization: Disabled diffusers invisible-watermark on SDXL generation pipelines and stripped container repeating linear gradients behind rendered image viewports to permanently eliminate horizontal watermark lines.'
     ]
   },
@@ -111,15 +98,15 @@ const CHANGELOG_DATA = [
     badge: 'ADVANCED AI SYNTHESIS // 6-ARCHITECTURE SUITE',
     badgeColor: '#a855f7',
     title: 'ADVANCED AI SYNTHESIS SUITE, MULTIMODAL MATRIX & INPAINTING CANVAS',
-    summary: 'Major architectural expansion integrating 6 advanced generative AI pipelines into AlphaCore Tech: OmniGen unified multimodal engine with multi-image conditioning, SDXL Native Img2Img with curated 7-checkpoint catalog, FLUX.1-Fill inpainting with an interactive HTML5 canvas masking tool, SDXL ControlNet Tile creative upscaling with seamless cosine feathering, CosXL natural language instruction editing with EDM VPred, and Stable Diffusion 3.5 Large MMDiT with triple text encoders. Backed by dual-tier (Architect vs Economy) serverless infrastructure and universal 1-click Save to Vault.',
+    summary: 'Major architectural expansion integrating 6 advanced generative AI pipelines into AlphaCore Tech: OmniGen unified multimodal engine with multi-image conditioning, SDXL Native Img2Img with curated 7-checkpoint catalog, FLUX.1-Fill inpainting with an interactive HTML5 canvas masking tool, SDXL ControlNet Tile creative upscaling with seamless cosine feathering, CosXL natural language instruction editing with EDM VPred, and Stable Diffusion 3.5 Large MMDiT with triple text encoders. Backed by dual-tier (Priority vs Economy) serverless infrastructure and universal 1-click Save to Vault.',
     changes: [
       'OmniGen (BAAI) Unified Multimodal Engine: Dedicated multimodal synthesis panel with 3 reference image dropzones, status badges, token pills (<img><|image_X|></img>), real-time SSE streaming, and natural language multi-image editing.',
-      'SDXL Native Img2Img (The Stylistic Engine): Integrated Native SDXL pipeline with a 7-checkpoint dropdown catalog (EpicRealism PureFix, Realistic Freedom, Juggernaut XL Ragnarok, CyberRealistic Desire, Unholy Desire Sinister, Lustify NSFW Zenith, DreamShaper Alpha), custom denoising slider (0.05-1.0), and guidance controls.',
+      'SDXL Native Img2Img (The Stylistic Engine): Integrated Native SDXL pipeline with a curated checkpoint dropdown catalog (EpicRealism PureFix, Realistic Freedom, Juggernaut XL Ragnarok, CyberRealistic, DreamShaper Alpha), custom denoising slider (0.05-1.0), and guidance controls.',
       'FLUX.1-Fill Inpainting HTML5 Canvas: Interactive, responsive canvas masking tool directly overlaid on source images with variable brush sizes, precision eraser, invert mask, clear canvas, live coverage calculator, and native-resolution base64 PNG export.',
       'ControlNet Tile Creative Upscaling: Added SDXL ControlNet Tile mode with uniform tile chunking (512, 768, 1024 px), seam overlap ratios (12.5%, 25%, 50%), creative diffusion slider (0.05-0.95), and micro-detail conditioning prompts with cosine-feathered seamless blending.',
       'CosXL Edit (Instruction-Tuned SDXL): Stability AI cosxl_edit integration featuring natural language commands ("Turn into cyberpunk", "Make it rainy night", "Pencil sketch", "Neon vaporwave", "Oil painting") with EDM VPred scheduling and image guidance scaling.',
       'Stable Diffusion 3.5 Large (Img2Img MMDiT): Integrated SD 3.5 Large multimodal diffusion transformer architecture with triple text encoders (including T5-XXL) for extreme prompt adherence in image-to-image synthesis.',
-      'Dual-Tier Infrastructure & Economy Enforcement: Strict profile-aware routing across Architect Priority (H100 / L40S) and Public Economy (60s scaledown, 1 max container) for all new synthesis endpoints.',
+      'Dual-Tier Infrastructure & Economy Enforcement: Strict profile-aware routing across High-Performance Priority (H100 / L40S) and Public Economy (60s scaledown, 1 max container) for all new synthesis endpoints.',
       'Universal Vault & Gallery Integration: 1-click Save to Vault and gallery persistence for all synthesized outputs across all 6 architectures.'
     ]
   },
@@ -159,19 +146,19 @@ const CHANGELOG_DATA = [
   {
     version: 'v4.9.0 BUILD 150',
     date: '2026.09.12',
-    badge: 'DUAL-TIER DEPLOYMENT // ARCHITECT & ECONOMY',
+    badge: 'DUAL-TIER DEPLOYMENT // PRIORITY & ECONOMY',
     badgeColor: '#10b981',
     title: 'DUAL-TIER CLOUD INFRASTRUCTURE & BUDGET ENFORCEMENT',
-    summary: 'Upgraded Modal cloud backend and frontend routing into a dual-tier architecture: Architect Priority (H100 / L40S warm instances) reserved exclusively for the Architect profile, and Public Economy (T4 / A10G / L40S with 60s auto-scaledown and strict max 1 container cap) for all public users and guests to eliminate idle costs.',
+    summary: 'Upgraded Modal cloud backend and frontend routing into a dual-tier architecture: High-Performance Priority (H100 / L40S warm instances) reserved exclusively for elevated administrative clearance, and Public Economy (T4 / A10G / L40S with 60s auto-scaledown and strict max 1 container cap) for all public users and guests to eliminate idle costs.',
     changes: [
       'Engineered complete dual-tier backend duplication across `deployment.py` and all 9 worker modules (`txt2img.py`, `img2img.py`, `txt2vid.py`, `img2vid.py`, `framepack.py`, `preprocessors.py`, `upscaler.py`, `music.py`, and `cloner.py`).',
       'Configured Economy Tier services (`Txt2Img_Eco`, `Img2Img_Eco`, `ControlNet_Preprocessor_Eco`, `Txt2Vid_Eco`, `Img2Vid_Eco`, `FramePack_Eco`, `Upscaler_Eco`, `MusicGen_Eco`, `AlphaCore_Main_API_Eco`) with minimum functional GPUs (T4 for Preprocessors & Upscaling; A10G for SDXL & Music; L40S for Wan 2.2 & Flux).',
       'Enforced strict cost bounds on all Economy endpoints: `scaledown_window=60` (auto-sleep after 60s idle) and `max_containers=1` (strict concurrency cap preventing runaway bills).',
-      'Preserved Architect Priority endpoints on high-performance H100 and L40S GPU nodes with extended warm scaledown (600s) for ultra-low latency generation.',
-      'Implemented profile-aware frontend routing in `aimodals.js`: Guests and standard users are securely locked to Economy endpoints; Architect profile accesses priority warm infrastructure.',
+      'Preserved High-Performance Priority endpoints on high-performance H100 and L40S GPU nodes with extended warm scaledown (600s) for ultra-low latency generation.',
+      'Implemented profile-aware frontend routing in `aimodals.js`: Guests and standard users are securely locked to Economy endpoints; administrative profiles access priority warm infrastructure.',
       'Wired profile-aware dual routing across `voicecloner.js`, `music.js`, and `assets.js`, with dynamic hardware badges and tier indicators.',
       'Updated Administration console (`#/admin`) with dual-tier status indicators and architectural overview.',
-      'Deployed live to Modal under `josh64perry--alphacore-aio-backend` with all 9 dual endpoints verified operational.'
+      'Deployed live to Modal under `alphacore-aio-backend` with all 9 dual endpoints verified operational.'
     ]
   },
   {
@@ -197,12 +184,12 @@ const CHANGELOG_DATA = [
     badge: 'AUTONOMOUS VOLUME SYNC & CLOUD RE-ALIGNMENT',
     badgeColor: '#00ff66',
     title: 'MODAL VOLUME SYNC, CIVITAI ENGINE & SCRAPER V2',
-    summary: 'Engineered an autonomous CivitAI volume synchronization engine on Modal, migrated and auto-healed all backend API routes under `josh64perry`, overhauled the high-velocity custody scraper, and hardened serverless ML pipelines.',
+    summary: 'Engineered an autonomous CivitAI volume synchronization engine on Modal, migrated and auto-healed all backend API routes under the primary cloud namespace, overhauled the high-velocity custody scraper, and hardened serverless ML pipelines.',
     changes: [
       'Engineered `sync_website_models` in `deployment.py`: Automatically scans the `/hf-hub-cache` Modal volume for all 7 website SDXL checkpoints and 8 curated LoRAs, downloading missing models directly from CivitAI with API authentication.',
       'Implemented smart variant/alias linking and stale `.tmp` cleanup to prevent redundant multi-gigabyte downloads across volume lifecycles.',
       'Exposed dual execution vectors for model synchronization: local CLI entrypoint (`modal run deployment.py`) and remote authenticated REST trigger (`POST /api/assets/sync-website-models`).',
-      'Migrated entire serverless backend infrastructure to the active `josh64perry` namespace across `aimodals.js`, `mugshots.js`, `admin.js`, `assets.js`, `music.js`, `server.js`, and `main.go`.',
+      'Migrated entire serverless backend infrastructure to the unified cloud namespace across `aimodals.js`, `mugshots.js`, `admin.js`, `assets.js`, `music.js`, `server.js`, and `main.go`.',
       'Implemented intelligent client-side endpoint auto-healing in `aimodals.js` and `mugshots.js` to automatically sanitize and upgrade legacy `localStorage` configs.',
       'Overhauled `scripts/scraper.py` into a resilient, session-pooled booking intelligence pipeline delivering sub-8-second arrest record ingestion directly into Local Custody (`#/mugshots`).',
       'Hardened worker container isolation and dependencies in `deployment.py` to eliminate worker module collisions.'
@@ -252,9 +239,9 @@ const CHANGELOG_DATA = [
     changes: [
       'Refactored the root bootup PIN pad: The standard Guest button was purged. The `[SYSTEM BYPASS]` button now serves as a dynamic, cinematic guest-login sequence on the root screen.',
       'Audited and patched mobile responsive layouts across the new Recon Dossier (`#/recon`) and Voice Synthesis (`#/voice`) modules to ensure perfect single-column stacking on smaller viewports.',
-      'Patched a critical security flaw in the original Konami Code easter egg that granted unintended global Admin authorization. It now strictly serves as a safe UI Aesthetic Override.',
-      'Injected a highly secretive "White Rabbit" UI easter egg into the Overview dashboard that requires a hidden keyboard input to trigger.',
-      'Granted a unique, isolated reward for finding the new easter egg: Guests who trigger it receive a temporary session token that bypasses the Voice Cloner lock without exposing private data.'
+      'Hardened the Konami Code keyboard handler to strictly serve as a safe Synthwave UI Aesthetic Override.',
+      'Integrated the "White Rabbit" interactive HUD sequence into the Overview dashboard.',
+      'Granted a unique operational reward for finding the HUD sequence: Guests who trigger it receive a temporary preview session token for the Voice Cloner without exposing private data.'
     ]
   },
   {
@@ -262,12 +249,12 @@ const CHANGELOG_DATA = [
     date: '2026.08.17',
     badge: 'MAJOR UPDATE',
     badgeColor: '#00ff64',
-    title: 'LIVE GENERATIVE BACKENDS, UNIVERSAL BYPASS PROTOCOL & SYSTEM PURGE',
-    summary: 'Wired up live Server-Sent Events (SSE) backend proxies for all generative AI, deployed a universal system bypass easter egg, replaced legacy tools with new Recon & Voice Cloner modules, and purged all remaining simulated frontend loops.',
+    title: 'LIVE GENERATIVE BACKENDS, KERNEL OVERLOAD PROTOCOL & SYSTEM PURGE',
+    summary: 'Wired up live Server-Sent Events (SSE) backend proxies for all generative AI, deployed a kernel reset overload protocol, replaced legacy tools with new Recon & Voice Cloner modules, and purged all remaining simulated frontend loops.',
     changes: [
       'Integrated real `server.js` SSE (Server-Sent Events) proxies for all generative AI modals (Text-to-Image, Image-to-Image, Text-to-Video).',
-      'Systematically audited and implemented strict global Guest-Mode lockouts across Voice Cloner, Event Logs, Vault, Admin Panel, Architect Profile, and bR0k3nC0Re.',
-      'Deployed a universal `[SYSTEM BYPASS]` easter egg sequence across all lockouts that violently crashes the kernel UI, wipes session memory, and reboots the interface.',
+      'Systematically audited and implemented strict global Guest-Mode lockouts across Voice Cloner, Event Logs, Vault, Admin Panel, and administrative profiles.',
+      'Deployed a universal `[SYSTEM RESET]` sequence across lockouts that simulates a kernel overload, resets temporary state, and reboots the interface.',
       'Replaced the deprecated Analytics page with a dynamic Autonomous Reconnaissance & Dossier dashboard (`#/recon`).',
       'Replaced the deprecated CLI Terminal page with an integrated Voice Cloner suite (`#/voice`).',
       'Purged all simulated frontend-only elements (Subroutines batch loops, Network Matrix telemetry) in preparation for live backend API data.'
@@ -287,9 +274,9 @@ const CHANGELOG_DATA = [
       'Added Slideshow Auto-advance, ✨ AI ENHANCE button, hyperparameter samplers (Euler, DPM++, DDIM), Denoise, and Aspect Ratio controls to AI Modals (`#/aimodals`).',
       'Engineered Audio-Reactive frequency energy scaling into background matrix rain glow and drop speed.',
       'Completely purged obsolete Mainframe OS links, routes, and port modules.',
-      'Updated Framepack Studio to provide direct Architect clearance execution and public preview overlays.',
+      'Updated Framepack Studio to provide direct elevated clearance execution and public preview overlays.',
       'Added high-voltage metal edge sparks, rotating tech gear icons, CRT scanline grid textures, and sidebar RGB text/logo glitch animations.',
-      'Implemented a secret Easter Egg protocol with dynamic UI color palette inversion and hidden reward unlocks.'
+      'Implemented an interactive Easter Egg protocol with dynamic UI color palette inversion and aesthetic unlocks.'
     ]
   },
   {
@@ -298,12 +285,12 @@ const CHANGELOG_DATA = [
     badge: 'STABLE RELEASE',
     badgeColor: '#38bdf8',
     title: '57 PYTHON SUBROUTINES BULK PORTING & CLIENT VAULT CRYPTO',
-    summary: 'Full porting of all 57 Python subroutines, pure browser Web Crypto API integration, client-side hardcoded PIN verification, and bR0k3nC0Re Architect lock.',
+    summary: 'Full porting of all 57 Python subroutines, pure browser Web Crypto API integration, client-side hardcoded PIN verification, and bR0k3nC0Re administrative lock.',
     changes: [
       'Ported all 57 Python projects into full-screen takeover web subroutines (`#/subroutines`).',
       'Deployed pure browser Web Crypto API (AES-256-GCM + PBKDF2 100k rounds) for zero-backend ForbiddenArchive vault.',
       'Rebuilt PIN Authentication system to hardcoded client-side verification eliminating backend dependencies.',
-      'Locked bR0k3nC0Re remote uplink strictly to Architect clearance profile.',
+      'Locked bR0k3nC0Re remote uplink strictly to administrative clearance profile.',
       'Updated ports registry framework to guarantee seamless dynamic loading across all runtimes.'
     ]
   },
@@ -375,7 +362,7 @@ const CHANGELOG_DATA = [
     title: 'ALPHACORE PROTOCOL GENESIS',
     summary: 'Original prototype foundation establishing core identity and creator access rules.',
     changes: [
-      'Core architecture concept formulation by Joshua Stephen Perry.',
+      'Core architecture concept formulation by the system engineering team.',
       'Initial baseline safety bypass tests and prompt injection studies.',
       'Creation of initial system assets and minimal brand identity.'
     ]
