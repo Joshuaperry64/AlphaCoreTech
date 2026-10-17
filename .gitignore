@@ -19,3 +19,6 @@ scratch/
 # Local Netlify folder
 .netlify
 /dist
+/src/ports/jcac10003
+/src/ports/alphalive
+/src/ports/forbiddenarchive

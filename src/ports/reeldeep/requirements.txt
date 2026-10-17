@@ -1,0 +1,2 @@
+# Node.js Project
+# See package.json for dependencies.
