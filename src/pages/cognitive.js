@@ -189,9 +189,7 @@ export default function CognitiveUplink() {
     let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
 
     // Master Gemini API Key for registered users in Global Comm Link
-    const MASTER_GEMINI_API_KEY = typeof atob === 'function'
-      ? atob('QVEuQWI4Uk42S3FmSjFmTmgtcmxYX196UkJmWTRJaDVUcTB1UTZHTzdxend3Um13Y1E2Y0E=')
-      : ['AQ', 'Ab8RN6KqfJ1fNh-rlX__zRBfY4Ih5Tq0uQ6GO7qzwwRmwcQ6cA'].join('.');
+    const MASTER_GEMINI_API_KEY = import.meta.env.VITE_MASTER_GEMINI_API_KEY || '';
 
     let globalSettings = {};
     try { globalSettings = JSON.parse(localStorage.getItem('alphacore_modal_settings')) || {}; } catch(e){}
@@ -281,7 +279,7 @@ export default function CognitiveUplink() {
             <input type="text" id="modal-account-input" class="aim-input" value="${globalSettings.modalAccount || 'alphacoreprogramming-ai'}" style="width: 100%; margin-bottom: 12px;">
 
             <label class="aim-label">COGNITIVE CORE ENDPOINT (vLLM Server)</label>
-            <input type="text" id="modal-vllm-input" class="aim-input" value="${globalSettings.vllmUrl || ''}" placeholder="https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--alphacore-aio-backend-cognitive-core.modal.run" style="width: 100%; margin-bottom: 12px;">
+            <input type="text" id="modal-vllm-input" class="aim-input" value="${globalSettings.vllmUrl || ''}" placeholder="https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--cognitive-core.us-east.modal.run" style="width: 100%; margin-bottom: 12px;">
 
             <label class="aim-label">TEXT TO IMAGE ENDPOINT (txt2img)</label>
             <input type="text" id="modal-txt2img-input" class="aim-input" value="${globalSettings.txt2imgUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
@@ -1371,7 +1369,7 @@ export default function CognitiveUplink() {
         initAudio();
         statusDot.classList.replace('online', 'streaming');
         statusText.textContent = 'CONNECTING TO vLLM COGNITIVE CORE...';
-        const defaultVllmUrl = `https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--alphacore-aio-backend-cognitive-core.modal.run`;
+        const defaultVllmUrl = `https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--cognitive-core.us-east.modal.run`;
         const targetUrl = (globalSettings.vllmUrl || defaultVllmUrl).replace(/\/$/, '');
 
         liveSession = {

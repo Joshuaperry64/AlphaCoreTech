@@ -26,8 +26,9 @@ image = (
     .add_local_python_source("shared_app")
 )
 
-FB_APP_ID = '1342941991353756'
-FB_APP_SECRET = 'a6ca1b29c5b8cff96e725df2564e807f'
+import os
+FB_APP_ID = os.environ.get('FB_APP_ID', '')
+FB_APP_SECRET = os.environ.get('FB_APP_SECRET', '')
 
 session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=15, max_retries=2)

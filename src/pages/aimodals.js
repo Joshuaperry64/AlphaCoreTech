@@ -66,8 +66,12 @@ export function getModalSettings() {
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.us-east.modal.run',
     fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots',
     music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/architect',
-    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run',
+    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--394c22.us-east.modal.run',
+    upscalerTileUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--3f7359.us-east.modal.run',
+    upscalerStatusUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run',
     vid2audioUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-web.us-east.modal.run/stream',
+    cognitiveUrl: 'https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run',
+    vllmUrl: 'https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run',
     tierName: 'ARCHITECT PRIORITY',
     tierHardware: 'B300 / H100 / L40S High-Performance Nodes',
   };
@@ -82,8 +86,12 @@ export function getModalSettings() {
     framepackUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-129944.us-east.modal.run',
     fanninCrimeUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots',
     music_url: 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/eco',
-    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run',
+    upscalerUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--731b3b.us-east.modal.run',
+    upscalerTileUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--33e966.us-east.modal.run',
+    upscalerStatusUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run',
     vid2audioUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-4f6ce0.us-east.modal.run/stream',
+    cognitiveUrl: 'https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run',
+    vllmUrl: 'https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run',
     tierName: 'PUBLIC ECONOMY',
     tierHardware: 'Cost-Optimized Nodes (60s Auto-Scale, Max 1)',
   };
@@ -114,7 +122,7 @@ export function getModalSettings() {
     if (customStr) {
       const custom = JSON.parse(customStr);
       // Strip trailing slashes from any cached custom endpoints
-      ['txt2imgUrl', 'img2imgUrl', 'omnigenUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url', 'upscalerUrl', 'vid2audioUrl'].forEach(k => {
+      ['txt2imgUrl', 'img2imgUrl', 'omnigenUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url', 'upscalerUrl', 'upscalerTileUrl', 'upscalerStatusUrl', 'vid2audioUrl', 'cognitiveUrl', 'vllmUrl'].forEach(k => {
         if (custom[k] && typeof custom[k] === 'string') {
           custom[k] = custom[k].trim().replace(/\/+$/, '');
         }
@@ -128,9 +136,10 @@ export function getModalSettings() {
       if (custom.img2vidUrl && !custom.img2vidUrl.includes('alphacoreprogramming')) custom.img2vidUrl = defaults.img2vidUrl;
       if (custom.framepackUrl && !custom.framepackUrl.includes('alphacoreprogramming')) custom.framepackUrl = defaults.framepackUrl;
       if (custom.music_url && !custom.music_url.includes('alphacoreprogramming')) custom.music_url = defaults.music_url;
-      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('alphacoreprogramming') || custom.upscalerUrl.includes('alphacore-main-api'))) custom.upscalerUrl = defaults.upscalerUrl;
+      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('alphacoreprogramming') || custom.upscalerUrl.includes('alphacore-main-api') || custom.upscalerUrl.includes('upscaler-status') || custom.upscalerUrl.includes('upscaler--a3cc47'))) custom.upscalerUrl = defaults.upscalerUrl;
       if (custom.vid2audioUrl && !custom.vid2audioUrl.includes('alphacoreprogramming')) custom.vid2audioUrl = defaults.vid2audioUrl;
       if (custom.fanninCrimeUrl && (!custom.fanninCrimeUrl.includes('alphacoreprogramming') || custom.fanninCrimeUrl.includes('fannin-scraper-api'))) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
+      if (custom.vllmUrl && !custom.vllmUrl.includes('cognitive-core')) custom.vllmUrl = defaults.vllmUrl;
 
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;
@@ -3766,7 +3775,11 @@ function buildUpscaler() {
       if (modelName === 'dsp-fast') {
         resultData = await clientSideUpscale(currentSourceB64, activeScale, sharpen, denoise);
       } else {
-        const upscaleEndpoint = resolveEndpoint(settings.upscalerUrl || (isArchitect ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run' : 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run'));
+        const upscaleEndpoint = resolveEndpoint(
+          isTileCreative
+            ? (settings.upscalerTileUrl || (isArchitect ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--3f7359.us-east.modal.run' : 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--33e966.us-east.modal.run'))
+            : (settings.upscalerUrl || (isArchitect ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--394c22.us-east.modal.run' : 'https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--731b3b.us-east.modal.run'))
+        );
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);

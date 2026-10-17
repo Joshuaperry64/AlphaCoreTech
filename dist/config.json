@@ -18,8 +18,12 @@
       "framepackUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-e7f107.us-east.modal.run",
       "fanninCrimeUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots",
       "music_url": "https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/architect",
-      "upscalerUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run",
-      "vid2audioUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-web.us-east.modal.run/stream"
+      "upscalerUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--394c22.us-east.modal.run",
+      "upscalerTileUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--3f7359.us-east.modal.run",
+      "upscalerStatusUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler-status.us-east.modal.run",
+      "vid2audioUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-web.us-east.modal.run/stream",
+      "cognitiveUrl": "https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run",
+      "vllmUrl": "https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run"
     },
     "economy": {
       "tierName": "PUBLIC ECONOMY",
@@ -33,8 +37,12 @@
       "framepackUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-framepack-129944.us-east.modal.run",
       "fanninCrimeUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots",
       "music_url": "https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/eco",
-      "upscalerUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run",
-      "vid2audioUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-4f6ce0.us-east.modal.run/stream"
+      "upscalerUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--731b3b.us-east.modal.run",
+      "upscalerTileUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--33e966.us-east.modal.run",
+      "upscalerStatusUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-upscaler--a3cc47.us-east.modal.run",
+      "vid2audioUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-vid2audio-4f6ce0.us-east.modal.run/stream",
+      "cognitiveUrl": "https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run",
+      "vllmUrl": "https://alphacoreprogramming-ai--cognitive-core.us-east.modal.run"
     }
   },
   "auth": {

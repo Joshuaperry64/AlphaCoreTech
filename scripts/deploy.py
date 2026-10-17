@@ -41,7 +41,7 @@ WEBSITE_CHECKPOINTS = {
     "epicrealismXL_pureFix.safetensors": "2514955",
     "intorealism_sdxlV4.safetensors": "2650268",
     "cyberrealisticPony_v180Coreshift.safetensors": "2884631",
-    "realvisxlV50_v50Bakedvae.safetensors": "789646",
+    "realvisxlV50_v50Bakedvae.safetensors": "798204",
 }
 
 WEBSITE_LORAS = {
