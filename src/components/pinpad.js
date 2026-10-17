@@ -26,11 +26,15 @@ export function getPins() {
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        // Ensure all DEFAULT_PINS are present in stored list
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure missing default profiles are present without reverting customized PINs or roles
         let changed = false;
         DEFAULT_PINS.forEach(defPin => {
-          if (!parsed.some(p => p.pin === defPin.pin)) {
+          const exists = parsed.some(p => 
+            p.pin === defPin.pin || 
+            (p.label && defPin.label && p.label.toLowerCase() === defPin.label.toLowerCase())
+          );
+          if (!exists) {
             parsed.push({ ...defPin });
             changed = true;
           }
