@@ -441,6 +441,7 @@ describe('buildPinPad automation and accessibility', () => {
   });
 
   it('authenticates john profile with pin 67676767 and sets current_profile', async () => {
+    addPin({ pin: '67676767', type: 'permanent', label: 'john', roles: ['aimodals', 'generate', 'vault'] });
     mockFetch(getPins());
     const successSpy = vi.fn();
     const el = buildPinPad({ onSuccess: successSpy });

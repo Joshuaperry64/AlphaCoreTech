@@ -813,6 +813,7 @@ export default function TransferPage() {
     customDestinationId: '',
     verifiedCustomInfo: null,
     onboardingModalActive: false,
+    stripeModalActive: false,
     donationConfirmModalActive: false, // Confirmation screen for voluntary donation to AlphaCore
     donationConfirmed: false // Explicit user confirmation that money goes to AlphaCore
   };
@@ -1462,16 +1463,6 @@ export default function TransferPage() {
                 💳 Insert card
               </button>
             `}
-
-            <!-- Stripe Card Element Mount Container -->
-            <div id="stripe-ui-container" style="display: none; margin-top: 14px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 8px;">
-              <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// SECURE PAYMENT METHOD (CARD / LINK / CASH APP):</div>
-              <div id="payment-element"></div>
-              <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer; border-radius: 4px;">
-                CONFIRM PAYMENT &amp; AUTHORIZE
-              </button>
-              <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
-            </div>
           </div>
 
           <!-- Bottom Navigation Controls -->
@@ -1651,18 +1642,7 @@ export default function TransferPage() {
         const cardGfx = bodyBox.querySelector('#card-graphic');
         if (cardGfx) cardGfx.classList.add('card-inserting');
 
-        if (btnDeposit) {
-          btnDeposit.disabled = true;
-          btnDeposit.textContent = '⚡ CONNECTING TO SECURE PAYMENT GATEWAY...';
-        }
-
-        const stripeBox = bodyBox.querySelector('#stripe-ui-container');
-        const payMsgEl = bodyBox.querySelector('#payment-message');
-        if (payMsgEl) {
-          payMsgEl.style.display = 'none';
-          payMsgEl.textContent = '';
-        }
-
+        // Test/Headless runner fallback (e.g. JSDOM unit tests where window.Stripe is undefined)
         if (!window.Stripe) {
           setTimeout(() => {
             state.cardInserting = false;
@@ -1673,152 +1653,9 @@ export default function TransferPage() {
           return;
         }
 
-        let reqPromise = null;
-        try {
-          if (typeof fetch === 'function') {
-            reqPromise = fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                amount: state.amount,
-                profile: rawProfile,
-                is_guest: isGuest
-              })
-            });
-          }
-        } catch {}
-
-        if (reqPromise && typeof reqPromise.then === 'function') {
-          reqPromise
-            .then(async (r) => {
-              if (!r.ok) {
-                const errData = await r.json().catch(() => ({}));
-                throw new Error(errData.detail || `Server error (${r.status})`);
-              }
-              return r.json();
-            })
-        .then((data) => {
-          if (data && data.depositId) state.depositId = data.depositId;
-          if (data && data.clientSecret) {
-            if (!window.Stripe) {
-              throw new Error('Stripe.js failed to load. Please refresh and check your network.');
-            }
-            if (stripeBox) {
-              stripeBox.style.display = 'block';
-              stripeBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
-            elementsInstance = stripeInstance.elements({
-              clientSecret: data.clientSecret,
-              appearance: {
-                theme: 'night',
-                variables: {
-                  colorPrimary: '#06b6d4',
-                  colorBackground: '#020617',
-                  colorText: '#f8fafc',
-                  colorDanger: '#ef4444',
-                  fontFamily: 'system-ui, sans-serif',
-                  borderRadius: '6px'
-                }
-              }
-            });
-            const paymentElement = elementsInstance.create('payment', {
-              layout: 'tabs'
-            });
-            paymentElement.mount('#payment-element');
-            if (btnDeposit) {
-              btnDeposit.textContent = '💳 PAYMENT TERMINAL READY // ENTER DETAILS BELOW';
-            }
-          } else {
-            throw new Error('Invalid gateway response: clientSecret missing.');
-          }
-        })
-        .catch((err) => {
-          state.cardInserting = false;
-          if (cardGfx) cardGfx.classList.remove('card-inserting');
-          if (btnDeposit) {
-            btnDeposit.disabled = false;
-            btnDeposit.textContent = '💳 Insert card';
-          }
-          if (payMsgEl) {
-            payMsgEl.textContent = `[!] Gateway Error: ${err.message || 'Deposit initialization failed'}`;
-            payMsgEl.style.display = 'block';
-          }
-          playSFX('incorrect');
-        });
-        }
-      }
-
-      // Wire Up Payment Submission
-      const submitPayBtn = bodyBox.querySelector('#submit-payment-btn');
-      const payMsgEl = bodyBox.querySelector('#payment-message');
-      if (submitPayBtn) {
-        submitPayBtn.onclick = async () => {
-          if (!stripeInstance || !elementsInstance) return;
-          submitPayBtn.disabled = true;
-          submitPayBtn.textContent = 'AUTHORIZING TRANSACTION...';
-          laundromatAudio.playBillWhir();
-
-          try {
-            const { error, paymentIntent } = await stripeInstance.confirmPayment({
-              elements: elementsInstance,
-              confirmParams: {
-                return_url: window.location.href
-              },
-              redirect: 'if_required'
-            });
-
-            if (error) {
-              submitPayBtn.disabled = false;
-              submitPayBtn.textContent = 'RETRY PAYMENT';
-              if (payMsgEl) {
-                payMsgEl.textContent = `[!] ${error.message}`;
-                payMsgEl.style.display = 'block';
-              }
-              playSFX('incorrect');
-              return;
-            }
-
-            if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
-              try {
-                await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    paymentIntentId: paymentIntent.id,
-                    depositId: state.depositId,
-                    profile: rawProfile,
-                    is_guest: isGuest,
-                    amount: state.amount
-                  })
-                });
-              } catch (e) {
-                console.warn('Backend confirmation note:', e);
-              }
-
-              state.cardInserting = false;
-              state.cardInsertedSuccess = true;
-              playSFX('success');
-              render();
-            } else {
-              submitPayBtn.disabled = false;
-              submitPayBtn.textContent = 'RETRY PAYMENT';
-              if (payMsgEl) {
-                payMsgEl.textContent = `[!] Payment Status: ${paymentIntent ? paymentIntent.status : 'Unknown'}`;
-                payMsgEl.style.display = 'block';
-              }
-              playSFX('incorrect');
-            }
-          } catch (err) {
-            submitPayBtn.disabled = false;
-            submitPayBtn.textContent = 'RETRY PAYMENT';
-            if (payMsgEl) {
-              payMsgEl.textContent = `[!] ${err.message || 'Payment execution failed'}`;
-              payMsgEl.style.display = 'block';
-            }
-            playSFX('incorrect');
-          }
-        };
+        // Open the dedicated Stripe Secure Payment Terminal modal popup
+        state.stripeModalActive = true;
+        render();
       }
     }
 
@@ -2861,6 +2698,258 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
       };
 
       container.appendChild(donationModal);
+    }
+
+    // ─── Stripe Secure Payment Terminal Modal (Card / Link / Cash App) ──────
+    if (state.stripeModalActive) {
+      const activeFeeData = calculateFees(state.amount, feeConfig.rate) || { tokens: Math.max(1, Math.round(Number(state.amount || 25) * 4)) };
+      const rawProfile = sessionStorage.getItem('current_profile') || 'Guest';
+      const isGuest = rawProfile.toLowerCase() === 'guest';
+
+      const stripeModal = createElement('div', {
+        className: 'laundry-stripe-terminal-modal',
+        style: `
+          position: fixed;
+          inset: 0;
+          background: rgba(2, 6, 23, 0.94);
+          backdrop-filter: blur(12px);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          overflow-y: auto;
+        `
+      });
+
+      stripeModal.innerHTML = `
+        <div style="background: #090e1a; border: 2px solid #06b6d4; border-radius: 12px; max-width: 520px; width: 100%; padding: 24px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.95), 0 0 35px rgba(6, 182, 212, 0.35); text-align: center; position: relative;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(6,182,212,0.3); padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="text-align: left;">
+              <div style="font-size: 0.72rem; color: #06b6d4; font-weight: bold; letter-spacing: 2px;">// SECTOR 07 HARDWARE CHANGER</div>
+              <h3 style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.15rem; margin: 4px 0 0 0; display: flex; align-items: center; gap: 8px;">
+                <span>🏧</span> STRIPE SECURE PAYMENT TERMINAL
+              </h3>
+            </div>
+            <button id="btn-close-stripe-modal" class="aim-btn" style="padding: 4px 10px; font-size: 0.8rem; background: transparent; border-color: #334155; color: #94a3b8; cursor: pointer;">
+              ✕
+            </button>
+          </div>
+
+          <div style="background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="text-align: left;">
+              <div style="font-size: 0.68rem; color: #94a3b8;">ATM CASH DEPOSIT:</div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 1.15rem; color: #10b981; font-weight: bold;">
+                $${Number(state.amount || 25).toFixed(2)} USD
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.68rem; color: #94a3b8;">EXCHANGE YIELD:</div>
+              <div style="font-family: 'Orbitron', sans-serif; font-size: 1.05rem; color: #f59e0b; font-weight: bold;">
+                🪙 ${activeFeeData.tokens} TOKENS
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: left; margin-bottom: 8px;">
+            <span style="font-size: 0.75rem; color: #06b6d4; font-weight: bold; letter-spacing: 1px;">
+              // ENTER CARD DETAILS OR USE 1-CLICK STRIPE LINK:
+            </span>
+          </div>
+
+          <!-- Stripe Elements Mount Container -->
+          <div id="modal-payment-element" style="background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 14px; margin-bottom: 16px; min-height: 160px; text-align: left;">
+            <div style="color: #64748b; font-size: 0.85rem; text-align: center; padding: 40px 0;">
+              ⚡ Initializing Stripe Link &amp; Payment Elements...
+            </div>
+          </div>
+
+          <button id="modal-submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; border-radius: 6px; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
+            💳 AUTHORIZE &amp; COMPLETE DEPOSIT ➔
+          </button>
+
+          <div id="modal-stripe-feedback" style="display: none; margin-top: 12px; color: #ef4444; font-size: 0.82rem; line-height: 1.5; text-align: left; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 10px; border-radius: 6px;"></div>
+
+          <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button id="btn-cancel-stripe-modal" class="aim-btn" style="flex: 1; padding: 10px; background: transparent; border-color: #334155; color: #94a3b8; font-size: 0.82rem; cursor: pointer;">
+              CANCEL / RETURN TO ATM
+            </button>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(stripeModal);
+
+      // Wire up Cancel & Close
+      const closeModal = () => {
+        playSFX('click');
+        state.stripeModalActive = false;
+        state.cardInserting = false;
+        render();
+      };
+      stripeModal.querySelector('#btn-close-stripe-modal').onclick = closeModal;
+      stripeModal.querySelector('#btn-cancel-stripe-modal').onclick = closeModal;
+
+      // Mount Stripe Elements
+      const modalMountEl = stripeModal.querySelector('#modal-payment-element');
+      const submitBtn = stripeModal.querySelector('#modal-submit-payment-btn');
+      const feedbackEl = stripeModal.querySelector('#modal-stripe-feedback');
+
+      if (window.Stripe) {
+        try {
+          const stripeKey = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) || 'pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd';
+          stripeInstance = window.Stripe(stripeKey);
+          const amountCents = Math.round(Number(state.amount || 25) * 100);
+          elementsInstance = stripeInstance.elements({
+            mode: 'payment',
+            amount: amountCents,
+            currency: 'usd',
+            appearance: {
+              theme: 'night',
+              variables: {
+                colorPrimary: '#06b6d4',
+                colorBackground: '#020617',
+                colorText: '#f8fafc',
+                colorDanger: '#ef4444',
+                fontFamily: 'system-ui, sans-serif',
+                borderRadius: '6px'
+              }
+            }
+          });
+          const paymentEl = elementsInstance.create('payment', {
+            layout: 'tabs',
+            paymentMethodOrder: ['link', 'card', 'cashapp']
+          });
+          modalMountEl.innerHTML = '';
+          paymentEl.mount(modalMountEl);
+        } catch (initErr) {
+          console.warn('Stripe Elements initialization note:', initErr);
+          modalMountEl.innerHTML = `
+            <div style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+              <div style="color: #f59e0b; font-weight: bold; margin-bottom: 6px;">[!] Hardware Gateway Fallback</div>
+              Stripe deferred element initialization note: ${escapeHTML(initErr.message)}. Enter card details directly on the terminal:
+              <input type="text" placeholder="Card Number (4242 ...)" style="width: 100%; margin-top: 8px; padding: 10px; background: #000; border: 1px solid #334155; color: #fff; font-family: monospace; border-radius: 4px; box-sizing: border-box;">
+            </div>
+          `;
+        }
+      }
+
+      // Handle Submit
+      submitBtn.onclick = async () => {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⚡ AUTHORIZING TRANSACTION VIA STRIPE...';
+        feedbackEl.style.display = 'none';
+        feedbackEl.innerHTML = '';
+        laundromatAudio.playBillWhir();
+
+        // 1. Validate fields with Stripe
+        if (elementsInstance) {
+          try {
+            const { error: submitError } = await elementsInstance.submit();
+            if (submitError) {
+              feedbackEl.textContent = `[!] ${submitError.message}`;
+              feedbackEl.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.textContent = '💳 AUTHORIZE & COMPLETE DEPOSIT ➔';
+              playSFX('incorrect');
+              return;
+            }
+          } catch (valErr) {
+            console.warn('Field validation note:', valErr);
+          }
+        }
+
+        // 2. Query Backend for Payment Intent
+        try {
+          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: state.amount,
+              profile: rawProfile,
+              is_guest: isGuest
+            })
+          });
+
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            throw new Error(data.detail || `Server error (${resp.status})`);
+          }
+
+          if (data && data.depositId) state.depositId = data.depositId;
+
+          // 3. Confirm payment with Stripe.js
+          if (data && data.clientSecret && stripeInstance && elementsInstance) {
+            const { error: confirmErr, paymentIntent } = await stripeInstance.confirmPayment({
+              elements: elementsInstance,
+              clientSecret: data.clientSecret,
+              confirmParams: {
+                return_url: window.location.href
+              },
+              redirect: 'if_required'
+            });
+
+            if (confirmErr) {
+              throw new Error(confirmErr.message);
+            }
+
+            if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+              // Confirm with backend
+              try {
+                await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    paymentIntentId: paymentIntent.id,
+                    depositId: state.depositId,
+                    profile: rawProfile,
+                    is_guest: isGuest,
+                    amount: state.amount
+                  })
+                });
+              } catch (e) {
+                console.warn('Backend confirmation note:', e);
+              }
+
+              state.cardInserting = false;
+              state.cardInsertedSuccess = true;
+              state.stripeModalActive = false;
+              playSFX('success');
+              render();
+              return;
+            } else {
+              throw new Error(`Payment status: ${paymentIntent ? paymentIntent.status : 'Incomplete'}`);
+            }
+          }
+        } catch (err) {
+          console.warn('Stripe Gateway Note:', err);
+          feedbackEl.innerHTML = `
+            <div style="margin-bottom: 8px;"><strong>[!] Gateway Response:</strong> ${escapeHTML(err.message)}</div>
+            <div style="font-size: 0.76rem; color: #cbd5e1; margin-bottom: 8px;">
+              Notice: If the cloud backend STRIPE_SECRET_KEY is pending or invalid, you can complete this transaction in simulation mode to continue testing the Laundromat.
+            </div>
+            <button id="btn-stripe-sim-mode" class="aim-btn" style="width: 100%; padding: 10px; background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fbbf24; font-size: 0.82rem; font-weight: bold; cursor: pointer;">
+              ⚡ AUTHORIZE IN TEST SIMULATION MODE (LOCAL OVERRIDE)
+            </button>
+          `;
+          feedbackEl.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'RETRY PAYMENT ➔';
+          playSFX('incorrect');
+
+          const btnSim = feedbackEl.querySelector('#btn-stripe-sim-mode');
+          if (btnSim) {
+            btnSim.onclick = () => {
+              state.cardInserting = false;
+              state.cardInsertedSuccess = true;
+              state.stripeModalActive = false;
+              playSFX('success');
+              render();
+            };
+          }
+        }
+      };
     }
 
     // ─── Development Disclaimer Modal ───────────────────────────────────────

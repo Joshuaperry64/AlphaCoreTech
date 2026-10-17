@@ -11,12 +11,10 @@ import { showModal } from './modal.js';
 
 // ─── Default Hardcoded PIN Registry ──────────────────────────────────────────
 
+// ─── Default Hardcoded PIN Registry (Root Fallback Only) ──────────────────────
+
 const DEFAULT_PINS = [
-  { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
-  { pin: '6969',      type: 'permanent', label: 'DoeBoy',    roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
-  { pin: '20022005',  type: 'permanent', label: 'J. P.',     roles: ['aimodals', 'generate'], createdAt: Date.now() },
-  { pin: '1990',      type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() },
-  { pin: '67676767',  type: 'permanent', label: 'john',      roles: ['aimodals', 'generate', 'vault', 'lora', 'diagnostics'], createdAt: Date.now() }
+  { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() }
 ];
 
 // ─── PIN Management Functions ────────────────────────────────────────────────
@@ -27,19 +25,14 @@ export function getPins() {
     try {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure missing default profiles are present without reverting customized PINs or roles
-        let changed = false;
-        DEFAULT_PINS.forEach(defPin => {
-          const exists = parsed.some(p => 
-            p.pin === defPin.pin || 
-            (p.label && defPin.label && p.label.toLowerCase() === defPin.label.toLowerCase())
-          );
-          if (!exists) {
-            parsed.push({ ...defPin });
-            changed = true;
-          }
-        });
-        if (changed) {
+        // Ensure ONLY the root Architect profile is present as fallback if missing, without overriding customized profiles
+        const architectDef = DEFAULT_PINS[0];
+        const hasArchitect = parsed.some(p => 
+          p.pin === architectDef.pin || 
+          (p.label && p.label.toLowerCase() === 'architect')
+        );
+        if (!hasArchitect) {
+          parsed.unshift({ ...architectDef });
           localStorage.setItem('alphacore_pins', JSON.stringify(parsed));
         }
         return parsed;
