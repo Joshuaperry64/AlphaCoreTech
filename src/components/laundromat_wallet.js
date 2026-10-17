@@ -71,6 +71,21 @@ export const DEFAULT_WALLETS = {
     isExempt: false,
     avatar: null
   },
+  'john': {
+    profile: 'john',
+    cardId: 'AC-CARD-6767',
+    balance: 0.00,
+    tokens: 0,
+    detergentPods: 0,
+    detergentSerial: 'AC-DET-6767 [CYBER MATRIX]',
+    dryerSheets: 0,
+    cleanLoads: 0,
+    roleTitle: 'SECURITY OPERATIVE // CLEARANCE LEVEL 2',
+    accentColor: '#00ffcc',
+    pin: '67676767',
+    isExempt: false,
+    avatar: null
+  },
   'Guest': {
     profile: 'Guest',
     cardId: 'AC-CARD-GUEST-00',
@@ -99,6 +114,7 @@ export function canonicalProfileName(rawName) {
   if (lower === 'doeboy') return 'DoeBoy';
   if (lower === 'fisherman') return 'Fisherman';
   if (lower === 'j. p.' || lower === 'jp' || lower === 'j.p.') return 'J. P.';
+  if (lower === 'john') return 'john';
   if (lower === 'guest') return 'Guest';
   return trimmed;
 }

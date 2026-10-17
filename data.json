@@ -56,6 +56,19 @@
         "vault"
       ],
       "createdAt": 1791270973315
+    },
+    {
+      "pin": "67676767",
+      "type": "permanent",
+      "label": "john",
+      "roles": [
+        "aimodals",
+        "generate",
+        "vault",
+        "lora",
+        "diagnostics"
+      ],
+      "createdAt": 1791271000000
     }
   ],
   "logs": [],

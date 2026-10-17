@@ -6,7 +6,7 @@
 import { apiUrl } from './api.js';
 import { logAction } from './logger.js';
 import { pushToServer } from './db_sync.js';
-import { playSFX } from './audio.js';
+import { playSFX, playProfileGreeting } from './audio.js';
 import { showModal } from './modal.js';
 
 // ─── Default Hardcoded PIN Registry ──────────────────────────────────────────
@@ -15,7 +15,8 @@ const DEFAULT_PINS = [
   { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
   { pin: '6969',      type: 'permanent', label: 'DoeBoy',    roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
   { pin: '20022005',  type: 'permanent', label: 'J. P.',     roles: ['aimodals', 'generate'], createdAt: Date.now() },
-  { pin: '1990',      type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() }
+  { pin: '1990',      type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() },
+  { pin: '67676767',  type: 'permanent', label: 'john',      roles: ['aimodals', 'generate', 'vault', 'lora', 'diagnostics'], createdAt: Date.now() }
 ];
 
 // ─── PIN Management Functions ────────────────────────────────────────────────
@@ -23,7 +24,23 @@ const DEFAULT_PINS = [
 export function getPins() {
   const stored = localStorage.getItem('alphacore_pins');
   if (stored) {
-    try { return JSON.parse(stored); } catch {}
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        // Ensure all DEFAULT_PINS are present in stored list
+        let changed = false;
+        DEFAULT_PINS.forEach(defPin => {
+          if (!parsed.some(p => p.pin === defPin.pin)) {
+            parsed.push({ ...defPin });
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem('alphacore_pins', JSON.stringify(parsed));
+        }
+        return parsed;
+      }
+    } catch {}
   }
   localStorage.setItem('alphacore_pins', JSON.stringify(DEFAULT_PINS));
   return DEFAULT_PINS;
@@ -402,6 +419,11 @@ export function buildPinPad({
           sessionStorage.setItem('current_profile', result.pinObj.label);
           sessionStorage.setItem('current_pin', result.pinObj.pin);
           (result.pinObj.roles || []).forEach(r => sessionStorage.setItem(r + '_authenticated', '1'));
+
+          // Trigger profile-specific greeting audio if applicable (e.g. john, Fisherman)
+          try {
+            playProfileGreeting(result.pinObj.label);
+          } catch (_) {}
         }
         onSuccess(result);
       }, 900);
@@ -639,12 +661,22 @@ export function openLoginModal({
   title = '// PROFILE_AUTHENTICATION',
   subtitle = 'ENTER ACCESS PIN TO UNLOCK FULL FEATURES',
   icon = '🔒',
-  isLoginScreen = false
+  isLoginScreen = false,
+  onSuccess: customOnSuccess = null
 } = {}) {
   const pinPadEl = buildPinPad({
-    onSuccess: () => {
+    onSuccess: async (result) => {
       showModal({ title: '', content: '' });
-      window.location.reload();
+      if (customOnSuccess) {
+        customOnSuccess(result);
+      } else {
+        const pName = (result?.pinObj?.label || '').toLowerCase();
+        if (pName === 'john' || pName === 'fisherman') {
+          // Wait for greeting to play before refreshing page if needed
+          await playProfileGreeting(result.pinObj.label);
+        }
+        window.location.reload();
+      }
     },
     title,
     subtitle,

@@ -1998,6 +1998,15 @@ export function resolveProfileDossier(profileName) {
       relationship: 'Field operator authorized for neural synthesis and generation modules. NOT the Architect.',
       temperament: 'Standard operator.'
     };
+  } else if (name === 'JOHN') {
+    return {
+      isArchitect: false,
+      role: 'REGISTERED OPERATOR',
+      clearance: 'LEVEL 2 (VAULT / MODALS / LABS)',
+      identity: 'john',
+      relationship: 'Registered matrix operative authorized for core labs and vault modules. NOT the Architect.',
+      temperament: 'Direct, focused, operational peer.'
+    };
   } else {
     return {
       isArchitect: false,

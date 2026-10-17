@@ -196,6 +196,94 @@ export function pauseGlobalAudio() {
   return false;
 }
 
+export function resumeGlobalAudio() {
+  if (!globalAudio) {
+    initGlobalAudio();
+  }
+  if (globalAudio && globalAudio.paused) {
+    if (globalAudio.readyState === 0) {
+      globalAudio.load();
+    }
+    const playPromise = globalAudio.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(() => {
+        isPlaying = true;
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }).catch((e) => {
+        console.warn("Global audio resume error:", e);
+      });
+    }
+    const playBtn = document.getElementById('play-audio-btn');
+    if (playBtn) {
+      playBtn.innerHTML = '&#10074;&#10074;';
+      playBtn.title = "Pause Music";
+    }
+  }
+}
+
+/**
+ * Plays a dedicated full-volume vocal greeting for specific user profiles (e.g. JOHN, FISHERMAN),
+ * pausing all background ambient audio, playing the clip at volume 1.0, and resuming normal audio
+ * after a short pause.
+ * 
+ * @param {string} profileName
+ * @returns {Promise<void>}
+ */
+export function playProfileGreeting(profileName) {
+  return new Promise((resolve) => {
+    if (!profileName) return resolve();
+    const norm = String(profileName).trim().toLowerCase();
+
+    let greetingSrc = null;
+    if (norm === 'john') {
+      greetingSrc = '/john_greeting.mp3';
+    } else if (norm === 'fisherman') {
+      greetingSrc = '/fish_greeting.mp3';
+    }
+
+    if (!greetingSrc) return resolve();
+
+    // 1. Pause background ambient audio
+    pauseGlobalAudio();
+
+    try {
+      const greetingAudio = new Audio(greetingSrc);
+      greetingAudio.volume = 1.0; // Play at full volume
+
+      let finished = false;
+      const finishGreeting = () => {
+        if (finished) return;
+        finished = true;
+        // After a short pause (800ms), resume normal background audio
+        setTimeout(() => {
+          resumeGlobalAudio();
+          resolve();
+        }, 800);
+      };
+
+      greetingAudio.addEventListener('ended', finishGreeting, { once: true });
+      greetingAudio.addEventListener('error', finishGreeting, { once: true });
+
+      // Fallback timeout in case event is missed or unsupported
+      setTimeout(finishGreeting, 15000);
+
+      const playPromise = greetingAudio.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((e) => {
+          console.warn("Greeting playback error:", e);
+          finishGreeting();
+        });
+      }
+    } catch (e) {
+      console.warn("Greeting initialization error:", e);
+      resumeGlobalAudio();
+      resolve();
+    }
+  });
+}
+
 export function initAudioVisualizer() {
   const visCanvas = document.getElementById('audio-vis-canvas');
   if (!visCanvas) return;

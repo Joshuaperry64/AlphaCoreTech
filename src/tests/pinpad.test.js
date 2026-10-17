@@ -439,4 +439,29 @@ describe('buildPinPad automation and accessibility', () => {
 
     el.remove();
   });
+
+  it('authenticates john profile with pin 67676767 and sets current_profile', async () => {
+    mockFetch(getPins());
+    const successSpy = vi.fn();
+    const el = buildPinPad({ onSuccess: successSpy });
+    document.body.appendChild(el);
+
+    const input = el.querySelector('#secure-pin-input');
+    input.value = '67676767';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const form = el.querySelector('#pin-login-form');
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await new Promise(r => setTimeout(r, 600));
+    const feedback = el.querySelector('#aim-pin-feedback');
+    expect(feedback.textContent).toContain('ACCESS GRANTED');
+
+    // Wait for success callback delay
+    await new Promise(r => setTimeout(r, 1000));
+    expect(sessionStorage.getItem('current_profile')).toBe('john');
+    expect(sessionStorage.getItem('current_pin')).toBe('67676767');
+
+    el.remove();
+  });
 });

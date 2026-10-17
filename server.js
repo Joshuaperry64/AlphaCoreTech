@@ -30,7 +30,8 @@ const DEFAULT_DB = {
     { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
     { pin: '6969', type: 'permanent', label: 'DoeBoy', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
     { pin: '20022005', type: 'permanent', label: 'J. P.', roles: ['aimodals', 'generate'], createdAt: Date.now() },
-    { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() }
+    { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() },
+    { pin: '67676767', type: 'permanent', label: 'john', roles: ['aimodals', 'generate', 'vault', 'lora', 'diagnostics'], createdAt: Date.now() }
   ],
   logs: [],
   pendingProfiles: [],

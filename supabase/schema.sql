@@ -95,7 +95,8 @@ VALUES
     ('672167566', 'Architect', 'permanent', '["admin", "vault", "aimodals", "generate", "lora", "diagnostics"]'::jsonb, false),
     ('6969', 'DoeBoy', 'permanent', '["admin", "vault", "aimodals", "generate", "lora", "diagnostics"]'::jsonb, false),
     ('20022005', 'J. P.', 'permanent', '["aimodals", "generate"]'::jsonb, false),
-    ('1990', 'Fisherman', 'permanent', '["aimodals", "generate"]'::jsonb, false)
+    ('1990', 'Fisherman', 'permanent', '["aimodals", "generate"]'::jsonb, false),
+    ('67676767', 'john', 'permanent', '["aimodals", "generate", "vault", "lora", "diagnostics"]'::jsonb, false)
 ON CONFLICT (pin) DO NOTHING;
 
 INSERT INTO public.alphacore_settings (id, data)

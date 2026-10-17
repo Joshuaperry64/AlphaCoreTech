@@ -58,6 +58,7 @@ func getDefaultDB() Database {
 		Pins: []Pin{
 			{Pin: "672167566", Type: "permanent", Label: "Architect", Roles: []string{"admin", "vault", "aimodals", "generate", "lora", "diagnostics"}, CreatedAt: time.Now().UnixMilli()},
 			{Pin: "6969", Type: "permanent", Label: "DoeBoy", Roles: []string{"admin", "vault", "aimodals", "generate", "lora", "diagnostics"}, CreatedAt: time.Now().UnixMilli()},
+			{Pin: "67676767", Type: "permanent", Label: "john", Roles: []string{"aimodals", "generate", "vault", "lora", "diagnostics"}, CreatedAt: time.Now().UnixMilli()},
 		},
 		Logs: []interface{}{},
 		Settings: Settings{
