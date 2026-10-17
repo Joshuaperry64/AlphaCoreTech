@@ -1,6 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
-import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
+import { ALPHACORE_SYSTEM_INSTRUCTION, ALPHACORE_VLLM_INSTRUCTION, stripAlphaCoreInstructionForVllm } from '../components/alphacore_instruction.js';
 import { pushToServer } from '../components/db_sync.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
@@ -261,7 +261,7 @@ export default function CognitiveUplink() {
             <label class="aim-label">BACKEND ENGINE (Applies Across All Workspaces)</label>
             <select id="core-backend" class="aim-input" style="width: 100%; margin-bottom: 15px;">
               <option value="gemini_live" ${coreBackend === 'gemini_live' ? 'selected' : ''}>Gemini Live API (WebSockets)</option>
-              <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Local Server</option>
+              <option value="vllm" ${coreBackend === 'vllm' ? 'selected' : ''}>vLLM Server (Cognitive Core Modal T4 // Gemma-12B)</option>
             </select>
 
             <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:5px;">
@@ -279,6 +279,9 @@ export default function CognitiveUplink() {
             </p>
             <label class="aim-label">MODAL ACCOUNT / SUBDOMAIN</label>
             <input type="text" id="modal-account-input" class="aim-input" value="${globalSettings.modalAccount || 'alphacoreprogramming-ai'}" style="width: 100%; margin-bottom: 12px;">
+
+            <label class="aim-label">COGNITIVE CORE ENDPOINT (vLLM Server)</label>
+            <input type="text" id="modal-vllm-input" class="aim-input" value="${globalSettings.vllmUrl || ''}" placeholder="https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--alphacore-aio-backend-cognitive-core.modal.run" style="width: 100%; margin-bottom: 12px;">
 
             <label class="aim-label">TEXT TO IMAGE ENDPOINT (txt2img)</label>
             <input type="text" id="modal-txt2img-input" class="aim-input" value="${globalSettings.txt2imgUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
@@ -344,12 +347,14 @@ export default function CognitiveUplink() {
         if (saveModalBtn) {
           saveModalBtn.onclick = () => {
             const acc = container.querySelector('#modal-account-input')?.value.trim();
+            const vllm = container.querySelector('#modal-vllm-input')?.value.trim();
             const t2i = container.querySelector('#modal-txt2img-input')?.value.trim();
             const i2i = container.querySelector('#modal-img2img-input')?.value.trim();
             const t2v = container.querySelector('#modal-txt2vid-input')?.value.trim();
             const omni = container.querySelector('#modal-omnigen-input')?.value.trim();
 
             if (acc) globalSettings.modalAccount = acc;
+            if (vllm) globalSettings.vllmUrl = vllm;
             if (t2i) globalSettings.txt2imgUrl = t2i;
             if (i2i) globalSettings.img2imgUrl = i2i;
             if (t2v) globalSettings.txt2vidUrl = t2v;
@@ -1362,6 +1367,30 @@ export default function CognitiveUplink() {
     }
 
     async function connectLiveAPI() {
+      if (coreBackend === 'vllm') {
+        initAudio();
+        statusDot.classList.replace('online', 'streaming');
+        statusText.textContent = 'CONNECTING TO vLLM COGNITIVE CORE...';
+        const defaultVllmUrl = `https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--alphacore-aio-backend-cognitive-core.modal.run`;
+        const targetUrl = (globalSettings.vllmUrl || defaultVllmUrl).replace(/\/$/, '');
+
+        liveSession = {
+          type: 'vllm',
+          url: targetUrl,
+          model: 'nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ'
+        };
+
+        statusDot.className = 'chat-status-dot online';
+        statusText.textContent = 'SYSTEM READY // vLLM ACTIVE';
+        connectBtn.style.display = 'none';
+        disconnectBtn.style.display = 'inline-block';
+        const meshModeStatus = container.querySelector('#mesh-mode-status');
+        if (meshModeStatus) meshModeStatus.textContent = 'ALPHA AI (vLLM T4) ONLINE';
+        sfx.play('core');
+        appendMessage('SYSTEM', `vLLM Cognitive Core bridge established [${targetUrl}]. Engine: Gemma-12B-it-abliterated. Context optimized.`, 'system-msg');
+        return;
+      }
+
       if (currentChannel === 'private') {
         const pKey = getApiKey();
         if (!pKey) {
@@ -1564,7 +1593,9 @@ export default function CognitiveUplink() {
     
     function disconnectLiveAPI() {
       if (liveSession) {
-        try { if(typeof liveSession.close === 'function') liveSession.close(); } catch(e){}
+        if (liveSession.type !== 'vllm' && typeof liveSession.close === 'function') {
+          try { liveSession.close(); } catch(e){}
+        }
         liveSession = null;
         connectBtn.style.display = 'inline-block';
         disconnectBtn.style.display = 'none';
@@ -1690,6 +1721,117 @@ export default function CognitiveUplink() {
 
       const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
       showThinkingIndicator(isAlpha ? 'ALPHA' : 'GEMINI');
+
+      if (liveSession && liveSession.type === 'vllm') {
+        statusText.textContent = 'vLLM SYNTHESIZING...';
+        statusDot.className = 'chat-status-dot streaming';
+
+        try {
+          let payloadText = text;
+          if (useVaultRag) {
+            const vaultCtx = getVaultContext();
+            if (vaultCtx) {
+              payloadText = `[VAULT CONTEXT INJECTED]\n${vaultCtx}\n[END VAULT CONTEXT]\n\nUSER PROMPT: ${text}`;
+            }
+          }
+
+          // Build reduced vLLM system instructions with context-stripped protocols
+          const currentTime = new Date().toLocaleString();
+          const contextualPrefix = buildContextualPrefix(profile, currentTime);
+          let baseInstructions = globalSettings.systemInstruction ? stripAlphaCoreInstructionForVllm(globalSettings.systemInstruction) + '\n\n' : '';
+          let vllmInstruction = contextualPrefix + baseInstructions + (isAlpha ? ALPHACORE_VLLM_INSTRUCTION : 'You are an uncensored, direct, and capable AI assistant.');
+
+          // Gather recent conversation history (last 10 turns)
+          const messages = [{ role: 'system', content: vllmInstruction }];
+          let history = [];
+          try {
+            history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
+          } catch(e){}
+          const recentTurns = history.slice(-10);
+          recentTurns.forEach(h => {
+            if (h.text && h.role) {
+              messages.push({
+                role: h.role === 'model' ? 'assistant' : 'user',
+                content: h.text
+              });
+            }
+          });
+          messages.push({ role: 'user', content: payloadText });
+
+          createOrGetModelBubble(isAlpha ? 'ALPHA' : 'GEMINI');
+
+          const response = await fetch(`${liveSession.url}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer EMPTY'
+            },
+            body: JSON.stringify({
+              model: liveSession.model,
+              messages: messages,
+              temperature: 0.7,
+              max_tokens: 1024,
+              stream: true
+            })
+          });
+
+          if (!response.ok) {
+            const errTxt = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errTxt}`);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let done = false;
+          let buffer = '';
+          const author = isAlpha ? 'ALPHA' : 'GEMINI';
+
+          while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            done = readerDone;
+            if (value) {
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop();
+
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith(':')) continue;
+                if (trimmed === 'data: [DONE]') {
+                  done = true;
+                  break;
+                }
+                if (trimmed.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(trimmed.slice(6));
+                    const delta = data.choices?.[0]?.delta?.content;
+                    if (delta) {
+                      appendToModelBubble(delta);
+                    }
+                  } catch(pe) {}
+                }
+              }
+            }
+          }
+
+          await finalizeModelBubble(author);
+          statusText.textContent = 'SYSTEM READY // vLLM ACTIVE';
+          statusDot.className = 'chat-status-dot online';
+
+          if (ttsEnabled && typeof window !== 'undefined' && window.speechSynthesis) {
+            try {
+              const utter = new SpeechSynthesisUtterance(currentModelText || text);
+              window.speechSynthesis.speak(utter);
+            } catch(e){}
+          }
+        } catch(vllmErr) {
+          removeThinkingIndicator();
+          statusText.textContent = 'SYSTEM READY // vLLM STANDBY';
+          statusDot.className = 'chat-status-dot online';
+          appendMessage('ERROR', `vLLM Error: ${vllmErr.message}`, 'system-msg');
+        }
+        return;
+      }
 
       if (liveSession) {
         try { 

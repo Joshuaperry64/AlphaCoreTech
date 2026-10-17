@@ -28,6 +28,7 @@ if modal.is_local():
     import img2vid
     import framepack
     import preprocessors
+    import vllm_t4
 
 # --- WEBSITE MODEL CATALOGS ---
 WEBSITE_CHECKPOINTS = {
@@ -746,6 +747,19 @@ def create_aio_api(is_eco: bool = False) -> FastAPI:
             return res
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    # --- COGNITIVE CORE (vLLM SERVER) STATUS ---
+    @app_instance.get("/api/cognitive/status")
+    def api_cognitive_status():
+        return {
+            "status": "online",
+            "tier": "universal",
+            "engine": "vLLM Abliterated Vision-Language Server",
+            "model": "nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ",
+            "hardware": "Modal Cloud T4 (Eager Mode, 16GB VRAM)",
+            "endpoint_label": "cognitive-core",
+            "timestamp": time.time()
+        }
 
     return app_instance
 

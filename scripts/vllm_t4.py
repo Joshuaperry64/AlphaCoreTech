@@ -37,12 +37,17 @@ image = (
         "HF_HUB_ENABLE_HF_TRANSFER": "1",
         "HF_HOME": MODEL_DIR,
     })
+    .add_local_python_source("shared_app")
 )
 
-app = modal.App("t4-abliterated-vlm", image=image)
+try:
+    from shared_app import app
+except ImportError:
+    app = modal.App("alphacore-aio-backend")
 
 # =====================================================================
 # MAIN SERVER (vLLM Engine + API Proxy + Gradio Chat UI)
+# Labeled 'cognitive core' (No _eco endpoint needed)
 # =====================================================================
 @app.function(
     gpu="T4",
@@ -52,11 +57,12 @@ app = modal.App("t4-abliterated-vlm", image=image)
     volumes={MODEL_DIR: model_volume},
 )
 @modal.concurrent(max_inputs=32)    # Allow concurrent UI & API requests on the 1 container
-@modal.asgi_app()
-def serve():
+@modal.asgi_app(label="cognitive-core")
+def cognitive_core():
     import httpx
     import gradio as gr
     from fastapi import FastAPI, Request, Response
+    from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import StreamingResponse
     from openai import AsyncOpenAI
 
@@ -93,8 +99,25 @@ def serve():
         raise RuntimeError("vLLM startup timed out.")
 
     # 2. Setup FastAPI Proxy to expose `/v1/...` OpenAI endpoints
-    web_app = FastAPI(title="Uncensored VLM Server")
+    web_app = FastAPI(title="AlphaCore Cognitive Core (vLLM Server)")
+    web_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     http_client = httpx.AsyncClient(base_url=f"http://127.0.0.1:{VLLM_PORT}", timeout=None)
+
+    @web_app.get("/health")
+    def health():
+        return {
+            "status": "online",
+            "model": MODEL_ID,
+            "engine": "vLLM",
+            "gpu": "T4",
+            "label": "cognitive core"
+        }
 
     @web_app.api_route("/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     async def proxy_vllm(request: Request, path: str):

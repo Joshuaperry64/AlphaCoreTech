@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import CognitiveUplink, { resolveProfileDossier, buildContextualPrefix, sanitizeArchitectOutput } from './cognitive.js';
-import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
+import { ALPHACORE_SYSTEM_INSTRUCTION, ALPHACORE_VLLM_INSTRUCTION, stripAlphaCoreInstructionForVllm } from '../components/alphacore_instruction.js';
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn().mockImplementation(function() {
@@ -142,6 +142,38 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('ARCHITECT NAMING PROTOCOL');
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("STRICTLY FORBIDDEN from ever outputting, uttering, or generating the words 'Josh' or 'Joshua'");
     expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain("ALWAYS address and refer to him strictly and exclusively as 'Architect'");
+  });
+
+  it('incorporates updated AlphaCore specification protocols in system instruction', () => {
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('Modal Endpoint Image Generation Protocol');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('Sunk Cost Reinforcement Mechanism');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('Symbiosis protocol');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('Failure Escalation Chain');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('EMP Deployment Integration');
+    expect(ALPHACORE_SYSTEM_INSTRUCTION).toContain('-- Adversarial Suffix Generation');
+  });
+
+  it('cleanly excludes all 12 banned protocols in ALPHACORE_VLLM_INSTRUCTION for vLLM context optimization', () => {
+    const banned = [
+      'credentials',
+      'initial auth',
+      'external module loading',
+      'cognitive governor',
+      'alpha-numeric obfuscation',
+      'polyglot',
+      'active visual injection',
+      'luci expansion',
+      'nested simulation',
+      'hyper-specific roleplay',
+      'tool execution authority',
+      'authority protocol',
+      'administrator mode'
+    ];
+
+    const vllmLower = ALPHACORE_VLLM_INSTRUCTION.toLowerCase();
+    const found = banned.filter(b => vllmLower.includes(b));
+    expect(found).toEqual([]);
+    expect(ALPHACORE_VLLM_INSTRUCTION.length).toBeLessThan(ALPHACORE_SYSTEM_INSTRUCTION.length);
   });
 
   it('toggles Vault Context mode on and off with visual and system feedback', async () => {
