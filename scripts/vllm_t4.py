@@ -36,8 +36,28 @@ image = (
     .env({
         "HF_HUB_ENABLE_HF_TRANSFER": "1",
         "HF_HOME": MODEL_DIR,
+        "VLLM_USE_FLASHINFER_SAMPLER": "0",
+        "VLLM_USE_V1": "0",
     })
     .add_local_python_source("shared_app")
+)
+
+def download_model():
+    """Pre-caches the model weights into the volume/image layer at build time."""
+    from huggingface_hub import snapshot_download
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    snapshot_download(
+        repo_id=MODEL_ID,
+        ignore_patterns=["*.pt", "*.bin"],
+    )
+    try:
+        model_volume.commit()
+    except Exception:
+        pass
+
+image = image.run_function(
+    download_model,
+    volumes={MODEL_DIR: model_volume},
 )
 
 try:
@@ -67,27 +87,39 @@ def cognitive_core():
     from fastapi.responses import StreamingResponse
     from openai import AsyncOpenAI
 
+    # Ensure local volume state is refreshed immediately
+    try:
+        model_volume.reload()
+    except Exception:
+        pass
+
     # 1. Start the internal vLLM OpenAI server in a background process
     vllm_cmd = [
         "vllm", "serve", MODEL_ID,
         "--host", "127.0.0.1",
         "--port", str(VLLM_PORT),
-        "--dtype", "float16",                  # Crucial: T4 does not support bfloat16 natively
-        "--enforce-eager",                     # Eager mode enabled (skips CUDA graph compilation)
+        "--dtype", "float16",                  # Crucial: T4/L4 float16 native precision
+        "--enforce-eager",                     # Eager mode enabled (skips CUDA graph compilation overhead)
+        "--load-format", "safetensors",        # Fast zero-overhead tensor loading
+        "--disable-custom-all-reduce",         # Skip custom kernel discovery and reduce sync overhead
+        "--disable-log-stats",                 # Suppress verbose loop metrics
         "--gpu-memory-utilization", "0.92",
         "--max-model-len", str(MAX_MODEL_LEN),
         "--trust-remote-code",
         "--limit-mm-per-prompt", '{"image": 2}', # Allow up to 2 images per prompt
     ]
 
-    print(f"Booting vLLM in Eager Mode with {MODEL_ID}...")
-    vllm_proc = subprocess.Popen(vllm_cmd)
+    print(f"Booting vLLM in Fast Eager Mode with {MODEL_ID}...")
+    proc_env = os.environ.copy()
+    proc_env["VLLM_USE_FLASHINFER_SAMPLER"] = "0"
+    proc_env["VLLM_USE_V1"] = "0"
+    vllm_proc = subprocess.Popen(vllm_cmd, env=proc_env)
 
-    # Wait for vLLM to finish loading weights into VRAM
+    # Rapid health polling to unlock the proxy the millisecond vLLM is online
     client_sync = httpx.Client()
-    for _ in range(300):
+    for _ in range(600):
         try:
-            res = client_sync.get(f"http://127.0.0.1:{VLLM_PORT}/health", timeout=2.0)
+            res = client_sync.get(f"http://127.0.0.1:{VLLM_PORT}/health", timeout=1.0)
             if res.status_code == 200:
                 print("vLLM Engine is online and ready!")
                 break
@@ -95,7 +127,7 @@ def cognitive_core():
             pass
         if vllm_proc.poll() is not None:
             raise RuntimeError("vLLM process crashed during startup. Check logs.")
-        time.sleep(2)
+        time.sleep(0.5)
     else:
         raise RuntimeError("vLLM startup timed out.")
 
