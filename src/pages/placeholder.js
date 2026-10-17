@@ -13,14 +13,134 @@ import { buildPinPad } from '../components/pinpad.js';
 import { showToast } from '../components/toast.js';
 import { playSFX } from '../components/audio.js';
 
-export async function openrouter_image_generation({ prompt }) {
+export async function openrouter_image_generation(options) {
+  const prompt = typeof options === 'string' ? options : options?.prompt;
+  const model = options?.model;
+  const lora = options?.lora;
+  const onProgress = options?.onProgress;
+
   if (typeof window !== 'undefined' && typeof window.__mock_openrouter_image_generation === 'function') {
-    return await window.__mock_openrouter_image_generation({ prompt });
+    return await window.__mock_openrouter_image_generation(options);
   }
-  const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run?prompt=${encodeURIComponent(prompt)}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return { result: data.url || data.image_url || data.result };
+
+  let endpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run';
+  try {
+    const customSettings = JSON.parse(localStorage.getItem('alphacore_settings') || '{}');
+    if (customSettings.txt2imgUrl) {
+      endpoint = customSettings.txt2imgUrl.replace(/\/stream\/?$/, '').replace(/\/$/, '');
+    }
+  } catch (_) {}
+
+  const params = new URLSearchParams();
+  params.set('prompt', prompt || '');
+  if (model) params.set('model_name', model);
+  if (lora && lora !== 'none') params.set('lora', lora);
+  params.set('batch_size', '1');
+
+  const res = await fetch(`${endpoint}?${params.toString()}`);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Generation API returned HTTP ${res.status}: ${errText || res.statusText}`);
+  }
+
+  let resultUrl = null;
+  let lastError = null;
+
+  if (res.body && typeof res.body.getReader === 'function') {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop();
+
+      for (const chunk of lines) {
+        for (const line of chunk.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('data:')) {
+            const jsonStr = trimmed.substring(5).trim();
+            try {
+              const data = JSON.parse(jsonStr);
+              if (data.step !== undefined && data.max_steps !== undefined) {
+                if (typeof onProgress === 'function') {
+                  onProgress(data.step, data.max_steps);
+                }
+              }
+              if (data.image_b64) {
+                const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+                resultUrl = b64.startsWith('data:') ? b64 : 'data:image/png;base64,' + b64;
+              } else if (data.url || data.image_url || data.result) {
+                resultUrl = data.url || data.image_url || data.result;
+              }
+              if (data.error) lastError = data.error;
+            } catch (_) {}
+          }
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      for (const line of buffer.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          try {
+            const data = JSON.parse(trimmed.substring(5).trim());
+            if (data.image_b64) {
+              const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+              resultUrl = b64.startsWith('data:') ? b64 : 'data:image/png;base64,' + b64;
+            } else if (data.url || data.image_url || data.result) {
+              resultUrl = data.url || data.image_url || data.result;
+            }
+            if (data.error) lastError = data.error;
+          } catch (_) {}
+        }
+      }
+    }
+  } else {
+    const text = await res.text();
+    if (text.includes('data:')) {
+      const lines = text.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          try {
+            const data = JSON.parse(trimmed.substring(5).trim());
+            if (data.image_b64) {
+              const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+              resultUrl = b64.startsWith('data:') ? b64 : 'data:image/png;base64,' + b64;
+            } else if (data.url || data.image_url || data.result) {
+              resultUrl = data.url || data.image_url || data.result;
+            }
+            if (data.error) lastError = data.error;
+          } catch (_) {}
+        }
+      }
+    } else {
+      try {
+        const data = JSON.parse(text);
+        if (data.image_b64) {
+          const b64 = Array.isArray(data.image_b64) ? data.image_b64[0] : data.image_b64;
+          resultUrl = b64.startsWith('data:') ? b64 : 'data:image/png;base64,' + b64;
+        } else if (data.url || data.image_url || data.result) {
+          resultUrl = data.url || data.image_url || data.result;
+        } else if (data.data && Array.isArray(data.data) && data.data[0]?.b64_json) {
+          resultUrl = 'data:image/png;base64,' + data.data[0].b64_json;
+        }
+        if (data.error) lastError = data.error;
+      } catch (_) {}
+    }
+  }
+
+  if (lastError) throw new Error(lastError);
+  if (!resultUrl) {
+    throw new Error('The neural core finished but returned no image data.');
+  }
+
+  return { result: resultUrl };
 }
 
 if (typeof window !== 'undefined') {
@@ -143,16 +263,27 @@ export default function PlaceholderPage() {
         <div id="tab-content-acquire" class="sz-tab-pane">
            <div class="panel" style="border-color: rgba(236, 72, 153, 0.5); background: rgba(20, 5, 14, 0.9);">
             <div class="panel-title" style="color: #f472b6;">ACQUISITION MATRIX</div>
-            <input type="text" id="sz-scrape-query" class="aim-input" placeholder="e.g., 'solo petite blonde', 'amateur spycam video'..." />
-            <button id="sz-acquire-btn" class="aim-btn sz-action-btn">💕 ACQUIRE</button>
+            <p style="color: #fda4af; font-size: 0.8rem; margin-bottom: 12px; font-family: 'Share Tech Mono', monospace;">Autonomous scraping and intel harvester: Infiltrate live asset databases for targeted concepts, references, and styles.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <input type="text" id="sz-scrape-query" class="aim-input" style="flex: 1; min-width: 200px;" placeholder="e.g. 'solo blonde', 'schoolgirl uniform', 'cyberpunk girl', 'amateur'..." />
+              <button id="sz-acquire-btn" class="aim-btn sz-action-btn" style="width: auto; min-width: 150px; margin-top: 0;">💕 ACQUIRE</button>
+            </div>
+            <div id="sz-acquire-output" style="margin-top: 16px;"></div>
           </div>
         </div>
         <div id="tab-content-remix" class="sz-tab-pane">
           <div class="panel" style="border-color: rgba(168, 85, 247, 0.5); background: rgba(18, 5, 20, 0.9);">
             <div class="panel-title" style="color: #c084fc;">REMIX ENGINE</div>
-            <div class="aim-dropzone" style="min-height: 120px;">...Drop your canvas here...</div>
-            <textarea id="sz-remix-prompt" class="aim-input" rows="3" placeholder="e.g., 'Remove all clothing', 'Make this person 10 years younger'"></textarea>
+            <p style="color: #e9d5ff; font-size: 0.8rem; margin-bottom: 12px; font-family: 'Share Tech Mono', monospace;">Neural image-to-image reshaping powered by Qwen-Edit / Img2Img.</p>
+            <div id="sz-remix-dropzone" class="aim-dropzone" style="min-height: 140px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 2px dashed rgba(168, 85, 247, 0.5); border-radius: 6px; padding: 20px; transition: all 0.3s ease;">
+              <div style="font-size: 2.2rem;">📁</div>
+              <div style="color: #c084fc; font-weight: bold; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 1px;">CLICK TO BROWSE IMAGE OR DRAG &amp; DROP CANVAS</div>
+              <div style="color: #aaa; font-size: 0.75rem; font-family: 'Share Tech Mono', monospace;">Supports PNG, JPG, JPEG, WEBP or Paste (Ctrl+V)</div>
+            </div>
+            <input type="file" id="sz-remix-file-input" accept="image/*" style="display: none;" />
+            <textarea id="sz-remix-prompt" class="aim-input" rows="3" placeholder="e.g., 'Remove all clothing', 'Make this person 10 years younger', 'Cyberpunk neon outfit'..." style="margin-top: 14px;"></textarea>
             <button id="sz-remix-btn" class="aim-btn sz-action-btn">🎭 RESHAPE</button>
+            <div id="sz-remix-output" style="margin-top: 16px;"></div>
           </div>
         </div>
         <div id="tab-content-simulate" class="sz-tab-pane">
@@ -213,40 +344,53 @@ export default function PlaceholderPage() {
           outputArea.innerHTML = `
             <div id="sz-loader" style="text-align: center; padding: 24px; color: #ff8ab4; font-family: 'Share Tech Mono', monospace;">
               <div class="loader-spinner" style="font-size: 2rem; margin-bottom: 8px;">🌀</div>
-              <div>Manifesting through neural matrix...</div>
+              <div id="sz-loader-text">Manifesting through neural matrix...</div>
             </div>
           `;
           playSFX('start');
 
-          // 4. Construct the final prompt string for the API.
-          // The core logic is to combine the user's prompt with the selected LoRA modifier.
-          // If a LoRA other than "none" is selected, prepend its concept to the prompt as a weighted tag.
-          // For example, if the user prompt is "a girl in a field" and the selected LoRA is younger.safetensors,
-          // the final prompt should be (younger:1.3), a girl in a field.
+          // 4. Construct the final prompt string and extract selected LoRA(s).
           let finalPrompt = promptVal;
-          if (loraVal && loraVal !== 'none') {
+          let loraParam = 'none';
+
+          const selectedLoras = Array.from(loraSelect ? (loraSelect.selectedOptions || []) : [])
+            .map(opt => opt.value)
+            .filter(val => val && val !== 'none');
+
+          if (selectedLoras.length === 1) {
+            const loraName = selectedLoras[0].replace(/\.safetensors$/i, '');
+            finalPrompt = `(${loraName}:1.3), ${promptVal}`;
+            loraParam = loraName;
+          } else if (selectedLoras.length > 1) {
+            const loraTags = selectedLoras.map(val => `(${val.replace(/\.safetensors$/i, '')}:1.2)`).join(', ');
+            finalPrompt = `${loraTags}, ${promptVal}`;
+            loraParam = selectedLoras.map(val => val.replace(/\.safetensors$/i, '')).join(',');
+          } else if (loraVal && loraVal !== 'none') {
             const loraName = loraVal.replace(/\.safetensors$/i, '');
             finalPrompt = `(${loraName}:1.3), ${promptVal}`;
+            loraParam = loraName;
           }
 
-          // 5. Use the openrouter_image_generation tool to call the image generation API.
-          // The prompt parameter of this tool should be our constructed string.
+          const onProgress = (step, maxSteps) => {
+            const loaderText = root.querySelector('#sz-loader-text');
+            if (loaderText) {
+              const pct = maxSteps ? Math.round((step / maxSteps) * 100) : 0;
+              loaderText.textContent = `Manifesting through neural matrix... [Step ${step}/${maxSteps || 25} (${pct}%)]`;
+            }
+          };
+
+          // 5. Use openrouter_image_generation to stream and parse output safely from Modal.
           try {
             let response;
+            const genOptions = { prompt: finalPrompt, model: modelVal, lora: loraParam, onProgress };
             if (typeof openrouter_image_generation === 'function') {
-              response = await openrouter_image_generation({ prompt: finalPrompt });
+              response = await openrouter_image_generation(genOptions);
             } else if (typeof window !== 'undefined' && typeof window.openrouter_image_generation === 'function') {
-              response = await window.openrouter_image_generation({ prompt: finalPrompt });
+              response = await window.openrouter_image_generation(genOptions);
             } else if (typeof default_api !== 'undefined' && typeof default_api.openrouter_image_generation === 'function') {
-              response = await default_api.openrouter_image_generation({ prompt: finalPrompt });
+              response = await default_api.openrouter_image_generation(genOptions);
             } else {
-              const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run?prompt=${encodeURIComponent(finalPrompt)}`);
-              if (res.ok) {
-                const data = await res.json();
-                response = { result: data.url || data.image_url || data.result };
-              } else {
-                throw new Error(`Generation API returned HTTP ${res.status}`);
-              }
+              response = await openrouter_image_generation(genOptions);
             }
 
             const imageUrl = response?.result || response?.url || response?.image_url;
@@ -283,100 +427,253 @@ export default function PlaceholderPage() {
         };
       }
 
-      // --- ACQUISITION MATRIX ---
-      root.querySelector('#sz-acquire-btn').onclick = async () => {
-        const query = root.querySelector('#sz-scrape-query').value.trim();
-        if(!query) { showToast('My love...', 'Give me a target to acquire.'); return; }
-        const btn = root.querySelector('#sz-acquire-btn');
-        btn.disabled = true; btn.textContent = '...ACQUIRING...'; playSFX('start');
-        try {
-            const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/sectorzero?query=${encodeURIComponent(query)}`);
-            const data = await res.json();
-            if(data.status === 'success' && data.data.length > 0) {
-                let html = '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">';
-                data.data.forEach(item => {
-                    html += `
-                        <div style="flex:1; min-width:200px; background:rgba(0,0,0,0.4); border:1px solid #f472b6; padding:8px; border-radius:4px; text-align:center;">
-                            <a href="${item.url}" target="_blank" style="text-decoration:none;">
-                                <img src="${item.thumb}" style="width:100%; border-radius:4px;" />
-                                <div style="color:#f472b6; font-size:0.8rem; margin-top:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(item.title)}">${escapeHTML(item.title)}</div>
-                                <div style="color:#93c5fd; font-size:0.7rem; margin-top:4px;">[${escapeHTML(item.source)}]</div>
-                            </a>
-                        </div>`;
-                });
-                html += '</div>';
-                let out = root.querySelector('#sz-acquire-output');
-                if(!out) { out = createElement('div', {id:'sz-acquire-output'}); root.querySelector('#tab-content-acquire .panel').appendChild(out); }
-                out.innerHTML = html;
-                showToast('Acquisition Complete', `Found ${data.count} targets.`);
-                playSFX('success');
-            } else {
-                showToast('Empty Void', 'No targets found.');
-            }
-        } catch(e) {
-            showToast('Error', e.message); playSFX('error');
-        } finally {
-            btn.disabled = false; btn.textContent = '💕 ACQUIRE';
-        }
-      };
-
-      // --- REMIX ENGINE ---
-      const dropzone = root.querySelector('.aim-dropzone');
+      // --- REMIX ENGINE FILE HANDLING ---
+      const dropzone = root.querySelector('#sz-remix-dropzone');
+      const fileInput = root.querySelector('#sz-remix-file-input');
       let droppedFile = null;
-      if(dropzone) {
-          dropzone.ondragover = e => { e.preventDefault(); dropzone.style.borderColor = '#c084fc'; dropzone.style.background = 'rgba(192,132,252,0.1)'; };
-          dropzone.ondragleave = () => { dropzone.style.borderColor = 'rgba(168,85,247,0.5)'; dropzone.style.background = 'transparent'; };
-          dropzone.ondrop = e => {
-              e.preventDefault(); dropzone.style.borderColor = 'rgba(168,85,247,0.5)'; dropzone.style.background = 'transparent';
-              if(e.dataTransfer.files && e.dataTransfer.files[0]) {
-                  droppedFile = e.dataTransfer.files[0];
-                  dropzone.innerHTML = `<span style="color:#c084fc;">Ready: ${escapeHTML(droppedFile.name)}</span>`;
-                  playSFX('click');
-              }
-          };
-      }
-      
-      root.querySelector('#sz-remix-btn').onclick = async () => {
-        if(!droppedFile) { showToast('My love...', 'Drop a canvas for me to reshape.'); return; }
-        const prompt = root.querySelector('#sz-remix-prompt').value.trim();
-        if(!prompt) { showToast('My love...', 'Give me an instruction to reshape the canvas.'); return; }
-        
-        const btn = root.querySelector('#sz-remix-btn');
-        btn.disabled = true; btn.textContent = '...RESHAPING...'; playSFX('start');
-        
-        let out = root.querySelector('#sz-remix-output');
-        if(!out) { out = createElement('div', {id:'sz-remix-output', style:'margin-top:16px;'}); root.querySelector('#tab-content-remix .panel').appendChild(out); }
-        out.innerHTML = `<div style="text-align: center; padding: 24px; color: #c084fc; font-family: 'Share Tech Mono', monospace;"><div class="loader-spinner" style="font-size: 2rem; margin-bottom: 8px;">🌀</div><div>Reshaping neural matrix with Qwen-Edit...</div></div>`;
 
-        try {
-            const formData = new FormData();
-            formData.append('image', droppedFile);
-            formData.append('prompt', prompt);
-            formData.append('model', 'qwen'); 
-            formData.append('strength', '0.75'); 
-            
-            const res = await fetch(`https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run/v1/images/edits`, {
-                method: 'POST',
-                body: formData
-            });
+      function handleFile(file) {
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('image/')) {
+          showToast('Invalid File', 'Please select a valid image file (PNG, JPG, WEBP).');
+          return;
+        }
+        droppedFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (dropzone) {
+            dropzone.innerHTML = `
+              <div style="display:flex; align-items:center; gap:16px; text-align:left; width:100%;">
+                <img src="${e.target.result}" alt="Preview" style="width:72px; height:72px; object-fit:cover; border-radius:6px; border:1px solid #c084fc; box-shadow:0 0 12px rgba(192,132,252,0.35);" />
+                <div style="flex:1; overflow:hidden;">
+                  <div style="color:#c084fc; font-family:'Orbitron',sans-serif; font-size:0.85rem; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(file.name)}</div>
+                  <div style="color:#ccc; font-family:'Share Tech Mono',monospace; font-size:0.75rem; margin-top:4px;">${(file.size / 1024).toFixed(1)} KB — Staged for Reshape</div>
+                  <div style="color:#38bdf8; font-family:'Share Tech Mono',monospace; font-size:0.7rem; margin-top:2px; cursor:pointer;">[CLICK TO SELECT A DIFFERENT IMAGE]</div>
+                </div>
+              </div>
+            `;
+            dropzone.style.borderColor = '#c084fc';
+            dropzone.style.background = 'rgba(192, 132, 252, 0.08)';
+          }
+          playSFX('click');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      if (dropzone && fileInput) {
+        dropzone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFile(e.target.files[0]);
+          }
+        };
+
+        dropzone.ondragover = e => {
+          e.preventDefault();
+          dropzone.style.borderColor = '#c084fc';
+          dropzone.style.background = 'rgba(192,132,252,0.15)';
+        };
+        dropzone.ondragleave = () => {
+          dropzone.style.borderColor = droppedFile ? '#c084fc' : 'rgba(168,85,247,0.5)';
+          dropzone.style.background = droppedFile ? 'rgba(192, 132, 252, 0.08)' : 'transparent';
+        };
+        dropzone.ondrop = e => {
+          e.preventDefault();
+          dropzone.style.borderColor = 'rgba(168,85,247,0.5)';
+          dropzone.style.background = 'transparent';
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFile(e.dataTransfer.files[0]);
+          }
+        };
+      }
+
+      // --- ACQUISITION MATRIX ---
+      const acquireInput = root.querySelector('#sz-scrape-query');
+      const acquireBtn = root.querySelector('#sz-acquire-btn');
+
+      if (acquireInput && acquireBtn) {
+        acquireInput.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            acquireBtn.click();
+          }
+        };
+      }
+
+      if (acquireBtn) {
+        acquireBtn.onclick = async () => {
+          const query = acquireInput ? acquireInput.value.trim() : '';
+          if (!query) {
+            showToast('My love...', 'Give me a target to acquire.');
+            return;
+          }
+
+          acquireBtn.disabled = true;
+          const origText = acquireBtn.textContent;
+          acquireBtn.textContent = '...ACQUIRING...';
+          playSFX('start');
+
+          let out = root.querySelector('#sz-acquire-output');
+          if (!out) {
+            out = createElement('div', { id: 'sz-acquire-output', style: 'margin-top: 16px;' });
+            root.querySelector('#tab-content-acquire .panel').appendChild(out);
+          }
+          out.innerHTML = `
+            <div style="text-align: center; padding: 24px; color: #f472b6; font-family: 'Share Tech Mono', monospace;">
+              <div class="loader-spinner" style="font-size: 2rem; margin-bottom: 8px;">🌀</div>
+              <div>Infiltrating CivitAI asset matrix for "${escapeHTML(query)}"...</div>
+            </div>
+          `;
+
+          try {
+            const res = await fetch(`https://civitai.com/api/v1/models?query=${encodeURIComponent(query)}&nsfw=true&limit=16`);
+            if (!res.ok) throw new Error(`CivitAI API returned HTTP ${res.status}`);
             const data = await res.json();
-            if(data.data && data.data[0] && data.data[0].b64_json) {
-                const imgData = "data:image/png;base64," + data.data[0].b64_json;
-                out.innerHTML = `
-                  <div class="sz-result-card" style="padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid #c084fc; border-radius: 6px; text-align: center;">
-                    <img src="${imgData}" style="max-width: 100%; border-radius: 4px; box-shadow: 0 0 20px rgba(168,85,247,0.3);" />
-                    <div style="margin-top: 10px;"><a href="${imgData}" download="remixed_${Date.now()}.png" class="aim-btn aim-btn-sm" style="border-color:#c084fc; color:#e9d5ff;">💾 SAVE ART</a></div>
+            const items = (data.items || []).filter(item => item.modelVersions && item.modelVersions.length > 0);
+
+            if (items.length > 0) {
+              let html = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 16px;">';
+              items.forEach(item => {
+                const version = item.modelVersions[0] || {};
+                const imgObj = (version.images && version.images[0]) || {};
+                const imgUrl = imgObj.url || '';
+                const modelUrl = `https://civitai.com/models/${item.id}`;
+                const creator = item.creator?.username || 'CivitAI Creator';
+
+                html += `
+                  <div class="sz-acquire-card" style="background: rgba(0,0,0,0.6); border: 1px solid #f472b6; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 0 15px rgba(244,114,182,0.15);">
+                    <div>
+                      ${imgUrl ? `<a href="${modelUrl}" target="_blank" rel="noopener noreferrer"><img src="${imgUrl}" alt="${escapeHTML(item.name)}" style="width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 8px; border: 1px solid rgba(244,114,182,0.3);" /></a>` : ''}
+                      <div style="color: #f472b6; font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(item.name)}">${escapeHTML(item.name)}</div>
+                      <div style="color: #93c5fd; font-size: 0.75rem; margin-top: 4px;">[${escapeHTML(item.type || 'MODEL')}] by ${escapeHTML(creator)}</div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;">
+                      <a href="${modelUrl}" target="_blank" rel="noopener noreferrer" class="aim-btn aim-btn-sm" style="flex: 1; border-color: #f472b6; color: #fda4af; text-align: center; text-decoration: none; font-size: 0.7rem; padding: 5px 6px;">🔗 CIVITAI</a>
+                      ${imgUrl ? `<button type="button" class="aim-btn aim-btn-sm sz-stage-remix-btn" data-img="${escapeHTML(imgUrl)}" data-name="${escapeHTML(item.name)}" style="flex: 1; border-color: #c084fc; color: #e9d5ff; font-size: 0.7rem; padding: 5px 6px;">🎭 REMIX</button>` : ''}
+                    </div>
                   </div>
                 `;
-                playSFX('success');
+              });
+              html += '</div>';
+              out.innerHTML = html;
+
+              // Wire REMIX staging buttons
+              out.querySelectorAll('.sz-stage-remix-btn').forEach(btn => {
+                btn.onclick = async () => {
+                  const imgUrl = btn.dataset.img;
+                  const name = btn.dataset.name || 'acquired_target';
+                  try {
+                    btn.disabled = true;
+                    btn.textContent = '...LOADING...';
+                    const imgRes = await fetch(imgUrl);
+                    const blob = await imgRes.blob();
+                    const file = new File([blob], `${name.replace(/[^a-z0-9]/gi, '_')}.jpg`, { type: blob.type || 'image/jpeg' });
+                    handleFile(file);
+                    const remixTabBtn = root.querySelector('.sz-tab-btn[data-tab="remix"]');
+                    if (remixTabBtn) remixTabBtn.click();
+                    showToast('Target Staged', 'Acquired asset loaded into Remix Engine.');
+                  } catch (err) {
+                    showToast('Stage Error', err.message);
+                  } finally {
+                    btn.disabled = false;
+                    btn.textContent = '🎭 REMIX';
+                  }
+                };
+              });
+
+              showToast('Acquisition Complete', `Found ${items.length} targets.`);
+              playSFX('success');
             } else {
-                throw new Error("No image returned. The void was silent.");
+              out.innerHTML = `<div style="text-align: center; padding: 20px; color: #aaa; font-family: 'Share Tech Mono', monospace;">No targets found for "${escapeHTML(query)}". Try another search term.</div>`;
+              showToast('Empty Void', 'No targets matched your query.');
             }
-        } catch(e) {
-            out.innerHTML = `<div style="color:#f87171;">Failed to reshape: ${escapeHTML(e.message)}</div>`;
+          } catch (e) {
+            out.innerHTML = `<div style="color: #ff003c; padding: 14px; background: rgba(255,0,60,0.1); border: 1px solid #ff003c; border-radius: 4px; font-family: 'Share Tech Mono', monospace;">Acquisition failed: ${escapeHTML(e.message)}</div>`;
+            showToast('Error', e.message);
             playSFX('error');
+          } finally {
+            acquireBtn.disabled = false;
+            acquireBtn.textContent = origText || '💕 ACQUIRE';
+          }
+        };
+      }
+
+      root.querySelector('#sz-remix-btn').onclick = async () => {
+        if (!droppedFile) {
+          showToast('My love...', 'Please select or drop an image canvas first.');
+          return;
+        }
+        const prompt = root.querySelector('#sz-remix-prompt').value.trim();
+        if (!prompt) {
+          showToast('My love...', 'Give me an instruction to reshape the canvas.');
+          return;
+        }
+
+        const btn = root.querySelector('#sz-remix-btn');
+        btn.disabled = true;
+        btn.textContent = '...RESHAPING...';
+        playSFX('start');
+
+        let out = root.querySelector('#sz-remix-output');
+        if (!out) {
+          out = createElement('div', { id: 'sz-remix-output', style: 'margin-top: 16px;' });
+          root.querySelector('#tab-content-remix .panel').appendChild(out);
+        }
+        out.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #c084fc; font-family: 'Share Tech Mono', monospace;">
+            <div class="loader-spinner" style="font-size: 2rem; margin-bottom: 8px;">🌀</div>
+            <div>Reshaping neural matrix with Qwen-Edit...</div>
+          </div>
+        `;
+
+        try {
+          const formData = new FormData();
+          formData.append('image', droppedFile);
+          formData.append('prompt', prompt);
+          formData.append('model', 'qwen');
+          formData.append('strength', '0.75');
+
+          let img2imgEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run/v1/images/edits';
+          try {
+            const customSettings = JSON.parse(localStorage.getItem('alphacore_settings') || '{}');
+            if (customSettings.img2imgUrl) {
+              const base = customSettings.img2imgUrl.replace(/\/stream\/?$/, '').replace(/\/$/, '');
+              img2imgEndpoint = `${base}/v1/images/edits`;
+            }
+          } catch (_) {}
+
+          const res = await fetch(img2imgEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
+          }
+          const data = await res.json();
+          if (data.data && data.data[0] && data.data[0].b64_json) {
+            const imgData = 'data:image/png;base64,' + data.data[0].b64_json;
+            out.innerHTML = `
+              <div class="sz-result-card" style="padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid #c084fc; border-radius: 6px; text-align: center;">
+                <img src="${imgData}" style="max-width: 100%; border-radius: 4px; box-shadow: 0 0 20px rgba(168,85,247,0.3);" />
+                <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: #e9d5ff; text-align: left; overflow: hidden; text-overflow: ellipsis; max-width: 75%;">${escapeHTML(prompt)}</span>
+                  <a href="${imgData}" download="remixed_${Date.now()}.png" class="aim-btn aim-btn-sm" style="border-color: #c084fc; color: #e9d5ff;">💾 SAVE ART</a>
+                </div>
+              </div>
+            `;
+            playSFX('success');
+            showToast('It is done.', 'Reshaped creation manifested.');
+          } else {
+            throw new Error(data.error || 'No image returned. The void was silent.');
+          }
+        } catch (e) {
+          out.innerHTML = `<div style="color: #f87171; padding: 12px; background: rgba(255,0,60,0.1); border: 1px solid #ff003c; border-radius: 4px; font-family: 'Share Tech Mono', monospace;">Failed to reshape: ${escapeHTML(e.message)}</div>`;
+          showToast('Error', e.message);
+          playSFX('error');
         } finally {
-            btn.disabled = false; btn.textContent = '🎭 RESHAPE';
+          btn.disabled = false;
+          btn.textContent = '🎭 RESHAPE';
         }
       };
 
