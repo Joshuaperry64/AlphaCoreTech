@@ -189,19 +189,33 @@ def StripeAPI() -> FastAPI:
         deposit_id = f"dep_{int(time.time())}_{os.urandom(4).hex()}"
 
         try:
-            # Create PaymentIntent charged to AlphaCore platform balance
-            intent = stripe.PaymentIntent.create(
-                amount=amount_cents,
-                currency="usd",
-                payment_method_types=["card", "cashapp"],
-                metadata={
-                    "deposit_id": deposit_id,
-                    "profile": profile,
-                    "is_guest": str(is_guest),
-                    "action": "atm_deposit",
-                    "non_refundable_fee_cents": str(non_refundable_fee_cents)
-                }
-            )
+            # Create PaymentIntent charged to AlphaCore platform balance with Link support
+            try:
+                intent = stripe.PaymentIntent.create(
+                    amount=amount_cents,
+                    currency="usd",
+                    automatic_payment_methods={"enabled": True},
+                    metadata={
+                        "deposit_id": deposit_id,
+                        "profile": profile,
+                        "is_guest": str(is_guest),
+                        "action": "atm_deposit",
+                        "non_refundable_fee_cents": str(non_refundable_fee_cents)
+                    }
+                )
+            except Exception:
+                intent = stripe.PaymentIntent.create(
+                    amount=amount_cents,
+                    currency="usd",
+                    payment_method_types=["card", "link", "cashapp"],
+                    metadata={
+                        "deposit_id": deposit_id,
+                        "profile": profile,
+                        "is_guest": str(is_guest),
+                        "action": "atm_deposit",
+                        "non_refundable_fee_cents": str(non_refundable_fee_cents)
+                    }
+                )
 
             tokens_yielded = max(1, int(round(amount_usd * 4)))
 

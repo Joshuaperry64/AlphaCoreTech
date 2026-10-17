@@ -304,6 +304,13 @@ export default function VoiceClonerPage() {
     const btnExecute = container.querySelector('#btn-execute-pipeline');
     if (btnExecute) {
       btnExecute.onclick = async () => {
+        if (!sessionStorage.getItem('generate_authenticated') && currentProfile === 'guest') {
+          showToast('GUEST PREVIEW MODE', 'Please log in with a profile PIN to execute voice cloning.');
+          import('../components/pinpad.js').then(({ openLoginModal }) => {
+            openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR VOICE CLONING' });
+          });
+          return;
+        }
         const statusBox = container.querySelector('#pipeline-status');
         const pitchShift = parseInt(container.querySelector('#slider-pitch')?.value || 0, 10);
         let sourceBlob = null;

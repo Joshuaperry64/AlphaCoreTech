@@ -2809,6 +2809,12 @@ input:focus, textarea:focus {
   overflow: hidden;
 }
 
+.aim-pin-box-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .aim-pin-box::before {
   content: '';
   position: absolute;

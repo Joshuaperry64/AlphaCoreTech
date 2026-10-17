@@ -1379,7 +1379,7 @@ export default function TransferPage() {
               <!-- Source -->
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; padding: 4px 0;">
                 <span style="color: #94a3b8;">SOURCE (FUNDING INSTRUMENT):</span>
-                <span style="color: #fff; font-weight: bold;">💳 Card / Cash App (Instant Capture)</span>
+                <span style="color: #fff; font-weight: bold;">💳 Card / Link / Cash App (Instant Capture)</span>
               </div>
               ${state.selectedDestination === DONATION_ACCOUNT_ID ? `
                 <div style="margin-top: 6px; font-size: 0.75rem; color: #fbbf24; background: rgba(245,158,11,0.1); padding: 4px 8px; border-radius: 4px;">
@@ -1465,10 +1465,10 @@ export default function TransferPage() {
 
             <!-- Stripe Card Element Mount Container -->
             <div id="stripe-ui-container" style="display: none; margin-top: 14px; background: #020617; border: 1px solid #06b6d4; padding: 18px; border-radius: 8px;">
-              <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// ENTER SOURCE PAYMENT CARD DETAILS:</div>
+              <div style="color: #06b6d4; font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">// SECURE PAYMENT METHOD (CARD / LINK / CASH APP):</div>
               <div id="payment-element"></div>
               <button id="submit-payment-btn" class="aim-btn" style="width: 100%; min-height: 48px; margin-top: 16px; padding: 14px; background: #06b6d4; border-color: #06b6d4; color: #000; font-weight: bold; cursor: pointer; border-radius: 4px;">
-                CONFIRM CARD &amp; AUTHORIZE
+                CONFIRM PAYMENT &amp; AUTHORIZE
               </button>
               <div id="payment-message" style="color: #ef4444; margin-top: 10px; font-family: sans-serif; display: none;"></div>
             </div>
@@ -1653,12 +1653,30 @@ export default function TransferPage() {
 
         if (btnDeposit) {
           btnDeposit.disabled = true;
-          btnDeposit.textContent = '⚡ READING CARD & AUTHORIZING...';
+          btnDeposit.textContent = '⚡ CONNECTING TO SECURE PAYMENT GATEWAY...';
         }
 
+        const stripeBox = bodyBox.querySelector('#stripe-ui-container');
+        const payMsgEl = bodyBox.querySelector('#payment-message');
+        if (payMsgEl) {
+          payMsgEl.style.display = 'none';
+          payMsgEl.textContent = '';
+        }
+
+        if (!window.Stripe) {
+          setTimeout(() => {
+            state.cardInserting = false;
+            state.cardInsertedSuccess = true;
+            playSFX('success');
+            render();
+          }, 500);
+          return;
+        }
+
+        let reqPromise = null;
         try {
           if (typeof fetch === 'function') {
-            const req = fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
+            reqPromise = fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -1667,32 +1685,68 @@ export default function TransferPage() {
                 is_guest: isGuest
               })
             });
-            if (req && typeof req.then === 'function') {
-              req.then(r => r && typeof r.json === 'function' ? r.json() : null).then(data => {
-                if (data && data.depositId) state.depositId = data.depositId;
-                if (data && data.clientSecret && window.Stripe) {
-                  const stripeBox = bodyBox.querySelector('#stripe-ui-container');
-                  if (stripeBox) stripeBox.style.display = 'block';
-                  stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
-                  elementsInstance = stripeInstance.elements({
-                    clientSecret: data.clientSecret,
-                    appearance: { theme: 'night' }
-                  });
-                  const paymentElement = elementsInstance.create('payment');
-                  paymentElement.mount('#payment-element');
-                  if (btnDeposit) btnDeposit.textContent = '💳 PAYMENT CARD INSERTED // COMPLETE BELOW';
-                }
-              }).catch(() => {});
-            }
           }
         } catch {}
 
-        setTimeout(() => {
+        if (reqPromise && typeof reqPromise.then === 'function') {
+          reqPromise
+            .then(async (r) => {
+              if (!r.ok) {
+                const errData = await r.json().catch(() => ({}));
+                throw new Error(errData.detail || `Server error (${r.status})`);
+              }
+              return r.json();
+            })
+        .then((data) => {
+          if (data && data.depositId) state.depositId = data.depositId;
+          if (data && data.clientSecret) {
+            if (!window.Stripe) {
+              throw new Error('Stripe.js failed to load. Please refresh and check your network.');
+            }
+            if (stripeBox) {
+              stripeBox.style.display = 'block';
+              stripeBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            stripeInstance = window.Stripe('pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd');
+            elementsInstance = stripeInstance.elements({
+              clientSecret: data.clientSecret,
+              appearance: {
+                theme: 'night',
+                variables: {
+                  colorPrimary: '#06b6d4',
+                  colorBackground: '#020617',
+                  colorText: '#f8fafc',
+                  colorDanger: '#ef4444',
+                  fontFamily: 'system-ui, sans-serif',
+                  borderRadius: '6px'
+                }
+              }
+            });
+            const paymentElement = elementsInstance.create('payment', {
+              layout: 'tabs'
+            });
+            paymentElement.mount('#payment-element');
+            if (btnDeposit) {
+              btnDeposit.textContent = '💳 PAYMENT TERMINAL READY // ENTER DETAILS BELOW';
+            }
+          } else {
+            throw new Error('Invalid gateway response: clientSecret missing.');
+          }
+        })
+        .catch((err) => {
           state.cardInserting = false;
-          state.cardInsertedSuccess = true;
-          playSFX('success');
-          render();
-        }, 500);
+          if (cardGfx) cardGfx.classList.remove('card-inserting');
+          if (btnDeposit) {
+            btnDeposit.disabled = false;
+            btnDeposit.textContent = '💳 Insert card';
+          }
+          if (payMsgEl) {
+            payMsgEl.textContent = `[!] Gateway Error: ${err.message || 'Deposit initialization failed'}`;
+            payMsgEl.style.display = 'block';
+          }
+          playSFX('incorrect');
+        });
+        }
       }
 
       // Wire Up Payment Submission
@@ -1702,43 +1756,67 @@ export default function TransferPage() {
         submitPayBtn.onclick = async () => {
           if (!stripeInstance || !elementsInstance) return;
           submitPayBtn.disabled = true;
-          submitPayBtn.textContent = 'AUTHORIZING DIRECT TRANSACTION...';
+          submitPayBtn.textContent = 'AUTHORIZING TRANSACTION...';
           laundromatAudio.playBillWhir();
 
-          const { error, paymentIntent } = await stripeInstance.confirmPayment({
-            elements: elementsInstance,
-            redirect: 'if_required'
-          });
+          try {
+            const { error, paymentIntent } = await stripeInstance.confirmPayment({
+              elements: elementsInstance,
+              confirmParams: {
+                return_url: window.location.href
+              },
+              redirect: 'if_required'
+            });
 
-          if (error) {
+            if (error) {
+              submitPayBtn.disabled = false;
+              submitPayBtn.textContent = 'RETRY PAYMENT';
+              if (payMsgEl) {
+                payMsgEl.textContent = `[!] ${error.message}`;
+                payMsgEl.style.display = 'block';
+              }
+              playSFX('incorrect');
+              return;
+            }
+
+            if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+              try {
+                await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    paymentIntentId: paymentIntent.id,
+                    depositId: state.depositId,
+                    profile: rawProfile,
+                    is_guest: isGuest,
+                    amount: state.amount
+                  })
+                });
+              } catch (e) {
+                console.warn('Backend confirmation note:', e);
+              }
+
+              state.cardInserting = false;
+              state.cardInsertedSuccess = true;
+              playSFX('success');
+              render();
+            } else {
+              submitPayBtn.disabled = false;
+              submitPayBtn.textContent = 'RETRY PAYMENT';
+              if (payMsgEl) {
+                payMsgEl.textContent = `[!] Payment Status: ${paymentIntent ? paymentIntent.status : 'Unknown'}`;
+                payMsgEl.style.display = 'block';
+              }
+              playSFX('incorrect');
+            }
+          } catch (err) {
             submitPayBtn.disabled = false;
             submitPayBtn.textContent = 'RETRY PAYMENT';
             if (payMsgEl) {
-              payMsgEl.textContent = `[!] ${error.message}`;
+              payMsgEl.textContent = `[!] ${err.message || 'Payment execution failed'}`;
               payMsgEl.style.display = 'block';
             }
             playSFX('incorrect');
-          } else {
-            try {
-              await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  paymentIntentId: paymentIntent.id,
-                  depositId: state.depositId,
-                  profile: rawProfile,
-                  is_guest: isGuest,
-                  amount: state.amount
-                })
-              });
-            } catch (e) {
-              console.warn('Backend confirmation note:', e);
-            }
-
-            state.cardInserting = false;
-            state.cardInsertedSuccess = true;
-            playSFX('success');
-            render();
           }
         };
       }

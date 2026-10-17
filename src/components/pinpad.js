@@ -211,7 +211,7 @@ export function buildPinPad({
       </form>
 
       <!-- Request Access View -->
-      <div id="aim-pin-signup-view" class="aim-pin-box-inner" style="display: none;">
+      <div id="aim-pin-signup-view" class="aim-pin-box-inner" style="display: none; flex-direction: column;">
         <div class="aim-pin-icon">📝</div>
         <h2 class="aim-pin-title">REQUEST ACCESS</h2>
         <p class="aim-pin-subtitle">SUBMIT PROFILE FOR APPROVAL</p>
@@ -238,7 +238,7 @@ export function buildPinPad({
       </div>
 
       <!-- Pending Approval View -->
-      <div id="aim-pin-pending-view" class="aim-pin-box-inner" style="display: none;">
+      <div id="aim-pin-pending-view" class="aim-pin-box-inner" style="display: none; flex-direction: column;">
         <div class="aim-pin-icon" style="color: #ff9600; text-shadow: 0 0 10px #ff9600;">⏳</div>
         <h2 class="aim-pin-title" style="color: #ff9600;">PROFILE PENDING</h2>
         <p class="aim-pin-subtitle" style="color: #ff9600;">AWAITING ADMINISTRATOR APPROVAL</p>
@@ -466,6 +466,7 @@ export function buildPinPad({
       playSFX('click');
       mainView.style.display = 'none';
       signupView.style.display = 'flex';
+      signupView.style.flexDirection = 'column';
     };
   }
 
@@ -476,6 +477,7 @@ export function buildPinPad({
       playSFX('click');
       signupView.style.display = 'none';
       mainView.style.display = 'flex';
+      mainView.style.flexDirection = 'column';
       wrap.querySelector('#signup-username').value = '';
       wrap.querySelector('#signup-email').value = '';
       wrap.querySelector('#signup-pin').value = '';
@@ -522,6 +524,7 @@ export function buildPinPad({
           playSFX('success');
           signupView.style.display = 'none';
           pendingView.style.display = 'flex';
+          pendingView.style.flexDirection = 'column';
         } else {
           playSFX('incorrect');
           signupFeedback.textContent = `> ERROR: ${data.error || 'REQUEST FAILED'}`;
@@ -544,6 +547,7 @@ export function buildPinPad({
       playSFX('click');
       pendingView.style.display = 'none';
       mainView.style.display = 'flex';
+      mainView.style.flexDirection = 'column';
       if (signupView) {
         wrap.querySelector('#signup-username').value = '';
         wrap.querySelector('#signup-email').value = '';

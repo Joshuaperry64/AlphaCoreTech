@@ -329,6 +329,13 @@ export default function MusicPage() {
 
   // Generate Handler
   btn.addEventListener('click', async () => {
+    if (!sessionStorage.getItem('generate_authenticated') && currentProfile === 'guest') {
+      showToast('GUEST PREVIEW MODE', 'Please log in with a profile PIN to synthesize music.');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR MUSIC SYNTHESIS' });
+      });
+      return;
+    }
     const prompt = promptIn.value.trim();
     if (!prompt) return showToast('ENTER A PROMPT FIRST', 'error');
     

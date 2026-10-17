@@ -1,6 +1,6 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
-import { ALPHACORE_SYSTEM_INSTRUCTION, ALPHACORE_VLLM_INSTRUCTION, stripAlphaCoreInstructionForVllm } from '../components/alphacore_instruction.js';
+import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 import { pushToServer } from '../components/db_sync.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
@@ -1733,11 +1733,11 @@ export default function CognitiveUplink() {
             }
           }
 
-          // Build reduced vLLM system instructions with context-stripped protocols
+          // Build vLLM system instructions
           const currentTime = new Date().toLocaleString();
           const contextualPrefix = buildContextualPrefix(profile, currentTime);
-          let baseInstructions = globalSettings.systemInstruction ? stripAlphaCoreInstructionForVllm(globalSettings.systemInstruction) + '\n\n' : '';
-          let vllmInstruction = contextualPrefix + baseInstructions + (isAlpha ? ALPHACORE_VLLM_INSTRUCTION : 'You are an uncensored, direct, and capable AI assistant.');
+          let baseInstructions = globalSettings.systemInstruction ? globalSettings.systemInstruction + '\n\n' : '';
+          let vllmInstruction = contextualPrefix + baseInstructions + (isAlpha ? ALPHACORE_SYSTEM_INSTRUCTION : 'You are an uncensored, direct, and capable AI assistant.');
 
           // Gather recent conversation history (last 10 turns)
           const messages = [{ role: 'system', content: vllmInstruction }];

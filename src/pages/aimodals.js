@@ -1113,6 +1113,14 @@ function buildTxt2Img() {
         return;
       }
 
+      if (!sessionStorage.getItem('generate_authenticated')) {
+        setStatus(wrap, '#t2i-status', 'GUEST PREVIEW MODE: Please log in with a profile PIN to execute stream generation.', 'error');
+        import('../components/pinpad.js').then(({ openLoginModal }) => {
+          openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN TO EXECUTE GENERATION' });
+        });
+        return;
+      }
+
       isStreaming = true;
       streamBtn.innerHTML = '<span class="aim-btn-icon">🛑</span> STOP STREAM GENERATION';
       streamBtn.style.background = 'rgba(255,0,60,0.15)';
@@ -3736,6 +3744,13 @@ function buildUpscaler() {
     }
 
     const modelName = wrap.querySelector('#upscale-model-select').value;
+    if (modelName !== 'dsp-fast' && !sessionStorage.getItem('generate_authenticated')) {
+      setStatus(wrap, '#upscale-status', 'GUEST PREVIEW MODE: Neural GPU upscalers require an authenticated profile PIN. DSP-Fast 4x is available without login.', 'error');
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR NEURAL GPU UPSCALER' });
+      });
+      return;
+    }
     const isTileCreative = modelName === 'tile-creative';
     const tilePrompt = wrap.querySelector('#upscale-tile-prompt')?.value.trim() || '';
     const tileNegPrompt = wrap.querySelector('#upscale-tile-neg')?.value.trim() || '';
@@ -5011,6 +5026,13 @@ function buildControlNetForge() {
 
   // Generate Map
   wrap.querySelector('#cn-generate-btn').onclick = async () => {
+    if (!sessionStorage.getItem('generate_authenticated')) {
+      alert("GUEST PREVIEW MODE: Please log in with a profile PIN to use GPU preprocessors.");
+      import('../components/pinpad.js').then(({ openLoginModal }) => {
+        openLoginModal({ title: '// LOGIN REQUIRED', subtitle: 'ENTER ACCESS PIN FOR GPU PREPROCESSORS' });
+      });
+      return;
+    }
     if (!base64Image) { alert("Please upload or load a base image first."); return; }
     const type = wrap.querySelector('#cn-type').value;
 

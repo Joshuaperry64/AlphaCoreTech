@@ -9,6 +9,20 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.2.1 BUILD 192',
+    date: '2026.10.17',
+    badge: 'STRIPE LINK PAYMENT GATEWAY, GUEST GPU GATING & PROTOCOL HARDENING',
+    badgeColor: '#10b981',
+    title: 'STRIPE LINK ATM DEPOSITS, STRICT GUEST GPU ENDPOINT GATING, ACCESS FORM RESTRUCTURE & INSTRUCTION CLEAN-UP',
+    summary: 'Security and infrastructure patch introducing full Stripe Link and Cash App instant payment processing in Sector 7 Laundromat ATM, strict endpoint gating blocking guest users from dispatching GPU Modal pipelines while preserving client-side DSP upscaling, resolution of Request Access modal CSS flex layouts, and complete purge of legacy vLLM instruction stripping logic.',
+    changes: [
+      'Stripe Link & Cash App Instant Processing: Activated Link in backend Stripe PaymentIntent creation with automatic payment methods support. Eliminated premature 500ms timeout in ATM card insertion, properly mounting Stripe Payment Element and processing confirmation with required redirect return parameters.',
+      'Strict Guest GPU Endpoint Gating: Blocked unauthenticated guest users from triggering high-cost GPU Modal pipelines across Txt2Img streaming, Neural/Tile Upscalers, ControlNet preprocessors, Ace-Step Music, and Voice Cloning, routing unauthenticated attempts to the PIN login modal while keeping client-side DSP 4x upscaling available without login.',
+      'Request Access Layout Correction: Fixed flex-direction column layout on Request Access profile modal to eliminate horizontal layout overlapping and ensure clean form presentation.',
+      'AlphaCore Instruction Clean-Up: Removed obsolete stripAlphaCoreInstructionForVllm logic and exports following direct instruction stripping in source, streamlining vLLM system instruction initialization.'
+    ]
+  },
+  {
     version: 'v5.2.0 BUILD 190',
     date: '2026.10.17',
     badge: 'COMIC BOOK ENGINE // SUPABASE REALTIME PERSISTENCE & ASSET LOCKING',
