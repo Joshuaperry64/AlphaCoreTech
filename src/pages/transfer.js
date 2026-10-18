@@ -2798,7 +2798,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
 
       if (window.Stripe) {
         try {
-          const stripeKey = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) || 'pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd';
+          const stripeKey = (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)) || 'pk_live_51TIaM8HHWJjCufbCSyQq4jWYfMhQdQP1SP2L2rq3ZLFefgmtGugrbOBSEsgugJxj2uDzlkeRpgOQyrSm1P3zQ9nv00x8zOLLXd';
           stripeInstance = window.Stripe(stripeKey);
           const amountCents = Math.round(Number(state.amount || 25) * 100);
           elementsInstance = stripeInstance.elements({

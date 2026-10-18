@@ -3,8 +3,8 @@
  * In production (Netlify), VITE_API_BASE points to the Render backend.
  * In local dev, falls back to relative paths (same-origin Express server).
  */
-export const API_BASE = import.meta.env.VITE_API_BASE
-  ? import.meta.env.VITE_API_BASE.replace(/\/$/, '')  // strip trailing slash
+export const API_BASE = (import.meta.env.API_BASE || import.meta.env.VITE_API_BASE)
+  ? (import.meta.env.API_BASE || import.meta.env.VITE_API_BASE).replace(/\/$/, '')  // strip trailing slash
   : '';
 
 /**

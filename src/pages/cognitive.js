@@ -190,7 +190,7 @@ export default function CognitiveUplink() {
     let useAlphaCorePrivate = localStorage.getItem(`alphacore_instruction_private_${profile}`) === 'true';
 
     // Master Gemini API Key for registered users in Global Comm Link
-    const MASTER_GEMINI_API_KEY = import.meta.env.VITE_MASTER_GEMINI_API_KEY || '';
+    const MASTER_GEMINI_API_KEY = import.meta.env.GEMINI_API_KEY || import.meta.env.VITE_MASTER_GEMINI_API_KEY || '';
 
     let globalSettings = {};
     try { globalSettings = JSON.parse(localStorage.getItem('alphacore_modal_settings')) || {}; } catch(e){}

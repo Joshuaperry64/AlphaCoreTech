@@ -58,7 +58,7 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     await new Promise(r => setTimeout(r, 60));
 
     const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
-    expect(settings.masterApiKey).toBe(import.meta.env.VITE_MASTER_GEMINI_API_KEY || atob('QVEuQWI4Uk42S3FmSjFmTmgtcmxYX196UkJmWTRJaDVUcTB1UTZHTzdxend3Um13Y1E2Y0E='));
+    expect(settings.masterApiKey).toBe(import.meta.env.GEMINI_API_KEY || import.meta.env.VITE_MASTER_GEMINI_API_KEY || atob('QVEuQWI4Uk42S3FmSjFmTmgtcmxYX196UkJmWTRJaDVUcTB1UTZHTzdxend3Um13Y1E2Y0E='));
   });
 
   it('switches to Private Uplink as secondary and can switch back to Global Comm Link', async () => {
