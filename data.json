@@ -5,14 +5,40 @@
       "type": "permanent",
       "label": "Architect",
       "roles": [
-        "admin",
-        "vault",
         "aimodals",
         "generate",
         "lora",
-        "diagnostics"
+        "upscaler",
+        "video",
+        "director",
+        "assets",
+        "voice",
+        "music",
+        "subroutines",
+        "vault",
+        "research",
+        "lore",
+        "diagnostics",
+        "admin"
       ],
       "createdAt": 1782687600000
+    },
+    {
+      "pin": "6969",
+      "type": "permanent",
+      "label": "DoeBoy",
+      "roles": [
+        "aimodals",
+        "generate",
+        "upscaler",
+        "voice",
+        "music",
+        "vault",
+        "research",
+        "lore",
+        "diagnostics"
+      ],
+      "createdAt": 1791270916511
     },
     {
       "pin": "20022005",
@@ -20,7 +46,16 @@
       "label": "J. P.",
       "roles": [
         "aimodals",
-        "generate"
+        "generate",
+        "upscaler",
+        "video",
+        "director",
+        "voice",
+        "music",
+        "vault",
+        "research",
+        "lore",
+        "diagnostics"
       ],
       "createdAt": 1782687600000
     },
@@ -30,32 +65,20 @@
       "label": "Fisherman",
       "roles": [
         "aimodals",
-        "generate"
-      ],
-      "createdAt": 1751676500000
-    },
-    {
-      "pin": "6969",
-      "type": "permanent",
-      "label": "DoeBoy",
-      "roles": [
-        "admin",
-        "vault",
-        "aimodals",
         "generate",
-        "lora",
+        "upscaler",
+        "video",
+        "director",
+        "assets",
+        "voice",
+        "music",
+        "subroutines",
+        "vault",
+        "research",
+        "lore",
         "diagnostics"
       ],
-      "createdAt": 1791270916511
-    },
-    {
-      "pin": "11112222",
-      "type": "permanent",
-      "label": "guest1",
-      "roles": [
-        "vault"
-      ],
-      "createdAt": 1791270973315
+      "createdAt": 1751676500000
     },
     {
       "pin": "67676767",
@@ -64,8 +87,13 @@
       "roles": [
         "aimodals",
         "generate",
+        "upscaler",
+        "video",
+        "voice",
+        "music",
         "vault",
-        "lora",
+        "research",
+        "lore",
         "diagnostics"
       ],
       "createdAt": 1791271000000

@@ -14,7 +14,7 @@ import { showModal } from './modal.js';
 // ─── Default Hardcoded PIN Registry (Root Fallback Only) ──────────────────────
 
 const DEFAULT_PINS = [
-  { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() }
+  { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['aimodals', 'generate', 'lora', 'upscaler', 'video', 'director', 'assets', 'voice', 'music', 'subroutines', 'vault', 'research', 'lore', 'diagnostics', 'admin'], createdAt: Date.now() }
 ];
 
 // ─── PIN Management Functions ────────────────────────────────────────────────

@@ -27,11 +27,11 @@ const DB_PATH = path.join(_dirname, 'data.json');
 
 const DEFAULT_DB = {
   pins: [
-    { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
-    { pin: '6969', type: 'permanent', label: 'DoeBoy', roles: ['admin', 'vault', 'aimodals', 'generate', 'lora', 'diagnostics'], createdAt: Date.now() },
-    { pin: '20022005', type: 'permanent', label: 'J. P.', roles: ['aimodals', 'generate'], createdAt: Date.now() },
-    { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate'], createdAt: Date.now() },
-    { pin: '67676767', type: 'permanent', label: 'john', roles: ['aimodals', 'generate', 'vault', 'lora', 'diagnostics'], createdAt: Date.now() }
+    { pin: '672167566', type: 'permanent', label: 'Architect', roles: ['aimodals', 'generate', 'lora', 'upscaler', 'video', 'director', 'assets', 'voice', 'music', 'subroutines', 'vault', 'research', 'lore', 'diagnostics', 'admin'], createdAt: Date.now() },
+    { pin: '6969', type: 'permanent', label: 'DoeBoy', roles: ['aimodals', 'generate', 'upscaler', 'voice', 'music', 'vault', 'research', 'lore', 'diagnostics'], createdAt: Date.now() },
+    { pin: '20022005', type: 'permanent', label: 'J. P.', roles: ['aimodals', 'generate', 'upscaler', 'video', 'director', 'voice', 'music', 'vault', 'research', 'lore', 'diagnostics'], createdAt: Date.now() },
+    { pin: '1990', type: 'permanent', label: 'Fisherman', roles: ['aimodals', 'generate', 'upscaler', 'video', 'director', 'assets', 'voice', 'music', 'subroutines', 'vault', 'research', 'lore', 'diagnostics'], createdAt: Date.now() },
+    { pin: '67676767', type: 'permanent', label: 'john', roles: ['aimodals', 'generate', 'upscaler', 'video', 'voice', 'music', 'vault', 'research', 'lore', 'diagnostics'], createdAt: Date.now() }
   ],
   logs: [],
   pendingProfiles: [],
