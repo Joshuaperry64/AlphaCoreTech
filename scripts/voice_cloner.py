@@ -35,13 +35,21 @@ image = (
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0G48k.pth -P /rvc/assets/pretrained_v2/",
         "wget -q https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/f0D48k.pth -P /rvc/assets/pretrained_v2/"
     )
-    # FIX: Explicitly mount shared_app.py into the /rvc working directory
-    .add_local_file("shared_app.py", "/rvc/shared_app.py")
+    .add_local_python_source("shared_app")
 )
 
-# Ensure the /rvc directory is in the Python path so shared_app can be found on boot
+storage_image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .add_local_python_source("shared_app")
+)
+
+# Ensure the /rvc directory is in Python path for RVC modules and import shared_app
 sys.path.insert(0, "/rvc")
-from shared_app import app
+try:
+    from shared_app import app
+except ImportError:
+    sys.path.insert(0, str(Path(__file__).parent))
+    from shared_app import app
 
 # ─────────────────────────────────────────────
 # Core Inference Helper
@@ -121,7 +129,7 @@ def _execute_rvc_inference(profile_name: str, audio_bytes: bytes, pitch_shift: i
 # Storage & Model Management Class
 # ─────────────────────────────────────────────
 
-@app.cls(timeout=300, volumes={"/mnt/rvc_data": volume})
+@app.cls(image=storage_image, timeout=300, volumes={"/mnt/rvc_data": volume})
 class VoiceCloner_Storage:
     @modal.method()
     def upload_audio_file(self, profile_name: str, filename: str, file_bytes: bytes):

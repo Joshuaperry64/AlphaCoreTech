@@ -30,7 +30,8 @@ image = (
     .run_commands(
         "git clone --depth 1 https://github.com/hkchengrex/MMAudio.git /opt/mmaudio",
         "pip install --upgrade pip",
-        "pip install -e /opt/mmaudio",
+        "pip install 'numpy==1.26.4' 'scipy==1.13.1'",
+        "pip install -e /opt/mmaudio 'numpy==1.26.4' 'scipy==1.13.1'",
     )
     .uv_pip_install(
         "torch>=2.5.1",
@@ -38,7 +39,8 @@ image = (
         "torchvision>=0.20.1",
         "fastapi[standard]>=0.115.4",
         "huggingface-hub>=0.36.0",
-        "numpy<2",
+        "scipy==1.13.1",
+        "numpy==1.26.4",
         "tqdm",
         "pydantic>=2.0",
     )
@@ -50,7 +52,12 @@ image = (
     })
 )
 
-from shared_app import app
+try:
+    from shared_app import app
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent))
+    from shared_app import app
 
 with image.imports():
     import torch
