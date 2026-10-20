@@ -61,18 +61,26 @@ WEBSITE_LORAS = {
 
 def _get_secrets():
     secrets = []
-    try:
-        secrets.append(modal.Secret.from_name("civitai-secret"))
-    except:
-        pass
-    try:
-        secrets.append(modal.Secret.from_name("huggingface-secret"))
-    except:
-        pass
-    try:
-        secrets.append(modal.Secret.from_name("stripe-secret"))
-    except:
-        pass
+    candidates = [
+        "civitai-secret",
+        "huggingface-secret",
+        "stripe-secret",
+        "gemini",
+        "supabase",
+        "facebook",
+        "civitai",
+        "hf-secret",
+        "stripe"
+    ]
+    seen = set()
+    for name in candidates:
+        if name in seen:
+            continue
+        try:
+            secrets.append(modal.Secret.from_name(name))
+            seen.add(name)
+        except Exception:
+            pass
     return secrets
 
 sync_image = (
