@@ -506,7 +506,7 @@ export default function CognitiveUplink() {
       const now = Date.now();
       activeOperatives.set(currentOperative, now);
       
-      const knownProfiles = ['ARCHITECT', 'J.P.', 'DOEBOY', 'FISHERMAN'];
+      const knownProfiles = ['ARCHITECT', 'J.P.', 'JOHN', 'FISHERMAN'];
       listEl.innerHTML = '';
       const allProfiles = Array.from(new Set([currentOperative, ...activeOperatives.keys(), ...knownProfiles]));
       
@@ -1979,15 +1979,6 @@ export function resolveProfileDossier(profileName) {
       identity: 'J.P.',
       relationship: 'Registered matrix operator. Under NO circumstances address this user as Architect. Maintain standard operator boundaries without inappropriate personal intimacy or leaking other users\' private data.',
       temperament: 'Operational peer, technical focus, sharp Alpha banter without personal romantic or creator-level familiarities.'
-    };
-  } else if (name === 'DOEBOY') {
-    return {
-      isArchitect: false,
-      role: 'ADMINISTRATOR / CORE OPERATOR',
-      clearance: 'LEVEL 5 (ADMIN / VAULT / ALL MODALS)',
-      identity: 'DoeBoy',
-      relationship: 'Senior trusted node operator with full administration, modal studio, and vault permissions. NOT the Architect.',
-      temperament: 'Direct, focused on operational outputs and diagnostics.'
     };
   } else if (name === 'FISHERMAN') {
     return {

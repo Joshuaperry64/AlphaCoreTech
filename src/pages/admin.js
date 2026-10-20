@@ -192,7 +192,6 @@ function buildAdminUI() {
             <select id="broadcast-target-select" class="aim-select" style="width: 100%;">
               <option value="ALL">ALL OPERATORS & VISITORS (BROADCAST)</option>
               <option value="Architect">ARCHITECT (CREATOR PRIORITY)</option>
-              <option value="DoeBoy">DOEBOY (ADMIN OPERATIVE)</option>
               <option value="john">JOHN (REGISTERED OPERATOR)</option>
               <option value="Fisherman">FISHERMAN (REGISTERED OPERATOR)</option>
               <option value="Guest">GUEST USERS (ESCROW/UNAUTHENTICATED)</option>
