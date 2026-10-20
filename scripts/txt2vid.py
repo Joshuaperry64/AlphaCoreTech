@@ -80,6 +80,7 @@ class Txt2Vid:
         )
 
     def _load_model(self, model_filename: str):
+        import torch
         if not hasattr(self, "pipe"):
             self.pipe = None
         if not hasattr(self, "current_model"):
@@ -96,7 +97,6 @@ class Txt2Vid:
                 del old_pipe
             except Exception:
                 pass
-            import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
@@ -141,6 +141,8 @@ class Txt2Vid:
         seed: int = -1,
         fps: int = 8,
     ):
+        import torch
+
         # Resolve model filename
         if model_name.endswith(".safetensors"):
             model_file = model_name

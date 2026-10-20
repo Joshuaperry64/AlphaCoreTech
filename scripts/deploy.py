@@ -37,7 +37,7 @@ WEBSITE_CHECKPOINTS = {
     "juggernautXL_ragnarok.safetensors": "1759168",
     "cyberrealisticXL_desireV30.safetensors": "2765942",
     "unholyDesireMixCrimson_v50.safetensors": "2200584",
-    "dreamshaperXL_alpha2Xl10.safetensors": "128713",
+    "dreamshaperXL_alpha2Xl10.safetensors": "303662",
     "lustifyNSFWCheckpoint_zenithV9.safetensors": "3112728",
     "epicrealismXL_pureFix.safetensors": "2514955",
     "intorealism_sdxlV4.safetensors": "2650268",
@@ -828,7 +828,7 @@ def scan_and_download(force: bool = False, check_updates: bool = True):
             for u in updates:
                 f_name = u["file"]
                 new_id = str(u["new_version_id"])
-                # Match e.g. "dreamshaperXL_alpha2Xl10.safetensors": "128713"
+                # Match e.g. "dreamshaperXL_alpha2Xl10.safetensors": "303662"
                 pattern = rf'("{re.escape(f_name)}":\s*")[^"]*(")'
                 if re.search(pattern, content):
                     content = re.sub(pattern, rf'\g<1>{new_id}\g<2>', content)
