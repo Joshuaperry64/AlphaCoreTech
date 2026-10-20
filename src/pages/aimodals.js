@@ -130,19 +130,15 @@ export function getModalSettings() {
           custom[k] = custom[k].trim().replace(/\/+$/, '');
         }
       });
-      // Auto-heal outdated endpoints in user's localStorage
-      if (custom.txt2imgUrl && (!custom.txt2imgUrl.includes('alphacoreprogramming') || custom.txt2imgUrl.endsWith('/stream'))) custom.txt2imgUrl = defaults.txt2imgUrl;
-      if (custom.img2imgUrl && (!custom.img2imgUrl.includes('alphacoreprogramming') || custom.img2imgUrl.endsWith('/stream'))) custom.img2imgUrl = defaults.img2imgUrl;
-      if (custom.omnigenUrl && !custom.omnigenUrl.includes('alphacoreprogramming')) custom.omnigenUrl = defaults.omnigenUrl;
-      if (custom.preprocessorUrl && !custom.preprocessorUrl.includes('alphacoreprogramming')) custom.preprocessorUrl = defaults.preprocessorUrl;
-      if (custom.txt2vidUrl && !custom.txt2vidUrl.includes('alphacoreprogramming')) custom.txt2vidUrl = defaults.txt2vidUrl;
-      if (custom.img2vidUrl && !custom.img2vidUrl.includes('alphacoreprogramming')) custom.img2vidUrl = defaults.img2vidUrl;
-      if (custom.framepackUrl && !custom.framepackUrl.includes('alphacoreprogramming')) custom.framepackUrl = defaults.framepackUrl;
-      if (custom.music_url && !custom.music_url.includes('alphacoreprogramming')) custom.music_url = defaults.music_url;
-      if (custom.upscalerUrl && (!custom.upscalerUrl.includes('alphacoreprogramming') || custom.upscalerUrl.includes('alphacore-main-api') || custom.upscalerUrl.includes('upscaler-status') || custom.upscalerUrl.includes('upscaler--a3cc47'))) custom.upscalerUrl = defaults.upscalerUrl;
-      if (custom.vid2audioUrl && !custom.vid2audioUrl.includes('alphacoreprogramming')) custom.vid2audioUrl = defaults.vid2audioUrl;
-      if (custom.fanninCrimeUrl && (!custom.fanninCrimeUrl.includes('alphacoreprogramming') || custom.fanninCrimeUrl.includes('fannin-scraper-api'))) custom.fanninCrimeUrl = defaults.fanninCrimeUrl;
-      if (custom.vllmUrl && !custom.vllmUrl.includes('cognitive-core')) custom.vllmUrl = defaults.vllmUrl;
+      // Auto-heal outdated endpoints: purge legacy 'alphacoreprogramming' endpoints and ensure active 'josh627764' profile
+      const endpointKeys = ['txt2imgUrl', 'img2imgUrl', 'omnigenUrl', 'preprocessorUrl', 'txt2vidUrl', 'img2vidUrl', 'framepackUrl', 'fanninCrimeUrl', 'music_url', 'upscalerUrl', 'upscalerTileUrl', 'upscalerStatusUrl', 'vid2audioUrl', 'cognitiveUrl', 'vllmUrl'];
+      endpointKeys.forEach(k => {
+        if (!custom[k] || typeof custom[k] !== 'string' || custom[k].includes('alphacoreprogramming') || !custom[k].includes('josh627764')) {
+          custom[k] = defaults[k];
+        }
+      });
+      if (custom.txt2imgUrl && custom.txt2imgUrl.endsWith('/stream')) custom.txt2imgUrl = defaults.txt2imgUrl;
+      if (custom.img2imgUrl && custom.img2imgUrl.endsWith('/stream')) custom.img2imgUrl = defaults.img2imgUrl;
 
       if (custom.stepsFastTxt === 10 || custom.stepsFastTxt === 20 || custom.stepsFocusedTxt === 50) {
         custom.stepsFastTxt = 20;

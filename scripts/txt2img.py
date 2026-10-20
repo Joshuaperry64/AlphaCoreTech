@@ -12,9 +12,7 @@ import modal
 
 MINUTES = 60
 
-from shared_app import app
-
-CACHE_DIR = "/hf-hub-cache"
+from shared_app import app, CACHE_DIR, cache_volume, OUTPUTS_DIR, outputs_volume
 
 # Checkpoints built on SD1.5 (loaded with StableDiffusionPipeline instead of SDXL)
 SD15_CHECKPOINTS = {"realisticComicBook_v10.safetensors"}
@@ -49,7 +47,7 @@ with image.imports():
     from safetensors.torch import load_file, save_file
     from fastapi import Response
 
-cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
+# Volumes imported from shared_app
 
 
 image = image.add_local_python_source("shared_app")
@@ -58,7 +56,7 @@ image = image.add_local_python_source("shared_app")
     gpu="H100",
     timeout=10 * MINUTES,
     scaledown_window=10 * MINUTES,
-    volumes={CACHE_DIR: cache_volume},
+    volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
     secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Img:
@@ -390,12 +388,24 @@ class Txt2Img:
                     ).images
                     
                     chunk_b64 = []
-                    for image in chunk_images:
+                    out_dir = Path(OUTPUTS_DIR) / "txt2img"
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    for idx, image in enumerate(chunk_images):
                         with io.BytesIO() as buf:
                             image.save(buf, format="PNG")
-                            b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+                            img_bytes = buf.getvalue()
+                            b64 = base64.b64encode(img_bytes).decode("utf-8")
                             chunk_b64.append(b64)
                             all_images_b64.append(b64)
+                        try:
+                            filename = f"txt2img_{int(time.time() * 1000)}_{idx}_{seed}.png"
+                            (out_dir / filename).write_bytes(img_bytes)
+                        except Exception as fe:
+                            print(f"[TXT2IMG] File write note: {fe}")
+                    try:
+                        outputs_volume.commit()
+                    except Exception as ve:
+                        print(f"[TXT2IMG] Volume commit note: {ve}")
                     
                     images_completed += current_batch_size
                     q.put({
@@ -569,7 +579,7 @@ class Txt2Img:
     timeout=10 * MINUTES,
     scaledown_window=60,
     max_containers=1,
-    volumes={CACHE_DIR: cache_volume},
+    volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
     secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Img_Eco(Txt2Img._get_user_cls()):
