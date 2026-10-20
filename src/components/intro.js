@@ -77,22 +77,6 @@ export default function createIntro(container) {
     });
     intro.appendChild(visCanvas);
 
-    // ─── Skip / Fast Boot Button ─────────────────────────────────────
-    const skipBtn = createElement('button', {
-      class: 'aim-btn aim-btn-sm intro-skip-btn',
-      'aria-label': 'Skip boot sequence and go directly to identity verification'
-    }, '⚡ FAST BOOT / SKIP');
-    Object.assign(skipBtn.style, {
-      position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: '100',
-      background: 'rgba(0, 255, 204, 0.1)', border: '1px solid rgba(0, 255, 204, 0.4)', color: '#00ffcc',
-      fontFamily: "'Orbitron', sans-serif", fontSize: '0.75rem', padding: '8px 24px',
-      cursor: 'pointer', letterSpacing: '1px', borderRadius: '20px', backdropFilter: 'blur(6px)',
-      opacity: '0.8', transition: 'all 0.2s ease', whiteSpace: 'nowrap'
-    });
-    skipBtn.onmouseenter = () => { skipBtn.style.opacity = '1'; skipBtn.style.background = 'rgba(0, 255, 204, 0.25)'; };
-    skipBtn.onmouseleave = () => { skipBtn.style.opacity = '0.8'; skipBtn.style.background = 'rgba(0, 255, 204, 0.1)'; };
-    intro.appendChild(skipBtn);
-
     // Hidden FITS Telemetry region for accessibility & test backward compatibility
     const fitsTerminal = createElement('div', {
       role: 'region',
@@ -105,16 +89,13 @@ export default function createIntro(container) {
     // ─── Layer A: Initial Touch Prompt Overlay ─────────────────────────
     const touchPrompt = createElement('div', { class: 'intro-touch-prompt' });
     Object.assign(touchPrompt.style, {
-      position: 'relative', zIndex: '25', display: 'flex', flexDirection: 'column',
+      position: 'fixed', inset: '0', zIndex: '25', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-      padding: '24px', cursor: 'pointer', userSelect: 'none'
+      padding: '24px', cursor: 'pointer', userSelect: 'none', width: '100%', height: '100%'
     });
     touchPrompt.innerHTML = `
-      <div style="font-family:'Share Tech Mono', monospace; font-size:1.1rem; color:#00ffcc; letter-spacing:3px; margin-bottom:12px; text-shadow:0 0 10px #00ffcc;">
+      <div style="font-family:'Share Tech Mono', monospace; font-size:1.1rem; color:#00ffcc; letter-spacing:3px; text-shadow:0 0 10px #00ffcc;">
         TOUCH THE SCREEN TO INITIALIZE ALPHACORE EXECUTION...
-      </div>
-      <div style="font-family:'Orbitron', sans-serif; font-size:0.8rem; color:#94a3b8; letter-spacing:2px; animation:blink 1.2s infinite;">
-        [ CLICK ANYWHERE OR PRESS ANY KEY TO INITIALIZE ]
       </div>
     `;
     intro.appendChild(touchPrompt);
@@ -282,7 +263,6 @@ export default function createIntro(container) {
       touchPrompt.style.display = 'none';
       startupOverlay.style.display = 'none';
       disclaimerOverlay.style.display = 'none';
-      skipBtn.style.display = 'none';
 
       // Hide video background and reveal audio visualizer
       bgVideo.style.display = 'none';
@@ -309,12 +289,6 @@ export default function createIntro(container) {
       resolve({ introContainer: mainWrap, cleanup });
     }
 
-    // Fast boot / skip navigates to disclaimer; disclaimer MUST be explicitly accepted
-    skipBtn.onclick = () => {
-      if (disclaimerOverlay.style.display !== 'flex') {
-        showDisclaimer();
-      }
-    };
     acceptBtn.onclick = finishBoot;
 
     // ─── Sequence: Touch -> Startup Video -> Disclaimer -> Finish ──────
@@ -367,17 +341,30 @@ export default function createIntro(container) {
       if (typeTimer) clearInterval(typeTimer);
       touchPrompt.style.display = 'none';
       startupOverlay.style.display = 'none';
-      skipBtn.style.display = 'none'; // User cannot skip past the disclaimer
       disclaimerOverlay.style.display = 'flex';
       // User must explicitly click acceptBtn to proceed — no auto-advance bypass
     }
 
-    // Interaction triggers for touch prompt
-    touchPrompt.onclick = startVideoStartup;
-    const keyTrigger = (e) => {
-      window.removeEventListener('keydown', keyTrigger);
-      startVideoStartup();
+    startupOverlay.style.cursor = 'pointer';
+    startupOverlay.onclick = () => {
+      showDisclaimer();
     };
+
+    // Interaction triggers for touch prompt - allows clicking anywhere or pressing any key
+    let startupInitiated = false;
+    function handleInitialTrigger() {
+      if (startupInitiated) return;
+      startupInitiated = true;
+      window.removeEventListener('keydown', keyTrigger);
+      touchPrompt.removeEventListener('click', handleInitialTrigger);
+      intro.removeEventListener('click', handleInitialTrigger);
+      startVideoStartup();
+    }
+    const keyTrigger = () => {
+      handleInitialTrigger();
+    };
+    touchPrompt.addEventListener('click', handleInitialTrigger);
+    intro.addEventListener('click', handleInitialTrigger);
     window.addEventListener('keydown', keyTrigger, { once: true });
 
     // Always ensure fresh boot session

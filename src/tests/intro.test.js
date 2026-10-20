@@ -8,7 +8,7 @@ describe('Intro Animation Boot Sequence', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders intro overlay, skip button brings user to disclaimer, and disclaimer must be accepted', async () => {
+  it('renders intro overlay without skip button or secondary prompt, allows clicking anywhere to proceed to disclaimer and terminal', async () => {
     const app = document.createElement('div');
     app.id = 'app';
     document.body.appendChild(app);
@@ -17,12 +17,24 @@ describe('Intro Animation Boot Sequence', () => {
     const overlay = document.getElementById('intro-overlay');
     expect(overlay).toBeTruthy();
 
-    const skipBtn = overlay.querySelector('.intro-skip-btn');
-    expect(skipBtn).toBeTruthy();
-    expect(skipBtn.textContent).toContain('FAST BOOT / SKIP');
+    // Verify touchPrompt text
+    const touchPrompt = overlay.querySelector('.intro-touch-prompt');
+    expect(touchPrompt).toBeTruthy();
+    expect(touchPrompt.textContent).toContain('TOUCH THE SCREEN TO INITIALIZE ALPHACORE EXECUTION...');
+    expect(touchPrompt.textContent).not.toContain('CLICK ANYWHERE OR PRESS ANY KEY');
 
-    // Clicking skip reveals the disclaimer and cannot bypass it directly
-    skipBtn.click();
+    // Verify FAST BOOT / SKIP button is removed
+    const skipBtn = overlay.querySelector('.intro-skip-btn');
+    expect(skipBtn).toBeNull();
+
+    // Clicking anywhere on the overlay/prompt starts the boot sequence
+    overlay.click();
+
+    // Clicking during startup advances directly to the disclaimer
+    const startupOverlay = overlay.querySelector('.intro-startup-overlay');
+    expect(startupOverlay).toBeTruthy();
+    startupOverlay.click();
+
     const disclaimerOverlay = overlay.querySelector('.intro-disclaimer-overlay');
     expect(disclaimerOverlay).toBeTruthy();
     expect(disclaimerOverlay.style.display).toBe('flex');
@@ -60,10 +72,12 @@ describe('Intro Animation Boot Sequence', () => {
     // Legacy flag was cleared from localStorage
     expect(localStorage.getItem('alphacore_intro_complete')).toBeNull();
 
-    // Fast boot button brings user to disclaimer
+    // Clicking anywhere brings user through boot to disclaimer
     const overlay = document.getElementById('intro-overlay');
-    const skipBtn = overlay.querySelector('.intro-skip-btn');
-    skipBtn.click();
+    overlay.click();
+
+    const startupOverlay = overlay.querySelector('.intro-startup-overlay');
+    startupOverlay.click();
 
     // Click accept to complete boot
     const disclaimerOverlay = overlay.querySelector('.intro-disclaimer-overlay');
