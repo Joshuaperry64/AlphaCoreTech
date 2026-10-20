@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Credentials come from .env (inlined at build time)
-const supabaseUrl = import.meta.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://dmlcergmwkotcbyylpdb.supabase.co';
-const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_qOYOw9CHH3nTTd-_-kxqXQ_2iZYNlb2';
+// Credentials come from environment variables (Netlify host / local .env)
+const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL)) || '';
+const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY)) || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
