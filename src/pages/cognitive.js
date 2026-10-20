@@ -283,10 +283,10 @@ export default function CognitiveUplink() {
               Directly configure Modal pipeline endpoints and target account. Edits persist across devices and apply to all synthesis studios. You can also edit <code>config.json</code> directly.
             </p>
             <label class="aim-label">MODAL ACCOUNT / SUBDOMAIN</label>
-            <input type="text" id="modal-account-input" class="aim-input" value="${globalSettings.modalAccount || 'alphacoreprogramming-ai'}" style="width: 100%; margin-bottom: 12px;">
+            <input type="text" id="modal-account-input" class="aim-input" value="${globalSettings.modalAccount || 'josh627764'}" style="width: 100%; margin-bottom: 12px;">
 
             <label class="aim-label">COGNITIVE CORE ENDPOINT (vLLM Server)</label>
-            <input type="text" id="modal-vllm-input" class="aim-input" value="${globalSettings.vllmUrl || ''}" placeholder="https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--cognitive-core.us-east.modal.run" style="width: 100%; margin-bottom: 12px;">
+            <input type="text" id="modal-vllm-input" class="aim-input" value="${globalSettings.vllmUrl || ''}" placeholder="https://${globalSettings.modalAccount || 'josh627764'}--cognitive-core.us-east.modal.run" style="width: 100%; margin-bottom: 12px;">
 
             <label class="aim-label">TEXT TO IMAGE ENDPOINT (txt2img)</label>
             <input type="text" id="modal-txt2img-input" class="aim-input" value="${globalSettings.txt2imgUrl || ''}" placeholder="https://..." style="width: 100%; margin-bottom: 12px;">
@@ -1405,18 +1405,18 @@ export default function CognitiveUplink() {
           // Wait, we MUST return a value. Let's block and wait. It usually takes ~10-20 seconds.
           
           if (functionCall.name === 'generate_image') {
-            const url = globalSettings.txt2imgUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run';
+            const url = globalSettings.txt2imgUrl || 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.us-east.modal.run';
             const payload = { prompt: args.prompt, num_inference_steps: 15, width: 1024, height: 1024 };
             const res = await fetchModal(url, 'GET', payload);
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'edit_image') {
-            const url = globalSettings.img2imgUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run';
+            const url = globalSettings.img2imgUrl || 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.us-east.modal.run';
             // img2img generally requires an image. If the user hasn't provided one via upload, it might fail.
             const payload = { prompt: args.prompt, num_inference_steps: 20 };
             const res = await fetchModal(url, 'GET', payload); // Note: img2img might need POST with an image, simplifying for now
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'generate_video') {
-            const url = globalSettings.txt2vidUrl || 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2vid-w-2cf2c7.us-east.modal.run/stream';
+            const url = globalSettings.txt2vidUrl || 'https://josh627764--alphacore-aio-backend-txt2vid-web-txt2vid.us-east.modal.run/stream';
             const payload = { prompt: args.prompt, num_frames: 49, fps: 8 };
             const res = await fetchModal(url, 'GET', payload);
             resultBase64 = res.b64; mimeType = res.type;
@@ -1461,7 +1461,7 @@ export default function CognitiveUplink() {
         initAudio();
         statusDot.classList.replace('online', 'streaming');
         statusText.textContent = 'CONNECTING TO vLLM COGNITIVE CORE...';
-        const defaultVllmUrl = `https://${globalSettings.modalAccount || 'alphacoreprogramming-ai'}--cognitive-core.us-east.modal.run`;
+        const defaultVllmUrl = `https://${globalSettings.modalAccount || 'josh627764'}--cognitive-core.us-east.modal.run`;
         const targetUrl = (globalSettings.vllmUrl || defaultVllmUrl).replace(/\/$/, '');
 
         liveSession = {

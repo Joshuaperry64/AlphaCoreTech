@@ -64,7 +64,7 @@ MODEL_720P = "fdk6566/wan2.2_14b_i2v_720p_lightning_nsfw_diffusers"
     scaledown_window=300,  # 5 minutes warm retention for B300
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Img2Vid:
     @modal.enter()
@@ -378,7 +378,7 @@ class Img2Vid:
     scaledown_window=60,
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Img2Vid_Eco(Img2Vid._get_user_cls()):
     """Economy tier endpoint for public/standard users. Cost-optimized on L40S with 60s scaledown."""

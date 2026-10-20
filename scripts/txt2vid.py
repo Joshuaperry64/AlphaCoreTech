@@ -64,7 +64,7 @@ image = image.add_local_python_source("shared_app")
     scaledown_window=300,  # 5 minutes warm retention for B300
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Vid:
     @modal.enter()
@@ -339,7 +339,7 @@ class Txt2Vid:
     scaledown_window=60,
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Vid_Eco(Txt2Vid._get_user_cls()):
     """Economy tier endpoint for public/standard users. Cost-optimized on A10G with 60s scaledown."""

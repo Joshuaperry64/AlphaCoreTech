@@ -250,8 +250,8 @@ export default function AssetManagerPage() {
 
   const getEndpoint = () => {
     const defaultUrl = isArchitect
-      ? 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run'
-      : 'https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run';
+      ? 'https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run'
+      : 'https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run';
     const settings = JSON.parse(localStorage.getItem('alphacore_modal_settings') || '{}');
     return isArchitect ? (settings.music_url || defaultUrl) : defaultUrl;
   };

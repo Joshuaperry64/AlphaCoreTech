@@ -491,7 +491,7 @@ export default function MugshotsPage() {
       try {
         let rawPosts = [];
 
-        const defaultScraperEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots';
+        const defaultScraperEndpoint = 'https://josh627764--alphacore-aio-backend-mugshots.us-east.modal.run/api/mugshots';
         let scraperEndpoint = defaultScraperEndpoint;
         try {
           const customStr = localStorage.getItem('alphacore_modal_settings');

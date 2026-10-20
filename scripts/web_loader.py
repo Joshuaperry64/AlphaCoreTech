@@ -11,9 +11,9 @@ image = (
 
 def _get_secrets():
     secrets = []
-    try: secrets.append(modal.Secret.from_name("civitai-secret"))
+    try: secrets.append(modal.Secret.from_name("alphacore-secrets"))
     except: pass
-    try: secrets.append(modal.Secret.from_name("huggingface-secret"))
+    try: secrets.append(modal.Secret.from_name("alphacore-secrets"))
     except: pass
     return secrets
 

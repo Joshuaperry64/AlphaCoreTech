@@ -19,7 +19,7 @@ cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 outputs_volume = modal.Volume.from_name("outputs", create_if_missing=True)
 OUTPUTS_DIR = Path("/outputs")
 volumes = {CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume}
-secrets = [modal.Secret.from_name("huggingface-secret")]
+secrets = [modal.Secret.from_name("alphacore-secrets")]
 
 # --- UNIFIED DEPENDENCIES ---
 image = (

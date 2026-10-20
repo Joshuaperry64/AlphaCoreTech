@@ -82,7 +82,7 @@ image = image.add_local_python_source("shared_app")
     scaledown_window=60,
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Vid2Audio:
     @modal.enter()
@@ -381,7 +381,7 @@ class Vid2Audio:
     scaledown_window=60,
     max_containers=1,
     volumes={CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Vid2Audio_Eco(Vid2Audio._get_user_cls()):
     """Economy tier video-to-audio Foley synthesis endpoint."""

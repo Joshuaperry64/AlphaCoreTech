@@ -136,8 +136,8 @@ INSERT INTO public.alphacore_settings (id, data)
 VALUES (
     'global',
     '{
-        "txt2imgUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run",
-        "img2imgUrl": "https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run",
+        "txt2imgUrl": "https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.us-east.modal.run",
+        "img2imgUrl": "https://josh627764--alphacore-aio-backend-img2img-web-img2img.us-east.modal.run",
         "negativePrompt": "worst quality, low quality, normal quality, lowres, monochrome, grayscale, watermark, signature, text, bad anatomy, bad hands, missing fingers, extra digit, deformed, ugly, mutated, distorted, pixelated, jpeg artifacts",
         "stepsFastTxt": 20, "stepsFocusedTxt": 60, "stepsNormalTxt": 30,
         "stepsFastImg": 15, "stepsFocusedImg": 40, "stepsNormalImg": 25,

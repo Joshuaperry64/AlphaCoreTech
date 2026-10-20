@@ -96,7 +96,7 @@ image = (
 )
 
 volumes = {CACHE_DIR: cache_volume, OUTPUTS_DIR: outputs_volume}
-secrets = [modal.Secret.from_name("huggingface-secret")]
+secrets = [modal.Secret.from_name("alphacore-secrets")]
 
 
 # --- PURE PYTORCH RRDBNet ARCHITECTURE ---

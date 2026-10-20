@@ -23,7 +23,7 @@ export async function openrouter_image_generation(options) {
     return await window.__mock_openrouter_image_generation(options);
   }
 
-  let endpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run';
+  let endpoint = 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.us-east.modal.run';
   try {
     const customSettings = JSON.parse(localStorage.getItem('alphacore_settings') || '{}');
     if (customSettings.txt2imgUrl) {
@@ -633,7 +633,7 @@ export default function PlaceholderPage() {
           formData.append('model', 'qwen');
           formData.append('strength', '0.75');
 
-          let img2imgEndpoint = 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run/v1/images/edits';
+          let img2imgEndpoint = 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.us-east.modal.run/v1/images/edits';
           try {
             const customSettings = JSON.parse(localStorage.getItem('alphacore_settings') || '{}');
             if (customSettings.img2imgUrl) {

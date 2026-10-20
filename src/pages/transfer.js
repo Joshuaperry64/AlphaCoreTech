@@ -1801,7 +1801,7 @@ export default function TransferPage() {
           if (cardNum.length >= 15 && cardExp.includes('/') && cardCvc.length >= 3) {
             try {
               const [expMonth, expYear] = cardExp.split('/');
-              await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/changer-payout', {
+              await fetch('https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run/stripe/changer-payout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2573,7 +2573,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
         statusMsg.style.display = 'none';
 
         try {
-          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/create-connect-account', {
+          const resp = await fetch('https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run/stripe/create-connect-account', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2862,7 +2862,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
 
         // 2. Query Backend for Payment Intent
         try {
-          const resp = await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/atm-deposit', {
+          const resp = await fetch('https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run/stripe/atm-deposit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2897,7 +2897,7 @@ DISPATCHED RECIPIENT:                ${state.selectedDestinationName || 'Persona
             if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
               // Confirm with backend
               try {
-                await fetch('https://alphacoreprogramming-ai--alphacore-aio-backend-alphacore-f5c3d8.us-east.modal.run/stripe/confirm-atm-deposit', {
+                await fetch('https://josh627764--alphacore-aio-backend-alphacore-main-api.us-east.modal.run/stripe/confirm-atm-deposit', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({

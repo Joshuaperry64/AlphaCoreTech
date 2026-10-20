@@ -60,14 +60,7 @@ WEBSITE_LORAS = {
 }
 
 def _get_secrets():
-    return [
-        modal.Secret.from_name("civitai-secret"),
-        modal.Secret.from_name("huggingface-secret"),
-        modal.Secret.from_name("stripe-secret"),
-        modal.Secret.from_name("gemini"),
-        modal.Secret.from_name("supabase"),
-        modal.Secret.from_name("facebook"),
-    ]
+    return [modal.Secret.from_name("alphacore-secrets")]
 
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")

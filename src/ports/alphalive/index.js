@@ -20,19 +20,19 @@ export const ALPHALIVE_CONFIG = {
   ttsEngine: 'gemini',
   activeVoice: 'Leda',
   audioMode: 'half',
-  modalProfile: 'alphacoreprogramming-ai',
+  modalProfile: 'josh627764',
   workstationRoles: {
     gui: 'start.bat',
     overseer: 'start.bat --overseer --host 127.0.0.1 --port 8765',
     worker: 'start.bat --aster-worker --host 127.0.0.1 --port 8765'
   },
   modalEndpoints: {
-    txt2img: 'https://alphacoreprogramming-ai--alphalive-backend-txt2img-web-txt2img.us-east.modal.run',
-    img2vid: 'https://alphacoreprogramming-ai--alphalive-backend-img2vid-web-img2vid.us-east.modal.run',
-    txt2vid: 'https://alphacoreprogramming-ai--alphalive-backend-txt2vid-web-txt2vid.us-east.modal.run',
-    mainApi: 'https://alphacoreprogramming-ai--alphalive-backend-alphalive-main-api.us-east.modal.run',
-    upscaler: 'https://alphacoreprogramming-ai--alphalive-backend-upscaler-status.us-east.modal.run',
-    orpheusTts: 'https://alphacoreprogramming-ai--alphalive-backend-orpheusttsser-17902e.us-east.modal.run'
+    txt2img: 'https://josh627764--alphalive-backend-txt2img-web-txt2img.us-east.modal.run',
+    img2vid: 'https://josh627764--alphalive-backend-img2vid-web-img2vid.us-east.modal.run',
+    txt2vid: 'https://josh627764--alphalive-backend-txt2vid-web-txt2vid.us-east.modal.run',
+    mainApi: 'https://josh627764--alphalive-backend-alphalive-main-api.us-east.modal.run',
+    upscaler: 'https://josh627764--alphalive-backend-upscaler-status.us-east.modal.run',
+    orpheusTts: 'https://josh627764--alphalive-backend-orpheusttsser-17902e.us-east.modal.run'
   }
 };
 

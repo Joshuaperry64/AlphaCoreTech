@@ -59,7 +59,7 @@ image = image.add_local_python_source("shared_app")
     timeout=10 * MINUTES,
     scaledown_window=10 * MINUTES,
     volumes={CACHE_DIR: cache_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Img:
     current_model = None
@@ -570,7 +570,7 @@ class Txt2Img:
     scaledown_window=60,
     max_containers=1,
     volumes={CACHE_DIR: cache_volume},
-    secrets=[modal.Secret.from_name("huggingface-secret")],
+    secrets=[modal.Secret.from_name("alphacore-secrets")],
 )
 class Txt2Img_Eco(Txt2Img._get_user_cls()):
     """Economy tier endpoint for public/standard users. Cost-optimized on A10G with 60s scaledown."""
