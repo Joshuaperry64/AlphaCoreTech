@@ -7,6 +7,12 @@ import { apiUrl } from '../components/api.js';
 import { saveFileToVault } from './vault.js';
 import { supabase } from '../lib/supabase.js';
 import { triggerBypassOverloadSequence } from '../components/pinpad.js';
+import {
+  getLocalSharedMessages,
+  persistSharedMessage,
+  batchPersistSharedMessages,
+  restoreSharedMessagesFromIndexedDB
+} from '../components/chat_db.js';
 
 class TacticalAudioEngine {
   constructor() {
@@ -673,6 +679,7 @@ export default function CognitiveUplink() {
               rendered.setAttribute('data-sig', encodeURIComponent(sig));
               if (msg.id) rendered.setAttribute('data-msg-id', msg.id);
             }
+            persistSharedMessage(msg);
             sfx.play('message');
           } catch(err) {}
         };
@@ -793,6 +800,10 @@ export default function CognitiveUplink() {
     const clearChatBtnEl = container.querySelector('#cmd-clear-chat');
     if (clearChatBtnEl) {
       clearChatBtnEl.onclick = () => {
+        if (currentChannel === 'shared' || currentThreadId === 'shared_main') {
+          console.warn('[COGNITIVE] Global Comm Link history is permanent and cannot be cleared.');
+          return;
+        }
         if (confirm('Delete session?')) {
           localStorage.removeItem(getMessagesKey(currentThreadId));
           if (currentChannel === 'private') {
@@ -911,32 +922,66 @@ export default function CognitiveUplink() {
       const div = document.createElement('div'); div.textContent = str; return div.innerHTML;
     }
 
+    function renderHistoryList(messagesList) {
+      chatMessages.innerHTML = '';
+      const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+      if (!messagesList || messagesList.length === 0) {
+        if (liveSession) {
+          appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
+        } else {
+          appendMessage('SYSTEM', 'Global Comm Link standby. Transmit text to matrix or establish live link for Alpha AI.', 'system-msg');
+        }
+      } else {
+        messagesList.forEach(msg => {
+          const author = msg.author || (msg.role === 'user' ? 'USER' : (isAlpha ? 'ALPHA' : 'GEMINI'));
+          const isAlphaMsg = msg.role === 'model' || author === 'ALPHA';
+          const className = msg.role === 'system' ? 'system-msg' : (isAlphaMsg ? 'alpha-msg' : 'user-msg');
+          const rendered = appendMessage(author, msg.text, className);
+          if (rendered && msg.id) {
+            rendered.setAttribute('data-msg-id', msg.id);
+          }
+        });
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
     async function saveMessageToHistory(role, text, author = null) {
       const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
       const effectiveAuthor = author || profile.toUpperCase();
 
-      // 1. Primary: Direct Cloud Substrate Sync via Supabase
-      if (supabase && typeof supabase.from === 'function') {
-        try {
-          supabase.from('alphacore_chat').insert({
-            id: msgId,
-            channel: currentChannel,
-            thread_id: currentChannel === 'private' ? (currentThreadId || 'default') : 'shared_main',
-            profile: profile.toUpperCase(),
-            author: effectiveAuthor,
-            role: role || 'user',
-            text: text,
-            created_at: new Date().toISOString()
-          }).then((res) => {
-            if (res && res.error) console.warn('[SUPABASE_CHAT] Save note:', res.error.message);
-          }).catch(() => {});
-        } catch (sbErr) {
-          console.warn('[SUPABASE_CHAT] Dispatch note:', sbErr.message || sbErr);
-        }
-      }
-
-      // 2. Secondary: Fallback to Server API or LocalStorage
       if (currentChannel === 'shared') {
+        // 1. Dual-Tier Permanent Local Persistence (LocalStorage & IndexedDB)
+        await persistSharedMessage({
+          id: msgId,
+          role: role || 'user',
+          author: effectiveAuthor,
+          text: text,
+          timestamp: Date.now(),
+          created_at: new Date().toISOString(),
+          channel: 'shared'
+        });
+
+        // 2. Primary Remote: Direct Cloud Substrate Sync via Supabase
+        if (supabase && typeof supabase.from === 'function') {
+          try {
+            supabase.from('alphacore_chat').insert({
+              id: msgId,
+              channel: 'shared',
+              thread_id: 'shared_main',
+              profile: profile.toUpperCase(),
+              author: effectiveAuthor,
+              role: role || 'user',
+              text: text,
+              created_at: new Date().toISOString()
+            }).then((res) => {
+              if (res && res.error) console.warn('[SUPABASE_CHAT] Save note:', res.error.message);
+            }).catch(() => {});
+          } catch (sbErr) {
+            console.warn('[SUPABASE_CHAT] Dispatch note:', sbErr.message || sbErr);
+          }
+        }
+
+        // 3. Secondary Remote: Fallback to Server API
         try {
           await fetch(apiUrl('/api/chat'), {
             method: 'POST',
@@ -949,64 +994,106 @@ export default function CognitiveUplink() {
         let history = JSON.parse(localStorage.getItem(storageKey)) || [];
         history.push({ id: msgId, role, text, author: effectiveAuthor });
         localStorage.setItem(storageKey, JSON.stringify(history));
+
+        if (supabase && typeof supabase.from === 'function') {
+          try {
+            supabase.from('alphacore_chat').insert({
+              id: msgId,
+              channel: 'private',
+              thread_id: currentThreadId || 'default',
+              profile: profile.toUpperCase(),
+              author: effectiveAuthor,
+              role: role || 'user',
+              text: text,
+              created_at: new Date().toISOString()
+            }).then((res) => {
+              if (res && res.error) console.warn('[SUPABASE_CHAT] Save note:', res.error.message);
+            }).catch(() => {});
+          } catch(sbErr) {
+            console.warn('[SUPABASE_CHAT] Dispatch note:', sbErr.message || sbErr);
+          }
+        }
       }
     }
 
     async function loadMessages() {
-      chatMessages.innerHTML = '';
-      let history = [];
-      let loadedFromSupabase = false;
+      if (currentChannel === 'shared') {
+        // Step 1: Render local cache immediately (zero latency, zero blank state)
+        let localHistory = getLocalSharedMessages();
+        renderHistoryList(localHistory);
 
-      // 1. Primary: Load from Supabase Cloud Substrate
-      if (supabase && typeof supabase.from === 'function') {
-        try {
-          let query = supabase.from('alphacore_chat').select('*').order('created_at', { ascending: true });
-          if (currentChannel === 'shared') {
-            query = query.eq('channel', 'shared');
-          } else {
-            query = query.eq('channel', 'private').eq('thread_id', currentThreadId || 'default');
+        // Step 2: Background restore from IndexedDB if LocalStorage was cleared or purged
+        restoreSharedMessagesFromIndexedDB().then((idbHistory) => {
+          if (idbHistory && idbHistory.length > localHistory.length) {
+            localHistory = idbHistory;
+            renderHistoryList(localHistory);
           }
-          const { data, error } = await query;
-          if (!error && Array.isArray(data) && data.length > 0) {
-            history = data;
-            loadedFromSupabase = true;
+        });
+
+        // Step 3: Fetch Supabase Cloud Substrate
+        let cloudMessages = [];
+        if (supabase && typeof supabase.from === 'function') {
+          try {
+            const { data, error } = await supabase
+              .from('alphacore_chat')
+              .select('*')
+              .eq('channel', 'shared')
+              .order('created_at', { ascending: true });
+            if (!error && Array.isArray(data) && data.length > 0) {
+              cloudMessages = data;
+            }
+          } catch (sbErr) {
+            console.warn('[SUPABASE_CHAT] Load note:', sbErr.message || sbErr);
           }
-        } catch (sbErr) {
-          console.warn('[SUPABASE_CHAT] Load note:', sbErr.message || sbErr);
         }
-      }
 
-      // 2. Secondary: Fallback to Server API / LocalStorage
-      if (!loadedFromSupabase) {
-        if (currentChannel === 'shared') {
+        // Step 4: Fallback to Server API if Supabase was empty or offline
+        if (cloudMessages.length === 0) {
           try {
             const res = await fetch(apiUrl('/api/chat/history'));
             if (res && typeof res.json === 'function') {
-              history = await res.json();
+              const serverData = await res.json();
+              if (Array.isArray(serverData) && serverData.length > 0) {
+                cloudMessages = serverData;
+              }
             }
           } catch(e) {}
-        } else {
-          history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
         }
-      }
 
-      const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
-      if (history.length === 0) {
-        if (liveSession) {
-          appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
-        } else {
-          appendMessage('SYSTEM', 'Global Comm Link standby. Transmit text to matrix or establish live link for Alpha AI.', 'system-msg');
+        // Step 5: If cloud messages were retrieved, merge into local storage & update UI
+        if (cloudMessages.length > 0) {
+          const merged = await batchPersistSharedMessages(cloudMessages);
+          renderHistoryList(merged);
         }
       } else {
-        history.forEach(msg => {
-          const author = msg.author || (msg.role === 'user' ? 'USER' : (isAlpha ? 'ALPHA' : 'GEMINI'));
-          const isAlphaMsg = msg.role === 'model' || author === 'ALPHA';
-          const className = msg.role === 'system' ? 'system-msg' : (isAlphaMsg ? 'alpha-msg' : 'user-msg');
-          const rendered = appendMessage(author, msg.text, className);
-          if (rendered && msg.id) {
-            rendered.setAttribute('data-msg-id', msg.id);
+        chatMessages.innerHTML = '';
+        let history = [];
+        let loadedFromSupabase = false;
+
+        // 1. Primary: Load from Supabase Cloud Substrate
+        if (supabase && typeof supabase.from === 'function') {
+          try {
+            const { data, error } = await supabase
+              .from('alphacore_chat')
+              .select('*')
+              .eq('channel', 'private')
+              .eq('thread_id', currentThreadId || 'default')
+              .order('created_at', { ascending: true });
+            if (!error && Array.isArray(data) && data.length > 0) {
+              history = data;
+              loadedFromSupabase = true;
+            }
+          } catch (sbErr) {
+            console.warn('[SUPABASE_CHAT] Load note:', sbErr.message || sbErr);
           }
-        });
+        }
+
+        // 2. Secondary: Fallback to LocalStorage
+        if (!loadedFromSupabase) {
+          history = JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || [];
+        }
+
+        renderHistoryList(history);
       }
     }
 
@@ -1913,6 +2000,7 @@ export default function CognitiveUplink() {
           const className = msg.role === 'system' ? 'system-msg' : (isAlpha ? 'alpha-msg' : 'user-msg');
           const rendered = appendMessage(msg.author || 'USER', msg.text, className);
           if (rendered) rendered.setAttribute('data-sig', encodeURIComponent(sig));
+          persistSharedMessage(msg);
           sfx.play('message');
         };
       }
@@ -1946,6 +2034,9 @@ export default function CognitiveUplink() {
       if (rendered) {
         rendered.setAttribute('data-sig', encodeURIComponent(sig));
         if (msg.id) rendered.setAttribute('data-msg-id', msg.id);
+      }
+      if (currentChannel === 'shared' || msg.channel === 'shared') {
+        persistSharedMessage(msg);
       }
       sfx.play('message');
     };

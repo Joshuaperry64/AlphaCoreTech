@@ -34,6 +34,7 @@ const DEFAULT_DB = {
   ],
   logs: [],
   pendingProfiles: [],
+  sharedChat: [],
   settings: {
     txt2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-txt2img-w-235075.us-east.modal.run',
     img2imgUrl: 'https://alphacoreprogramming-ai--alphacore-aio-backend-img2img-w-0e3ec9.us-east.modal.run',
@@ -91,6 +92,7 @@ async function readDB() {
     if (!dbCache.logs) dbCache.logs = [];
     if (!dbCache.settings) dbCache.settings = DEFAULT_DB.settings;
     if (!dbCache.pendingProfiles) dbCache.pendingProfiles = [];
+    if (!dbCache.sharedChat) dbCache.sharedChat = [];
 
     // Ensure default profiles are always present
     DEFAULT_DB.pins.forEach(defaultPin => {

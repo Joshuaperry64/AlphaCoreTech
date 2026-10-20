@@ -51,6 +51,15 @@ ALTER TABLE public.alphacore_chat ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public read/write on alphacore_chat" ON public.alphacore_chat;
 CREATE POLICY "Allow public read/write on alphacore_chat" ON public.alphacore_chat FOR ALL USING (true) WITH CHECK (true);
 
+-- Grant privileges to anon and authenticated roles for REST API exposure
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.alphacore_pins TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.alphacore_settings TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.alphacore_chat TO anon, authenticated, service_role;
+
+-- Reload PostgREST schema cache
+NOTIFY pgrst, 'reload schema';
+
 -- Ensure vault_files has public policy if RLS is on
 ALTER TABLE public.vault_files ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public read/write on vault_files" ON public.vault_files;

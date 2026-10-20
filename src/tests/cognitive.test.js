@@ -430,4 +430,47 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
 
     el.remove();
   }, 15000);
+
+  it('persists Global Comm Link chat history in indestructible local storage and protects it from deletion', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    // Pre-seed a message into persistent storage
+    const seeded = [
+      { id: 'msg_test_1', author: 'ARCHITECT', text: 'Initiating neural interface override.', role: 'user', timestamp: Date.now() - 1000 }
+    ];
+    localStorage.setItem('alphacore_shared_chat_history', JSON.stringify(seeded));
+    localStorage.setItem('gemini_chat_thread_shared_main', JSON.stringify(seeded));
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    // Verify rendered on screen immediately without blank screen
+    const chatMsgs = el.querySelector('#chat-messages');
+    expect(chatMsgs.innerHTML).toContain('Initiating neural interface override.');
+
+    // Attempt to invoke clear chat button
+    const clearBtn = el.querySelector('#cmd-clear-chat');
+    if (clearBtn) {
+      clearBtn.click();
+    }
+
+    // Verify history was NOT cleared
+    const rawHistory = localStorage.getItem('alphacore_shared_chat_history');
+    expect(rawHistory).toContain('Initiating neural interface override.');
+
+    // Transmit a new message and verify it saves to persistent storage
+    const input = el.querySelector('#chat-input');
+    const sendBtn = el.querySelector('#chat-send-btn');
+    input.value = 'Matrix status optimal.';
+    sendBtn.click();
+
+    await new Promise(r => setTimeout(r, 60));
+    const updatedHistory = localStorage.getItem('alphacore_shared_chat_history');
+    expect(updatedHistory).toContain('Matrix status optimal.');
+    expect(chatMsgs.innerHTML).toContain('Matrix status optimal.');
+
+    el.remove();
+  });
 });
