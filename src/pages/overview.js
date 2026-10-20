@@ -332,7 +332,20 @@ export default function Overview() {
     if (sessionStorage.getItem('alphacore_nav_hint_seen')) {
       navHint.style.display = 'none';
     } else {
-      dismissBtn?.addEventListener('click', () => {
+      navHint.style.cursor = 'pointer';
+      navHint.title = 'Click to open full navigation menu';
+      navHint.addEventListener('click', (e) => {
+        if (e.target.closest('#dismiss-nav-hint')) return;
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+          sidebar.classList.remove('sidebar--collapsed');
+          document.body.classList.remove('sidebar-collapsed');
+          localStorage.setItem('alphacore_sidebar_collapsed', '0');
+        }
+      });
+
+      dismissBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
         navHint.style.display = 'none';
         sessionStorage.setItem('alphacore_nav_hint_seen', '1');
       });

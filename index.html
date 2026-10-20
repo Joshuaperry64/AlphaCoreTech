@@ -17,7 +17,7 @@
   <!-- Stripe Elements -->
   <script src="https://js.stripe.com/v3/"></script>
 </head>
-<body style="background-color: #030308; margin: 0; color: #fff;">
+<body class="sidebar-collapsed" style="background-color: #030308; margin: 0; color: #fff;">
   <section id="startup-status" role="status" style="position:fixed; inset:0; z-index:1000000; display:grid; place-content:center; padding:24px; background:#030308; color:#00b8ff; font-family:'Share Tech Mono',monospace; text-align:center;">
     <h1 id="startup-title" style="font-size:1.25rem; letter-spacing:2px;">ALPHACORE // CONNECTING</h1>
     <p id="startup-message">Loading the neural interface…</p>
@@ -45,13 +45,16 @@
   
   <div class="sidebar-dim" id="sidebar-dim"></div>
   
-  <aside class="sidebar" id="sidebar" style="display: none;">
+  <aside class="sidebar sidebar--collapsed" id="sidebar" style="display: none;">
     <div class="sidebar-brand">
       <img src="/Images/ALPHA-LOGO.png" class="brand-logo" alt="Alpha">
       <div class="brand-text">
         <div class="brand-name">ALPHA<span>CORE</span></div>
         <div class="brand-version">v4.7 BUILD 135<span class="blinking-cursor">_</span></div>
       </div>
+      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse or Expand Sidebar Menu" title="Collapse or Expand Sidebar">
+        <span class="sc-icon">‹</span>
+      </button>
     </div>
     
     <nav class="sidebar-nav" id="sidebar-nav">
@@ -189,10 +192,6 @@
       </div>
     </div>
     
-    <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Collapse or Expand Sidebar Menu">
-      <span class="sc-label">COLLAPSE</span>
-      <span class="sc-icon">‹</span>
-    </button>
   </aside>
   
   <main class="main-content" id="app" role="main" aria-label="AlphaCore Interface Page Content" tabindex="-1"></main>

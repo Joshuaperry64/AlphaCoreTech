@@ -127,18 +127,37 @@ export function initSidebar() {
     if (sidebarDim) sidebarDim.addEventListener('click', closeSidebar);
   }
 
-  // Sidebar collapse (desktop)
+  // Sidebar collapse (desktop) — Default to collapsed unless explicitly expanded ('0')
   const collapseBtn = document.getElementById('sidebar-collapse-btn');
   if (collapseBtn && sidebar) {
-    if (localStorage.getItem('alphacore_sidebar_collapsed') === '1') {
+    const isExplicitlyExpanded = localStorage.getItem('alphacore_sidebar_collapsed') === '0';
+    if (!isExplicitlyExpanded) {
       sidebar.classList.add('sidebar--collapsed');
       document.body.classList.add('sidebar-collapsed');
+    } else {
+      sidebar.classList.remove('sidebar--collapsed');
+      document.body.classList.remove('sidebar-collapsed');
     }
-    collapseBtn.addEventListener('click', () => {
+
+    collapseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const collapsed = sidebar.classList.toggle('sidebar--collapsed');
       document.body.classList.toggle('sidebar-collapsed', collapsed);
       localStorage.setItem('alphacore_sidebar_collapsed', collapsed ? '1' : '0');
     });
+
+    // Also clicking brand logo when collapsed expands the sidebar
+    const brandLogo = sidebar.querySelector('.brand-logo');
+    if (brandLogo) {
+      brandLogo.style.cursor = 'pointer';
+      brandLogo.addEventListener('click', () => {
+        if (sidebar.classList.contains('sidebar--collapsed')) {
+          sidebar.classList.remove('sidebar--collapsed');
+          document.body.classList.remove('sidebar-collapsed');
+          localStorage.setItem('alphacore_sidebar_collapsed', '0');
+        }
+      });
+    }
   }
 
   // Neural Synthesis Accordion Toggle
