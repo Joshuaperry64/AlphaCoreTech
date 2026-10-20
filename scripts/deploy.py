@@ -60,28 +60,14 @@ WEBSITE_LORAS = {
 }
 
 def _get_secrets():
-    secrets = []
-    candidates = [
-        "civitai-secret",
-        "huggingface-secret",
-        "stripe-secret",
-        "gemini",
-        "supabase",
-        "facebook",
-        "civitai",
-        "hf-secret",
-        "stripe"
+    return [
+        modal.Secret.from_name("civitai-secret"),
+        modal.Secret.from_name("huggingface-secret"),
+        modal.Secret.from_name("stripe-secret"),
+        modal.Secret.from_name("gemini"),
+        modal.Secret.from_name("supabase"),
+        modal.Secret.from_name("facebook"),
     ]
-    seen = set()
-    for name in candidates:
-        if name in seen:
-            continue
-        try:
-            secrets.append(modal.Secret.from_name(name))
-            seen.add(name)
-        except Exception:
-            pass
-    return secrets
 
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
