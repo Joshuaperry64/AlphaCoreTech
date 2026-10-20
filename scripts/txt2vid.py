@@ -313,15 +313,16 @@ class Txt2Vid:
         @web_app.get("/stream")
         @web_app.get("/")
         def generate_endpoint(
-            prompt: str, model_name: str = "epic", negative_prompt: str = "low quality", height: int = 1024, width: int = 1024,
+            prompt: str, model_name: str = "epic", model: str = None, negative_prompt: str = "low quality", height: int = 1024, width: int = 1024,
             num_frames: int = 16, guidance_scale: float = 7.5, num_inference_steps: int = 25, seed: int = -1, fps: int = 8,
         ):
             from fastapi.responses import StreamingResponse
             import json
+            selected_model = model or model_name
             def event_stream():
                 try:
                     for msg in self.run_stream.local(
-                        prompt=prompt, model_name=model_name, negative_prompt=negative_prompt, height=height, width=width,
+                        prompt=prompt, model_name=selected_model, negative_prompt=negative_prompt, height=height, width=width,
                         num_frames=num_frames, guidance_scale=guidance_scale, num_inference_steps=num_inference_steps,
                         seed=seed, fps=fps,
                     ):

@@ -4081,11 +4081,11 @@ function buildTxt2Vid() {
     <div class="aim-panel-header">
       <span class="aim-panel-icon">🎥</span>
       <span class="aim-panel-title">TEXT TO VIDEO</span>
-      <span class="aim-panel-badge">WAN-14B ENGINE</span>
+      <span class="aim-panel-badge">ANIMATEDIFF SDXL ENGINE</span>
     </div>
 
-    <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
-      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Text-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
+    <div style="background: rgba(0, 255, 204, 0.08); border-left: 4px solid #00ffcc; padding: 12px; margin-bottom: 20px; color: #ccfffa; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
+      <strong style="color: #00ffcc; letter-spacing: 1px;">[✓] ANIMATEDIFF SDXL SYNTHESIS:</strong> Neural text-to-video synthesis driven by SDXL checkpoint weights and AnimateDiff SDXL motion adapter.
     </div>
 
     <div class="aim-field">
@@ -4103,6 +4103,22 @@ function buildTxt2Vid() {
           <button class="aim-seg-btn" data-steps="50">⚖ NORMAL</button>
           <button class="aim-seg-btn" data-steps="80">🎯 DETAILED</button>
         </div>
+      </div>
+      <div class="aim-field aim-field-half">
+        <label class="aim-label" for="t2v-model-select">SDXL CHECKPOINT</label>
+        <select class="aim-input" id="t2v-model-select">
+          <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM (PURE FIX)</option>
+          <option value="cyberrealisticXL_desireV30.safetensors">CYBER REALISTIC</option>
+          <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
+          <option value="0x7RealisticFreedom_omegaSDXL.safetensors">FREEDOM OMEGA</option>
+          <option value="unholyDesireMixCrimson_v50.safetensors">UNHOLY DESIRE (CRIMSON)</option>
+          <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
+          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
+          <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
+          <option value="cyberrealisticPony_v180Coreshift.safetensors">CYBERREALISTIC PONY</option>
+          <option value="realvisxlV50_v50Bakedvae.safetensors">REALVISXL V5.0</option>
+          <option value="juicyDreams_v10.safetensors">JUICY DREAMS</option>
+        </select>
       </div>
     </div>
 
@@ -4133,8 +4149,12 @@ function buildTxt2Vid() {
           <div class="aim-field aim-field-half">
             <label class="aim-label" for="t2v-resolution">RESOLUTION (W x H)</label>
             <select class="aim-input" id="t2v-resolution">
-              <option value="832x480" selected>832 x 480 (Widescreen SD)</option>
+              <option value="1024x1024" selected>1024 x 1024 (Square SDXL Native)</option>
+              <option value="1024x576">1024 x 576 (16:9 Widescreen)</option>
+              <option value="576x1024">576 x 1024 (9:16 Portrait)</option>
+              <option value="832x480">832 x 480 (Widescreen SD)</option>
               <option value="480x832">480 x 832 (Vertical SD)</option>
+              <option value="768x768">768 x 768 (Standard Square)</option>
             </select>
           </div>
         </div>
@@ -4143,11 +4163,10 @@ function buildTxt2Vid() {
           <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="t2v-frames">DURATION (TOTAL FRAMES)</label>
             <select class="aim-input" id="t2v-frames">
-              <option value="33">Micro (33 Frames)</option>
-              <option value="49" selected>Short (49 Frames)</option>
-              <option value="81">Standard (81 Frames)</option>
-              <option value="113">Long (113 Frames)</option>
-              <option value="129">Extended (129 Frames)</option>
+              <option value="16" selected>Short (16 Frames - Fast)</option>
+              <option value="24">Standard (24 Frames - Balanced)</option>
+              <option value="32">Medium (32 Frames - Extended)</option>
+              <option value="48">Long (48 Frames)</option>
             </select>
           </div>
         </div>
@@ -4190,6 +4209,7 @@ function buildTxt2Vid() {
     const prompt = wrap.querySelector('#t2v-prompt').value.trim();
     if (!prompt) { setStatus(wrap, '#t2v-status', 'ERROR: Cinematic prompt is empty.', 'error'); return; }
 
+    const model = wrap.querySelector('#t2v-model-select')?.value || 'epicrealismXL_pureFix.safetensors';
     const steps = parseInt(wrap.querySelector('#t2v-speed .aim-seg-btn.active').dataset.steps);
     let neg = wrap.querySelector('#t2v-neg').value;
     const cfg = parseFloat(wrap.querySelector('#t2v-cfg').value);
@@ -4223,6 +4243,8 @@ function buildTxt2Vid() {
     try {
       const params = new URLSearchParams({
         prompt,
+        model_name: model,
+        model: model,
         negative_prompt: neg,
         guidance_scale: cfg,
         num_inference_steps: steps,
