@@ -13,6 +13,16 @@ import {
   batchPersistSharedMessages,
   restoreSharedMessagesFromIndexedDB
 } from '../components/chat_db.js';
+import {
+  executeNotarizationSwarm,
+  renderNotarizationSwarmCard,
+  createArchitectNotarizationInvite,
+  validateOneTimeSetupCode,
+  verifyNotaryCodeForCheckIn,
+  renderArchitectInviteCard,
+  renderNotaryPortalUnlockCard,
+  STANDARD_NOTARY_FEE_USD
+} from '../components/notarization_swarm.js';
 
 class TacticalAudioEngine {
   constructor() {
@@ -1312,9 +1322,111 @@ export default function CognitiveUplink() {
             properties: { prompt: { type: Type.STRING, description: "Detailed description of the video to generate" } },
             required: ["prompt"]
           }
+        },
+        {
+          name: "execute_online_notarization",
+          description: "Executes an autonomous multi-agent swarm in parallel to set up and complete an online notarization of a document: Agent 1 collects & verifies the PDF document (SHA-256 hash & signature blocks), Agent 2 collects notarization funds/fees into escrow from the user's Smartcard Wallet, and Agent 3 automates a headless browser to scan and book the soonest available notary slot.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              documentName: { type: Type.STRING, description: "Name of the PDF document to notarize (e.g. 'AlphaCore_Affidavit.pdf')" },
+              documentType: { type: Type.STRING, description: "Document classification: AFFIDAVIT, POWER_OF_ATTORNEY, NDA_CONTRACT, PROPERTY_DEED, or TRUST_INSTRUMENT" },
+              signerName: { type: Type.STRING, description: "Name or profile handle of the principal signer" },
+              feeAmount: { type: Type.NUMBER, description: "Statutory notarization fee in USD (default 25.00)" },
+              urgency: { type: Type.STRING, description: "Booking urgency preference, e.g. 'SOONEST'" }
+            },
+            required: ["documentName"]
+          }
         }
       ]
     }];
+
+    let lastUploadedFile = null;
+
+    function launchArchitectInviteInChat(params = {}) {
+      const isArchitect = profile.toLowerCase() === 'architect' || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('current_pin') === '672167566');
+      if (!isArchitect) {
+        appendMessage('ALPHA', `ACCESS DENIED: Only the Architect has authorization to provision online notarization access and issue 1-Time Setup Codes. Current profile: [${profile.toUpperCase()}].`, 'alpha-msg');
+        return null;
+      }
+      const inviteResult = createArchitectNotarizationInvite({
+        callerProfile: profile,
+        clientName: params.clientName || 'AUTHORIZED_CLIENT',
+        documentType: params.documentType || 'AFFIDAVIT',
+        documentName: params.documentName || '',
+        feeAmount: params.feeAmount !== undefined ? params.feeAmount : STANDARD_NOTARY_FEE_USD,
+        notes: params.notes || '1-Time Setup Token issued via Cognitive Core AI'
+      });
+
+      if (!inviteResult.success) {
+        appendMessage('ALPHA', `Failed to generate setup code: ${inviteResult.error}`, 'alpha-msg');
+        return null;
+      }
+
+      const msgWrapper = document.createElement('div');
+      msgWrapper.className = 'chat-msg alpha-msg notarization-msg-wrap';
+      msgWrapper.innerHTML = `<span class="chat-prefix">[ALPHA // STAGE_1_SETUP]</span>`;
+      chatMessages.appendChild(msgWrapper);
+      renderArchitectInviteCard({ mountContainer: msgWrapper, inviteResult });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      const aiReply = `1-Time Setup Code [${inviteResult.setupCode}] successfully generated. Provide this code to the user. When they inform me in natural language that they have this code, I will authenticate it, collect their PDF document & required assets, collect funds, schedule the soonest slot, and issue their Notary Session Code.`;
+      saveMessageToHistory('model', aiReply, 'ALPHA');
+      return inviteResult;
+    }
+
+    function checkInWithNotaryCodeInChat(notaryCode) {
+      if (!notaryCode) {
+        appendMessage('ALPHA', 'Please provide your Notary Session Code (format: AC-RON-XXXXXX) to proceed with early check-in.', 'alpha-msg');
+        return null;
+      }
+      const check = verifyNotaryCodeForCheckIn(notaryCode);
+      if (!check.valid) {
+        appendMessage('ALPHA', `Notary Code check failed: ${check.reason}`, 'alpha-msg');
+        return null;
+      }
+
+      const msgWrapper = document.createElement('div');
+      msgWrapper.className = 'chat-msg alpha-msg notarization-msg-wrap';
+      msgWrapper.innerHTML = `<span class="chat-prefix">[ALPHA // STAGE_3_CHECKIN]</span>`;
+      chatMessages.appendChild(msgWrapper);
+      renderNotaryPortalUnlockCard({ mountContainer: msgWrapper, verificationResult: check });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      const aiReply = `Notary Session Code [${check.notaryCode}] confirmed! ${check.checkInStatus}. You are checked in. Click the button above to enter the Live Notarization Room.`;
+      saveMessageToHistory('model', aiReply, 'ALPHA');
+      return check;
+    }
+
+    function launchNotarizationSwarmInChat(params = {}) {
+      appendMessage('SYSTEM', `[SWARM_ORCHESTRATOR] Launching 3-Agent Parallel Online Notarization Swarm (PDF Ingest + Funds Escrow + Headless Browser Soonest Slot)...`, 'system-msg');
+      const msgWrapper = document.createElement('div');
+      msgWrapper.className = 'chat-msg alpha-msg notarization-msg-wrap';
+      msgWrapper.innerHTML = `<span class="chat-prefix">[ALPHA // RON_SWARM]</span>`;
+      chatMessages.appendChild(msgWrapper);
+
+      const { executionPromise } = renderNotarizationSwarmCard({
+        mountContainer: msgWrapper,
+        initialParams: {
+          setupCode: params.setupCode || null,
+          documentName: params.documentName || (lastUploadedFile && lastUploadedFile.name) || '',
+          documentType: params.documentType || 'AFFIDAVIT',
+          signerName: params.signerName || profile,
+          feeAmount: params.feeAmount !== undefined ? params.feeAmount : STANDARD_NOTARY_FEE_USD,
+          urgency: params.urgency || 'SOONEST',
+          fileObj: params.fileObj || lastUploadedFile || null
+        },
+        autoExecute: true,
+        stepDelayMs: params.stepDelayMs !== undefined ? params.stepDelayMs : 35,
+        onComplete: (session) => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          const summaryMsg = `Online Notarization setup complete! Notary Session Code: [${session.notaryCode}] | Scheduled Time: [${session.booking.selectedSlot.displayTime}]. Return to Cognitive Core 5–10 minutes early of your scheduled booking with code "${session.notaryCode}".`;
+          saveMessageToHistory('model', summaryMsg, 'ALPHA');
+        }
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return executionPromise;
+    }
 
     async function fetchModal(url, method, payload) {
       let res;
@@ -1361,8 +1473,29 @@ export default function CognitiveUplink() {
 
     async function handleToolCall(functionCall) {
       try {
-        const args = functionCall.args;
-        if (functionCall.name === 'memorize_fact') {
+        const args = functionCall.args || {};
+        if (functionCall.name === 'execute_online_notarization') {
+          const session = await launchNotarizationSwarmInChat({
+            documentName: args.documentName,
+            documentType: args.documentType,
+            signerName: args.signerName || profile,
+            feeAmount: args.feeAmount,
+            urgency: args.urgency || 'SOONEST'
+          });
+          return {
+            success: true,
+            sessionId: session.sessionId,
+            sealCertificateId: session.sealCertificateId,
+            documentName: session.pdf.documentName,
+            sha256: session.pdf.sha256,
+            escrowTxId: session.funds.escrowTxId,
+            settlementMode: session.funds.settlementMode,
+            bookedSlot: session.booking.selectedSlot.displayTime,
+            bookingConfirmationCode: session.booking.bookingConfirmationCode,
+            notaryAgent: session.booking.notaryAgent,
+            meetingRoomUrl: session.booking.meetingRoomUrl
+          };
+        } else if (functionCall.name === 'memorize_fact') {
           const res = await fetch(apiUrl('/api/memory'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -1697,6 +1830,7 @@ export default function CognitiveUplink() {
       }
     }
 
+
     connectBtn.onclick = () => { 
       sfx.play('click'); 
       if (isGuest) {
@@ -1725,6 +1859,7 @@ export default function CognitiveUplink() {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        lastUploadedFile = file;
         appendMessage('SYSTEM', `Processing upload: ${file.name}...`, 'system-msg');
         
         // Automatically save uploaded file to user's Vault databank
@@ -1820,6 +1955,128 @@ export default function CognitiveUplink() {
             bc.postMessage({ author, text, role: 'user', id: 'msg_' + Date.now() });
           }
         } catch(e){}
+      }
+
+      // 4-Stage Autonomous Notarization Natural Language Interception
+      const lowerText = text.toLowerCase();
+      const isArchitect = profile.toLowerCase() === 'architect' || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('current_pin') === '672167566');
+
+      // STAGE 1: Architect sets up access & requests 1-time setup code
+      const isStage1SetupIntent = /(?:setup|set\s+up|create|issue|generate|provision)\s+(?:access\s+to\s+a\s+|an?\s+)?(?:online\s+)?notariz(?:ation|e)\s+(?:session|invite|code)/i.test(text) ||
+                                  /(?:setup|set\s+up|create|issue|generate)\s+(?:a\s+)?(?:1-?time|one-?time)\s+(?:notariz(?:ation|e)\s+)?code/i.test(text);
+
+      if (isStage1SetupIntent) {
+        if (!isArchitect) {
+          appendMessage('ALPHA', `ACCESS DENIED: Only the Architect can setup access to a notarization session and issue 1-time setup codes. Your current profile is [${profile.toUpperCase()}].`, 'alpha-msg');
+          saveMessageToHistory('model', `ACCESS DENIED: Only the Architect can setup access to a notarization session.`, 'ALPHA');
+          return;
+        }
+        const docMatch = text.match(/["']([^"']+\.pdf)["']/i) || text.match(/([a-zA-Z0-9_.-]+\.pdf)/i);
+        const feeMatch = text.match(/\$(\d+(?:\.\d{1,2})?)/);
+        let docType = 'AFFIDAVIT';
+        if (/power\s+of\s+attorney|\bpoa\b/i.test(text)) docType = 'POWER_OF_ATTORNEY';
+        else if (/\bnda\b|contract|agreement/i.test(text)) docType = 'NDA_CONTRACT';
+        else if (/deed|property/i.test(text)) docType = 'PROPERTY_DEED';
+
+        launchArchitectInviteInChat({
+          documentName: docMatch ? docMatch[1] : '',
+          documentType: docType,
+          feeAmount: feeMatch ? parseFloat(feeMatch[1]) : STANDARD_NOTARY_FEE_USD
+        });
+        return;
+      }
+
+      // STAGE 3: Client early check-in with their Notary Session Code (AC-RON-XXXXXX)
+      const ronCodeMatch = text.match(/\b(AC-RON-[A-Z0-9]{4,10})\b/i);
+      const isStage3CheckInIntent = ronCodeMatch || (
+        /(?:have|got|enter|use)\s+(?:my\s+|the\s+)?notary\s+code/i.test(text) ||
+        /(?:check-?in|ready\s+for|attend|join)\s+(?:my\s+|the\s+)?(?:scheduled\s+)?notariz/i.test(text)
+      );
+
+      if (isStage3CheckInIntent) {
+        if (ronCodeMatch) {
+          checkInWithNotaryCodeInChat(ronCodeMatch[1]);
+          return;
+        } else {
+          // User states they have a notary code, but didn't provide it yet
+          appendMessage('ALPHA', 'Please provide your Notary Session Code (format: AC-RON-XXXXXX) so I can verify your scheduled booking and open the Notarization Portal.', 'alpha-msg');
+          saveMessageToHistory('model', 'Please provide your Notary Session Code (format: AC-RON-XXXXXX).', 'ALPHA');
+          return;
+        }
+      }
+
+      // STAGE 2: Client redeems 1-Time Setup Code (AC-INV-XXXXXX)
+      const invCodeMatch = text.match(/\b(AC-INV-[A-Z0-9]{4,10})\b/i);
+      const isStage2RedeemIntent = invCodeMatch || (
+        /(?:have|got|use|enter)\s+(?:a\s+|my\s+)?(?:1-?time\s+|one-?time\s+)?(?:notariz(?:ation|e)\s+)?code/i.test(text) ||
+        /(?:have|got)\s+(?:a\s+)?code\s+to\s+notarize/i.test(text)
+      );
+
+      if (isStage2RedeemIntent) {
+        if (!invCodeMatch) {
+          appendMessage('ALPHA', 'Please enter your 1-Time Setup Code (format: AC-INV-XXXXXX) provided by the Architect so I can initiate your notarization swarm.', 'alpha-msg');
+          saveMessageToHistory('model', 'Please enter your 1-Time Setup Code (format: AC-INV-XXXXXX).', 'ALPHA');
+          return;
+        }
+
+        const setupCode = invCodeMatch[1].toUpperCase();
+        const check = validateOneTimeSetupCode(setupCode);
+        if (!check.valid) {
+          appendMessage('ALPHA', `Setup Code Verification Failed: ${check.reason}`, 'alpha-msg');
+          saveMessageToHistory('model', `Setup Code Verification Failed: ${check.reason}`, 'ALPHA');
+          return;
+        }
+
+        const quotedPdfMatch = text.match(/["']([^"']+\.pdf)["']/i);
+        const tokenPdfMatch = text.match(/([a-zA-Z0-9_.\s-]+\.pdf)/i);
+        const feeMatch = text.match(/\$(\d+(?:\.\d{1,2})?)/);
+        let extractedDoc = '';
+        if (quotedPdfMatch) {
+          extractedDoc = quotedPdfMatch[1].trim();
+        } else if (tokenPdfMatch) {
+          extractedDoc = tokenPdfMatch[1].trim().replace(/^(?:notarize|notarization|notarazation|for|file|document|doc)\s+/i, '');
+        }
+
+        launchNotarizationSwarmInChat({
+          setupCode,
+          documentName: extractedDoc || check.invite?.documentName || '',
+          documentType: check.invite?.documentType || 'AFFIDAVIT',
+          signerName: profile,
+          feeAmount: feeMatch ? parseFloat(feeMatch[1]) : (check.invite?.feeAmount ?? STANDARD_NOTARY_FEE_USD),
+          urgency: 'SOONEST'
+        });
+        return;
+      }
+
+      // General /notarize or direct notarize command fallback
+      const isNotarizeIntent = /^\/notarize/i.test(text) || /\b(?:notarize|notarization|notarazation|online\s+notary|book\s+.*notary)\b/i.test(text);
+      let completedNotarySession = null;
+      if (isNotarizeIntent) {
+        const cleanedCmd = text.replace(/^\/notarize\s*/i, '');
+        const quotedPdfMatch = cleanedCmd.match(/["']([^"']+\.pdf)["']/i);
+        const tokenPdfMatch = cleanedCmd.match(/([a-zA-Z0-9_.\s-]+\.pdf)/i);
+        const feeMatch = text.match(/\$(\d+(?:\.\d{1,2})?)/);
+        let extractedDoc = '';
+        if (quotedPdfMatch) {
+          extractedDoc = quotedPdfMatch[1].trim();
+        } else if (tokenPdfMatch) {
+          extractedDoc = tokenPdfMatch[1].trim().replace(/^(?:notarize|notarization|notarazation|for|file|document|doc)\s+/i, '');
+        }
+        const extractedFee = feeMatch ? parseFloat(feeMatch[1]) : STANDARD_NOTARY_FEE_USD;
+        let docType = 'AFFIDAVIT';
+        if (/power\s+of\s+attorney|\bpoa\b/i.test(text)) docType = 'POWER_OF_ATTORNEY';
+        else if (/\bnda\b|contract|agreement/i.test(text)) docType = 'NDA_CONTRACT';
+        else if (/deed|property/i.test(text)) docType = 'PROPERTY_DEED';
+        else if (/trust/i.test(text)) docType = 'TRUST_INSTRUMENT';
+
+        completedNotarySession = await launchNotarizationSwarmInChat({
+          documentName: extractedDoc,
+          documentType: docType,
+          signerName: profile,
+          feeAmount: extractedFee,
+          urgency: 'SOONEST'
+        });
+        if (!liveSession) return;
       }
       
       // If Live Link is not established, do NOT trigger Alpha AI response

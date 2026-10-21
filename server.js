@@ -613,6 +613,116 @@ app.get('/api/gazette/:name', async (req, res) => {
   }
 });
 
+// ==========================================================
+// ONLINE NOTARIZATION MULTI-AGENT SWARM ENDPOINTS
+// ==========================================================
+app.get('/api/notarize/slots', async (req, res) => {
+  const baseMs = Date.now();
+  const fiveMin = 5 * 60 * 1000;
+  const nextMark = Math.ceil((baseMs + 8 * 60 * 1000) / fiveMin) * fiveMin;
+
+  const slots = [
+    {
+      slotId: `SLOT-${Math.floor((nextMark / 1000) % 100000)}-A1`,
+      isoTime: new Date(nextMark).toISOString(),
+      displayTime: new Date(nextMark).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (IN ~10 MIN)',
+      notaryAgent: 'COMMISSIONER V. KOVACS // RON-NODE-01',
+      jurisdiction: 'US-GA // CYBER-JURISDICTION SEC-7',
+      available: true,
+      priority: 'SOONEST_IMMEDIATE'
+    },
+    {
+      slotId: `SLOT-${Math.floor(((nextMark + 15 * 60000) / 1000) % 100000)}-B2`,
+      isoTime: new Date(nextMark + 15 * 60000).toISOString(),
+      displayTime: new Date(nextMark + 15 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (+25 MIN)',
+      notaryAgent: 'NOTARY SYNTH-UNIT // RON-NODE-04',
+      jurisdiction: 'US-DE // CORPORATE ESCROW GRID',
+      available: true,
+      priority: 'STANDARD'
+    }
+  ];
+
+  res.json({ status: 'ONLINE', selectedSlot: slots[0], slots });
+});
+
+app.get('/api/notarize/sessions', async (req, res) => {
+  const db = await readDB();
+  res.json(db.notarizations || []);
+});
+
+app.post('/api/notarize/swarm', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const db = await readDB();
+    if (!db.notarizations) db.notarizations = [];
+
+    const sessionRecord = {
+      sessionId: payload.sessionId || `RON-SWARM-${Date.now()}`,
+      status: payload.status || 'COMPLETED_AND_BOOKED',
+      executionMode: 'PARALLEL_MULTI_AGENT_SWARM',
+      signerName: payload.signerName || 'Architect',
+      createdAt: payload.createdAt || new Date().toISOString(),
+      sealCertificateId: payload.sealCertificateId || `AC-SEAL-${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
+      pdf: payload.pdf || null,
+      funds: payload.funds || null,
+      booking: payload.booking || null
+    };
+
+    db.notarizations.unshift(sessionRecord);
+    if (db.notarizations.length > 50) db.notarizations = db.notarizations.slice(0, 50);
+    await writeDB(db);
+
+    res.json({ success: true, session: sessionRecord });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notarize/seal-pdf', async (req, res) => {
+  try {
+    const {
+      documentName = 'AlphaCore_Affidavit.pdf',
+      documentType = 'AFFIDAVIT',
+      signerName = 'Architect',
+      sha256 = '',
+      sealCertificateId = 'AC-SEAL-VERIFIED',
+      bookingConfirmationCode = 'RON-BOOKED',
+      slotDisplayTime = 'IMMEDIATE'
+    } = req.body || {};
+
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      res.json({
+        success: true,
+        filename: `NOTARIZED_${documentName.replace(/[^a-zA-Z0-9._-]/g, '_')}`,
+        b64: pdfBuffer.toString('base64'),
+        mimeType: 'application/pdf'
+      });
+    });
+
+    doc.fontSize(16).text('ALPHACORE TECH // REMOTE ONLINE NOTARIZATION', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`SEAL CERTIFICATE ID: ${sealCertificateId}`, { align: 'center' });
+    doc.moveDown(1.5);
+    doc.fontSize(11).text(`Document Name: ${documentName}`);
+    doc.text(`Document Class: ${documentType}`);
+    doc.text(`Principal Signer: ${signerName}`);
+    doc.text(`Booking Reference: ${bookingConfirmationCode}`);
+    doc.text(`Scheduled Slot: ${slotDisplayTime}`);
+    doc.text(`SHA-256 Digest: ${sha256 || crypto.createHash('sha256').update(documentName + signerName).digest('hex')}`);
+    doc.moveDown(1.5);
+    doc.fontSize(10).text('CRYPTOGRAPHIC JURAT & DIGITAL NOTARY SEAL:', { underline: true });
+    doc.moveDown(0.5);
+    doc.text('State of Georgia, Cyber-Jurisdiction Sector 7. Subscribed and sworn before the AlphaCore Autonomous RON Swarm Engine via multi-agent verification.');
+    doc.end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve frontend build if exists
 app.use(express.static(path.join(_dirname, 'dist')));
 

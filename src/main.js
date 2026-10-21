@@ -37,6 +37,7 @@ import MugshotsPage from './pages/mugshots.js';
 import TheLabPage from './pages/thelab.js';
 import TransferPage from './pages/transfer.js';
 import CyberDirectorPage from './pages/director.js';
+import NotarizationPage from './pages/notarization.js';
 import PlaceholderPage from './pages/placeholder.js';
 
 const routes = {
@@ -75,6 +76,8 @@ const routes = {
   '/assets': AssetManagerPage,
   '/changelog': ChangelogPage,
   '/mugshots': MugshotsPage,
+  '/notarization': NotarizationPage,
+  '/notary': NotarizationPage,
   '/placeholder': PlaceholderPage,
   '/admin/placeholder': PlaceholderPage,
 };
@@ -519,6 +522,17 @@ function initApp() {
 if (!window.location.hash) {
   window.history.replaceState(null, '', '#/');
 }
+
+// Global Navigation helper for Cognitive Core Notarization Button & RON Suite
+window.openNotarizationRoom = function(notaryCode) {
+  if (notaryCode) {
+    try {
+      sessionStorage.setItem('alphacore_active_notary_code', notaryCode);
+      localStorage.setItem('alphacore_active_notary_code', notaryCode);
+    } catch (_) {}
+  }
+  window.location.hash = '#/notarization';
+};
 
 // Call init functions and kickoff initial route render
 initApp();

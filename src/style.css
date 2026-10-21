@@ -4916,3 +4916,367 @@ body.synthwave-overdrive :focus-visible {
   transform: translateX(-50%) translateY(-2px);
 }
 
+/* ==========================================================================
+   ONLINE NOTARIZATION MULTI-AGENT SWARM HUD STYLES
+   ========================================================================== */
+.notarization-swarm-card {
+  background: linear-gradient(145deg, rgba(4, 10, 22, 0.96) 0%, rgba(7, 18, 36, 0.98) 100%);
+  border: 1px solid var(--blue, #00b8ff);
+  border-left: 4px solid #00ff8c;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 10px 0;
+  box-shadow: 0 0 24px rgba(0, 184, 255, 0.18), inset 0 0 15px rgba(0, 255, 140, 0.05);
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  color: #e2e8f0;
+}
+
+.swarm-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid rgba(0, 184, 255, 0.25);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.swarm-header-left,
+.swarm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.swarm-parallel-pill {
+  background: rgba(0, 255, 140, 0.15);
+  border: 1px solid #00ff8c;
+  color: #00ff8c;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-family: var(--font-hud, 'Orbitron', sans-serif);
+  font-weight: bold;
+  text-shadow: 0 0 6px rgba(0, 255, 140, 0.35);
+}
+
+.swarm-orchestrator-title {
+  font-family: var(--font-hud, 'Orbitron', sans-serif);
+  font-size: 0.88rem;
+  color: var(--blue, #00b8ff);
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(0, 184, 255, 0.4);
+}
+
+.swarm-overall-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(0, 184, 255, 0.15);
+  border: 1px solid var(--blue, #00b8ff);
+  color: var(--blue, #00b8ff);
+  font-weight: bold;
+}
+
+.swarm-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 184, 255, 0.15);
+  border-radius: 4px;
+}
+
+.swarm-control-doc {
+  flex: 1;
+  min-width: 170px;
+}
+
+.swarm-control-type {
+  min-width: 130px;
+}
+
+.swarm-control-fee {
+  min-width: 95px;
+}
+
+.swarm-control-label {
+  font-size: 0.63rem;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.swarm-controls-row .aim-input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.swarm-control-actions {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  padding-top: 12px;
+}
+
+.swarm-attach-pdf-btn {
+  padding: 5px 9px;
+  font-size: 0.7rem;
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.swarm-rerun-btn {
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.swarm-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.swarm-agent-lane {
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.swarm-lane-pdf {
+  background: rgba(0, 184, 255, 0.04);
+  border: 1px solid rgba(0, 184, 255, 0.3);
+}
+
+.swarm-lane-funds {
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.swarm-lane-browser {
+  background: rgba(168, 85, 247, 0.05);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.swarm-lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.swarm-lane-title {
+  font-family: var(--font-hud, 'Orbitron', sans-serif);
+  font-size: 0.72rem;
+  font-weight: bold;
+}
+
+.swarm-title-pdf { color: #38bdf8; text-shadow: 0 0 6px rgba(56, 189, 248, 0.3); }
+.swarm-title-funds { color: #10b981; text-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
+.swarm-title-browser { color: #c084fc; text-shadow: 0 0 6px rgba(192, 132, 252, 0.3); }
+
+.agent-status-pill {
+  font-size: 0.64rem;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.pill-pdf { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.pill-funds { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.pill-browser { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
+
+.agent-progress-track {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.agent-progress-bar {
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.bar-pdf { background: linear-gradient(90deg, #00b8ff, #00ff8c); }
+.bar-funds { background: linear-gradient(90deg, #10b981, #f59e0b); }
+.bar-browser { background: linear-gradient(90deg, #a855f7, #00b8ff); }
+
+.agent-metrics-box {
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  min-height: 54px;
+}
+
+.swarm-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.headless-browser-viewport {
+  background: #050811;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.headless-browser-chrome {
+  background: rgba(168, 85, 247, 0.15);
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.chrome-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-red { background: #ff003c; }
+.dot-amber { background: #f59e0b; }
+.dot-green { background: #00ff8c; }
+
+.headless-url-bar {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.6);
+  color: #c084fc;
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headless-slots-container {
+  padding: 8px 10px;
+  font-size: 0.68rem;
+}
+
+.headless-slot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headless-slot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.headless-slot-row.slot-locked {
+  background: rgba(0, 255, 140, 0.15);
+  border-color: #00ff8c;
+}
+
+.headless-slot-label {
+  color: #cbd5e1;
+}
+
+.headless-slot-row.slot-locked .headless-slot-label {
+  color: #00ff8c;
+  font-weight: bold;
+}
+
+.headless-slot-id {
+  color: #94a3b8;
+  font-size: 0.62rem;
+}
+
+.swarm-telemetry-panel {
+  background: #04070e;
+  border: 1px solid rgba(0, 184, 255, 0.25);
+  border-radius: 5px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.swarm-telemetry-header {
+  font-size: 0.66rem;
+  color: var(--blue, #00b8ff);
+  font-weight: bold;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 184, 255, 0.15);
+  padding-bottom: 3px;
+}
+
+.swarm-telemetry-log {
+  font-size: 0.66rem;
+  color: #94a3b8;
+  max-height: 110px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.35;
+}
+
+.swarm-completion-banner {
+  background: rgba(0, 255, 140, 0.08);
+  border: 1px solid #00ff8c;
+  border-radius: 5px;
+  padding: 10px 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swarm-completion-title {
+  font-family: var(--font-hud, 'Orbitron', sans-serif);
+  font-size: 0.78rem;
+  color: #00ff8c;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(0, 255, 140, 0.35);
+}
+
+.swarm-seal-summary {
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+
+.swarm-completion-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.swarm-download-pdf-btn {
+  padding: 5px 10px;
+  font-size: 0.68rem;
+  border-color: #00ff8c;
+  color: #00ff8c;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .swarm-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .swarm-control-actions {
+    padding-top: 4px;
+    justify-content: flex-end;
+  }
+}
+
