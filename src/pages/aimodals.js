@@ -876,6 +876,311 @@ function dispatchControlNetToModal(tabSelector, options = {}) {
   }
 }
 
+/* ─── IP-ADAPTER (IMAGE PROMPTING) & REGIONAL PROMPTING HELPERS ─── */
+const REGIONAL_SPLIT_PRESETS = {
+  none: { label: 'DISABLED (GLOBAL PROMPT ONLY)', regions: [] },
+  left_right: {
+    label: '◧ LEFT / RIGHT SPLIT (2 REGIONS)',
+    regions: [
+      { id: 0, title: 'LEFT REGION (50%)', placeholder: 'Describe subject/scene on the LEFT half...' },
+      { id: 1, title: 'RIGHT REGION (50%)', placeholder: 'Describe subject/scene on the RIGHT half...' },
+    ],
+  },
+  top_bottom: {
+    label: '⬒ TOP / BOTTOM SPLIT (2 REGIONS)',
+    regions: [
+      { id: 0, title: 'TOP REGION (SKY / UPPER 50%)', placeholder: 'Describe upper half / sky / background...' },
+      { id: 1, title: 'BOTTOM REGION (FOREGROUND / LOWER 50%)', placeholder: 'Describe lower half / ground / subject...' },
+    ],
+  },
+  three_col: {
+    label: ' Vertically 3-COLUMN SPLIT (LEFT / CENTER / RIGHT)',
+    regions: [
+      { id: 0, title: 'LEFT COLUMN (33%)', placeholder: 'Left character or element...' },
+      { id: 1, title: 'CENTER COLUMN (33%)', placeholder: 'Center focal subject...' },
+      { id: 2, title: 'RIGHT COLUMN (33%)', placeholder: 'Right character or element...' },
+    ],
+  },
+  center_bg: {
+    label: '▣ CENTER SUBJECT + SURROUNDING BACKGROUND',
+    regions: [
+      { id: 0, title: 'OUTER BACKGROUND (PERIMETER)', placeholder: 'Describe the surrounding environment & backdrop...' },
+      { id: 1, title: 'CENTER SUBJECT (INNER FOCUS)', placeholder: 'Describe the central hero subject...' },
+    ],
+  },
+  quadrants: {
+    label: '⊞ 4-QUADRANT MATRIX (TOP-L / TOP-R / BOT-L / BOT-R)',
+    regions: [
+      { id: 0, title: 'TOP-LEFT QUADRANT', placeholder: 'Top-left scene/element...' },
+      { id: 1, title: 'TOP-RIGHT QUADRANT', placeholder: 'Top-right scene/element...' },
+      { id: 2, title: 'BOTTOM-LEFT QUADRANT', placeholder: 'Bottom-left scene/element...' },
+      { id: 3, title: 'BOTTOM-RIGHT QUADRANT', placeholder: 'Bottom-right scene/element...' },
+    ],
+  },
+};
+
+function getIpAdapterSectionHTML(prefix) {
+  return `
+    <div class="aim-ip-mgmt-section" id="${prefix}-ip-mgmt" style="margin-top:14px; border:1px solid rgba(16, 185, 129, 0.35); background:rgba(0, 20, 15, 0.35); border-radius:4px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#10b981; font-size:1rem;">🖼️</span>
+          <span class="aim-label" style="margin:0; font-size:0.85rem; letter-spacing:1px; color:#10b981;">IP-ADAPTER (IMAGE PROMPTING)</span>
+          <span class="ip-status-badge" id="${prefix}-ip-status" style="font-size:0.7rem; padding:2px 6px; border-radius:3px; background:rgba(100,100,100,0.2); color:#888; border:1px solid #555;">INACTIVE</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="aim-btn aim-btn-sm" id="${prefix}-ip-load-vault" style="padding:3px 8px; font-size:0.75rem; border-color:#f59e0b; color:#f59e0b;" title="Load reference image from Vault">📂 VAULT</button>
+          <label class="aim-btn aim-btn-sm" style="padding:3px 8px; font-size:0.75rem; border-color:#10b981; color:#10b981; cursor:pointer; margin:0; display:inline-flex; align-items:center;" title="Upload reference image for Style or Face Identity">
+            📤 UPLOAD REF
+            <input type="file" id="${prefix}-ip-upload-input" accept="image/*" style="display:none;" />
+          </label>
+          <button type="button" class="aim-btn aim-btn-sm" id="${prefix}-ip-clear-btn" style="padding:3px 8px; font-size:0.75rem; border-color:#ff4444; color:#ff4444; display:none;" title="Clear IP-Adapter image">✕ CLEAR</button>
+        </div>
+      </div>
+
+      <div id="${prefix}-ip-active-view" style="display:none; margin-top:10px;">
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <div style="position:relative; flex-shrink:0;">
+            <img id="${prefix}-ip-preview-thumb" src="" style="width:90px; height:90px; object-fit:cover; background:#000; border:1px solid #10b981; border-radius:4px; display:block;" alt="IP-Adapter Ref" />
+            <span id="${prefix}-ip-mode-badge" style="position:absolute; bottom:2px; right:2px; background:rgba(0,0,0,0.85); color:#10b981; font-size:0.6rem; padding:1px 4px; border-radius:2px; border:1px solid #10b981; text-transform:uppercase;">STYLE</span>
+          </div>
+          <div style="flex:1; min-width:170px;">
+            <div class="aim-row" style="margin-bottom:8px;">
+              <label class="aim-label" for="${prefix}-ip-mode-select" style="font-size:0.75rem; margin-bottom:4px;">ADAPTER TARGET MODE</label>
+              <select class="aim-input" id="${prefix}-ip-mode-select" style="font-size:0.8rem; padding:4px 8px;">
+                <option value="standard" selected>🎨 Standard (Style & Composition Transfer)</option>
+                <option value="face">👤 Face / Identity Plus (ViT-H Character Lock)</option>
+              </select>
+            </div>
+            <div>
+              <label class="aim-label" for="${prefix}-ip-scale-slider" style="font-size:0.75rem; margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span>IMAGE PROMPT WEIGHT</span>
+                <span class="aim-val-display" id="${prefix}-ip-scale-val">0.60</span>
+              </label>
+              <input class="aim-range" type="range" id="${prefix}-ip-scale-slider" min="0.05" max="1.5" step="0.05" value="0.60" style="margin:0;" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="${prefix}-ip-empty-hint" style="font-size:0.75rem; color:#666; font-family:'Share Tech Mono', monospace; margin-top:4px;">
+        Inject a visual reference into Cross-Attention. Use Standard for style/composition or Face Plus (ViT-H) for character identity lock.
+      </div>
+    </div>
+  `;
+}
+
+function bindIpAdapterSection(wrap, prefix) {
+  const sec = wrap.querySelector(`#${prefix}-ip-mgmt`);
+  if (!sec) return;
+  sec._ipImageB64 = '';
+
+  const statusBadge = sec.querySelector(`#${prefix}-ip-status`);
+  const activeView = sec.querySelector(`#${prefix}-ip-active-view`);
+  const emptyHint = sec.querySelector(`#${prefix}-ip-empty-hint`);
+  const previewThumb = sec.querySelector(`#${prefix}-ip-preview-thumb`);
+  const modeBadge = sec.querySelector(`#${prefix}-ip-mode-badge`);
+  const modeSelect = sec.querySelector(`#${prefix}-ip-mode-select`);
+  const scaleSlider = sec.querySelector(`#${prefix}-ip-scale-slider`);
+  const scaleVal = sec.querySelector(`#${prefix}-ip-scale-val`);
+  const clearBtn = sec.querySelector(`#${prefix}-ip-clear-btn`);
+  const uploadInput = sec.querySelector(`#${prefix}-ip-upload-input`);
+  const vaultBtn = sec.querySelector(`#${prefix}-ip-load-vault`);
+
+  const setIpImage = (dataUrl) => {
+    sec._ipImageB64 = dataUrl || '';
+    if (sec._ipImageB64) {
+      if (previewThumb) previewThumb.src = sec._ipImageB64;
+      if (activeView) activeView.style.display = 'block';
+      if (emptyHint) emptyHint.style.display = 'none';
+      if (clearBtn) clearBtn.style.display = 'inline-flex';
+      if (statusBadge) {
+        statusBadge.textContent = 'ACTIVE';
+        statusBadge.style.color = '#10b981';
+        statusBadge.style.borderColor = '#10b981';
+        statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+      }
+    } else {
+      if (previewThumb) previewThumb.src = '';
+      if (activeView) activeView.style.display = 'none';
+      if (emptyHint) emptyHint.style.display = 'block';
+      if (clearBtn) clearBtn.style.display = 'none';
+      if (statusBadge) {
+        statusBadge.textContent = 'INACTIVE';
+        statusBadge.style.color = '#888';
+        statusBadge.style.borderColor = '#555';
+        statusBadge.style.background = 'rgba(100,100,100,0.2)';
+      }
+    }
+  };
+
+  if (uploadInput) {
+    uploadInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setIpImage(ev.target.result);
+        playSFX('pop', 0.8);
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+
+  if (vaultBtn) {
+    vaultBtn.addEventListener('click', () => {
+      openControlNetVaultPicker((selectedData) => {
+        setIpImage(selectedData);
+        playSFX('pop', 0.8);
+      });
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      setIpImage('');
+      if (uploadInput) uploadInput.value = '';
+      playSFX('pop', 0.6);
+    });
+  }
+
+  if (modeSelect && modeBadge) {
+    modeSelect.addEventListener('change', () => {
+      modeBadge.textContent = modeSelect.value === 'face' ? 'FACE ID' : 'STYLE';
+    });
+  }
+
+  if (scaleSlider && scaleVal) {
+    scaleSlider.addEventListener('input', () => {
+      scaleVal.textContent = parseFloat(scaleSlider.value).toFixed(2);
+    });
+  }
+}
+
+function getIpAdapterValues(wrap, prefix) {
+  const sec = wrap.querySelector(`#${prefix}-ip-mgmt`);
+  if (!sec || !sec._ipImageB64) {
+    return { ip_adapter_image_b64: '', ip_adapter_scale: 0.6, ip_adapter_mode: 'standard' };
+  }
+  const mode = sec.querySelector(`#${prefix}-ip-mode-select`)?.value || 'standard';
+  const scale = parseFloat(sec.querySelector(`#${prefix}-ip-scale-slider`)?.value || '0.6');
+  return {
+    ip_adapter_image_b64: sec._ipImageB64,
+    ip_adapter_scale: scale,
+    ip_adapter_mode: mode,
+  };
+}
+
+function getRegionalPromptSectionHTML(prefix) {
+  return `
+    <div class="aim-reg-mgmt-section" id="${prefix}-reg-mgmt" style="margin-top:14px; border:1px solid rgba(168, 85, 247, 0.35); background:rgba(20, 0, 35, 0.35); border-radius:4px; padding:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="color:#c084fc; font-size:1rem;">📐</span>
+          <span class="aim-label" style="margin:0; font-size:0.85rem; letter-spacing:1px; color:#c084fc;">REGIONAL PROMPTING (MASKED CROSS-ATTENTION)</span>
+          <span class="reg-status-badge" id="${prefix}-reg-status" style="font-size:0.7rem; padding:2px 6px; border-radius:3px; background:rgba(100,100,100,0.2); color:#888; border:1px solid #555;">GLOBAL</span>
+        </div>
+      </div>
+
+      <div class="aim-row" style="gap:10px; align-items:flex-end;">
+        <div class="aim-field" style="flex:2;">
+          <label class="aim-label" for="${prefix}-reg-mode-select" style="font-size:0.75rem;">SPATIAL SPLIT LAYOUT</label>
+          <select class="aim-input" id="${prefix}-reg-mode-select" style="font-size:0.8rem; padding:5px 8px;">
+            ${Object.entries(REGIONAL_SPLIT_PRESETS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="aim-field" id="${prefix}-reg-ratio-wrap" style="flex:1; display:none;">
+          <label class="aim-label" for="${prefix}-reg-base-ratio" style="font-size:0.75rem; display:flex; justify-content:space-between;">
+            <span>BASE PROMPT BLEND</span>
+            <span class="aim-val-display" id="${prefix}-reg-ratio-val">0.20</span>
+          </label>
+          <input class="aim-range" type="range" id="${prefix}-reg-base-ratio" min="0.0" max="0.8" step="0.05" value="0.20" style="margin:0;" />
+        </div>
+      </div>
+
+      <div id="${prefix}-reg-inputs-container" style="display:none; margin-top:10px; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px;"></div>
+    </div>
+  `;
+}
+
+function bindRegionalPromptSection(wrap, prefix) {
+  const sec = wrap.querySelector(`#${prefix}-reg-mgmt`);
+  if (!sec) return;
+  const modeSelect = sec.querySelector(`#${prefix}-reg-mode-select`);
+  const ratioWrap = sec.querySelector(`#${prefix}-reg-ratio-wrap`);
+  const ratioSlider = sec.querySelector(`#${prefix}-reg-base-ratio`);
+  const ratioVal = sec.querySelector(`#${prefix}-reg-ratio-val`);
+  const inputsContainer = sec.querySelector(`#${prefix}-reg-inputs-container`);
+  const statusBadge = sec.querySelector(`#${prefix}-reg-status`);
+
+  const renderRegionInputs = () => {
+    const mode = modeSelect?.value || 'none';
+    const preset = REGIONAL_SPLIT_PRESETS[mode] || REGIONAL_SPLIT_PRESETS.none;
+    if (mode === 'none' || preset.regions.length === 0) {
+      if (inputsContainer) {
+        inputsContainer.style.display = 'none';
+        inputsContainer.innerHTML = '';
+      }
+      if (ratioWrap) ratioWrap.style.display = 'none';
+      if (statusBadge) {
+        statusBadge.textContent = 'GLOBAL';
+        statusBadge.style.color = '#888';
+        statusBadge.style.borderColor = '#555';
+        statusBadge.style.background = 'rgba(100,100,100,0.2)';
+      }
+      return;
+    }
+
+    if (ratioWrap) ratioWrap.style.display = 'block';
+    if (statusBadge) {
+      statusBadge.textContent = `${preset.regions.length} REGIONS ACTIVE`;
+      statusBadge.style.color = '#c084fc';
+      statusBadge.style.borderColor = '#c084fc';
+      statusBadge.style.background = 'rgba(168, 85, 247, 0.18)';
+    }
+
+    if (inputsContainer) {
+      inputsContainer.style.display = 'grid';
+      inputsContainer.innerHTML = preset.regions.map((r) => `
+        <div class="aim-field" style="margin:0; background:rgba(0,0,0,0.45); border:1px solid rgba(168,85,247,0.3); padding:8px; border-radius:4px;">
+          <label class="aim-label" style="font-size:0.7rem; color:#c084fc; margin-bottom:4px;">${r.title}</label>
+          <textarea class="aim-textarea aim-textarea-sm ${prefix}-reg-prompt-input" data-region-idx="${r.id}" rows="2" placeholder="${r.placeholder}" style="font-size:0.78rem;"></textarea>
+        </div>
+      `).join('');
+    }
+  };
+
+  if (modeSelect) {
+    modeSelect.addEventListener('change', renderRegionInputs);
+  }
+  if (ratioSlider && ratioVal) {
+    ratioSlider.addEventListener('input', () => {
+      ratioVal.textContent = parseFloat(ratioSlider.value).toFixed(2);
+    });
+  }
+  renderRegionInputs();
+}
+
+function getRegionalPromptValues(wrap, prefix) {
+  const sec = wrap.querySelector(`#${prefix}-reg-mgmt`);
+  if (!sec) return { regional_mode: 'none', regional_prompts: '', regional_base_ratio: 0.2 };
+  const mode = sec.querySelector(`#${prefix}-reg-mode-select`)?.value || 'none';
+  if (mode === 'none') {
+    return { regional_mode: 'none', regional_prompts: '', regional_base_ratio: 0.2 };
+  }
+  const ratio = parseFloat(sec.querySelector(`#${prefix}-reg-base-ratio`)?.value || '0.2');
+  const inputs = Array.from(sec.querySelectorAll(`.${prefix}-reg-prompt-input`));
+  const promptsList = inputs.map(el => el.value.trim());
+  if (promptsList.every(p => !p)) {
+    return { regional_mode: 'none', regional_prompts: '', regional_base_ratio: ratio };
+  }
+  return {
+    regional_mode: mode,
+    regional_prompts: JSON.stringify(promptsList),
+    regional_base_ratio: ratio,
+  };
+}
+
 /* ─── TXT2IMG PANEL ─────────────────────────────────────────── */
 function buildTxt2Img() {
   const settings = getModalSettings();
@@ -940,7 +1245,13 @@ function buildTxt2Img() {
       </div>
     </div>
 
-    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; align-items:center; gap:20px; width:100%;">
+    <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; align-items:center; gap:20px; width:100%; flex-wrap:wrap;">
+      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+        <span style="margin-right:8px; font-weight:600; color:#f59e0b;">⚡ SDXL-LIGHTNING (4-STEP REAL-TIME):</span>
+        <div id="t2i-lightning-btn" data-active="true" title="Toggle ByteDance/SDXL-Lightning 4-Step LoRA + FreeU V2 + DeepCache (steps=4, guidance_scale=0)" style="width:36px; height:20px; background:rgba(245, 158, 11, 0.35); border:1px solid #f59e0b; border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:#f59e0b; border-radius:50%; position:absolute; top:2px; left:18px; transition:0.3s;"></div>
+        </div>
+      </label>
       <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
         <span style="margin-right:8px; font-weight:600; color:var(--accent);">📖 COMIC MODE:</span>
         <div id="t2i-comic-mode-btn" data-active="false" title="Toggle Comic Mode: speech/thought bubbles & multi-page storybook when batch > 1" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid rgba(0, 184, 255, 0.4); border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
@@ -978,8 +1289,8 @@ function buildTxt2Img() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2i-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale)}</span></label>
-            <input class="aim-range" type="range" id="t2i-cfg" min="1" max="20" step="0.5" value="${settings.guidanceScale}" />
+            <label class="aim-label" for="t2i-cfg">PROMPT ADHERANCE (CFG): <span class="aim-val-display" id="t2i-cfg-val">0.0</span></label>
+            <input class="aim-range" type="range" id="t2i-cfg" min="0" max="20" step="0.5" value="0.0" />
           </div>
         </div>
 
@@ -987,8 +1298,8 @@ function buildTxt2Img() {
           <div class="aim-field aim-field-half">
             <label class="aim-label" for="t2i-scheduler">GENERATION ENGINE</label>
             <select class="aim-input" id="t2i-scheduler">
-              <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
-              <option value="Euler">Euler</option>
+              <option value="Euler" selected>Euler Trailing (SDXL-Lightning 4-Step)</option>
+              <option value="Euler a">Euler Ancestral (Euler a)</option>
               <option value="DPM++ 2M">DPM++ 2M</option>
               <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
               <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
@@ -1019,6 +1330,8 @@ function buildTxt2Img() {
           </div>
         </div>
 
+        ${getIpAdapterSectionHTML('t2i')}
+        ${getRegionalPromptSectionHTML('t2i')}
         ${getControlNetSectionHTML('t2i')}
       </div>
     </details>
@@ -1097,6 +1410,32 @@ function buildTxt2Img() {
     });
   }
 
+  const lightningBtn = wrap.querySelector('#t2i-lightning-btn');
+  if (lightningBtn) {
+    lightningBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = lightningBtn.dataset.active === 'true';
+      const newState = !isActive;
+      lightningBtn.dataset.active = newState ? 'true' : 'false';
+      lightningBtn.style.background = newState ? 'rgba(245, 158, 11, 0.35)' : 'rgba(0,0,0,0.5)';
+      lightningBtn.style.borderColor = newState ? '#f59e0b' : 'rgba(245, 158, 11, 0.4)';
+      const knob = lightningBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = newState ? '18px' : '2px';
+        knob.style.background = newState ? '#f59e0b' : 'var(--text-muted)';
+      }
+      if (newState) {
+        if (cfgInput) { cfgInput.value = '0.0'; if (cfgVal) cfgVal.textContent = '0'; }
+        setStatus(wrap, '#t2i-status', '⚡ SDXL-LIGHTNING ENGAGED: 4-Step Fused LoRA, Trailing Scheduler, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
+      } else {
+        if (cfgInput) { cfgInput.value = settings.guidanceScale || '7.0'; if (cfgVal) cfgVal.textContent = parseFloat(cfgInput.value); }
+        setStatus(wrap, '#t2i-status', 'SDXL-LIGHTNING DISENGAGED: Standard multi-step CFG mode active.', 'info');
+      }
+    });
+  }
+
+  bindIpAdapterSection(wrap, 't2i');
+  bindRegionalPromptSection(wrap, 't2i');
   bindControlNetSection(wrap, 't2i');
 
   // --- STREAM GENERATOR LOGIC ---
@@ -1166,17 +1505,46 @@ function buildTxt2Img() {
           if (modelStr.includes('cyberrealistic')) cyberFlag = '1';
           if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
           
+          const isLightning = !lightningBtn || lightningBtn.dataset.active === 'true';
+          const effectiveSteps = isLightning ? 4 : steps;
+          const effectiveCfg = isLightning ? 0.0 : cfg;
+          const effectiveScheduler = isLightning ? 'Euler' : randomScheduler;
+          const ipVals = getIpAdapterValues(wrap, 't2i');
+          const regVals = getRegionalPromptValues(wrap, 't2i');
+          const ctrlImg = window._cn_global_img || '';
+          const ctrlType = ctrlImg ? (window._cn_global_type || 'canny') : 'none';
+          const ctrlScale = window._cn_global_scale || 1.0;
+
           const params = new URLSearchParams({
             prompt, model: modelStr, checkpoint: modelStr, model_name: modelStr,
             checkpoint_name: modelStr, base_model: modelStr, selected_model: modelStr,
             JuggernautXL: juggFlag, CyberRealisticXL: cyberFlag, negative_prompt: neg,
-            guidance_scale: cfg, num_inference_steps: steps, batch_size: 1, 
-            lora: lora, scheduler: randomScheduler, sampler: randomScheduler, clip_skip: clipSkip,
-            width: w, height: h, seed: randomSeed
+            guidance_scale: effectiveCfg, num_inference_steps: effectiveSteps, batch_size: 1, 
+            lora: lora, scheduler: effectiveScheduler, sampler: effectiveScheduler, clip_skip: clipSkip,
+            width: w, height: h, seed: randomSeed,
+            lcm_mode: isLightning ? '1' : '0',
+            regional_mode: regVals.regional_mode,
+            regional_prompts: regVals.regional_prompts,
+            regional_base_ratio: regVals.regional_base_ratio,
           });
 
           const txt2imgEndpoint = resolveEndpoint(settings.txt2imgUrl, 'stream');
-          const res = await fetch(`${txt2imgEndpoint}?${params}`);
+          const hasHeavyPayload = Boolean(ipVals.ip_adapter_image_b64 || ctrlImg || regVals.regional_prompts);
+          const res = hasHeavyPayload
+            ? await fetch(txt2imgEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ...Object.fromEntries(params.entries()),
+                  control_image_b64: ctrlImg,
+                  control_type: ctrlType,
+                  controlnet_conditioning_scale: ctrlScale,
+                  ip_adapter_image_b64: ipVals.ip_adapter_image_b64,
+                  ip_adapter_scale: ipVals.ip_adapter_scale,
+                  ip_adapter_mode: ipVals.ip_adapter_mode,
+                }),
+              })
+            : await fetch(`${txt2imgEndpoint}?${params}`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
           const reader = res.body.getReader();
@@ -1323,6 +1691,16 @@ function buildTxt2Img() {
       if (modelStr.includes('cyberrealistic')) { cyberFlag = '1'; }
       if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
 
+      const isLightning = !lightningBtn || lightningBtn.dataset.active === 'true';
+      const effectiveSteps = isLightning ? 4 : steps;
+      const effectiveCfg = isLightning ? 0.0 : cfg;
+      const effectiveScheduler = isLightning ? 'Euler' : scheduler;
+      const ipVals = getIpAdapterValues(wrap, 't2i');
+      const regVals = getRegionalPromptValues(wrap, 't2i');
+      const ctrlImg = window._cn_global_img || '';
+      const ctrlType = ctrlImg ? (window._cn_global_type || 'canny') : 'none';
+      const ctrlScale = window._cn_global_scale || 1.0;
+
       const params = new URLSearchParams({
         prompt,
         model: modelStr,
@@ -1334,19 +1712,38 @@ function buildTxt2Img() {
         JuggernautXL: juggFlag,
         CyberRealisticXL: cyberFlag,
         negative_prompt: neg,
-        guidance_scale: cfg,
-        num_inference_steps: steps,
+        guidance_scale: effectiveCfg,
+        num_inference_steps: effectiveSteps,
         batch_size: batchSize,
         lora: lora,
         comic_mode: isComicMode ? '1' : '0',
-        scheduler: scheduler,
-        sampler: scheduler,
+        scheduler: effectiveScheduler,
+        sampler: effectiveScheduler,
         clip_skip: clipSkip,
         width: w,
         height: h,
+        lcm_mode: isLightning ? '1' : '0',
+        regional_mode: regVals.regional_mode,
+        regional_prompts: regVals.regional_prompts,
+        regional_base_ratio: regVals.regional_base_ratio,
       });
       const txt2imgEndpoint = resolveEndpoint(settings.txt2imgUrl, 'stream');
-      const res = await fetch(`${txt2imgEndpoint}?${params}`);
+      const hasHeavyPayload = Boolean(ipVals.ip_adapter_image_b64 || ctrlImg || regVals.regional_prompts);
+      const res = hasHeavyPayload
+        ? await fetch(txt2imgEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...Object.fromEntries(params.entries()),
+              control_image_b64: ctrlImg,
+              control_type: ctrlType,
+              controlnet_conditioning_scale: ctrlScale,
+              ip_adapter_image_b64: ipVals.ip_adapter_image_b64,
+              ip_adapter_scale: ipVals.ip_adapter_scale,
+              ip_adapter_mode: ipVals.ip_adapter_mode,
+            }),
+          })
+        : await fetch(`${txt2imgEndpoint}?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const reader = res.body.getReader();
@@ -1659,7 +2056,13 @@ function buildImg2Img() {
           <button class="aim-seg-btn" data-steps="${settings.stepsFocusedImg}">🎯 DETAILED</button>
         </div>
       </div>
-      <div class="aim-field aim-field-half" style="display:flex; justify-content:flex-end; align-items:flex-end;">
+      <div class="aim-field aim-field-half" style="display:flex; justify-content:flex-end; align-items:flex-end; gap:14px; flex-wrap:wrap;">
+        <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin-bottom:6px; user-select:none;">
+          <span style="margin-right:8px; color:#f59e0b; font-weight:600;">⚡ LIGHTNING (4-STEP):</span>
+          <div id="i2i-lightning-btn" data-active="false" title="Toggle ByteDance/SDXL-Lightning 4-Step LoRA + FreeU V2 + DeepCache on SDXL Native" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid rgba(245, 158, 11, 0.45); border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+            <div class="toggle-knob" style="width:14px; height:14px; background:var(--text-muted); border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
+          </div>
+        </label>
         <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin-bottom:6px; user-select:none;">
           <span style="margin-right:8px;">DETAILIFIER:</span>
           <div id="i2i-detailifier-btn" data-active="false" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid #10b981; border-radius:10px; position:relative; transition:0.3s;">
@@ -1784,6 +2187,8 @@ function buildImg2Img() {
           </div>
         </div>
 
+        ${getIpAdapterSectionHTML('i2i')}
+        ${getRegionalPromptSectionHTML('i2i')}
         ${getControlNetSectionHTML('i2i')}
       </div>
     </details>
@@ -2340,6 +2745,30 @@ function buildImg2Img() {
   bindDropzone(fileInput, dropzone, dzInner, preview);
   bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
 
+  const i2iLightningBtn = wrap.querySelector('#i2i-lightning-btn');
+  if (i2iLightningBtn) {
+    i2iLightningBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = i2iLightningBtn.dataset.active === 'true';
+      const newState = !isActive;
+      i2iLightningBtn.dataset.active = newState ? 'true' : 'false';
+      i2iLightningBtn.style.background = newState ? 'rgba(245, 158, 11, 0.35)' : 'rgba(0,0,0,0.5)';
+      i2iLightningBtn.style.borderColor = newState ? '#f59e0b' : 'rgba(245, 158, 11, 0.45)';
+      const knob = i2iLightningBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = newState ? '18px' : '2px';
+        knob.style.background = newState ? '#f59e0b' : 'var(--text-muted)';
+      }
+      if (newState) {
+        setStatus(wrap, '#i2i-status', '⚡ SDXL-LIGHTNING (4-STEP) ENGAGED: Trailing Euler, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
+      } else {
+        setStatus(wrap, '#i2i-status', 'SDXL-LIGHTNING DISENGAGED.', 'info');
+      }
+    });
+  }
+
+  bindIpAdapterSection(wrap, 'i2i');
+  bindRegionalPromptSection(wrap, 'i2i');
   bindControlNetSection(wrap, 'i2i');
 
   if (window._i2i_injected_image || window._pending_img2img_image) {
@@ -2495,6 +2924,21 @@ function buildImg2Img() {
         if (selectedI2iModel === 'sdxl') {
           const ckpt = wrap.querySelector('#i2i-checkpoint')?.value || 'epicrealismXL_pureFix';
           formData.append('checkpoint', ckpt);
+        }
+
+        const isI2iLightning = i2iLightningBtn && i2iLightningBtn.dataset.active === 'true';
+        const ipValsI2i = getIpAdapterValues(wrap, 'i2i');
+        const regValsI2i = getRegionalPromptValues(wrap, 'i2i');
+        formData.append('lcm_mode', isI2iLightning ? '1' : '0');
+        if (ipValsI2i.ip_adapter_image_b64) {
+          formData.append('ip_adapter_image_b64', ipValsI2i.ip_adapter_image_b64);
+          formData.append('ip_adapter_scale', ipValsI2i.ip_adapter_scale);
+          formData.append('ip_adapter_mode', ipValsI2i.ip_adapter_mode);
+        }
+        if (regValsI2i.regional_mode && regValsI2i.regional_mode !== 'none' && regValsI2i.regional_prompts) {
+          formData.append('regional_mode', regValsI2i.regional_mode);
+          formData.append('regional_prompts', regValsI2i.regional_prompts);
+          formData.append('regional_base_ratio', regValsI2i.regional_base_ratio);
         }
 
         // Objectives 2, 6 & Flux: Denoising Strength

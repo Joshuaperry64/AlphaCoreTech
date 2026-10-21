@@ -9,6 +9,22 @@ import { showToast } from '../components/toast.js';
 
 const CHANGELOG_DATA = [
   {
+    version: 'v5.3.0 BUILD 200',
+    date: '2026.10.21',
+    badge: 'REAL-TIME SYNTHESIS ACCELERATION // SDXL-LIGHTNING, IP-ADAPTER & REGIONAL PROMPTING',
+    badgeColor: '#f59e0b',
+    title: 'SDXL-LIGHTNING 4-STEP REAL-TIME ENGINE, FREEU V2, DEEPCACHE, AOT TORCH.COMPILE WARMUP, IP-ADAPTER & REGIONAL PROMPTING MATRIX',
+    summary: 'Major Modal GPU pipeline and Studio Matrix upgrade introducing sub-second 4-step SDXL-Lightning synthesis with fused LoRA weights and trailing Euler scheduling, Native Diffusers FreeU V2 structure coherence, DeepCache feature caching, AOT torch.compile graph compilation during container spin-up (@modal.enter), dual-mode IP-Adapter Image Prompting (Standard Style & ViT-H Face Identity Lock), and Masked Cross-Attention Regional Prompting across spatial split layouts.',
+    changes: [
+      'SDXL-Lightning 4-Step Real-Time Engine: Integrated ByteDance/SDXL-Lightning (sdxl_lightning_4step_lora.safetensors) directly fused into the SDXL pipeline with EulerDiscreteScheduler(timestep_spacing="trailing"), executing real-time synthesis at num_inference_steps=4 and guidance_scale=0.0.',
+      'FreeU V2 & DeepCache Acceleration: Enabled Native Diffusers FreeU V2 structure coherence (s1=0.9, s2=0.2, b1=1.3, b2=1.4) alongside DeepCacheSDHelper (cache_interval=2) across SDXL pipelines to maximize high-frequency detail retention while slashing U-Net compute.',
+      'AOT Torch.Compile & @modal.enter() Cold-Start Warmup: Wrapped U-Net and VAE in torch.channels_last memory format and compiled the U-Net with torch.compile(mode="reduce-overhead", fullgraph=True). Engineered an automatic 4-step dummy warmup pass inside @modal.enter() so CUDA graph compilation finishes during container spin-up rather than timing out on the first user request.',
+      'IP-Adapter Integration (Image Prompting): Added full Cross-Attention visual reference injection supporting both Standard Style & Composition transfer (ip-adapter_sdxl.bin) and Face / Character Identity Lock (ip-adapter-plus-face_sdxl_vit-h.bin) with Vault and device upload controls.',
+      'Regional Prompting (Masked Cross-Attention Matrix): Engineered custom RegionalAttnProcessor2_0 wrapping U-Net Cross-Attention (attn2) layers with Gaussian-feathered spatial masks across 5 preset split layouts (Left/Right, Top/Bottom, 3-Column, Center Subject + Background, and 4-Quadrants) with adjustable Base Prompt Blend ratio.',
+      'POST Streaming Transport Upgrade: Upgraded Modal web_txt2img SSE endpoints to accept POST /stream and POST / payloads (JSON and multipart FormData) alongside GET /stream, enabling multi-megabyte base64 IP-Adapter and ControlNet conditioning payloads without URL length limits.'
+    ]
+  },
+  {
     version: 'v5.2.4 BUILD 195',
     date: '2026.10.17',
     badge: 'CYBER BOOT REVOLUTION // VIDEO & CANVAS VISUALIZER MATRIX',

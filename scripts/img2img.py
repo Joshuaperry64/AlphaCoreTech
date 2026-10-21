@@ -41,6 +41,7 @@ image = (
         "omegaconf",
         "einops", "timm", "transformers-stream-generator",
         "peft",
+        "DeepCache",
         "python-multipart",
         extra_options="--index-strategy unsafe-best-match",
         extra_index_url="https://download.pytorch.org/whl/cu128",
@@ -152,6 +153,126 @@ def resolve_checkpoint_filename(checkpoint_name: str) -> str:
 image = image.add_local_python_source("shared_app")
 
 
+# --- REGIONAL PROMPTING (MASKED CROSS-ATTENTION / ATTENTION COUPLE) ---
+def build_regional_mask_i2i(height: int, width: int, mode: str, num_regions: int, device, dtype):
+    import torch
+    H, W = height, width
+    y_coords = torch.linspace(0, 1, H, device=device, dtype=dtype).view(H, 1).expand(H, W)
+    x_coords = torch.linspace(0, 1, W, device=device, dtype=dtype).view(1, W).expand(H, W)
+    mode = (mode or "none").lower().strip()
+    sharpness = 16.0
+
+    raw_masks = []
+    if mode in ("left_right", "horizontal", "cols", "2col") or (mode == "auto" and num_regions == 2):
+        m_left = torch.sigmoid((0.5 - x_coords) * sharpness)
+        raw_masks = [m_left, 1.0 - m_left]
+    elif mode in ("top_bottom", "vertical", "rows", "2row"):
+        m_top = torch.sigmoid((0.5 - y_coords) * sharpness)
+        raw_masks = [m_top, 1.0 - m_top]
+    elif mode in ("three_col", "3col", "thirds"):
+        m1 = torch.sigmoid((0.333 - x_coords) * sharpness)
+        m3 = torch.sigmoid((x_coords - 0.667) * sharpness)
+        m2 = torch.clamp(1.0 - m1 - m3, min=0.0)
+        raw_masks = [m1, m2, m3]
+    elif mode in ("center_bg", "center_background", "spotlight"):
+        dist = torch.sqrt((x_coords - 0.5) ** 2 + (y_coords - 0.5) ** 2)
+        m_center = torch.sigmoid((0.32 - dist) * sharpness)
+        raw_masks = [m_center, 1.0 - m_center]
+    elif mode in ("quadrants", "grid", "4quad"):
+        m_left = torch.sigmoid((0.5 - x_coords) * sharpness)
+        m_right = 1.0 - m_left
+        m_top = torch.sigmoid((0.5 - y_coords) * sharpness)
+        m_bottom = 1.0 - m_top
+        raw_masks = [m_top * m_left, m_top * m_right, m_bottom * m_left, m_bottom * m_right]
+    else:
+        edges = torch.linspace(0, 1, num_regions + 1, device=device, dtype=dtype)
+        for i in range(num_regions):
+            raw_masks.append(((x_coords >= edges[i]) & (x_coords <= edges[i + 1])).to(dtype))
+
+    while len(raw_masks) < num_regions:
+        raw_masks.append(torch.ones((H, W), device=device, dtype=dtype) / num_regions)
+    raw_masks = raw_masks[:num_regions]
+    stacked = torch.stack(raw_masks, dim=0)
+    return stacked / (stacked.sum(dim=0, keepdim=True) + 1e-6)
+
+
+class RegionalAttnProcessorI2I:
+    def __init__(self, base_processor, region_cond_embeds, regional_mode="left_right", base_ratio=0.2, latent_hw=(128, 128)):
+        self.base_processor = base_processor
+        self.region_cond_embeds = region_cond_embeds
+        self.regional_mode = regional_mode
+        self.base_ratio = float(base_ratio)
+        self.latent_hw = latent_hw
+        self._mask_cache = {}
+
+    def _get_masks(self, seq_len: int, device, dtype):
+        key = (seq_len, str(device), str(dtype))
+        if key in self._mask_cache:
+            return self._mask_cache[key]
+        orig_h, orig_w = self.latent_hw
+        aspect = orig_w / max(1, orig_h)
+        h = max(1, int(round((seq_len / aspect) ** 0.5)))
+        w = max(1, seq_len // h)
+        if h * w != seq_len:
+            for cand_h in range(int(seq_len**0.5), 0, -1):
+                if seq_len % cand_h == 0:
+                    h, w = cand_h, seq_len // cand_h
+                    break
+        masks_2d = build_regional_mask_i2i(h, w, self.regional_mode, len(self.region_cond_embeds), device, dtype)
+        masks_flat = masks_2d.reshape(len(self.region_cond_embeds), 1, seq_len, 1)
+        self._mask_cache[key] = masks_flat
+        return masks_flat
+
+    def __call__(self, attn, hidden_states, encoder_hidden_states=None, attention_mask=None, temb=None, *args, **kwargs):
+        import torch
+        if encoder_hidden_states is None or not self.region_cond_embeds:
+            return self.base_processor(attn, hidden_states, encoder_hidden_states=encoder_hidden_states, attention_mask=attention_mask, temb=temb, *args, **kwargs)
+
+        ip_tokens_full = None
+        text_seq_len = self.region_cond_embeds[0].shape[1]
+        if isinstance(encoder_hidden_states, tuple):
+            _, ip_tokens_full = encoder_hidden_states
+        elif hasattr(encoder_hidden_states, "shape") and encoder_hidden_states.shape[1] > text_seq_len:
+            ip_tokens_full = encoder_hidden_states[:, text_seq_len:, :]
+
+        base_out = self.base_processor(attn, hidden_states, encoder_hidden_states=encoder_hidden_states, attention_mask=attention_mask, temb=temb, *args, **kwargs)
+        batch_total, seq_len, _ = hidden_states.shape
+        r_batch = self.region_cond_embeds[0].shape[0]
+        has_cfg = batch_total == 2 * r_batch
+        if has_cfg:
+            _, hidden_cond = hidden_states.chunk(2, dim=0)
+            base_uncond, base_cond = base_out.chunk(2, dim=0)
+            ip_cond = ip_tokens_full.chunk(2, dim=0)[1] if ip_tokens_full is not None else None
+        elif batch_total == r_batch:
+            hidden_cond = hidden_states
+            base_cond = base_out
+            ip_cond = ip_tokens_full
+        else:
+            return base_out
+
+        masks = self._get_masks(seq_len, hidden_cond.device, hidden_cond.dtype)
+        regional_accum = torch.zeros_like(base_cond)
+        for r_idx, reg_emb in enumerate(self.region_cond_embeds):
+            reg_emb_cast = reg_emb.to(device=hidden_cond.device, dtype=hidden_cond.dtype)
+            if ip_cond is not None:
+                reg_enc = (reg_emb_cast, ip_cond) if isinstance(encoder_hidden_states, tuple) else torch.cat([reg_emb_cast, ip_cond], dim=1)
+            else:
+                reg_enc = reg_emb_cast
+            reg_out = self.base_processor(
+                attn,
+                hidden_cond,
+                encoder_hidden_states=reg_enc,
+                attention_mask=attention_mask,
+                temb=temb.chunk(2, dim=0)[1] if (temb is not None and has_cfg) else temb,
+                *args,
+                **kwargs,
+            )
+            regional_accum = regional_accum + reg_out * masks[r_idx]
+
+        blended_cond = (self.base_ratio * base_cond) + ((1.0 - self.base_ratio) * regional_accum)
+        return torch.cat([base_uncond, blended_cond], dim=0) if has_cfg else blended_cond
+
+
 @app.cls(
     image=image,
     gpu="H100",
@@ -169,6 +290,8 @@ class Img2Img:
     def enter(self):
         self.current_model = None
         self.pipe = None
+        self.loaded_ip_adapter_mode = None
+        self.loaded_image_encoder_sub = None
         
     def _load_model(self, model_choice: str, checkpoint: str = ""):
         if not hasattr(self, "pipe"):
@@ -289,6 +412,20 @@ class Img2Img:
                     self.pipe.watermark = None
                 print(f"[SDXL] Pretrained fallback base model loaded successfully.")
 
+            # Apply FreeU V2, DeepCache, and channels_last to SDXL Img2Img pipeline
+            try:
+                self.pipe.enable_freeu(s1=0.9, s2=0.2, b1=1.3, b2=1.4)
+                self.pipe.unet.to(memory_format=torch.channels_last)
+                self.pipe.vae.to(memory_format=torch.channels_last)
+                from DeepCache import DeepCacheSDHelper
+                helper = DeepCacheSDHelper(pipe=self.pipe)
+                helper.set_params(cache_interval=2, cache_branch_id=0)
+                helper.enable()
+                self.deepcache_helper = helper
+                print("✅ [SDXL-I2I] FreeU V2 + DeepCache (interval=2) + channels_last enabled.")
+            except Exception as opt_e:
+                print(f"[SDXL-I2I] Optimization notice: {opt_e}")
+
             try:
                 cache_volume.commit()
             except Exception:
@@ -378,7 +515,128 @@ class Img2Img:
                 print(f"[SD3.5] Volume commit note: {ce}")
 
         self.current_model = cache_key
+        self.loaded_ip_adapter_mode = None
+        self.loaded_image_encoder_sub = None
         print(f"✅ Model [{self.current_model.upper()}] loaded successfully!")
+
+    def _configure_sdxl_ip_adapter(self, ip_adapter_image_b64: str, ip_adapter_scale: float, ip_adapter_mode: str):
+        import base64
+        import io
+        import torch
+        from PIL import Image
+        from transformers import CLIPVisionModelWithProjection
+
+        if not ip_adapter_image_b64 or not ip_adapter_image_b64.strip():
+            if getattr(self, "loaded_ip_adapter_mode", None) is not None:
+                try:
+                    self.pipe.unload_ip_adapter()
+                    self.loaded_ip_adapter_mode = None
+                except Exception:
+                    try:
+                        self.pipe.set_ip_adapter_scale(0.0)
+                    except Exception:
+                        pass
+            return None
+
+        clean_b64 = ip_adapter_image_b64.split(",", 1)[1] if "," in ip_adapter_image_b64 else ip_adapter_image_b64.strip()
+        ip_pil = Image.open(io.BytesIO(base64.b64decode(clean_b64))).convert("RGB")
+        mode = (ip_adapter_mode or "standard").lower().strip()
+        subfolder = "sdxl_models"
+        if "face" in mode:
+            weight_name = "ip-adapter-plus-face_sdxl_vit-h.bin"
+            encoder_sub = "models/image_encoder"
+        elif "plus" in mode:
+            weight_name = "ip-adapter-plus_sdxl_vit-h.bin"
+            encoder_sub = "models/image_encoder"
+        else:
+            weight_name = "ip-adapter_sdxl.bin"
+            encoder_sub = "sdxl_models/image_encoder"
+
+        adapter_key = f"{subfolder}/{weight_name}"
+        if getattr(self, "loaded_ip_adapter_mode", None) != adapter_key:
+            print(f"[SDXL-I2I IP-ADAPTER] Loading {adapter_key} (encoder: {encoder_sub})...")
+            if getattr(self, "loaded_image_encoder_sub", None) != encoder_sub:
+                image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+                    "h94/IP-Adapter",
+                    subfolder=encoder_sub,
+                    torch_dtype=torch.bfloat16,
+                    cache_dir=CACHE_DIR,
+                ).to("cuda")
+                self.pipe.register_modules(image_encoder=image_encoder)
+                self.loaded_image_encoder_sub = encoder_sub
+
+            self.pipe.load_ip_adapter(
+                "h94/IP-Adapter",
+                subfolder=subfolder,
+                weight_name=weight_name,
+                cache_dir=CACHE_DIR,
+            )
+            self.loaded_ip_adapter_mode = adapter_key
+            try:
+                cache_volume.commit()
+            except Exception:
+                pass
+
+        self.pipe.set_ip_adapter_scale(float(ip_adapter_scale))
+        print(f"[SDXL-I2I IP-ADAPTER] Active ({weight_name}) at scale={float(ip_adapter_scale):.2f}")
+        return ip_pil
+
+    def _apply_sdxl_regional_prompting(self, regional_mode: str, regional_prompts_str: str, regional_base_ratio: float, batch_size: int, height: int, width: int):
+        import json as _json
+        import torch
+        mode = (regional_mode or "none").lower().strip()
+        if mode in ("none", "", "off", "disabled") or not regional_prompts_str:
+            return None
+
+        region_texts = []
+        raw_str = regional_prompts_str.strip()
+        if raw_str.startswith("["):
+            try:
+                parsed = _json.loads(raw_str)
+                if isinstance(parsed, list):
+                    region_texts = [str(x).strip() for x in parsed if str(x).strip()]
+            except Exception:
+                pass
+        if not region_texts:
+            if "||" in raw_str:
+                region_texts = [p.strip() for p in raw_str.split("||") if p.strip()]
+            elif "BREAK" in raw_str:
+                region_texts = [p.strip() for p in raw_str.split("BREAK") if p.strip()]
+            else:
+                region_texts = [raw_str]
+
+        if not region_texts:
+            return None
+
+        print(f"[SDXL-I2I REGIONAL] Mode='{mode}', Regions={len(region_texts)}, BaseRatio={regional_base_ratio:.2f}")
+        region_cond_embeds = []
+        with torch.no_grad():
+            for r_text in region_texts:
+                enc_res = self.pipe.encode_prompt(
+                    prompt=r_text,
+                    prompt_2=r_text,
+                    device="cuda",
+                    num_images_per_prompt=batch_size,
+                    do_classifier_free_guidance=False,
+                )
+                region_cond_embeds.append(enc_res[0])
+
+        orig_processors = dict(self.pipe.unet.attn_processors)
+        new_processors = {}
+        latent_hw = (max(1, height // 8), max(1, width // 8))
+        for name, proc in orig_processors.items():
+            if name.endswith("attn2.processor"):
+                new_processors[name] = RegionalAttnProcessorI2I(
+                    base_processor=proc,
+                    region_cond_embeds=region_cond_embeds,
+                    regional_mode=mode,
+                    base_ratio=regional_base_ratio,
+                    latent_hw=latent_hw,
+                )
+            else:
+                new_processors[name] = proc
+        self.pipe.unet.set_attn_processor(new_processors)
+        return orig_processors
 
     @modal.method(is_generator=True)
     def run_stream(
@@ -404,6 +662,13 @@ class Img2Img:
         seed: int | None = None,
         image_bytes2: bytes | None = None,
         refs: list[bytes] = [],
+        lcm_mode: int = 0,
+        ip_adapter_image_b64: str = "",
+        ip_adapter_scale: float = 0.6,
+        ip_adapter_mode: str = "standard",
+        regional_mode: str = "none",
+        regional_prompts: str = "",
+        regional_base_ratio: float = 0.2,
     ):
         from diffusers.utils import load_image
         from PIL import Image
@@ -553,43 +818,121 @@ class Img2Img:
 
                     elif self.current_model.startswith("sdxl"):
                         from PIL import Image
+                        import diffusers
                         w, h = pil_images[0].size
                         scale_f = min(1.0, 1024.0 / max(w, h))
                         tw = max(64, int(round(w * scale_f / 64) * 64))
                         th = max(64, int(round(h * scale_f / 64) * 64))
                         sdxl_img = pil_images[0].resize((tw, th), Image.Resampling.LANCZOS)
 
-                        sdxl_steps = max(10, num_inference_steps)
+                        is_lcm_active = bool(int(lcm_mode or 0) == 1)
+                        if is_lcm_active:
+                            print("⚡ [SDXL-I2I LIGHTNING] Activating EulerDiscreteScheduler(timestep_spacing='trailing') + ByteDance/SDXL-Lightning 4-step LoRA...")
+                            self.pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
+                                self.pipe.scheduler.config,
+                                timestep_spacing="trailing",
+                            )
+                            sdxl_steps = 4
+                            sdxl_guidance = 0.0
+                        else:
+                            self.pipe.scheduler = diffusers.EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+                            sdxl_steps = max(10, num_inference_steps)
+                            sdxl_guidance = effective_guidance if effective_guidance > 1.0 else 6.0
+
                         def sdxl_step_callback(pipe, step_index, timestep, callback_kwargs):
                             q.put({"step": step_index, "max_steps": sdxl_steps, "images_completed": images_completed, "total_images": batch_size})
                             return callback_kwargs
 
-                        sdxl_guidance = effective_guidance if effective_guidance > 1.0 else 6.0
                         sdxl_strength = min(0.99, max(0.05, effective_strength))
 
-                        # LoRA support for SDXL
+                        # LoRA + SDXL-Lightning 4-step LoRA support for SDXL
+                        loaded_sdxl_adapters = []
+                        sdxl_adapter_weights = []
+                        if is_lcm_active:
+                            try:
+                                from huggingface_hub import hf_hub_download
+                                light_name = "sdxl_lightning_4step"
+                                ckpt_path = hf_hub_download("ByteDance/SDXL-Lightning", "sdxl_lightning_4step_lora.safetensors", cache_dir=CACHE_DIR)
+                                self.pipe.load_lora_weights(ckpt_path, adapter_name=light_name)
+                                loaded_sdxl_adapters.append(light_name)
+                                sdxl_adapter_weights.append(1.0)
+                            except Exception as lcm_e:
+                                print(f"[SDXL-I2I] SDXL-Lightning LoRA load note: {lcm_e}")
+
                         if lora and lora != "none":
                             loras_to_load = [l.strip() for l in lora.split(",") if l.strip() and l.strip() != "none"]
                             for l in loras_to_load:
-                                lora_path = Path("/hf-hub-cache/loras") / f"{l}.safetensors"
+                                clean_l = l.replace(".safetensors", "")
+                                lora_path = Path("/hf-hub-cache/loras") / f"{clean_l}.safetensors"
                                 if lora_path.exists():
                                     try:
-                                        self.pipe.load_lora_weights(str(lora_path.parent), weight_name=lora_path.name, adapter_name=l)
+                                        self.pipe.load_lora_weights(str(lora_path.parent), weight_name=lora_path.name, adapter_name=clean_l)
+                                        loaded_sdxl_adapters.append(clean_l)
+                                        sdxl_adapter_weights.append(0.8 if is_lcm_active else 1.0)
                                     except Exception as le:
                                         print(f"[SDXL] LoRA load note for {l}: {le}")
 
+                        if loaded_sdxl_adapters:
+                            try:
+                                self.pipe.set_adapters(loaded_sdxl_adapters, adapter_weights=sdxl_adapter_weights)
+                            except Exception as ae:
+                                print(f"[SDXL] Adapter activation note: {ae}")
+
+                        # IP-Adapter support for SDXL Img2Img
+                        ip_pil = None
+                        try:
+                            ip_pil = self._configure_sdxl_ip_adapter(
+                                ip_adapter_image_b64=ip_adapter_image_b64,
+                                ip_adapter_scale=ip_adapter_scale,
+                                ip_adapter_mode=ip_adapter_mode,
+                            )
+                        except Exception as ip_e:
+                            print(f"[SDXL-I2I] IP-Adapter warning: {ip_e}")
+
+                        # Regional Prompting support for SDXL Img2Img
+                        orig_sdxl_procs = None
+                        if regional_mode and regional_mode.lower() not in ("none", "", "off") and regional_prompts:
+                            try:
+                                orig_sdxl_procs = self._apply_sdxl_regional_prompting(
+                                    regional_mode=regional_mode,
+                                    regional_prompts_str=regional_prompts,
+                                    regional_base_ratio=float(regional_base_ratio),
+                                    batch_size=current_batch_size,
+                                    height=th,
+                                    width=tw,
+                                )
+                            except Exception as reg_e:
+                                print(f"[SDXL-I2I] Regional prompting warning: {reg_e}")
+
+                        sdxl_kwargs = {}
+                        if ip_pil is not None:
+                            sdxl_kwargs["ip_adapter_image"] = ip_pil
+
                         print(f"[SDXL] Img2Img inference: strength={sdxl_strength:.2f}, guidance={sdxl_guidance:.1f}, steps={sdxl_steps}, dims=({tw}x{th})")
-                        chunk_images = self.pipe(
-                            prompt=effective_prompt,
-                            negative_prompt=negative_prompt,
-                            image=sdxl_img,
-                            num_inference_steps=sdxl_steps,
-                            strength=sdxl_strength,
-                            guidance_scale=sdxl_guidance,
-                            num_images_per_prompt=current_batch_size,
-                            generator=generator,
-                            callback_on_step_end=sdxl_step_callback
-                        ).images
+                        try:
+                            chunk_images = self.pipe(
+                                prompt=effective_prompt,
+                                negative_prompt=(negative_prompt if sdxl_guidance > 0.0 else None),
+                                image=sdxl_img,
+                                num_inference_steps=sdxl_steps,
+                                strength=sdxl_strength,
+                                guidance_scale=sdxl_guidance,
+                                num_images_per_prompt=current_batch_size,
+                                generator=generator,
+                                callback_on_step_end=sdxl_step_callback,
+                                **sdxl_kwargs,
+                            ).images
+                        finally:
+                            if orig_sdxl_procs is not None:
+                                try:
+                                    self.pipe.unet.set_attn_processor(orig_sdxl_procs)
+                                except Exception:
+                                    pass
+                            if loaded_sdxl_adapters:
+                                try:
+                                    self.pipe.unload_lora_weights()
+                                except Exception:
+                                    pass
 
                     elif self.current_model == "flux_fill":
                         from PIL import Image
@@ -729,6 +1072,13 @@ class Img2Img:
         seed: int | None = None,
         image_bytes2: bytes | None = None,
         refs: list[bytes] = [],
+        lcm_mode: int = 0,
+        ip_adapter_image_b64: str = "",
+        ip_adapter_scale: float = 0.6,
+        ip_adapter_mode: str = "standard",
+        regional_mode: str = "none",
+        regional_prompts: str = "",
+        regional_base_ratio: float = 0.2,
     ) -> list[bytes]:
         import base64
         msgs = list(self.run_stream.local(
@@ -753,6 +1103,13 @@ class Img2Img:
             seed=seed,
             image_bytes2=image_bytes2,
             refs=refs,
+            lcm_mode=lcm_mode,
+            ip_adapter_image_b64=ip_adapter_image_b64,
+            ip_adapter_scale=ip_adapter_scale,
+            ip_adapter_mode=ip_adapter_mode,
+            regional_mode=regional_mode,
+            regional_prompts=regional_prompts,
+            regional_base_ratio=regional_base_ratio,
         ))
         final_msg = msgs[-1]
         if "error" in final_msg:
@@ -816,6 +1173,7 @@ class Img2Img:
             mask: UploadFile | None = File(None),
             ref1: UploadFile | None = File(None),
             ref2: UploadFile | None = File(None),
+            ip_adapter_image: UploadFile | None = File(None),
             Qwen: int = Form(0),
             Flux: int = Form(0),
             model_name: str = Form(""),
@@ -835,14 +1193,26 @@ class Img2Img:
             mask_b64: str = Form(""),
             width: int = Form(0),
             height: int = Form(0),
+            lcm_mode: int = Form(0),
+            ip_adapter_image_b64: str = Form(""),
+            ip_adapter_scale: float = Form(0.6),
+            ip_adapter_mode: str = Form("standard"),
+            regional_mode: str = Form("none"),
+            regional_prompts: str = Form(""),
+            regional_base_ratio: float = Form(0.2),
         ):
             from fastapi.responses import StreamingResponse
+            import base64
             
             image_bytes = image.file.read()
             image_bytes2 = image2.file.read() if image2 else None
             mask_bytes = mask.file.read() if mask else None
             refs_bytes = [ref.file.read() for ref in [ref1, ref2] if ref]
             seed_val = None if seed == -1 else seed
+            if ip_adapter_image and not ip_adapter_image_b64:
+                ip_bytes = ip_adapter_image.file.read()
+                if ip_bytes:
+                    ip_adapter_image_b64 = base64.b64encode(ip_bytes).decode("utf-8")
             
             effective_model = (model_name or model or "").lower().strip()
 
@@ -869,6 +1239,13 @@ class Img2Img:
                     seed=seed_val,
                     image_bytes2=image_bytes2,
                     refs=refs_bytes,
+                    lcm_mode=lcm_mode,
+                    ip_adapter_image_b64=ip_adapter_image_b64,
+                    ip_adapter_scale=ip_adapter_scale,
+                    ip_adapter_mode=ip_adapter_mode,
+                    regional_mode=regional_mode,
+                    regional_prompts=regional_prompts,
+                    regional_base_ratio=regional_base_ratio,
                 ):
                     yield f"data: {json.dumps(msg)}\n\n"
                     
@@ -893,6 +1270,7 @@ class Img2Img:
             mask: UploadFile | None = File(None),
             ref1: UploadFile | None = File(None),
             ref2: UploadFile | None = File(None),
+            ip_adapter_image: UploadFile | None = File(None),
             Qwen: int = Form(0),
             Flux: int = Form(0),
             model_name: str = Form(""),
@@ -912,12 +1290,24 @@ class Img2Img:
             mask_b64: str = Form(""),
             width: int = Form(0),
             height: int = Form(0),
+            lcm_mode: int = Form(0),
+            ip_adapter_image_b64: str = Form(""),
+            ip_adapter_scale: float = Form(0.6),
+            ip_adapter_mode: str = Form("standard"),
+            regional_mode: str = Form("none"),
+            regional_prompts: str = Form(""),
+            regional_base_ratio: float = Form(0.2),
         ):
+            import base64
             image_bytes = image.file.read()
             image_bytes2 = image2.file.read() if image2 else None
             mask_bytes = mask.file.read() if mask else None
             refs_bytes = [ref.file.read() for ref in [ref1, ref2] if ref]
             seed_val = None if seed == -1 else seed
+            if ip_adapter_image and not ip_adapter_image_b64:
+                ip_bytes = ip_adapter_image.file.read()
+                if ip_bytes:
+                    ip_adapter_image_b64 = base64.b64encode(ip_bytes).decode("utf-8")
             
             effective_model = (model_name or model or "").lower().strip()
 
@@ -943,6 +1333,13 @@ class Img2Img:
                 seed=seed_val,
                 image_bytes2=image_bytes2,
                 refs=refs_bytes,
+                lcm_mode=lcm_mode,
+                ip_adapter_image_b64=ip_adapter_image_b64,
+                ip_adapter_scale=ip_adapter_scale,
+                ip_adapter_mode=ip_adapter_mode,
+                regional_mode=regional_mode,
+                regional_prompts=regional_prompts,
+                regional_base_ratio=regional_base_ratio,
             )
 
             out_dir = OUTPUTS_DIR / "img2img"
