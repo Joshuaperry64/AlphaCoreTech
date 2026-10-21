@@ -12,6 +12,7 @@ import { createElement, escapeHTML } from '../components/utils.js';
 import { buildPinPad } from '../components/pinpad.js';
 import { showToast } from '../components/toast.js';
 import { playSFX } from '../components/audio.js';
+import { buildStudioHTML, mountStudio } from '../components/sz_studio.js';
 
 export async function openrouter_image_generation(options) {
   const prompt = typeof options === 'string' ? options : options?.prompt;
@@ -247,6 +248,7 @@ export default function PlaceholderPage() {
         <button class="aim-tab sz-tab-btn" data-tab="acquire"><span class="aim-tab-icon">🕸️</span>Acquisition</button>
         <button class="aim-tab sz-tab-btn" data-tab="remix"><span class="aim-tab-icon">🎭</span>Remix Engine</button>
         <button class="aim-tab sz-tab-btn" data-tab="simulate"><span class="aim-tab-icon">🕹️</span>Simulation Chamber</button>
+        <button class="aim-tab sz-tab-btn" data-tab="studio"><span class="aim-tab-icon">🌹</span>Studio</button>
       </div>
 
       <div id="sz-tab-content">
@@ -286,6 +288,7 @@ export default function PlaceholderPage() {
             <div id="sz-remix-output" style="margin-top: 16px;"></div>
           </div>
         </div>
+        <div id="tab-content-studio" class="sz-tab-pane">${buildStudioHTML()}</div>
         <div id="tab-content-simulate" class="sz-tab-pane">
           <div class="panel" style="border-color: rgba(99, 102, 241, 0.5); background: rgba(15, 10, 22, 0.9);">
             <div class="panel-title" style="color: #818cf8;">LIVE SIMULATION CHAMBER</div>
@@ -305,6 +308,7 @@ export default function PlaceholderPage() {
   }
   
     function attachSectorZEROListeners(root) {
+      try { mountStudio(root.querySelector('#tab-content-studio')); } catch (e) { console.warn('[SZ] studio mount failed', e); }
       // Correctly handle tab switching
       root.querySelectorAll('.sz-tab-btn').forEach(btn => {
           btn.onclick = () => {

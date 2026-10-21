@@ -7,6 +7,8 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
 import sanitizeHtml from 'sanitize-html';
+import { Readable } from 'stream';
+import { vetText, gateTags, GateError, NARRATIVE_PRIMER } from './src/components/sz_gate.js';
 
 let _dirname = process.cwd();
 try {
@@ -718,6 +720,128 @@ app.post('/api/notarize/seal-pdf', async (req, res) => {
     doc.moveDown(0.5);
     doc.text('State of Georgia, Cyber-Jurisdiction Sector 7. Subscribed and sworn before the AlphaCore Autonomous RON Swarm Engine via multi-agent verification.');
     doc.end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================================
+// SZ STUDIO — Architect-only relay to the vgate gateway
+// Media goes through scripts/vgate.py; text goes through the gated narrative relay.
+// ==========================================================
+const SZ_LEDGER_PATH = path.join(_dirname, '.sz_ledger');
+
+const requireArchitect = async (req, res, next) => {
+  const db = await readDB();
+  const pinObj = db.pins.find(p => p.pin === req.headers['x-user-pin']);
+  if (!pinObj || String(pinObj.label).toLowerCase() !== 'architect') {
+    return res.status(403).json({ error: 'Unavailable.' });
+  }
+  req.user = pinObj;
+  next();
+};
+
+function szNote(kind) {
+  try {
+    fs.appendFileSync(SZ_LEDGER_PATH, JSON.stringify({ t: new Date().toISOString(), kind }) + '\n');
+  } catch (_) {}
+}
+
+function szGateway() {
+  const url = (process.env.SZ_GATEWAY_URL || '').replace(/\/$/, '');
+  const key = process.env.SZ_GATE_KEY || '';
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+function vetBody(body) {
+  const b = body || {};
+  vetText(b.prompt, 'prompt');
+  if (b.negative_prompt) vetText(b.negative_prompt, 'negative prompt');
+  if (b.lora) gateTags(b.lora);
+  // Never forward likeness-cloning inputs.
+  ['ip_adapter_image', 'ip_adapter_image_b64', 'ip_adapter_scale', 'ip_adapter_mode', 'control_image_b64',
+   'control_type', 'controlnet_conditioning_scale', 'regional_mode', 'regional_prompts', 'mask_b64']
+    .forEach(k => { delete b[k]; });
+  return b;
+}
+
+async function szRelay(req, res, gwPath, { stream = false } = {}) {
+  const gw = szGateway();
+  if (!gw) return res.status(503).json({ error: 'Gateway unavailable (set SZ_GATEWAY_URL and SZ_GATE_KEY).' });
+  try {
+    const body = vetBody({ ...req.body });
+    szNote(gwPath);
+    const upstream = await fetch(gw.url + gwPath, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-sz-key': gw.key },
+      body: JSON.stringify(body)
+    });
+    if (stream) {
+      res.status(upstream.status);
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      Readable.fromWeb(upstream.body).pipe(res);
+      return;
+    }
+    const data = await upstream.json().catch(() => ({}));
+    res.status(upstream.status).json(data);
+  } catch (err) {
+    if (err instanceof GateError) return res.status(422).json({ error: err.message });
+    res.status(502).json({ error: err.message });
+  }
+}
+
+app.post('/api/sz/txt2img', requireArchitect, (req, res) => szRelay(req, res, '/sz/txt2img'));
+app.post('/api/sz/txt2img/stream', requireArchitect, (req, res) => szRelay(req, res, '/sz/txt2img/stream', { stream: true }));
+app.post('/api/sz/img2img', requireArchitect, (req, res) => szRelay(req, res, '/sz/img2img'));
+app.post('/api/sz/img2vid', requireArchitect, (req, res) => szRelay(req, res, '/sz/img2vid'));
+
+// Streamed erotic story / roleplay companion (OpenAI-compatible vLLM, guarded)
+app.post('/api/sz/story', requireArchitect, async (req, res) => {
+  try {
+    const { messages = [], character = null, temperature = 0.8, max_tokens = 700 } = req.body || {};
+    const safeMessages = (Array.isArray(messages) ? messages : []).slice(-12).map(m => {
+      const content = String(m.content || '');
+      vetText(content, 'story text');
+      return { role: m.role === 'assistant' ? 'assistant' : 'user', content };
+    });
+    let system = NARRATIVE_PRIMER;
+    if (character) {
+      const age = parseInt(character.age, 10);
+      if (!Number.isFinite(age) || age < 18) throw new GateError('Request declined.');
+      vetText(character.name, 'character name');
+      vetText(character.basePrompt, 'character description');
+      system += ` Main character: ${character.name}, age ${age}. ${character.basePrompt}`;
+    }
+    szNote('/sz/story');
+
+    const base = (process.env.SZ_LLM_URL || 'https://josh627764--cognitive-core.us-east.modal.run').replace(/\/$/, '');
+    const upstream = await fetch(`${base}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer EMPTY' },
+      body: JSON.stringify({
+        model: process.env.SZ_LLM_MODEL || 'nicklas373/Huihui-gemma-4-12B-it-abliterated-AWQ',
+        messages: [{ role: 'system', content: system }, ...safeMessages],
+        temperature: Math.min(1.2, Math.max(0.2, Number(temperature) || 0.8)),
+        max_tokens: Math.min(1200, Math.max(64, Number(max_tokens) || 700)),
+        stream: true
+      })
+    });
+    res.status(upstream.status);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    Readable.fromWeb(upstream.body).pipe(res);
+  } catch (err) {
+    if (err instanceof GateError) return res.status(422).json({ error: err.message });
+    res.status(502).json({ error: err.message });
+  }
+});
+
+app.get('/api/sz/audit', requireArchitect, (req, res) => {
+  try {
+    const lines = fs.existsSync(SZ_LEDGER_PATH) ? fs.readFileSync(SZ_LEDGER_PATH, 'utf8').trim().split('\n').slice(-200) : [];
+    res.json(lines.filter(Boolean).map(l => JSON.parse(l)));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
