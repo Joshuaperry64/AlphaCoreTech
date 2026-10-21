@@ -4513,6 +4513,9 @@ function buildMainUI() {
 /* ─── TXT2VID PANEL ─────────────────────────────────────────── */
 function buildTxt2Vid() {
   const settings = getModalSettings();
+  const isArchitect = settings.isArchitect;
+  const hasLoraAccess = Boolean(sessionStorage.getItem('lora_authenticated'));
+  const initNsfw = isArchitect && (sessionStorage.getItem('t2v_nsfw_mode') === 'true' || sessionStorage.getItem('darkness_mode_active') === 'true');
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
   
   const wrap = document.createElement('div');
@@ -4533,27 +4536,34 @@ function buildTxt2Vid() {
         <label class="aim-label" for="t2v-prompt" style="margin:0;">CINEMATIC PROMPT</label>
       </div>
       <textarea class="aim-textarea" id="t2v-prompt" rows="3" placeholder="Describe the video you want to generate (e.g., A cinematic video of a serene waterfall...)"></textarea>
+      ${isArchitect ? `
+      <div id="t2v-nsfw-chips" style="display:${initNsfw ? 'flex' : 'none'}; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="aim-btn aim-btn-sm t2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="completely naked, uncensored, photorealistic skin texture, anatomically correct proportions, natural body physics, smooth fluid motion">🔥 Uncensored / Nudify</button>
+        <button type="button" class="aim-btn aim-btn-sm t2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="sensual rhythmic body motion, natural soft tissue physics, seductive expression, cinematic intimate lighting, ultra detailed 8k">💃 Sensual Motion & Physics</button>
+        <button type="button" class="aim-btn aim-btn-sm t2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="POV intimate close-up, direct eye contact, realistic breathing and fluid motion, flawless anatomy, sharp focus">💋 Intimate / POV</button>
+      </div>
+      ` : ''}
     </div>
 
     <div class="aim-row">
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2v-speed">SPEED MODE</label>
         <div class="aim-seg aim-seg-3" id="t2v-speed">
-          <button class="aim-seg-btn active" data-steps="30">⚡ FAST</button>
-          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL</button>
-          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED</button>
+          <button class="aim-seg-btn active" data-steps="25">⚡ FAST</button>
+          <button class="aim-seg-btn" data-steps="35">⚖ NORMAL</button>
+          <button class="aim-seg-btn" data-steps="50">🎯 DETAILED</button>
         </div>
       </div>
       <div class="aim-field aim-field-half">
         <label class="aim-label" for="t2v-model-select">SDXL CHECKPOINT</label>
         <select class="aim-input" id="t2v-model-select">
-          <option value="epicrealismXL_pureFix.safetensors" selected>EPICREALISM (PURE FIX)</option>
+          <option value="epicrealismXL_pureFix.safetensors" ${!initNsfw ? 'selected' : ''}>EPICREALISM (PURE FIX)</option>
           <option value="cyberrealisticXL_desireV30.safetensors">CYBER REALISTIC</option>
           <option value="juggernautXL_ragnarok.safetensors">JUGGERNAUT RAGNAROK</option>
           <option value="0x7RealisticFreedom_omegaSDXL.safetensors">FREEDOM OMEGA</option>
           <option value="unholyDesireMixCrimson_v50.safetensors">UNHOLY DESIRE (CRIMSON)</option>
           <option value="dreamshaperXL_alpha2Xl10.safetensors">DREAMSHAPER XL</option>
-          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors">LUSTIFY ZENITH</option>
+          <option value="lustifyNSFWCheckpoint_zenithV9.safetensors" ${initNsfw ? 'selected' : ''}>LUSTIFY ZENITH (NSFW)</option>
           <option value="intorealism_sdxlV4.safetensors">INTOREALISM V4</option>
           <option value="cyberrealisticPony_v180Coreshift.safetensors">CYBERREALISTIC PONY</option>
           <option value="realvisxlV50_v50Bakedvae.safetensors">REALVISXL V5.0</option>
@@ -4562,18 +4572,40 @@ function buildTxt2Vid() {
       </div>
     </div>
 
+    ${isArchitect ? `
+    <div class="aim-row" style="margin-top:6px; margin-bottom:10px; display:flex; justify-content:flex-end; align-items:center; gap:20px; width:100%;">
+      <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+        <span style="margin-right:8px; font-weight:700; color:#ff003c; letter-spacing:1px;">🔥 NSFW MODE (ARCHITECT):</span>
+        <div id="t2v-nsfw-btn" data-active="${initNsfw ? 'true' : 'false'}" title="Unlock uncensored NSFW checkpoint, anatomical conditioning & LoRAs" style="width:36px; height:20px; background:${initNsfw ? 'rgba(255, 0, 60, 0.35)' : 'rgba(0,0,0,0.5)'}; border:1px solid #ff003c; border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:${initNsfw ? '#ff003c' : 'var(--text-muted)'}; border-radius:50%; position:absolute; top:2px; left:${initNsfw ? '18px' : '2px'}; transition:0.3s;"></div>
+        </div>
+      </label>
+    </div>
+    ` : ''}
+
+    ${isArchitect && hasLoraAccess ? `
+    <div class="aim-row" style="margin-bottom:10px;">
+      <div class="aim-field" id="t2v-lora-field" style="width:100%;">
+        <label class="aim-label" for="t2v-lora">ACTIVE LORAS (CTRL+CLICK) <span id="t2v-lora-lock-badge" style="color:${initNsfw ? '#10b981' : '#ff003c'}; margin-left:4px;">${initNsfw ? '[UNLOCKED]' : '[ENABLE NSFW MODE]'}</span></label>
+        <select class="aim-input aim-lora-select" id="t2v-lora" multiple ${initNsfw ? '' : 'disabled'}>
+          ${getLoraOptions()}
+        </select>
+      </div>
+    </div>
+    ` : ''}
+
     <details class="aim-advanced">
       <summary class="aim-advanced-toggle">▶ ADVANCED PARAMETERS</summary>
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="t2v-neg">NEGATIVE PROMPT</label>
-          <textarea class="aim-textarea aim-textarea-sm" id="t2v-neg" rows="2">low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, deformed, ugly, pixelated</textarea>
+          <textarea class="aim-textarea aim-textarea-sm" id="t2v-neg" rows="2">worst quality, low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, bad hands, deformed, mutated, extra limbs, missing limbs, disfigured, ugly, pixelated</textarea>
         </div>
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2v-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="t2v-cfg-val">5</span></label>
-            <input class="aim-range" type="range" id="t2v-cfg" min="1" max="15" step="0.5" value="5" />
+            <label class="aim-label" for="t2v-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="t2v-cfg-val">7.5</span></label>
+            <input class="aim-range" type="range" id="t2v-cfg" min="1" max="15" step="0.5" value="7.5" />
           </div>
         </div>
 
@@ -4603,10 +4635,11 @@ function buildTxt2Vid() {
           <div class="aim-field" style="width: 100%;">
             <label class="aim-label" for="t2v-frames">DURATION (TOTAL FRAMES)</label>
             <select class="aim-input" id="t2v-frames">
-              <option value="16" selected>Short (16 Frames - Fast)</option>
-              <option value="24">Standard (24 Frames - Balanced)</option>
-              <option value="32">Medium (32 Frames - Extended)</option>
-              <option value="48">Long (48 Frames)</option>
+              <option value="16" selected>2 Seconds (16 Frames - Fast)</option>
+              <option value="32">4 Seconds (32 Frames - Standard)</option>
+              <option value="48">6 Seconds (48 Frames - Medium)</option>
+              <option value="64">8 Seconds (64 Frames - Long)</option>
+              <option value="80">10 Seconds (80 Frames - Max)</option>
             </select>
           </div>
         </div>
@@ -4639,6 +4672,48 @@ function buildTxt2Vid() {
     });
   });
 
+  const t2vNsfwBtn = wrap.querySelector('#t2v-nsfw-btn');
+  if (t2vNsfwBtn) {
+    t2vNsfwBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = t2vNsfwBtn.dataset.active === 'true';
+      const newState = !isActive;
+      t2vNsfwBtn.dataset.active = newState ? 'true' : 'false';
+      sessionStorage.setItem('t2v_nsfw_mode', newState ? 'true' : 'false');
+      t2vNsfwBtn.style.background = newState ? 'rgba(255, 0, 60, 0.35)' : 'rgba(0,0,0,0.5)';
+      const knob = t2vNsfwBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = newState ? '18px' : '2px';
+        knob.style.background = newState ? '#ff003c' : 'var(--text-muted)';
+      }
+      const chips = wrap.querySelector('#t2v-nsfw-chips');
+      if (chips) chips.style.display = newState ? 'flex' : 'none';
+      const modelSel = wrap.querySelector('#t2v-model-select');
+      if (newState && modelSel && modelSel.value === 'epicrealismXL_pureFix.safetensors') {
+        modelSel.value = 'lustifyNSFWCheckpoint_zenithV9.safetensors';
+      }
+      const loraSel = wrap.querySelector('#t2v-lora');
+      const loraBadge = wrap.querySelector('#t2v-lora-lock-badge');
+      if (loraSel) loraSel.disabled = !newState;
+      if (loraBadge) {
+        loraBadge.textContent = newState ? '[UNLOCKED]' : '[ENABLE NSFW MODE]';
+        loraBadge.style.color = newState ? '#10b981' : '#ff003c';
+      }
+      setStatus(wrap, '#t2v-status', newState ? '🔥 NSFW MODE ENGAGED: Uncensored checkpoint & anti-mutation conditioning active.' : 'NSFW MODE DISENGAGED (SFW Guard Active).', newState ? 'ok' : 'info');
+    });
+  }
+
+  wrap.querySelectorAll('.t2v-nsfw-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pInput = wrap.querySelector('#t2v-prompt');
+      if (pInput) {
+        const cur = pInput.value.trim();
+        pInput.value = cur ? `${cur}, ${btn.dataset.prompt}` : btn.dataset.prompt;
+        playSFX('pop', 0.8);
+      }
+    });
+  });
+
   bindControlNetSection(wrap, 't2v');
 
   wrap.querySelector('#t2v-gen-btn').addEventListener('click', async () => {
@@ -4657,9 +4732,13 @@ function buildTxt2Vid() {
     const numFrames = parseInt(wrap.querySelector('#t2v-frames').value);
     const resolution = wrap.querySelector('#t2v-resolution').value;
     const [w, h] = resolution.split('x').map(n => parseInt(n));
+    const isNsfwMode = isArchitect && (t2vNsfwBtn?.dataset.active === 'true' || sessionStorage.getItem('darkness_mode_active') === 'true');
 
-    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
-      neg = ''; 
+    let lora = 'none';
+    const loraSelect = wrap.querySelector('#t2v-lora');
+    if (isArchitect && hasLoraAccess && loraSelect && !loraSelect.disabled) {
+      const selected = Array.from(loraSelect.selectedOptions).map(opt => opt.value).filter(v => v && v !== 'none');
+      if (selected.length > 0) lora = selected.join(',');
     }
 
     const loaderSlot = wrap.querySelector('#t2v-loader-slot');
@@ -4667,7 +4746,7 @@ function buildTxt2Vid() {
     const genBtn = wrap.querySelector('#t2v-gen-btn');
 
     genBtn.disabled = true;
-    setStatus(wrap, '#t2v-status', 'ROUTING TO B300 VIDEO NODE...', 'info');
+    setStatus(wrap, '#t2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
     const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
@@ -4691,7 +4770,9 @@ function buildTxt2Vid() {
         width: w,
         height: h,
         num_frames: numFrames,
-        fps: fps
+        fps: fps,
+        nsfw_mode: isNsfwMode ? '1' : '0',
+        lora: lora
       });
       
       const settings = getModalSettings();
@@ -4836,6 +4917,9 @@ function buildTxt2Vid() {
 
 /* ─── IMG2VID PANEL ─────────────────────────────────────────── */
 function buildImg2Vid() {
+  const settings = getModalSettings();
+  const isArchitect = settings.isArchitect;
+  const initNsfw = isArchitect && (sessionStorage.getItem('i2v_nsfw_mode') === 'true' || sessionStorage.getItem('darkness_mode_active') === 'true');
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').toLowerCase();
   
   const wrap = document.createElement('div');
@@ -4844,11 +4928,11 @@ function buildImg2Vid() {
     <div class="aim-panel-header">
       <span class="aim-panel-icon">🎞️</span>
       <span class="aim-panel-title">IMAGE TO VIDEO</span>
-      <span class="aim-panel-badge">WAN-14B ENGINE</span>
+      <span class="aim-panel-badge">WAN 2.2 14B ENGINE</span>
     </div>
 
     <div style="background: rgba(255, 100, 0, 0.1); border-left: 4px solid #ff5500; padding: 12px; margin-bottom: 20px; color: #ffddcc; font-size: 0.85rem; font-family: 'Share Tech Mono', monospace; line-height: 1.4;">
-      <strong style="color: #ff5500; letter-spacing: 1px;">[!] WARNING - EXPERIMENTAL ENGINE:</strong> Image-to-Video synthesis core is still under active development. Generated artifacts can be highly unpredictable, graphically intense, or disturbing in nature. 
+      <strong style="color: #ff5500; letter-spacing: 1px;">[✓] WAN 2.2 14B LIGHTNING ENGINE:</strong> Aspect-ratio-preserving 14B MoE synthesis with FP32 causal VAE decoding (supports both 480p and 720p).
     </div>
 
     <div class="aim-row">
@@ -4870,17 +4954,34 @@ function buildImg2Vid() {
         <label class="aim-label" for="i2v-prompt" style="margin:0;">CINEMATIC PROMPT</label>
       </div>
       <textarea class="aim-textarea" id="i2v-prompt" rows="3" placeholder="Describe the motion/video you want to generate from the image..."></textarea>
+      ${isArchitect ? `
+      <div id="i2v-nsfw-chips" style="display:${initNsfw ? 'flex' : 'none'}; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <button type="button" class="aim-btn aim-btn-sm i2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="completely naked, remove all clothing, uncensored, keeping the exact same person and face, preserve original body proportions, realistic natural body physics">🔥 Uncensored / Nudify Motion</button>
+        <button type="button" class="aim-btn aim-btn-sm i2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="sensual rhythmic body sway, natural soft tissue physics, seductive expression, smooth fluid motion, photorealistic skin texture">💃 Sensual Sway & Physics</button>
+        <button type="button" class="aim-btn aim-btn-sm i2v-nsfw-chip" style="padding:4px 8px; font-size:0.75rem; background:rgba(255,0,60,0.15); border-color:#ff003c; color:#ff003c;" data-prompt="intimate POV motion, natural breathing, direct eye contact, anatomically accurate, smooth camera movement">💋 Intimate / POV Motion</button>
+      </div>
+      ` : ''}
     </div>
 
-    <div class="aim-row">
+    <div class="aim-row" style="align-items:flex-end;">
       <div class="aim-field aim-field-half">
-        <label class="aim-label" for="i2v-speed">SPEED MODE</label>
+        <label class="aim-label" for="i2v-speed">SPEED MODE (LIGHTNING DISTILLED)</label>
         <div class="aim-seg aim-seg-3" id="i2v-speed">
-          <button class="aim-seg-btn active" data-steps="30">⚡ FAST</button>
-          <button class="aim-seg-btn" data-steps="50">⚖ NORMAL</button>
-          <button class="aim-seg-btn" data-steps="80">🎯 DETAILED</button>
+          <button class="aim-seg-btn" data-steps="6">⚡ FAST (6)</button>
+          <button class="aim-seg-btn active" data-steps="8">⚖ NORMAL (8)</button>
+          <button class="aim-seg-btn" data-steps="12">🎯 DETAILED (12)</button>
         </div>
       </div>
+      ${isArchitect ? `
+      <div class="aim-field aim-field-half" style="display:flex; justify-content:flex-end; align-items:center; padding-bottom:8px;">
+        <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
+          <span style="margin-right:8px; font-weight:700; color:#ff003c; letter-spacing:1px;">🔥 NSFW MODE (ARCHITECT):</span>
+          <div id="i2v-nsfw-btn" data-active="${initNsfw ? 'true' : 'false'}" title="Unlock uncensored Wan 2.2 14B NSFW motion conditioning" style="width:36px; height:20px; background:${initNsfw ? 'rgba(255, 0, 60, 0.35)' : 'rgba(0,0,0,0.5)'}; border:1px solid #ff003c; border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+            <div class="toggle-knob" style="width:14px; height:14px; background:${initNsfw ? '#ff003c' : 'var(--text-muted)'}; border-radius:50%; position:absolute; top:2px; left:${initNsfw ? '18px' : '2px'}; transition:0.3s;"></div>
+          </div>
+        </label>
+      </div>
+      ` : ''}
     </div>
 
     <details class="aim-advanced">
@@ -4888,13 +4989,13 @@ function buildImg2Vid() {
       <div class="aim-advanced-body">
         <div class="aim-field">
           <label class="aim-label" for="i2v-neg">NEGATIVE PROMPT</label>
-          <textarea class="aim-textarea aim-textarea-sm" id="i2v-neg" rows="2">low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, deformed, ugly, pixelated</textarea>
+          <textarea class="aim-textarea aim-textarea-sm" id="i2v-neg" rows="2">worst quality, low quality, blurry, distorted, static, jittery, watermark, signature, text, bad anatomy, bad hands, deformed, mutated, extra limbs, extra fingers, fused fingers, disfigured, ugly, pixelated</textarea>
         </div>
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="i2v-cfg">PROMPT ADHERANCE: <span class="aim-val-display" id="i2v-cfg-val">5</span></label>
-            <input class="aim-range" type="range" id="i2v-cfg" min="1" max="15" step="0.5" value="5" />
+            <label class="aim-label" for="i2v-cfg">LIGHTNING GUIDANCE (CFG 1.0 = OPTIMAL): <span class="aim-val-display" id="i2v-cfg-val">1</span></label>
+            <input class="aim-range" type="range" id="i2v-cfg" min="1" max="3" step="0.25" value="1" />
           </div>
         </div>
 
@@ -4985,6 +5086,37 @@ function buildImg2Vid() {
     if (file && file.type.startsWith('image/')) { fileInput._droppedFile = file; showPreview(file); }
   });
 
+  const i2vNsfwBtn = wrap.querySelector('#i2v-nsfw-btn');
+  if (i2vNsfwBtn) {
+    i2vNsfwBtn.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isActive = i2vNsfwBtn.dataset.active === 'true';
+      const newState = !isActive;
+      i2vNsfwBtn.dataset.active = newState ? 'true' : 'false';
+      sessionStorage.setItem('i2v_nsfw_mode', newState ? 'true' : 'false');
+      i2vNsfwBtn.style.background = newState ? 'rgba(255, 0, 60, 0.35)' : 'rgba(0,0,0,0.5)';
+      const knob = i2vNsfwBtn.querySelector('.toggle-knob');
+      if (knob) {
+        knob.style.left = newState ? '18px' : '2px';
+        knob.style.background = newState ? '#ff003c' : 'var(--text-muted)';
+      }
+      const chips = wrap.querySelector('#i2v-nsfw-chips');
+      if (chips) chips.style.display = newState ? 'flex' : 'none';
+      setStatus(wrap, '#i2v-status', newState ? '🔥 NSFW MODE ENGAGED: Uncensored Wan 2.2 14B conditioning active.' : 'NSFW MODE DISENGAGED (SFW Guard Active).', newState ? 'ok' : 'info');
+    });
+  }
+
+  wrap.querySelectorAll('.i2v-nsfw-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pInput = wrap.querySelector('#i2v-prompt');
+      if (pInput) {
+        const cur = pInput.value.trim();
+        pInput.value = cur ? `${cur}, ${btn.dataset.prompt}` : btn.dataset.prompt;
+        playSFX('pop', 0.8);
+      }
+    });
+  });
+
   bindControlNetSection(wrap, 'i2v');
 
   if (window._pending_img2vid_image) {
@@ -5017,17 +5149,14 @@ function buildImg2Vid() {
     const fps = parseInt(wrap.querySelector('#i2v-fps').value);
     const numFrames = parseInt(wrap.querySelector('#i2v-frames').value);
     const resolution = wrap.querySelector('#i2v-resolution').value;
-
-    if (sessionStorage.getItem('darkness_mode_active') === 'true') {
-      neg = ''; 
-    }
+    const isNsfwMode = isArchitect && (i2vNsfwBtn?.dataset.active === 'true' || sessionStorage.getItem('darkness_mode_active') === 'true');
 
     const loaderSlot = wrap.querySelector('#i2v-loader-slot');
     const resultSlot = wrap.querySelector('#i2v-result-slot');
     const genBtn = wrap.querySelector('#i2v-gen-btn');
 
     genBtn.disabled = true;
-    setStatus(wrap, '#i2v-status', 'ROUTING TO B300 VIDEO NODE...', 'info');
+    setStatus(wrap, '#i2v-status', 'ROUTING TO H100 VIDEO NODE...', 'info');
     const loader = buildLoader('SYNTHESIZING VIDEO (This may take several minutes)...');
     loaderSlot.innerHTML = '';
     loaderSlot.appendChild(loader);
@@ -5058,7 +5187,8 @@ function buildImg2Vid() {
         num_inference_steps: parseInt(steps),
         resolution: resolution,
         num_frames: parseInt(numFrames),
-        fps: parseInt(fps)
+        fps: parseInt(fps),
+        nsfw_mode: isNsfwMode ? 1 : 0
       };
 
       const settings = getModalSettings();
