@@ -321,6 +321,11 @@ class Txt2Img:
         from diffusers import EulerDiscreteScheduler
         from DeepCache import DeepCacheSDHelper
         from huggingface_hub import hf_hub_download
+        import torch._dynamo
+
+        # Configure TorchDynamo to cleanly handle dynamic Python hooks (e.g., DeepCache, IP-Adapter, Regional Prompting)
+        torch._dynamo.config.suppress_errors = True
+        torch._dynamo.config.capture_scalar_outputs = True
 
         if getattr(self, "deepcache_helper", None) is not None:
             try:
@@ -335,7 +340,7 @@ class Txt2Img:
                 print(f"⚡ [SDXL-LIGHTNING] Loading & fusing {LIGHTNING_REPO}/{LIGHTNING_CKPT}...")
                 ckpt_path = hf_hub_download(LIGHTNING_REPO, LIGHTNING_CKPT, cache_dir=CACHE_DIR)
                 pipe.load_lora_weights(ckpt_path)
-                pipe.fuse_lora()
+                pipe.fuse_lora(lora_scale=1.0)
                 pipe.unload_lora_weights()
                 pipe.scheduler = EulerDiscreteScheduler.from_config(
                     pipe.scheduler.config,
@@ -352,13 +357,12 @@ class Txt2Img:
             except Exception as freeu_err:
                 print(f"⚠️ [FREEU V2] Warning: {freeu_err}")
 
-        # 3. DeepCache Integration (cache_interval=2)
+        # 3. DeepCache Integration (cache_interval=2) — initialized here and dynamically toggled per step-count in run()
         try:
             helper = DeepCacheSDHelper(pipe=pipe)
             helper.set_params(cache_interval=2, cache_branch_id=0)
-            helper.enable()
             self.deepcache_helper = helper
-            print("✅ [DEEPCACHE] DeepCacheSDHelper enabled (cache_interval=2).")
+            print("✅ [DEEPCACHE] DeepCacheSDHelper initialized (cache_interval=2).")
         except Exception as dc_err:
             print(f"⚠️ [DEEPCACHE] Warning: {dc_err}")
 
@@ -372,8 +376,8 @@ class Txt2Img:
 
         if compile_unet:
             try:
-                print("⚙️ [AOT COMPILE] Compiling pipe.unet with torch.compile(mode='reduce-overhead', fullgraph=True)...")
-                pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
+                print("⚙️ [AOT COMPILE] Compiling pipe.unet with torch.compile(mode='reduce-overhead')...")
+                pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead")
                 print("✅ [AOT COMPILE] U-Net wrapped for compilation.")
             except Exception as comp_err:
                 print(f"⚠️ [AOT COMPILE] Warning: {comp_err}")
@@ -805,6 +809,17 @@ class Txt2Img:
                 run_pipe.scheduler.config,
                 timestep_spacing="trailing",
             )
+
+        # Dynamically toggle DeepCache: disable for 4-step SDXL-Lightning (so all 4 steps get 100% full U-Net quality
+        # and avoid Tensor.item() graph breaks), and enable for multi-step runs (> 6 steps).
+        if getattr(self, "deepcache_helper", None) is not None:
+            try:
+                if is_lightning_active or num_inference_steps <= 6:
+                    self.deepcache_helper.disable()
+                else:
+                    self.deepcache_helper.enable()
+            except Exception as dc_toggle_err:
+                print(f"[DEEPCACHE] Toggle note: {dc_toggle_err}")
 
         # Handle Amateur UI toggle
         if amateur == 1:

@@ -826,6 +826,14 @@ class Img2Img:
                         sdxl_img = pil_images[0].resize((tw, th), Image.Resampling.LANCZOS)
 
                         is_lcm_active = bool(int(lcm_mode or 0) == 1)
+                        if getattr(self, "deepcache_helper", None) is not None:
+                            try:
+                                if is_lcm_active or num_inference_steps <= 6:
+                                    self.deepcache_helper.disable()
+                                else:
+                                    self.deepcache_helper.enable()
+                            except Exception:
+                                pass
                         if is_lcm_active:
                             print("⚡ [SDXL-I2I LIGHTNING] Activating EulerDiscreteScheduler(timestep_spacing='trailing') + ByteDance/SDXL-Lightning 4-step LoRA...")
                             self.pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
