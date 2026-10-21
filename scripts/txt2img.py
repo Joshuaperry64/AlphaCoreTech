@@ -376,8 +376,15 @@ class Txt2Img:
 
         if compile_unet:
             try:
-                print("⚙️ [AOT COMPILE] Compiling pipe.unet with torch.compile(mode='reduce-overhead')...")
-                pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead")
+                # Patch FreeU Fourier filter helper so TorchDynamo does not bail on complex64 FFT inside UNet forward
+                try:
+                    import diffusers.utils.torch_utils as _dtu
+                    if hasattr(_dtu, "fourier_filter") and hasattr(torch, "compiler") and hasattr(torch.compiler, "disable"):
+                        _dtu.fourier_filter = torch.compiler.disable(_dtu.fourier_filter)
+                except Exception:
+                    pass
+                print("⚙️ [AOT COMPILE] Compiling pipe.unet with torch.compile(mode='default')...")
+                pipe.unet = torch.compile(pipe.unet, mode="default")
                 print("✅ [AOT COMPILE] U-Net wrapped for compilation.")
             except Exception as comp_err:
                 print(f"⚠️ [AOT COMPILE] Warning: {comp_err}")
@@ -898,6 +905,9 @@ class Txt2Img:
         import threading
         import base64
 
+        if getattr(self, "_gen_lock", None) is None:
+            self._gen_lock = threading.Lock()
+
         q = queue.Queue()
 
         def callback(pipe, step_index, timestep, callback_kwargs):
@@ -909,130 +919,132 @@ class Txt2Img:
             import base64
             all_images_b64 = []
             orig_attn_processors = None
-            try:
-                # Comic Mode prompt & negative prompt adaptations
-                base_prompt = prompt
-                effective_neg = negative_prompt or ""
-                if comic_mode == 1:
-                    comic_neg = "illegible text, gibberish lettering, smeared speech bubbles, unreadable typography, messy pseudo-letters, blurry captions, distorted dialogue balloons, cut off text, watermark, bad anatomy, photorealistic, 3d render"
-                    effective_neg = (effective_neg + ", " + comic_neg) if effective_neg else comic_neg
+            with self._gen_lock:
+                try:
+                    # Comic Mode prompt & negative prompt adaptations
+                    base_prompt = prompt
+                    effective_neg = negative_prompt or ""
+                    if comic_mode == 1:
+                        comic_neg = "illegible text, gibberish lettering, smeared speech bubbles, unreadable typography, messy pseudo-letters, blurry captions, distorted dialogue balloons, cut off text, watermark, bad anatomy, photorealistic, 3d render"
+                        effective_neg = (effective_neg + ", " + comic_neg) if effective_neg else comic_neg
 
-                images_completed = 0
-                while images_completed < batch_size:
-                    current_page = images_completed + 1
-                    if comic_mode == 1 and batch_size > 1:
-                        if current_page == 1:
-                            current_prompt = f"Page 1 of {batch_size}, opening chapter, establishing scene: {base_prompt}, dynamic comic book page layout, narrative introduction caption box, character dialogue speech bubble with bold legible comic text, crisp graphic novel inks, vibrant cell shading"
-                        elif current_page < batch_size:
-                            current_prompt = f"Page {current_page} of {batch_size}, scene continuation, rising action and dialogue exchange: {base_prompt}, expressive character reactions, conversation speech balloons with bold legible text, clear thought bubble, dramatic panel transitions"
+                    images_completed = 0
+                    while images_completed < batch_size:
+                        current_page = images_completed + 1
+                        if comic_mode == 1 and batch_size > 1:
+                            if current_page == 1:
+                                current_prompt = f"Page 1 of {batch_size}, opening chapter, establishing scene: {base_prompt}, dynamic comic book page layout, narrative introduction caption box, character dialogue speech bubble with bold legible comic text, crisp graphic novel inks, vibrant cell shading"
+                            elif current_page < batch_size:
+                                current_prompt = f"Page {current_page} of {batch_size}, scene continuation, rising action and dialogue exchange: {base_prompt}, expressive character reactions, conversation speech balloons with bold legible text, clear thought bubble, dramatic panel transitions"
+                            else:
+                                current_prompt = f"Page {current_page} of {batch_size}, final concluding comic book page, climactic moment and resolution: {base_prompt}, dramatic character face-off, final dialogue balloons with crisp legible lettering, concluding narrative caption 'TO BE CONTINUED...', epic graphic novel finale"
+                            current_batch_size = 1
                         else:
-                            current_prompt = f"Page {current_page} of {batch_size}, final concluding comic book page, climactic moment and resolution: {base_prompt}, dramatic character face-off, final dialogue balloons with crisp legible lettering, concluding narrative caption 'TO BE CONTINUED...', epic graphic novel finale"
-                        current_batch_size = 1
-                    else:
-                        current_prompt = (
-                            f"comic book page, comic panel layout, dynamic graphic novel art, clean legible speech bubbles, white dialogue balloons with bold black typography, clear thought bubble with crisp text, sound effects onomatopoeia: {base_prompt}"
-                            if comic_mode == 1 else base_prompt
-                        )
-                        current_batch_size = min(batch_size - images_completed, 10)
+                            current_prompt = (
+                                f"comic book page, comic panel layout, dynamic graphic novel art, clean legible speech bubbles, white dialogue balloons with bold black typography, clear thought bubble with crisp text, sound effects onomatopoeia: {base_prompt}"
+                                if comic_mode == 1 else base_prompt
+                            )
+                            current_batch_size = min(batch_size - images_completed, 10)
 
-                    # 2. Configure Regional Prompting (Masked Cross-Attention) for current chunk batch size
+                        # 2. Configure Regional Prompting (Masked Cross-Attention) for current chunk batch size
+                        if orig_attn_processors is not None:
+                            try:
+                                run_pipe.unet.set_attn_processor(orig_attn_processors)
+                            except Exception:
+                                pass
+                            orig_attn_processors = None
+
+                        if regional_mode and regional_mode.lower() not in ("none", "", "off") and regional_prompts:
+                            try:
+                                orig_attn_processors = self._apply_regional_prompting(
+                                    run_pipe=run_pipe,
+                                    regional_mode=regional_mode,
+                                    regional_prompts_str=regional_prompts,
+                                    regional_base_ratio=float(regional_base_ratio),
+                                    batch_size=current_batch_size,
+                                    height=height,
+                                    width=width,
+                                    is_sd15=is_sd15,
+                                )
+                            except Exception as reg_err:
+                                print(f"⚠️ [REGIONAL PROMPTING] Setup warning: {reg_err}")
+                                orig_attn_processors = None
+
+                        def chunk_callback(pipe, step_index, timestep, callback_kwargs):
+                            q.put({"step": step_index, "max_steps": num_inference_steps, "images_completed": images_completed, "total_images": batch_size})
+                            return callback_kwargs
+
+                        kwargs = {
+                            "width": width,
+                            "height": height,
+                        }
+                        if controlnet_image_obj:
+                            kwargs["image"] = controlnet_image_obj.resize((width, height), Image.Resampling.LANCZOS)
+                            kwargs["controlnet_conditioning_scale"] = float(controlnet_conditioning_scale)
+                        if ip_pil_image is not None:
+                            kwargs["ip_adapter_image"] = ip_pil_image
+
+                        with torch.inference_mode():
+                            chunk_images = run_pipe(
+                                prompt=current_prompt,
+                                negative_prompt=(effective_neg if (effective_neg and g_scale_float > 0.0) else None),
+                                num_images_per_prompt=current_batch_size,
+                                num_inference_steps=num_inference_steps,
+                                guidance_scale=g_scale_float,
+                                callback_on_step_end=chunk_callback,
+                                **kwargs
+                            ).images
+                        
+                        chunk_b64 = []
+                        out_dir = Path(OUTPUTS_DIR) / "txt2img"
+                        out_dir.mkdir(parents=True, exist_ok=True)
+                        for idx, image in enumerate(chunk_images):
+                            with io.BytesIO() as buf:
+                                image.save(buf, format="PNG")
+                                img_bytes = buf.getvalue()
+                                b64 = base64.b64encode(img_bytes).decode("utf-8")
+                                chunk_b64.append(b64)
+                                all_images_b64.append(b64)
+                            try:
+                                filename = f"txt2img_{int(time.time() * 1000)}_{idx}_{seed}.png"
+                                (out_dir / filename).write_bytes(img_bytes)
+                            except Exception as fe:
+                                print(f"[TXT2IMG] File write note: {fe}")
+                        try:
+                            outputs_volume.commit()
+                        except Exception as ve:
+                            print(f"[TXT2IMG] Volume commit note: {ve}")
+                        
+                        images_completed += current_batch_size
+                        q.put({
+                            "image_b64_partial": chunk_b64, 
+                            "images_completed": images_completed, 
+                            "total_images": batch_size,
+                            "current_page": current_page if (comic_mode == 1 and batch_size > 1) else None,
+                            "is_comic_book": bool(comic_mode == 1 and batch_size > 1)
+                        })
+
                     if orig_attn_processors is not None:
                         try:
                             run_pipe.unet.set_attn_processor(orig_attn_processors)
                         except Exception:
                             pass
-                        orig_attn_processors = None
-
-                    if regional_mode and regional_mode.lower() not in ("none", "", "off") and regional_prompts:
-                        try:
-                            orig_attn_processors = self._apply_regional_prompting(
-                                run_pipe=run_pipe,
-                                regional_mode=regional_mode,
-                                regional_prompts_str=regional_prompts,
-                                regional_base_ratio=float(regional_base_ratio),
-                                batch_size=current_batch_size,
-                                height=height,
-                                width=width,
-                                is_sd15=is_sd15,
-                            )
-                        except Exception as reg_err:
-                            print(f"⚠️ [REGIONAL PROMPTING] Setup warning: {reg_err}")
-                            orig_attn_processors = None
-
-                    def chunk_callback(pipe, step_index, timestep, callback_kwargs):
-                        q.put({"step": step_index, "max_steps": num_inference_steps, "images_completed": images_completed, "total_images": batch_size})
-                        return callback_kwargs
-
-                    kwargs = {
-                        "width": width,
-                        "height": height,
-                    }
-                    if controlnet_image_obj:
-                        kwargs["image"] = controlnet_image_obj.resize((width, height), Image.Resampling.LANCZOS)
-                        kwargs["controlnet_conditioning_scale"] = float(controlnet_conditioning_scale)
-                    if ip_pil_image is not None:
-                        kwargs["ip_adapter_image"] = ip_pil_image
-                        
-                    chunk_images = run_pipe(
-                        prompt=current_prompt,
-                        negative_prompt=(effective_neg if (effective_neg and g_scale_float > 0.0) else None),
-                        num_images_per_prompt=current_batch_size,
-                        num_inference_steps=num_inference_steps,
-                        guidance_scale=g_scale_float,
-                        callback_on_step_end=chunk_callback,
-                        **kwargs
-                    ).images
+                    torch.cuda.empty_cache()
+                    if loaded_adapters:
+                        try: run_pipe.unload_lora_weights()
+                        except: pass
                     
-                    chunk_b64 = []
-                    out_dir = Path(OUTPUTS_DIR) / "txt2img"
-                    out_dir.mkdir(parents=True, exist_ok=True)
-                    for idx, image in enumerate(chunk_images):
-                        with io.BytesIO() as buf:
-                            image.save(buf, format="PNG")
-                            img_bytes = buf.getvalue()
-                            b64 = base64.b64encode(img_bytes).decode("utf-8")
-                            chunk_b64.append(b64)
-                            all_images_b64.append(b64)
+                    q.put({"image_b64": all_images_b64})
+                except Exception as e:
+                    if orig_attn_processors is not None:
                         try:
-                            filename = f"txt2img_{int(time.time() * 1000)}_{idx}_{seed}.png"
-                            (out_dir / filename).write_bytes(img_bytes)
-                        except Exception as fe:
-                            print(f"[TXT2IMG] File write note: {fe}")
-                    try:
-                        outputs_volume.commit()
-                    except Exception as ve:
-                        print(f"[TXT2IMG] Volume commit note: {ve}")
-                    
-                    images_completed += current_batch_size
-                    q.put({
-                        "image_b64_partial": chunk_b64, 
-                        "images_completed": images_completed, 
-                        "total_images": batch_size,
-                        "current_page": current_page if (comic_mode == 1 and batch_size > 1) else None,
-                        "is_comic_book": bool(comic_mode == 1 and batch_size > 1)
-                    })
-
-                if orig_attn_processors is not None:
-                    try:
-                        run_pipe.unet.set_attn_processor(orig_attn_processors)
-                    except Exception:
-                        pass
-                torch.cuda.empty_cache()
-                if loaded_adapters:
-                    try: run_pipe.unload_lora_weights()
-                    except: pass
-                
-                q.put({"image_b64": all_images_b64})
-            except Exception as e:
-                if orig_attn_processors is not None:
-                    try:
-                        run_pipe.unet.set_attn_processor(orig_attn_processors)
-                    except Exception:
-                        pass
-                if loaded_adapters:
-                    try: run_pipe.unload_lora_weights()
-                    except: pass
-                q.put({"error": str(e)})
+                            run_pipe.unet.set_attn_processor(orig_attn_processors)
+                        except Exception:
+                            pass
+                    if loaded_adapters:
+                        try: run_pipe.unload_lora_weights()
+                        except: pass
+                    q.put({"error": str(e)})
 
         threading.Thread(target=generate_task).start()
 
