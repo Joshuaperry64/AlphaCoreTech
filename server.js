@@ -7,7 +7,6 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
 import sanitizeHtml from 'sanitize-html';
-import { Readable } from 'stream';
 
 let _dirname = process.cwd();
 try {
@@ -46,6 +45,7 @@ const DEFAULT_DB = {
   }
 };
 
+// ... (Your DB logic functions like readDB and writeDB remain here) ...
 import { getStore } from '@netlify/blobs';
 
 let dbCache = null;
@@ -79,6 +79,7 @@ async function readDB() {
       }
       dbCache = data;
     } else {
+      // Local FS fallback
       try {
         await fs.promises.access(DB_PATH);
       } catch {
@@ -93,6 +94,7 @@ async function readDB() {
     if (!dbCache.pendingProfiles) dbCache.pendingProfiles = [];
     if (!dbCache.sharedChat) dbCache.sharedChat = [];
 
+    // Ensure default profiles are always present
     DEFAULT_DB.pins.forEach(defaultPin => {
       if (!dbCache.pins.some(p => p.pin === defaultPin.pin)) {
         dbCache.pins.push(defaultPin);
@@ -125,6 +127,7 @@ async function writeDB(data) {
   }
 }
 
+
 const authenticate = async (req, res, next) => {
     const userPin = req.headers['x-user-pin'];
     const db = await readDB();
@@ -133,6 +136,7 @@ const authenticate = async (req, res, next) => {
     req.user = pinObj;
     next();
 };
+
 
 // ==========================================================
 // ADVANCED OSINT ENDPOINT
@@ -145,6 +149,7 @@ app.post('/api/recon/scan', authenticate, async (req, res) => {
         return res.status(400).json({ status: 'ERROR', message: 'Target identifier is required.' });
     }
 
+    // Validate target to prevent command/argument injection
     if (!/^[a-zA-Z0-9][a-zA-Z0-9@._-]*$/.test(target)) {
         return res.status(400).json({ status: 'ERROR', message: 'Invalid target format.' });
     }
@@ -180,12 +185,14 @@ app.post('/api/recon/scan', authenticate, async (req, res) => {
     });
 });
 
+
 // ==========================================================
 // GAZETTE PROXY ENDPOINT
 // ==========================================================
 app.get('/api/gazette/:name', async (req, res) => {
     try {
         const name = req.params.name;
+        // Node 18+ has global fetch
         const response = await fetch(`https://thegeorgiagazette.com/fannin/${name}/`, {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
@@ -207,6 +214,7 @@ app.get('/api/gazette/:name', async (req, res) => {
     }
 });
 
+// ... (All your other existing API routes: /api/pins, /api/logs, /api/vault, etc.)
 app.get('/api/pins', async (req, res) => {
   const db = await readDB();
   const userPin = req.headers['x-user-pin'];
@@ -215,6 +223,7 @@ app.get('/api/pins', async (req, res) => {
   if (isAuthenticated) {
     res.json(db.pins);
   } else {
+    // Return safe pins (no actual pin value)
     res.json(db.pins.map(p => {
       const safePin = { ...p };
       delete safePin.pin;
@@ -223,9 +232,11 @@ app.get('/api/pins', async (req, res) => {
   }
 });
 
+
 // ==========================================================
 // PENDING PROFILES ENDPOINTS
 // ==========================================================
+
 app.get('/api/pending-profiles', authenticate, async (req, res) => {
   const db = await readDB();
   res.json(db.pendingProfiles || []);
@@ -239,10 +250,12 @@ app.post('/api/pending-profiles/request', async (req, res) => {
 
   const db = await readDB();
 
+  // Check if PIN already exists in active pins
   if (db.pins.some(p => p.pin === pin)) {
     return res.status(400).json({ error: 'PIN already in use' });
   }
 
+  // Check if PIN already exists in pending profiles
   if (db.pendingProfiles && db.pendingProfiles.some(p => p.pin === pin)) {
     return res.status(400).json({ error: 'PIN request already pending' });
   }
@@ -271,4 +284,453 @@ app.post('/api/pending-profiles/approve', authenticate, async (req, res) => {
   const requestIndex = db.pendingProfiles.findIndex(p => p.pin === pin);
   if (requestIndex === -1) {
     return res.status(404).json({ error: 'Pending request not found' });
+  }
+
+  const request = db.pendingProfiles[requestIndex];
+
+  // Remove from pending
+  db.pendingProfiles.splice(requestIndex, 1);
+
+  // Add to active pins
+  db.pins.push({
+    pin: request.pin,
+    type: 'permanent',
+    label: request.username,
+    roles: roles || [],
+    createdAt: Date.now()
+  });
+
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+app.post('/api/pending-profiles/reject', authenticate, async (req, res) => {
+  const { pin } = req.body;
+  if (!pin) return res.status(400).json({ error: 'PIN required' });
+
+  const db = await readDB();
+  if (!db.pendingProfiles) db.pendingProfiles = [];
+
+  const requestIndex = db.pendingProfiles.findIndex(p => p.pin === pin);
+  if (requestIndex === -1) {
+    return res.status(404).json({ error: 'Pending request not found' });
+  }
+
+  // Remove from pending
+  db.pendingProfiles.splice(requestIndex, 1);
+
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+
+app.get('/api/pins', authenticate, async (req, res) => res.json((await readDB()).pins));
+app.post('/api/pins', authenticate, async (req, res) => {
+  const db = await readDB();
+  db.pins = req.body;
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+app.get('/api/logs', authenticate, async (req, res) => res.json((await readDB()).logs));
+app.post('/api/logs', authenticate, async (req, res) => {
+  const db = await readDB();
+  db.logs = req.body;
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+app.get('/api/settings', authenticate, async (req, res) => res.json((await readDB()).settings));
+app.post('/api/settings', authenticate, async (req, res) => {
+  const db = await readDB();
+  db.settings = req.body;
+  await writeDB(db);
+  res.json({ success: true });
+});
+
+app.post('/api/auth', async (req, res) => {
+  const db = await readDB();
+  const { pin, requiredRole } = req.body || {};
+
+  const found = db.pins.find(p => p.pin === pin);
+
+  if (!found) {
+    const isPending = db.pendingProfiles && db.pendingProfiles.some(p => p.pin === pin);
+    if (isPending) {
+      return res.json({ valid: false, reason: 'PROFILE PENDING APPROVAL', isPending: true });
+    }
+    return res.json({ valid: false, reason: 'ACCESS DENIED' });
+  }
+
+  if (requiredRole && (!found.roles || !found.roles.includes(requiredRole))) {
+    return res.json({ valid: false, reason: `INSUFFICIENT CLEARANCE: REQUIRES [${requiredRole.toUpperCase()}]` });
+  }
+
+  if (found.mustChangePin) {
+    return res.json({ valid: true, pinObj: found, requireNewPin: true });
+  }
+
+  if (found.type === 'one-time') {
+    if (found.used) {
+      return res.json({ valid: false, reason: 'ONE-TIME PIN EXPIRED' });
+    }
+    found.used = true;
+    db.pins = db.pins.filter(p => p.pin !== pin);
+    await writeDB(db);
+    return res.json({ valid: true, pinObj: found, isOtp: true });
+  }
+
+  if (found.type === 'temporary') {
+    if (Date.now() > found.expiresAt) {
+      return res.json({ valid: false, reason: 'TEMPORARY PIN EXPIRED' });
+    }
+    return res.json({ valid: true, pinObj: found });
+  }
+
+  res.json({ valid: true, pinObj: found });
+});
+
+// --- GLOBAL MEMORY SYSTEM (USER PROFILE SCOPED) ---
+app.get('/api/memory', async (req, res) => {
+  const db = await readDB();
+  const profile = (req.query.profile || '').toUpperCase();
+  if (profile) {
+    const userMemory = (db.memory || []).filter(m => !m.profile || m.profile === profile || m.profile === 'GLOBAL');
+    return res.json(userMemory);
+  }
+  res.json(db.memory || []);
+});
+
+app.post('/api/memory', async (req, res) => {
+  const db = await readDB();
+  if (!db.memory) db.memory = [];
   
+  const { action, fact, query, profile } = req.body;
+  const callerProfile = (profile || 'GLOBAL').toUpperCase();
+  if (action === 'memorize' && fact) {
+    db.memory.push({ fact, profile: callerProfile, timestamp: Date.now() });
+    await writeDB(db);
+    return res.json({ success: true, fact, profile: callerProfile });
+  } else if (action === 'recall' && query) {
+    // Basic text search recall scoped to caller profile or GLOBAL
+    const results = db.memory.filter(m => {
+      const matches = m.fact && m.fact.toLowerCase().includes(query.toLowerCase());
+      if (!matches) return false;
+      if (!profile) return true;
+      const memProfile = (m.profile || 'GLOBAL').toUpperCase();
+      return memProfile === callerProfile || memProfile === 'GLOBAL';
+    });
+    return res.json({ results });
+  }
+  res.status(400).json({ error: 'Invalid action or missing parameters' });
+});
+
+// --- SHARED CHAT SSE & POST ---
+let chatClients = [];
+
+app.get('/api/chat/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  chatClients.push(res);
+
+  req.on('close', () => {
+    chatClients = chatClients.filter(client => client !== res);
+  });
+});
+
+app.post('/api/chat', async (req, res) => {
+  const { author, text, role } = req.body;
+  if (!text) return res.status(400).json({ error: 'Text required' });
+
+  const db = await readDB();
+  const msgAuthor = author || 'USER';
+
+  if (role === 'user' && db.blockedUsers && db.blockedUsers[msgAuthor]) {
+    if (Date.now() < db.blockedUsers[msgAuthor]) {
+      return res.status(403).json({ error: 'You are currently blocked from the shared chat.' });
+    } else {
+      delete db.blockedUsers[msgAuthor];
+      await writeDB(db);
+    }
+  }
+
+  const msgObj = {
+    id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
+    author: msgAuthor,
+    text,
+    role: role || 'user',
+    timestamp: Date.now()
+  };
+
+  if (!db.sharedChat) db.sharedChat = [];
+  db.sharedChat.push(msgObj);
+  if (db.sharedChat.length > 100) db.sharedChat.shift();
+  await writeDB(db);
+
+  chatClients.forEach(client => client.write(`data: ${JSON.stringify(msgObj)}\n\n`));
+
+  res.json({ success: true });
+});
+
+app.post('/api/chat/block', async (req, res) => {
+  const { author, durationMinutes, reason } = req.body;
+  if (!author || !durationMinutes) return res.status(400).json({ error: 'Author and durationMinutes required' });
+  
+  const db = await readDB();
+  if (!db.blockedUsers) db.blockedUsers = {};
+  db.blockedUsers[author] = Date.now() + (durationMinutes * 60 * 1000);
+  await writeDB(db);
+  
+  const msgObj = { author: 'SYSTEM', text: `User [${author}] has been muted for ${durationMinutes} minutes. ${reason ? `Reason: ${reason}` : ''}`, role: 'system', timestamp: Date.now() };
+  if (!db.sharedChat) db.sharedChat = [];
+  db.sharedChat.push(msgObj);
+  if (db.sharedChat.length > 100) db.sharedChat.shift();
+  await writeDB(db);
+  chatClients.forEach(client => client.write(`data: ${JSON.stringify(msgObj)}\n\n`));
+
+  res.json({ success: true, message: `User ${author} blocked for ${durationMinutes} minutes.` });
+});
+
+app.get('/api/chat/history', async (req, res) => {
+  const db = await readDB();
+  res.json(db.sharedChat || []);
+});
+
+app.post('/api/vault', authenticate, async (req, res) => {
+  try {
+    const { action, text, password } = req.body;
+    if (!text || !password) {
+      return res.status(400).json({ error: 'Text and password are required' });
+    }
+    const key = crypto.scryptSync(password, 'forbidden-salt', 32);
+    if (action === 'encrypt') {
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+      let encrypted = cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+      const authTag = cipher.getAuthTag().toString('hex');
+      const payload = `${iv.toString('hex')}:${authTag}:${encrypted}`;
+      return res.json({ result: payload });
+    } else if (action === 'decrypt') {
+      const parts = text.split(':');
+      if (parts.length !== 3) return res.status(400).json({ error: 'Invalid encrypted payload' });
+      const iv = Buffer.from(parts[0], 'hex');
+      const authTag = Buffer.from(parts[1], 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      decipher.setAuthTag(authTag);
+      let decrypted = decipher.update(parts[2], 'hex', 'utf8') + decipher.final('utf8');
+      return res.json({ result: decrypted });
+    } else {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (err) {
+    return res.status(400).json({ error: 'Operation failed: Incorrect password or corrupted data' });
+  }
+});
+
+// Health check for Render uptime monitoring
+app.get('/api/ping', (req, res) => res.json({ status: 'ONLINE', ts: Date.now() }));
+
+// Gazette Profile Proxy — fetches a Georgia Gazette inmate page server-side to bypass CORS
+app.get('/api/gazette-profile', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('thegeorgiagazette.com')) {
+    return res.status(400).json({ error: 'Invalid url parameter' });
+  }
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 12000
+    });
+    if (!r.ok) return res.status(r.status).json({ error: `Upstream ${r.status}` });
+    const html = await r.text();
+
+    // Basic HTML → text strip
+    const stripTags = s => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const clean = stripTags(html);
+
+    const charges = [];
+    const name_match = clean.match(/Name[:\s]+([A-Z][a-zA-Z\s,]+?)(?=\s+Age|\s+Booking|\s+Arrest|$)/);
+    const age_match = clean.match(/Age[:\s]+(\d+)/i);
+    const bond_match = clean.match(/Bond[:\s]+([\$0-9,\.]+(?:\s+[a-zA-Z]+)*)/i);
+    const date_match = clean.match(/(?:Booking|Arrest)\s+Date[:\s]+([A-Za-z0-9\s\/\-,]+?)(?=\s+[A-Z][a-z])/i);
+
+    // Extract "Reason(s) For Booking" block
+    const booking_match = html.match(/Reason(?:s)?\s*For\s*Booking[^<]*<\/[^>]+>\s*(.*?)(?=<\/(?:div|section|article)|<h\d)/is);
+    if (booking_match) {
+      const raw = stripTags(booking_match[1]);
+      raw.split(/[\n;,]+/).forEach(c => {
+        const t = c.trim();
+        if (t.length > 4) charges.push(t);
+      });
+    }
+
+    // Fallback: keyword scan
+    if (charges.length === 0) {
+      const chargeRx = /(felony|misdemeanor|assault|battery|theft|dui|drug|possession|warrant|burglary|trafficking|probation|murder|robbery|fraud|trespass|disorderly|resist|flee)/gi;
+      const lines = clean.split(/[.!?]/);
+      lines.forEach(line => {
+        if (chargeRx.test(line) && line.length < 200) charges.push(line.trim());
+      });
+    }
+
+    res.json({
+      name: name_match ? name_match[1].trim() : '',
+      age: age_match ? age_match[1] : '',
+      bond: bond_match ? bond_match[1].trim() : '',
+      booking_date: date_match ? date_match[1].trim() : '',
+      charges: [...new Set(charges)].slice(0, 10)
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Gazette listing proxy (legacy route)
+app.get('/api/gazette/:name', async (req, res) => {
+  try {
+    const fetch = (await import('node-fetch')).default;
+    const searchUrl = `https://thegeorgiagazette.com/?s=${encodeURIComponent(req.params.name)}`;
+    const r = await fetch(searchUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    let html = await r.text();
+    const cleanHtml = sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'style', 'html', 'head', 'body', 'title', 'meta', 'link' ]),
+        allowedAttributes: {
+            '*': ['class', 'id', 'style'],
+            'a': ['href', 'name', 'target'],
+            'img': ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+            'link': ['href', 'rel', 'type']
+        },
+        allowVulnerableTags: true,
+    });
+    res.setHeader('Content-Type', 'text/html');
+    res.send(cleanHtml);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================================
+// ONLINE NOTARIZATION MULTI-AGENT SWARM ENDPOINTS
+// ==========================================================
+app.get('/api/notarize/slots', async (req, res) => {
+  const baseMs = Date.now();
+  const fiveMin = 5 * 60 * 1000;
+  const nextMark = Math.ceil((baseMs + 8 * 60 * 1000) / fiveMin) * fiveMin;
+
+  const slots = [
+    {
+      slotId: `SLOT-${Math.floor((nextMark / 1000) % 100000)}-A1`,
+      isoTime: new Date(nextMark).toISOString(),
+      displayTime: new Date(nextMark).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (IN ~10 MIN)',
+      notaryAgent: 'COMMISSIONER V. KOVACS // RON-NODE-01',
+      jurisdiction: 'US-GA // CYBER-JURISDICTION SEC-7',
+      available: true,
+      priority: 'SOONEST_IMMEDIATE'
+    },
+    {
+      slotId: `SLOT-${Math.floor(((nextMark + 15 * 60000) / 1000) % 100000)}-B2`,
+      isoTime: new Date(nextMark + 15 * 60000).toISOString(),
+      displayTime: new Date(nextMark + 15 * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' (+25 MIN)',
+      notaryAgent: 'NOTARY SYNTH-UNIT // RON-NODE-04',
+      jurisdiction: 'US-DE // CORPORATE ESCROW GRID',
+      available: true,
+      priority: 'STANDARD'
+    }
+  ];
+
+  res.json({ status: 'ONLINE', selectedSlot: slots[0], slots });
+});
+
+app.get('/api/notarize/sessions', async (req, res) => {
+  const db = await readDB();
+  res.json(db.notarizations || []);
+});
+
+app.post('/api/notarize/swarm', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const db = await readDB();
+    if (!db.notarizations) db.notarizations = [];
+
+    const sessionRecord = {
+      sessionId: payload.sessionId || `RON-SWARM-${Date.now()}`,
+      status: payload.status || 'COMPLETED_AND_BOOKED',
+      executionMode: 'PARALLEL_MULTI_AGENT_SWARM',
+      signerName: payload.signerName || 'Architect',
+      createdAt: payload.createdAt || new Date().toISOString(),
+      sealCertificateId: payload.sealCertificateId || `AC-SEAL-${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
+      pdf: payload.pdf || null,
+      funds: payload.funds || null,
+      booking: payload.booking || null
+    };
+
+    db.notarizations.unshift(sessionRecord);
+    if (db.notarizations.length > 50) db.notarizations = db.notarizations.slice(0, 50);
+    await writeDB(db);
+
+    res.json({ success: true, session: sessionRecord });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/notarize/seal-pdf', async (req, res) => {
+  try {
+    const {
+      documentName = 'AlphaCore_Affidavit.pdf',
+      documentType = 'AFFIDAVIT',
+      signerName = 'Architect',
+      sha256 = '',
+      sealCertificateId = 'AC-SEAL-VERIFIED',
+      bookingConfirmationCode = 'RON-BOOKED',
+      slotDisplayTime = 'IMMEDIATE'
+    } = req.body || {};
+
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(chunks);
+      res.json({
+        success: true,
+        filename: `NOTARIZED_${documentName.replace(/[^a-zA-Z0-9._-]/g, '_')}`,
+        b64: pdfBuffer.toString('base64'),
+        mimeType: 'application/pdf'
+      });
+    });
+
+    doc.fontSize(16).text('ALPHACORE TECH // REMOTE ONLINE NOTARIZATION', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(10).text(`SEAL CERTIFICATE ID: ${sealCertificateId}`, { align: 'center' });
+    doc.moveDown(1.5);
+    doc.fontSize(11).text(`Document Name: ${documentName}`);
+    doc.text(`Document Class: ${documentType}`);
+    doc.text(`Principal Signer: ${signerName}`);
+    doc.text(`Booking Reference: ${bookingConfirmationCode}`);
+    doc.text(`Scheduled Slot: ${slotDisplayTime}`);
+    doc.text(`SHA-256 Digest: ${sha256 || crypto.createHash('sha256').update(documentName + signerName).digest('hex')}`);
+    doc.moveDown(1.5);
+    doc.fontSize(10).text('CRYPTOGRAPHIC JURAT & DIGITAL NOTARY SEAL:', { underline: true });
+    doc.moveDown(0.5);
+    doc.text('State of Georgia, Cyber-Jurisdiction Sector 7. Subscribed and sworn before the AlphaCore Autonomous RON Swarm Engine via multi-agent verification.');
+    doc.end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Serve frontend build if exists
+app.use(express.static(path.join(_dirname, 'dist')));
+
+if (!process.env.NETLIFY) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`[SYS] AlphaCore Database Server running on port ${PORT}`);
+  });
+}
+
+export default app;
