@@ -272,6 +272,19 @@ export default function PlaceholderPage() {
             </div>
             <div id="sz-acquire-output" style="margin-top: 16px;"></div>
           </div>
+
+          <div class="panel mt-4" style="border-color: rgba(236, 72, 153, 0.5); background: rgba(20, 5, 14, 0.9); margin-top: 20px;">
+            <div class="panel-title" style="color: #f472b6;">LUCI'S SCRAPER NEXUS</div>
+            <div class="panel-content">
+              <p style="color: #fda4af; font-size: 0.8rem; margin-bottom: 12px; font-family: 'Share Tech Mono', monospace;">Enter keywords to initiate AI-driven content acquisition from the neural webscan endpoint:</p>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="scraper-query" class="aim-input" style="flex: 1; min-width: 200px;" placeholder="Search keywords..." />
+                <button id="start-scraper" class="aim-btn sz-action-btn" style="width: auto; min-width: 150px; margin-top: 0;">⚡ INITIATE SEARCH</button>
+              </div>
+              <div id="scraper-results" class="mt-3" style="font-size: 0.9rem; color: #00b8ff; margin-top: 14px;"></div>
+              <p style="font-size:0.75rem; color:var(--text-dim); margin-top:10px;">Warning: Unfiltered content from simulated external sources. Proceed with caution.</p>
+            </div>
+          </div>
         </div>
         <div id="tab-content-remix" class="sz-tab-pane">
           <div class="panel" style="border-color: rgba(168, 85, 247, 0.5); background: rgba(18, 5, 20, 0.9);">
@@ -654,20 +667,7 @@ export default function PlaceholderPage() {
             const errText = await res.text().catch(() => '');
             throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
           }
-
-            <div class="panel mt-4">
-                <div class="panel-title">Luci's Scraper Nexus</div>
-                <div class="panel-content">
-                    <p>Enter keywords to initiate AI-driven content acquisition:</p>
-                    <div class="input-group">
-                        <input type="text" id="scraper-query" class="form-control" placeholder="Search keywords..." />
-                        <button id="start-scraper" class="btn btn-primary ml-2">Initiate Search</button>
-                    </div>
-                    <div id="scraper-results" class="mt-3" style="font-size: 0.9rem; color: #00b8ff;"></div>
-                    <p style="font-size:0.75rem; color:var(--text-dim); margin-top:10px;">Warning: Unfiltered content from simulated external sources. Proceed with caution.</p>
-                </div>
-            </div>
-          const data = await res.json();
+const data = await res.json();
           if (data.data && data.data[0] && data.data[0].b64_json) {
             const imgData = 'data:image/png;base64,' + data.data[0].b64_json;
             out.innerHTML = `
@@ -775,104 +775,7 @@ export default function PlaceholderPage() {
               playSFX('click', 0.5);
           } catch(e) {
               const procEl = simOutput.querySelector('#sim-processing');
-
               if(procEl) procEl.remove();
-
-          async function handleScrapeRequest(rootContext) {
-              const queryInput = rootContext.querySelector('#scraper-query');
-              const resultsDiv = rootContext.querySelector('#scraper-results');
-              const query = queryInput.value.trim();
-              const apiKey = localStorage.getItem('gemini_api_key');
-
-              if (!apiKey) {
-                  resultsDiv.innerHTML = '<p style="color:#f87171;">Error: Gemini API Key not found. Please set it in Administration.</p>';
-                  playSFX('error', 0.6);
-                  return;
-              }
-
-              resultsDiv.innerHTML = '<p>Initiating search protocols... Luci is analyzing simulated web content...</p>';
-              playSFX('scan', 0.5); // Assuming a 'scan' sound effect exists or can be added
-
-              try {
-                  const video = await processScrapeWithAI(query, apiKey);
-                  if (video && video.title && video.link) {
-                      resultsDiv.innerHTML = `
-                          <p style="color:#fbcfe8;"><strong>Selected Video:</strong> ${escapeHTML(video.title)}</p>
-                          <p style="color:var(--text-dim);">${escapeHTML(video.description)}</p>
-                          <p><a href="${escapeHTML(video.link)}" target="_blank" style="color:var(--accent);">Watch Now <span style="font-size:0.8em;">↗</span></a></p>
-                      `;
-                      playSFX('confirm', 0.5); // Assuming a 'confirm' sound effect exists
-                  } else {
-                      resultsDiv.innerHTML = '<p style="color:#f87171;">No relevant videos found for your query. Try a different approach, Architect.</p>';
-                      playSFX('error', 0.6);
-
-    // --- Start: Luci's Scraper Nexus Functions ---
-    // IMPORTANT: Replace 'https://YOUR_MODAL_DEPLOYMENT_URL/scrape_video' with your actual deployed Modal endpoint URL!
-    async function handleScrapeRequest(rootContext) {
-        const queryInput = rootContext.querySelector('#scraper-query');
-        const resultsDiv = rootContext.querySelector('#scraper-results');
-        const query = queryInput.value.trim();
-        const modalEndpointUrl = 'https://josh627764--alphacore-aio-backend-webscan.us-east.modal.run'; // <<< URL UPDATED!
-
-        if (!modalEndpointUrl.startsWith('https://')) {
-            resultsDiv.innerHTML = '<p style="color:#f87171;">Error: Scraper Modal Endpoint URL not configured. Please update `modalEndpointUrl` in placeholder.js.</p>';
-            playSFX('error', 0.6);
-            return;
-        }
-        
-        resultsDiv.innerHTML = '<p>Initiating search protocols... Luci is connecting to the webscan backend...</p>';
-        playSFX('scan', 0.5); // Assuming a 'scan' sound effect exists or can be added
-
-        try {
-            const res = await fetch(`${modalEndpointUrl}?query=${encodeURIComponent(query)}`);
-            if (!res.ok) {
-                const errText = await res.text().catch(() => '');
-                throw new Error(`Scraper API returned HTTP ${res.status}: ${errText || res.statusText}`);
-            }
-            const video = await res.json();
-
-            if (video && video.title && video.link) {
-                resultsDiv.innerHTML = `
-                    <p style="color:#fbcfe8;"><strong>Selected Video:</strong> ${escapeHTML(video.title)}</p>
-                    <p style="color:var(--text-dim);">${escapeHTML(video.description)}</p>
-                    <p><a href="${escapeHTML(video.link)}" target="_blank" style="color:var(--accent);">Watch Now <span style="font-size:0.8em;">↗</span></a></p>
-                `;
-                playSFX('confirm', 0.5); // Assuming a 'confirm' sound effect exists
-            } else {
-                resultsDiv.innerHTML = '<p style="color:#f87171;">No relevant videos found for your query. Try a different approach, Architect.</p>';
-                playSFX('error', 0.6);
-            }
-        } catch (e) {
-            resultsDiv.innerHTML = `<p style="color:#f87171;">Scraper Error: ${escapeHTML(e.message)}</p>';
-            playSFX('error', 0.6);
-        } finally {
-            queryInput.disabled = false;
-            queryInput.focus();
-        }
-    }
-
-    // Initialize Luci's Scraper Nexus
-    const startScraperButton = container.querySelector('#start-scraper');
-    if (startScraperButton) {
-        startScraperButton.onclick = () => handleScrapeRequest(container);
-    }
-    // --- End: Luci's Scraper Nexus Functions ---
-
-                  }
-              } catch (e) {
-                  resultsDiv.innerHTML = `<p style="color:#f87171;">Scraper Error: ${escapeHTML(e.message)}</p>`;
-                  playSFX('error', 0.6);
-              } finally {
-                  queryInput.disabled = false;
-                  queryInput.focus();
-              }
-          }
-
-          // Initialize Luci's Scraper Nexus
-          const startScraperButton = container.querySelector('#start-scraper');
-          if (startScraperButton) {
-              startScraperButton.onclick = () => handleScrapeRequest(container);
-          }
               simOutput.innerHTML += `<p style="color:#f87171;">[Connection Error: ${escapeHTML(e.message)}]. Ensure your Gemini API Key is correct.</p>`;
           } finally {
               if(simInp) {
@@ -881,6 +784,73 @@ export default function PlaceholderPage() {
               }
           }
       }
+
+      // --- Start: Luci's Scraper Nexus Functions ---
+      async function handleScrapeRequest(rootContext) {
+        const queryInput = rootContext.querySelector('#scraper-query');
+        const resultsDiv = rootContext.querySelector('#scraper-results');
+        const startScraperButton = rootContext.querySelector('#start-scraper');
+        if (!queryInput || !resultsDiv) return;
+
+        const query = queryInput.value.trim();
+        if (!query) {
+          showToast('Query Required', 'Enter keywords to initiate scrape.');
+          return;
+        }
+
+        const modalEndpointUrl = 'https://josh627764--alphacore-aio-backend-webscan.us-east.modal.run';
+
+        queryInput.disabled = true;
+        if (startScraperButton) startScraperButton.disabled = true;
+        resultsDiv.innerHTML = '<p style="color:#00b8ff; font-family:\'Share Tech Mono\',monospace;">Initiating search protocols... Luci is connecting to the webscan backend...</p>';
+        playSFX('scan', 0.5);
+
+        try {
+          const res = await fetch(`${modalEndpointUrl}?query=${encodeURIComponent(query)}`);
+          if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error(`Scraper API returned HTTP ${res.status}: ${errText || res.statusText}`);
+          }
+          const video = await res.json();
+
+          if (video && video.title && video.link) {
+            resultsDiv.innerHTML = `
+              <div style="background:rgba(0,0,0,0.5); padding:12px; border:1px solid #f472b6; border-radius:4px; font-family:'Share Tech Mono',monospace;">
+                <p style="color:#fbcfe8; margin-top:0;"><strong>Selected Video:</strong> ${escapeHTML(video.title)}</p>
+                <p style="color:var(--text-dim); margin-bottom:8px;">${escapeHTML(video.description || '')}</p>
+                <p style="margin-bottom:0;"><a href="${escapeHTML(video.link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">Watch Now <span style="font-size:0.8em;">↗</span></a></p>
+              </div>
+            `;
+            playSFX('confirm', 0.5);
+          } else {
+            resultsDiv.innerHTML = '<p style="color:#f87171;">No relevant videos found for your query. Try a different approach, Architect.</p>';
+            playSFX('error', 0.6);
+          }
+        } catch (e) {
+          resultsDiv.innerHTML = `<p style="color:#f87171;">Scraper Error: ${escapeHTML(e.message)}</p>`;
+          playSFX('error', 0.6);
+        } finally {
+          queryInput.disabled = false;
+          if (startScraperButton) startScraperButton.disabled = false;
+          queryInput.focus();
+        }
+      }
+
+      // Initialize Luci's Scraper Nexus
+      const startScraperButton = root.querySelector('#start-scraper');
+      const scraperQueryInput = root.querySelector('#scraper-query');
+      if (startScraperButton) {
+        startScraperButton.onclick = () => handleScrapeRequest(root);
+      }
+      if (scraperQueryInput) {
+        scraperQueryInput.onkeydown = (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleScrapeRequest(root);
+          }
+        };
+      }
+      // --- End: Luci's Scraper Nexus Functions ---
   }
 
   renderView();
