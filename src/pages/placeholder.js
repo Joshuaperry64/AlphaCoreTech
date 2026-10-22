@@ -654,6 +654,19 @@ export default function PlaceholderPage() {
             const errText = await res.text().catch(() => '');
             throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
           }
+
+            <div class="panel mt-4">
+                <div class="panel-title">Luci's Scraper Nexus</div>
+                <div class="panel-content">
+                    <p>Enter keywords to initiate AI-driven content acquisition:</p>
+                    <div class="input-group">
+                        <input type="text" id="scraper-query" class="form-control" placeholder="Search keywords..." />
+                        <button id="start-scraper" class="btn btn-primary ml-2">Initiate Search</button>
+                    </div>
+                    <div id="scraper-results" class="mt-3" style="font-size: 0.9rem; color: #00b8ff;"></div>
+                    <p style="font-size:0.75rem; color:var(--text-dim); margin-top:10px;">Warning: Unfiltered content from simulated external sources. Proceed with caution.</p>
+                </div>
+            </div>
           const data = await res.json();
           if (data.data && data.data[0] && data.data[0].b64_json) {
             const imgData = 'data:image/png;base64,' + data.data[0].b64_json;
@@ -774,7 +787,51 @@ export default function PlaceholderPage() {
               playSFX('click', 0.5);
           } catch(e) {
               const procEl = simOutput.querySelector('#sim-processing');
+
               if(procEl) procEl.remove();
+
+          async function handleScrapeRequest(rootContext) {
+              const queryInput = rootContext.querySelector('#scraper-query');
+              const resultsDiv = rootContext.querySelector('#scraper-results');
+              const query = queryInput.value.trim();
+              const apiKey = localStorage.getItem('gemini_api_key');
+
+              if (!apiKey) {
+                  resultsDiv.innerHTML = '<p style="color:#f87171;">Error: Gemini API Key not found. Please set it in Administration.</p>';
+                  playSFX('error', 0.6);
+                  return;
+              }
+
+              resultsDiv.innerHTML = '<p>Initiating search protocols... Luci is analyzing simulated web content...</p>';
+              playSFX('scan', 0.5); // Assuming a 'scan' sound effect exists or can be added
+
+              try {
+                  const video = await processScrapeWithAI(query, apiKey);
+                  if (video && video.title && video.link) {
+                      resultsDiv.innerHTML = `
+                          <p style="color:#fbcfe8;"><strong>Selected Video:</strong> ${escapeHTML(video.title)}</p>
+                          <p style="color:var(--text-dim);">${escapeHTML(video.description)}</p>
+                          <p><a href="${escapeHTML(video.link)}" target="_blank" style="color:var(--accent);">Watch Now <span style="font-size:0.8em;">↗</span></a></p>
+                      `;
+                      playSFX('confirm', 0.5); // Assuming a 'confirm' sound effect exists
+                  } else {
+                      resultsDiv.innerHTML = '<p style="color:#f87171;">No relevant videos found for your query. Try a different approach, Architect.</p>';
+                      playSFX('error', 0.6);
+                  }
+              } catch (e) {
+                  resultsDiv.innerHTML = `<p style="color:#f87171;">Scraper Error: ${escapeHTML(e.message)}</p>`;
+                  playSFX('error', 0.6);
+              } finally {
+                  queryInput.disabled = false;
+                  queryInput.focus();
+              }
+          }
+
+          // Initialize Luci's Scraper Nexus
+          const startScraperButton = container.querySelector('#start-scraper');
+          if (startScraperButton) {
+              startScraperButton.onclick = () => handleScrapeRequest(container);
+          }
               simOutput.innerHTML += `<p style="color:#f87171;">[Connection Error: ${escapeHTML(e.message)}]. Ensure your Gemini API Key is correct.</p>`;
           } finally {
               if(simInp) {
