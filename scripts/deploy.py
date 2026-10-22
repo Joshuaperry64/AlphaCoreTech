@@ -791,7 +791,7 @@ def AlphaCore_Main_API():
     
     import stripe_transfer
     # Mount the globally initialized module app directly
-    master_app.mount("/webscan", webscan.app)
+
     master_app.mount("/stripe", stripe_transfer.app) 
     
     return master_app

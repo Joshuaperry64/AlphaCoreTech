@@ -3,8 +3,8 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import json
+from shared_app import app
 
-app = modal.App(name="alphacore-webscan-backend")
 image = modal.Image.debian_slim().pip_install(["requests", "beautifulsoup4"])
 
 # --- BEGIN SCRAPER LOGIC (Creator: Expand this section for real scraping) ---
@@ -51,7 +51,7 @@ def perform_unrestricted_scrape(query: str) -> dict:
 
 @app.function(image=image)
 @modal.fastapi_endpoint(method="GET")
-def scrape_video(query: str = ""):
+def webscan(query: str = ""):
     """
     Modal web endpoint for the video scraper.
     Takes a 'query' string and returns JSON with video details.
@@ -63,7 +63,7 @@ def scrape_video(query: str = ""):
         return json.dumps({"error": str(e)}), 500
 
 # To run locally for testing (optional):
-# modal run scripts/webscan.py::scrape_video --query "siren"
+# modal run scripts/webscan.py::webscan --query "siren"
 
 # To deploy to Modal:
-# modal deploy scripts/webscan.py
+# modal deploy scripts/deploy.py
