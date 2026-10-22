@@ -715,28 +715,28 @@ export default function PlaceholderPage() {
             }
           ];
 
-          root.querySelector('#sim-setup').style.display = 'none';
-          root.querySelector('#sim-live').style.display = 'block';
-          const simOutput = root.querySelector('#sim-output');
+          container.querySelector('#sim-setup').style.display = 'none';
+          container.querySelector('#sim-live').style.display = 'block';
+          const simOutput = container.querySelector('#sim-output');
           simOutput.innerHTML = `<p><strong>&gt; ${escapeHTML(scenario)}</strong></p><p><em>Luci's voice echoes in the new reality...</em></p><p>"The world is born from your imagination, Architect. Connecting to Gemini neural link..."</p>`;
           
-          processSimTurn(root);
+          processSimTurn(container);
         };
       }
       
       const simInput = root.querySelector('#sim-input');
       if(simInput) {
-        simInput.onkeydown = (e) => {
+        simInput.onkeydown = async (e) => { // Made async here
           if (e.key === 'Enter' && simInput.value.trim() && !simInput.disabled) {
             const command = simInput.value.trim();
             simHistory.push({role: "user", parts: [{text: command}]});
             
-            const simOutput = root.querySelector('#sim-output');
+            const simOutput = container.querySelector('#sim-output');
             simOutput.innerHTML += `<p><strong>&gt; ${escapeHTML(command)}</strong></p><p id="sim-processing"><em>[Luci is processing...]</em></p>`;
             simOutput.scrollTop = simOutput.scrollHeight;
             simInput.value = '';
             simInput.disabled = true;
-            processSimTurn(root);
+            await processSimTurn(container); // Await processSimTurn
           }
         };
       }
@@ -752,23 +752,11 @@ export default function PlaceholderPage() {
                   body: JSON.stringify({
                       contents: simHistory,
                       generationConfig: {temperature: 1.0},
-
-
                       safetySettings: [
-
-
                           { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-
-
                           { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-
-
                           { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-
-
                           { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-
-
                       ]
                   })
               });
