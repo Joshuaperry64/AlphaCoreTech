@@ -100,12 +100,12 @@ def cognitive_core():
         "vllm", "serve", MODEL_ID,
         "--host", "127.0.0.1",
         "--port", str(VLLM_PORT),
-        "--dtype", "float16",                  # Crucial: T4/L4 float16 native precision
+        "--dtype", "auto",                     # Native bfloat16 on L4/A100 (prevents downcast warnings)
         "--enforce-eager",                     # Eager mode enabled (skips CUDA graph compilation overhead)
         "--load-format", "safetensors",        # Fast zero-overhead tensor loading
         "--disable-custom-all-reduce",         # Skip custom kernel discovery and reduce sync overhead
         "--disable-log-stats",                 # Suppress verbose loop metrics
-        "--gpu-memory-utilization", "0.92",
+        "--gpu-memory-utilization", "0.88",    # Optimal allocation without warmup allocator thrashing,
         "--max-model-len", str(MAX_MODEL_LEN),
         "--trust-remote-code",
         "--limit-mm-per-prompt", '{"image": 2}', # Allow up to 2 images per prompt
@@ -150,8 +150,17 @@ def cognitive_core():
             "status": "online",
             "model": MODEL_ID,
             "engine": "vLLM",
-            "gpu": "T4",
+            "gpu": "L4",
             "label": "cognitive core"
+        }
+
+    @web_app.get("/v1/model/info")
+    def model_info():
+        return {
+            "id": MODEL_ID,
+            "object": "model",
+            "model": MODEL_ID,
+            "ready": True
         }
 
     @web_app.api_route("/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
@@ -221,7 +230,7 @@ def cognitive_core():
                 partial_text += chunk.choices[0].delta.content
                 yield partial_text
 
-    with gr.Blocks(theme=gr.themes.Monochrome(), title="Uncensored VLM") as demo:
+    with gr.Blocks(title="Uncensored VLM") as demo:
         gr.Markdown(f"### 👁️ Uncensored Vision-Language Chat (`{MODEL_ID}`)\n*Running on Modal T4 (Eager Mode)*")
         with gr.Accordion("System Prompt & Generation Parameters", open=False):
             sys_prompt = gr.Textbox(
@@ -240,4 +249,4 @@ def cognitive_core():
         )
 
     # Mount Gradio onto the root `/` of the FastAPI app
-    return gr.mount_gradio_app(web_app, demo, path="/")
+    return gr.mount_gradio_app(web_app, demo, path="/", theme=gr.themes.Monochrome())
