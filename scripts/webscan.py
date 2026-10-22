@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import json
 from shared_app import app
 
-image = modal.Image.debian_slim().pip_install(["requests", "beautifulsoup4"])
+image = modal.Image.debian_slim().pip_install(["requests", "beautifulsoup4", "fastapi[standard]"])
 
 # --- BEGIN SCRAPER LOGIC (Creator: Expand this section for real scraping) ---
 # This is a placeholder for actual scraping logic.

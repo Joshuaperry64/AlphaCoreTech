@@ -812,7 +812,7 @@ export default function PlaceholderPage() {
         const queryInput = rootContext.querySelector('#scraper-query');
         const resultsDiv = rootContext.querySelector('#scraper-results');
         const query = queryInput.value.trim();
-        const modalEndpointUrl = 'https://YOUR_MODAL_DEPLOYMENT_URL/scrape_video'; // <<< UPDATE THIS URL AFTER DEPLOYING webscan.py
+        const modalEndpointUrl = 'https://josh627764--alphacore-aio-backend-webscan.us-east.modal.run'; // <<< URL UPDATED!
 
         if (!modalEndpointUrl.startsWith('https://')) {
             resultsDiv.innerHTML = '<p style="color:#f87171;">Error: Scraper Modal Endpoint URL not configured. Please update `modalEndpointUrl` in placeholder.js.</p>';
