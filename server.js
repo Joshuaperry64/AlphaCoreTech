@@ -800,6 +800,155 @@ app.post('/api/vault', authenticate, async (req, res) => {
   }
 });
 
+// ==========================================================
+// VAULT CLASSIFIED URL LINKS RBAC REGISTRY
+// ==========================================================
+
+function checkLinkAccess(link, callerProfile, callerRoles = [], callerPin = '') {
+  if (callerProfile.toLowerCase() === 'architect' || callerPin === '672167566') {
+    return true;
+  }
+  const accessLevel = (link.accessLevel || 'RESTRICTED').toUpperCase();
+  const allowedProfiles = (link.allowedProfiles || []).map(p => p.toLowerCase());
+  const isPublic = allowedProfiles.includes('*') || allowedProfiles.includes('public') || accessLevel === 'PUBLIC_CLEARANCE';
+  const profileMatches = allowedProfiles.includes(callerProfile.toLowerCase());
+
+  if (accessLevel === 'RESTRICTED') {
+    return profileMatches;
+  }
+
+  if (isPublic) {
+    return callerProfile && callerProfile.toLowerCase() !== 'guest';
+  }
+
+  if (profileMatches) return true;
+
+  const linkRoles = (link.allowedRoles || []).map(r => r.toLowerCase());
+  const userRoles = callerRoles.map(r => r.toLowerCase());
+  return linkRoles.some(r => userRoles.includes(r));
+}
+
+app.get('/api/vault/links', async (req, res) => {
+  const db = await readDB();
+  const userPin = req.headers['x-user-pin'] || req.query.pin;
+  const pinObj = userPin ? db.pins.find(p => p.pin === userPin) : null;
+  const callerProfile = pinObj ? pinObj.label : (req.query.profile || 'Guest');
+  const callerRoles = pinObj ? (pinObj.roles || []) : [];
+  const isArchitect = callerProfile.toLowerCase() === 'architect' || userPin === '672167566';
+
+  const links = (db.vaultLinks || []).map(link => {
+    const canAccess = checkLinkAccess(link, callerProfile, callerRoles, userPin);
+    return {
+      ...link,
+      canAccess,
+      url: canAccess || isArchitect ? link.url : 'https://••••••••••••••••••••'
+    };
+  });
+
+  res.json({
+    callerProfile,
+    callerRoles,
+    isArchitect,
+    links
+  });
+});
+
+app.post('/api/vault/links', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required to register links to the vault' });
+  }
+
+  const { title, url, category, description, allowedProfiles, allowedRoles, accessLevel } = req.body;
+  if (!title || !url) {
+    return res.status(400).json({ error: 'Title and URL are required' });
+  }
+
+  const db = await readDB();
+  if (!db.vaultLinks) db.vaultLinks = [];
+
+  let normalizedUrl = url.trim();
+  if (!/^https?:\/\//i.test(normalizedUrl)) {
+    normalizedUrl = 'https://' + normalizedUrl;
+  }
+
+  const newLink = {
+    id: 'link_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    title: title.trim(),
+    url: normalizedUrl,
+    category: (category || 'INFRASTRUCTURE').toUpperCase(),
+    description: description ? description.trim() : 'Secure Vault Resource',
+    allowedProfiles: Array.isArray(allowedProfiles) && allowedProfiles.length > 0 ? allowedProfiles : ['Architect'],
+    allowedRoles: Array.isArray(allowedRoles) ? allowedRoles : ['admin', 'vault'],
+    accessLevel: accessLevel || (Array.isArray(allowedProfiles) && allowedProfiles.includes('*') ? 'PUBLIC_CLEARANCE' : 'RESTRICTED'),
+    clicksCount: 0,
+    createdBy: req.user.label || 'Architect',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  db.vaultLinks.unshift(newLink);
+
+  if (!db.logs) db.logs = [];
+  db.logs.unshift({
+    type: 'VAULT_LINK_ADDED',
+    user: req.user.label,
+    linkId: newLink.id,
+    title: newLink.title,
+    timestamp: Date.now()
+  });
+  if (db.logs.length > 100) db.logs.pop();
+
+  await writeDB(db);
+  res.json({ success: true, link: newLink });
+});
+
+app.post('/api/vault/links/:id/permissions', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required' });
+  }
+
+  const db = await readDB();
+  const link = (db.vaultLinks || []).find(l => l.id === req.params.id);
+  if (!link) return res.status(404).json({ error: 'Vault link not found' });
+
+  const { allowedProfiles, allowedRoles, accessLevel } = req.body;
+  if (Array.isArray(allowedProfiles)) link.allowedProfiles = allowedProfiles;
+  if (Array.isArray(allowedRoles)) link.allowedRoles = allowedRoles;
+  if (accessLevel) link.accessLevel = accessLevel;
+  link.updatedAt = Date.now();
+
+  await writeDB(db);
+  res.json({ success: true, link });
+});
+
+app.delete('/api/vault/links/:id', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required' });
+  }
+
+  const db = await readDB();
+  const idx = (db.vaultLinks || []).findIndex(l => l.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Vault link not found' });
+
+  const deleted = db.vaultLinks.splice(idx, 1)[0];
+  await writeDB(db);
+  res.json({ success: true, message: `Vault link ${deleted.id} deleted` });
+});
+
+app.post('/api/vault/links/:id/click', async (req, res) => {
+  const db = await readDB();
+  const link = (db.vaultLinks || []).find(l => l.id === req.params.id);
+  if (!link) return res.status(404).json({ error: 'Vault link not found' });
+
+  link.clicksCount = (link.clicksCount || 0) + 1;
+  await writeDB(db);
+  res.json({ success: true, clicksCount: link.clicksCount });
+});
+
+
 // Health check for Render uptime monitoring
 app.get('/api/ping', (req, res) => res.json({ status: 'ONLINE', ts: Date.now() }));
 

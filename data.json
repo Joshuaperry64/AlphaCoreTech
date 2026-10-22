@@ -86,6 +86,20 @@
   ],
   "logs": [
     {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1792682944408_9rynj",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1792682944408
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1792682924001_ow3gn",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1792682924001
+    },
+    {
       "type": "APK_DOWNLOAD",
       "user": "Architect",
       "appId": "alphacore-hud-mobile",
@@ -244,6 +258,83 @@
       ],
       "accessLevel": "PUBLIC_CLEARANCE",
       "downloadsCount": 89,
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    }
+  ],
+  "vaultLinks": [
+    {
+      "id": "link_modal_orchestrator",
+      "title": "Modal Cloud Orchestrator [josh627764]",
+      "url": "https://modal.com/apps/josh627764/main",
+      "category": "INFRASTRUCTURE",
+      "description": "Primary GPU container cluster control plane for Blackwell B300 and L40S inference workers.",
+      "allowedProfiles": [
+        "Architect"
+      ],
+      "allowedRoles": [
+        "admin"
+      ],
+      "accessLevel": "RESTRICTED",
+      "clicksCount": 54,
+      "createdBy": "Architect",
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    },
+    {
+      "id": "link_b300_telemetry",
+      "title": "Blackwell B300 Telemetry & Worker Logs",
+      "url": "https://modal.com/apps/josh627764/main/deployed/alphacore-aio-backend",
+      "category": "TELEMETRY",
+      "description": "Live worker logs, scaledown monitors, and inference container telemetry.",
+      "allowedProfiles": [
+        "Architect",
+        "Fisherman"
+      ],
+      "allowedRoles": [
+        "admin",
+        "diagnostics"
+      ],
+      "accessLevel": "ROLE_LOCKED",
+      "clicksCount": 38,
+      "createdBy": "Architect",
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    },
+    {
+      "id": "link_supabase_db",
+      "title": "AlphaCore Supabase Enclave",
+      "url": "https://supabase.com/dashboard/project/iqmndhyxrmqffoebfmsr",
+      "category": "DATABASE",
+      "description": "Encrypted persistent database storage, user profiles, and audit log enclaves.",
+      "allowedProfiles": [
+        "Architect"
+      ],
+      "allowedRoles": [
+        "admin"
+      ],
+      "accessLevel": "RESTRICTED",
+      "clicksCount": 29,
+      "createdBy": "Architect",
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    },
+    {
+      "id": "link_civitai_registry",
+      "title": "CivitAI Enterprise Model Registry",
+      "url": "https://civitai.com/models",
+      "category": "AI_MODELS",
+      "description": "Public and custom checkpoint, LoRA, and embedding repository for generative diffusion.",
+      "allowedProfiles": [
+        "*"
+      ],
+      "allowedRoles": [
+        "vault",
+        "aimodals"
+      ],
+      "accessLevel": "PUBLIC_CLEARANCE",
+      "clicksCount": 112,
+      "createdBy": "Architect",
       "createdAt": 1782687600000,
       "updatedAt": 1782687600000
     }

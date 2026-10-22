@@ -46,6 +46,9 @@ function buildVaultUI() {
       <button class="aim-tab" data-tab="storage">
         <span class="aim-tab-icon">💾</span> USER STORAGE
       </button>
+      <button class="aim-tab" data-tab="links">
+        <span class="aim-tab-icon">🔗</span> CLASSIFIED LINKS
+      </button>
     </div>
 
     <div id="vault-content" class="vault-panel-body"></div>
@@ -101,6 +104,8 @@ function buildVaultUI() {
       blueprintAnimFrame = startVisualizer();
     } else if (activeTab === 'storage') {
       content.appendChild(buildStoragePanel());
+    } else if (activeTab === 'links') {
+      content.appendChild(buildLinksPanel());
     }
   }
 
