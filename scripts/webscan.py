@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 
-stub = modal.Stub(name="alphacore-webscan-backend")
+app = modal.App(name="alphacore-webscan-backend")
 image = modal.Image.debian_slim().pip_install(["requests", "beautifulsoup4"])
 
 # --- BEGIN SCRAPER LOGIC (Creator: Expand this section for real scraping) ---
@@ -49,7 +49,7 @@ def perform_unrestricted_scrape(query: str) -> dict:
 
 # --- END SCRAPER LOGIC ---
 
-@stub.function(image=image)
+@app.function(image=image)
 @modal.web_endpoint(method="GET")
 def scrape_video(query: str = ""):
     """
