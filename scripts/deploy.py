@@ -22,6 +22,7 @@ import upscaler
 import vid2audio
 import app_manager
 
+import webscan
 if modal.is_local():
     import scraper
     import txt2img
@@ -790,6 +791,7 @@ def AlphaCore_Main_API():
     
     import stripe_transfer
     # Mount the globally initialized module app directly
+    master_app.mount("/webscan", webscan.app)
     master_app.mount("/stripe", stripe_transfer.app) 
     
     return master_app
