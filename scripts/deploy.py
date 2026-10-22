@@ -20,6 +20,7 @@ import web_loader
 import voice_cloner
 import upscaler
 import vid2audio
+import app_manager
 
 if modal.is_local():
     import scraper
@@ -30,6 +31,7 @@ if modal.is_local():
     import framepack
     import preprocessors
     import vllm_t4
+    import app_manager
 
 # --- WEBSITE MODEL CATALOGS ---
 WEBSITE_CHECKPOINTS = {

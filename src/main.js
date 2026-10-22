@@ -39,6 +39,8 @@ import TransferPage from './pages/transfer.js';
 import CyberDirectorPage from './pages/director.js';
 import NotarizationPage from './pages/notarization.js';
 import PlaceholderPage from './pages/placeholder.js';
+import AppManagerPage from './pages/appmanager.js';
+
 
 const routes = {
   '/': Overview,
@@ -78,6 +80,9 @@ const routes = {
   '/mugshots': MugshotsPage,
   '/notarization': NotarizationPage,
   '/notary': NotarizationPage,
+  '/apps': AppManagerPage,
+  '/appmanager': AppManagerPage,
+  '/alpha-apps': AppManagerPage,
   '/placeholder': PlaceholderPage,
   '/admin/placeholder': PlaceholderPage,
 };

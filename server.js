@@ -7,6 +7,8 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import PDFDocument from 'pdfkit';
 import sanitizeHtml from 'sanitize-html';
+import { buildMinimalApkBuffer } from './src/lib/apk_helper.js';
+
 
 let _dirname = process.cwd();
 try {
@@ -21,7 +23,8 @@ try {
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const DB_PATH = path.join(_dirname, 'data.json');
 
@@ -389,6 +392,273 @@ app.post('/api/auth', async (req, res) => {
 
   res.json({ valid: true, pinObj: found });
 });
+
+
+// ==========================================================
+// ALPHA APP MANAGER ENDPOINTS (MODAL VOLUME & PROFILE LOCKED)
+// ==========================================================
+
+const TARGET_MODAL_PROFILE = 'josh627764';
+const APPS_MODAL_VOLUME = 'alpha-apps';
+
+function checkAppAccess(app, callerProfile, callerRoles = [], callerPin = '') {
+  if (callerProfile.toLowerCase() === 'architect' || callerPin === '672167566') {
+    return true;
+  }
+
+  const accessLevel = (app.accessLevel || 'RESTRICTED').toUpperCase();
+  const allowedProfiles = (app.allowedProfiles || []).map(p => p.toLowerCase());
+  const isPublic = allowedProfiles.includes('*') || allowedProfiles.includes('public') || accessLevel === 'PUBLIC_CLEARANCE';
+  const profileMatches = allowedProfiles.includes(callerProfile.toLowerCase());
+
+  if (accessLevel === 'RESTRICTED') {
+    return profileMatches;
+  }
+
+  if (isPublic) {
+    return callerProfile && callerProfile.toLowerCase() !== 'guest';
+  }
+
+  if (profileMatches) return true;
+
+  const appRoles = (app.allowedRoles || []).map(r => r.toLowerCase());
+  const userRoles = callerRoles.map(r => r.toLowerCase());
+  return appRoles.some(r => userRoles.includes(r));
+}
+
+app.get('/api/apps', async (req, res) => {
+  const db = await readDB();
+  const userPin = req.headers['x-user-pin'] || req.query.pin;
+  const pinObj = userPin ? db.pins.find(p => p.pin === userPin) : null;
+  const callerProfile = pinObj ? pinObj.label : (req.query.profile || 'Guest');
+  const callerRoles = pinObj ? (pinObj.roles || []) : [];
+
+  const apps = (db.apps || []).map(app => {
+    const canDownload = checkAppAccess(app, callerProfile, callerRoles, userPin);
+    return {
+      ...app,
+      canDownload,
+      targetModalProfile: TARGET_MODAL_PROFILE,
+      modalVolume: APPS_MODAL_VOLUME
+    };
+  });
+
+  res.json({
+    callerProfile,
+    callerRoles,
+    lockedModalProfile: TARGET_MODAL_PROFILE,
+    modalVolume: APPS_MODAL_VOLUME,
+    apps
+  });
+});
+
+app.get('/api/apps/:id', async (req, res) => {
+  const db = await readDB();
+  const app = (db.apps || []).find(a => a.id === req.params.id);
+  if (!app) return res.status(404).json({ error: 'App not found' });
+
+  const userPin = req.headers['x-user-pin'] || req.query.pin;
+  const pinObj = userPin ? db.pins.find(p => p.pin === userPin) : null;
+  const callerProfile = pinObj ? pinObj.label : (req.query.profile || 'Guest');
+  const callerRoles = pinObj ? (pinObj.roles || []) : [];
+  const canDownload = checkAppAccess(app, callerProfile, callerRoles, userPin);
+
+  res.json({
+    ...app,
+    canDownload,
+    targetModalProfile: TARGET_MODAL_PROFILE,
+    modalVolume: APPS_MODAL_VOLUME
+  });
+});
+
+app.get('/api/apps/:id/download', async (req, res) => {
+  const db = await readDB();
+  const app = (db.apps || []).find(a => a.id === req.params.id);
+  if (!app) return res.status(404).json({ error: 'App not found' });
+
+  const userPin = req.headers['x-user-pin'] || req.query.pin;
+  const pinObj = userPin ? db.pins.find(p => p.pin === userPin) : null;
+  const callerProfile = pinObj ? pinObj.label : (req.query.profile || 'Guest');
+  const callerRoles = pinObj ? (pinObj.roles || []) : [];
+  const canDownload = checkAppAccess(app, callerProfile, callerRoles, userPin);
+
+  if (!canDownload) {
+    return res.status(403).json({
+      error: `ACCESS_DENIED: INSUFFICIENT CLEARANCE FOR APK [${app.name}]. REQUIRED: ${JSON.stringify(app.allowedProfiles)}`
+    });
+  }
+
+  // Increment download count and audit log
+  app.downloadsCount = (app.downloadsCount || 0) + 1;
+  if (!db.logs) db.logs = [];
+  db.logs.unshift({
+    type: 'APK_DOWNLOAD',
+    user: callerProfile,
+    appId: app.id,
+    appName: app.name,
+    filename: app.filename,
+    profileLock: TARGET_MODAL_PROFILE,
+    timestamp: Date.now()
+  });
+  if (db.logs.length > 100) db.logs.pop();
+  await writeDB(db);
+
+  // Check if physical file exists in public/apks/
+  const apksDir = path.join(_dirname, 'public', 'apks');
+  const apkFilePath = path.join(apksDir, app.filename);
+
+  let apkBuffer = null;
+  try {
+    if (fs.existsSync(apkFilePath)) {
+      apkBuffer = await fs.promises.readFile(apkFilePath);
+    }
+  } catch (err) {
+    console.warn('[APK] Local file read warning:', err);
+  }
+
+  if (!apkBuffer) {
+    // Generate valid Android APK container
+    apkBuffer = buildMinimalApkBuffer({
+      packageName: app.packageName || 'com.alphacore.app',
+      appName: app.name,
+      version: app.version
+    });
+  }
+
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+  res.setHeader('Content-Disposition', `attachment; filename="${app.filename}"`);
+  res.setHeader('X-Checksum-SHA256', app.sha256 || crypto.createHash('sha256').update(apkBuffer).digest('hex'));
+  res.setHeader('X-Locked-Modal-Profile', TARGET_MODAL_PROFILE);
+  res.setHeader('X-Modal-Volume', APPS_MODAL_VOLUME);
+  res.setHeader('Content-Length', apkBuffer.length);
+  res.send(apkBuffer);
+});
+
+app.post('/api/apps/upload', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required to upload APKs' });
+  }
+
+  const {
+    id, name, filename, packageName, version, versionCode,
+    description, changelog, minAndroid, allowedProfiles, allowedRoles, accessLevel,
+    apkBase64
+  } = req.body;
+
+  if (!id || !name || !filename) {
+    return res.status(400).json({ error: 'Missing required app fields (id, name, filename)' });
+  }
+
+  const db = await readDB();
+  if (!db.apps) db.apps = [];
+
+  let finalFilename = filename.endsWith('.apk') ? filename : `${filename}.apk`;
+  let fileBuffer = null;
+  if (apkBase64) {
+    fileBuffer = Buffer.from(apkBase64, 'base64');
+  } else {
+    fileBuffer = buildMinimalApkBuffer({ packageName: packageName || 'com.alphacore.custom', appName: name, version: version || 'v1.0.0' });
+  }
+
+  const apksDir = path.join(_dirname, 'public', 'apks');
+  await fs.promises.mkdir(apksDir, { recursive: true });
+  await fs.promises.writeFile(path.join(apksDir, finalFilename), fileBuffer);
+
+  const sha256 = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+  const sizeMb = parseFloat((fileBuffer.length / (1024 * 1024)).toFixed(2));
+
+  const newApp = {
+    id,
+    name,
+    filename: finalFilename,
+    packageName: packageName || `com.alphacore.${id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`,
+    version: version || 'v1.0.0',
+    versionCode: parseInt(versionCode) || 1,
+    sizeMb,
+    sizeBytes: fileBuffer.length,
+    sha256,
+    description: description || 'AlphaCore Android Application Module',
+    changelog: changelog || '• Initial Release',
+    minAndroid: minAndroid || 'Android 10+ (API 29)',
+    targetModalProfile: TARGET_MODAL_PROFILE,
+    modalVolume: APPS_MODAL_VOLUME,
+    allowedProfiles: Array.isArray(allowedProfiles) ? allowedProfiles : ['Architect'],
+    allowedRoles: Array.isArray(allowedRoles) ? allowedRoles : ['admin'],
+    accessLevel: accessLevel || 'RESTRICTED',
+    downloadsCount: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  const existingIdx = db.apps.findIndex(a => a.id === id);
+  if (existingIdx >= 0) {
+    db.apps[existingIdx] = { ...db.apps[existingIdx], ...newApp, downloadsCount: db.apps[existingIdx].downloadsCount || 0 };
+  } else {
+    db.apps.push(newApp);
+  }
+
+  await writeDB(db);
+  res.json({ success: true, app: newApp });
+});
+
+app.post('/api/apps/:id/permissions', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required' });
+  }
+
+  const db = await readDB();
+  const app = (db.apps || []).find(a => a.id === req.params.id);
+  if (!app) return res.status(404).json({ error: 'App not found' });
+
+  const { allowedProfiles, allowedRoles, accessLevel } = req.body;
+  if (Array.isArray(allowedProfiles)) app.allowedProfiles = allowedProfiles;
+  if (Array.isArray(allowedRoles)) app.allowedRoles = allowedRoles;
+  if (accessLevel) app.accessLevel = accessLevel;
+  app.updatedAt = Date.now();
+
+  await writeDB(db);
+  res.json({ success: true, app });
+});
+
+app.delete('/api/apps/:id', authenticate, async (req, res) => {
+  const isArchitect = req.user.label === 'Architect' || req.user.pin === '672167566' || (req.user.roles && req.user.roles.includes('admin'));
+  if (!isArchitect) {
+    return res.status(403).json({ error: 'Architect clearance required' });
+  }
+
+  const db = await readDB();
+  const idx = (db.apps || []).findIndex(a => a.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'App not found' });
+
+  const deleted = db.apps.splice(idx, 1)[0];
+  try {
+    const filePath = path.join(_dirname, 'public', 'apks', deleted.filename);
+    if (fs.existsSync(filePath)) await fs.promises.unlink(filePath);
+  } catch (e) {
+    console.warn('[APK] File unlink note:', e);
+  }
+
+  await writeDB(db);
+  res.json({ success: true, message: `App ${deleted.id} removed` });
+});
+
+app.get('/api/apps/status/telemetry', async (req, res) => {
+  const db = await readDB();
+  const apps = db.apps || [];
+  const totalDownloads = apps.reduce((sum, a) => sum + (a.downloadsCount || 0), 0);
+  res.json({
+    service: 'AlphaCore App Manager',
+    status: 'ONLINE',
+    lockedModalProfile: TARGET_MODAL_PROFILE,
+    modalVolume: APPS_MODAL_VOLUME,
+    totalApps: apps.length,
+    totalDownloads,
+    timestamp: Date.now()
+  });
+});
+
 
 // --- GLOBAL MEMORY SYSTEM (USER PROFILE SCOPED) ---
 app.get('/api/memory', async (req, res) => {

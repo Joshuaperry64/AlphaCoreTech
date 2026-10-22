@@ -92,6 +92,7 @@ function buildAdminUI() {
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="video"> Video Gen</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="director"> Cyber-Director</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="assets"> Asset Manager</label>
+              <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="apps"> App Manager</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="voice"> Voice Cloner</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="music"> Music Gen</label>
               <label style="color: var(--blue-dim); font-size: 0.75rem;"><input type="checkbox" class="new-pin-role" value="subroutines"> Subroutines</label>

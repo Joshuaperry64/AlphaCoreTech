@@ -50,7 +50,7 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
 
     const el = PlaceholderPage();
     const tabs = el.querySelectorAll('.sz-tab-btn');
-    expect(tabs.length).toBe(4);
+    expect(tabs.length).toBe(5);
 
     const promptInput = el.querySelector('#sz-prompt');
     const genBtn = el.querySelector('#sz-generate-btn');

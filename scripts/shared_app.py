@@ -7,6 +7,8 @@ OUTPUTS_DIR = "/outputs"
 
 cache_volume = modal.Volume.from_name("hf-hub-cache", create_if_missing=True)
 outputs_volume = modal.Volume.from_name("outputs", create_if_missing=True)
+apps_volume = modal.Volume.from_name("alpha-apps", create_if_missing=True)
+APPS_VOLUME_NAME = "alpha-apps"
 
 # Unified Modal Secret containing all environment variables (.env)
 # Keys: HF_TOKEN, CIVITAI_API_KEY, STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY,

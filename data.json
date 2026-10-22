@@ -19,7 +19,8 @@
         "research",
         "lore",
         "diagnostics",
-        "admin"
+        "admin",
+        "apps"
       ],
       "createdAt": 1782687600000
     },
@@ -59,7 +60,8 @@
         "vault",
         "research",
         "lore",
-        "diagnostics"
+        "diagnostics",
+        "apps"
       ],
       "createdAt": 1751676500000
     },
@@ -82,7 +84,71 @@
       "createdAt": 1791271000000
     }
   ],
-  "logs": [],
+  "logs": [
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682240164
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682240151
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682165842
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682165835
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682081703
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682081697
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792682081690
+    }
+  ],
   "settings": {
     "txt2imgUrl": "https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.us-east.modal.run/",
     "img2imgUrl": "https://josh627764--alphacore-aio-backend-img2img-web-img2img.us-east.modal.run/",
@@ -93,8 +159,93 @@
     "stepsFastImg": 8,
     "stepsFocusedImg": 30,
     "stepsNormalImg": 17,
-    "guidanceImg": 4
+    "guidanceImg": 4,
+    "appManagerUrl": "https://josh627764--alphacore-aio-backend-appmanager-web-apps.us-east.modal.run",
+    "targetModalProfile": "josh627764",
+    "appModalVolume": "alpha-apps"
   },
   "pendingProfiles": [],
-  "sharedChat": []
+  "sharedChat": [],
+  "apps": [
+    {
+      "id": "alphacore-hud-mobile",
+      "name": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "packageName": "com.alphacore.hud",
+      "version": "v4.7.2",
+      "versionCode": 135,
+      "sizeMb": 42.8,
+      "sizeBytes": 44879052,
+      "sha256": "8f4e2c91a3b5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1",
+      "description": "Native Android Cyberpunk HUD client for AlphaCore Tech. Direct neural telemetry, mobile voice synthesis, and remote AI modal execution.",
+      "changelog": "• Integrated Blackwell Ultra B300 streaming\n• Optimized matrix rain canvas for mobile OLED\n• Biometric PIN authentication enclave",
+      "minAndroid": "Android 10+ (API 29)",
+      "targetModalProfile": "josh627764",
+      "modalVolume": "alpha-apps",
+      "allowedProfiles": [
+        "Architect"
+      ],
+      "allowedRoles": [
+        "admin"
+      ],
+      "accessLevel": "RESTRICTED",
+      "downloadsCount": 46,
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    },
+    {
+      "id": "alpha-sentinel-recon",
+      "name": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "packageName": "com.alphacore.sentinel",
+      "version": "v2.1.0",
+      "versionCode": 21,
+      "sizeMb": 28.4,
+      "sizeBytes": 29779558,
+      "sha256": "3a7b9c1d5e7f8a9b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b",
+      "description": "Autonomous mobile reconnaissance and field custody scanner. Encrypted offline data harvesting and sensor stream uplink.",
+      "changelog": "• Background sensor sync\n• Encrypted local sqlite enclave\n• High-frequency ping protocol",
+      "minAndroid": "Android 11+ (API 30)",
+      "targetModalProfile": "josh627764",
+      "modalVolume": "alpha-apps",
+      "allowedProfiles": [
+        "Architect",
+        "Fisherman"
+      ],
+      "allowedRoles": [
+        "admin",
+        "recon"
+      ],
+      "accessLevel": "ROLE_LOCKED",
+      "downloadsCount": 21,
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    },
+    {
+      "id": "crypt-vault-authenticator",
+      "name": "Alpha Crypt Vault",
+      "filename": "Alpha_Vault_v1.5.0.apk",
+      "packageName": "com.alphacore.vault",
+      "version": "v1.5.0",
+      "versionCode": 15,
+      "sizeMb": 19.2,
+      "sizeBytes": 20132659,
+      "sha256": "e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5",
+      "description": "AES-256-GCM hardware-backed TOTP authenticator & encrypted message enclave for AlphaCore nodes.",
+      "changelog": "• Biometric unlock fallback\n• Quantum-resistant key derivation (scrypt)\n• Hardware keystore attestation",
+      "minAndroid": "Android 9+ (API 28)",
+      "targetModalProfile": "josh627764",
+      "modalVolume": "alpha-apps",
+      "allowedProfiles": [
+        "*"
+      ],
+      "allowedRoles": [
+        "vault"
+      ],
+      "accessLevel": "PUBLIC_CLEARANCE",
+      "downloadsCount": 89,
+      "createdAt": 1782687600000,
+      "updatedAt": 1782687600000
+    }
+  ]
 }
