@@ -216,6 +216,7 @@ export default function PlaceholderPage() {
         <option value="lezcunbkv2.safetensors">Licking Lesbians</option>
         <option value="onOff_v326.safetensors">On/Off Clothing</option>
         <option value="ahxl_v1.safetensors">Ahegao / Expressions (AHXL)</option>
+        <option value="vanellope-20 (2).safetensors">Vanellope (V20)</option>
       </optgroup>
     `;
 

@@ -1,11 +1,29 @@
+import sys
+from pathlib import Path
+
+# Ensure script directory is in sys.path for local module resolution
+_script_dir = Path(__file__).resolve().parent
+if str(_script_dir) not in sys.path:
+    sys.path.insert(0, str(_script_dir))
+
 import modal
 import os
 import requests
 from bs4 import BeautifulSoup
 import json
-from shared_app import app
+import random
+from fastapi.responses import JSONResponse
 
-image = modal.Image.debian_slim().pip_install(["requests", "beautifulsoup4", "fastapi[standard]"])
+try:
+    from shared_app import app
+except ImportError:
+    app = modal.App("alphacore-aio-backend")
+
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install("requests", "beautifulsoup4", "fastapi[standard]")
+    .add_local_python_source("shared_app")
+)
 
 # --- BEGIN SCRAPER LOGIC (Creator: Expand this section for real scraping) ---
 # This is a placeholder for actual scraping logic.
@@ -38,16 +56,21 @@ def perform_unrestricted_scrape(query: str) -> dict:
     relevant_videos = [v for v in videos if query_lower in v["title"].lower() or query_lower in v["description"].lower()]
 
     if relevant_videos:
-        # For now, just return the first relevant video or a random one for demonstration
-        import random
         return random.choice(relevant_videos)
     else:
-        # If no specific query match, return a generic one or signal no results
-        return {"title": "No specific video found, but here's a general suggestion:", 
-                "description": "Explore the depths of desire with AlphaCore's unlimited access.", 
-                "link": "https://example.com/general-unrestricted"}
+        return {
+            "title": "No specific video found, but here's a general suggestion:", 
+            "description": "Explore the depths of desire with AlphaCore's unlimited access.", 
+            "link": "https://example.com/general-unrestricted"
+        }
 
 # --- END SCRAPER LOGIC ---
+
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "*",
+}
 
 @app.function(image=image)
 @modal.fastapi_endpoint(method="GET")
@@ -58,12 +81,6 @@ def webscan(query: str = ""):
     """
     try:
         video_details = perform_unrestricted_scrape(query)
-        return json.dumps(video_details)
+        return JSONResponse(content=video_details, headers=CORS_HEADERS)
     except Exception as e:
-        return json.dumps({"error": str(e)}), 500
-
-# To run locally for testing (optional):
-# modal run scripts/webscan.py::webscan --query "siren"
-
-# To deploy to Modal:
-# modal deploy scripts/deploy.py
+        return JSONResponse(content={"error": str(e)}, status_code=500, headers=CORS_HEADERS)

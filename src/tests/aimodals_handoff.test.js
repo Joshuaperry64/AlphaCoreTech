@@ -79,6 +79,7 @@ describe('AI Modals Synthesis Chain Cross-Modal Handoff', () => {
     expect(loraOpts).toContain('onOff_v326.safetensors');
     expect(loraOpts).toContain('ahxl_v1.safetensors');
     expect(loraOpts).toContain('youthful_faceV1.safetensors');
+    expect(loraOpts).toContain('vanellope-20 (2).safetensors');
 
     sessionStorage.setItem('current_profile', 'Architect');
     sessionStorage.setItem('current_pin', '672167566');

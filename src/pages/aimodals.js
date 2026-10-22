@@ -24,6 +24,7 @@ export function getLoraOptions() {
   <option value="onOff_v326.safetensors">ON/OFF CLOTHING (ONOFF)</option>
   <option value="ahxl_v1.safetensors">AHXL V1 (AHEGAO/EXPRESSIONS)</option>
   <option value="youthful_faceV1.safetensors">YOUTHFUL FACE V1</option>
+  <option value="vanellope-20 (2).safetensors">VANELLOPE (V20)</option>
 `;
   const currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim().toLowerCase();
   if (currentProfile !== 'guest') {

@@ -40,6 +40,7 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     expect(loraSelect.innerHTML).toContain('onOff_v326.safetensors');
     expect(loraSelect.innerHTML).toContain('ahxl_v1.safetensors');
     expect(loraSelect.innerHTML).toContain('youthful_faceV1.safetensors');
+    expect(loraSelect.innerHTML).toContain('vanellope-20 (2).safetensors');
   });
 
   it('allows switching between Sector ZERO modules and interacting with simulation chamber', () => {

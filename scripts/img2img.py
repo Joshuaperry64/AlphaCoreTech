@@ -872,6 +872,10 @@ class Img2Img:
                             for l in loras_to_load:
                                 clean_l = l.replace(".safetensors", "")
                                 lora_path = Path("/hf-hub-cache/loras") / f"{clean_l}.safetensors"
+                                if not lora_path.exists():
+                                    candidates = list(Path("/hf-hub-cache/loras").glob(f"*{clean_l}*.safetensors"))
+                                    if candidates:
+                                        lora_path = candidates[0]
                                 if lora_path.exists():
                                     try:
                                         self.pipe.load_lora_weights(str(lora_path.parent), weight_name=lora_path.name, adapter_name=clean_l)

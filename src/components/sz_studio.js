@@ -32,7 +32,7 @@ export const CHECKPOINTS = [
   ['fullyREALXL_v30TRINITY.safetensors', 'fullyREALXL_v30TRINITY']
 ];
 
-const LORAS = ['BJ', 'Cowgirl', 'Missionary', 'lezcunbkv2', 'onOff_v326', 'ahxl_v1'];
+const LORAS = ['BJ', 'Cowgirl', 'Missionary', 'lezcunbkv2', 'onOff_v326', 'ahxl_v1', 'vanellope-20 (2)'];
 
 export const PHASES = [
   { id: 'warmup', label: 'Warm-up', pct: 0.25, intensityScale: 0.4 },

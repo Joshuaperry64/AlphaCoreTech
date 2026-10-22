@@ -380,6 +380,22 @@ class AssetSync:
         for fn, vid in WEBSITE_LORAS.items():
             process_item(fn, vid, lora_dir, "loras")
 
+        # Provide friendly aliases for vanellope
+        van_file = lora_dir / "vanellope-20 (2).safetensors"
+        if not van_file.exists():
+            van_file = lora_dir / "vanellope-20.safetensors"
+        if van_file.exists():
+            for v_alias_name in ["vanellope-20.safetensors", "vanellope.safetensors", "vanellope-20 (2).safetensors"]:
+                v_alias = lora_dir / v_alias_name
+                if not v_alias.exists():
+                    try:
+                        os.link(str(van_file), str(v_alias))
+                    except Exception:
+                        try:
+                            os.symlink(str(van_file), str(v_alias))
+                        except Exception:
+                            pass
+
         # Provide friendly alias licking_lesbians.safetensors pointing to lezcunbkv2.safetensors
         lez_file = lora_dir / "lezcunbkv2.safetensors"
         lez_alias = lora_dir / "licking_lesbians.safetensors"

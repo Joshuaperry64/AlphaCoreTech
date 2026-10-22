@@ -866,6 +866,10 @@ class Txt2Img:
                 if clean_name in ("lcm-lora-sdxl", "lcm_lora_sdxl", "lcm", "sdxl_lightning_4step_lora"):
                     continue
                 lora_path = Path("/hf-hub-cache/loras") / f"{clean_name}.safetensors"
+                if not lora_path.exists():
+                    candidates = list(Path("/hf-hub-cache/loras").glob(f"*{clean_name}*.safetensors"))
+                    if candidates:
+                        lora_path = candidates[0]
                 if lora_path.exists():
                     print(f"Loading LoRA: {lora_path}")
                     try:
