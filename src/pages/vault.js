@@ -1,4 +1,6 @@
-import { createElement } from '../components/utils.js';
+import { createElement, escapeHTML } from '../components/utils.js';
+import { showToast } from '../components/toast.js';
+import { playSFX } from '../components/audio.js';
 import { buildPinPad, requireAuth } from '../components/pinpad.js';
 import { showModal } from '../components/modal.js';
 import { supabase } from '../lib/supabase.js';
@@ -955,6 +957,686 @@ function buildStoragePanel() {
 }
 
 // ==========================================
+// VAULT CLASSIFIED LINKS PANEL
+// ==========================================
+function buildLinksPanel() {
+  const container = document.createElement('div');
+  container.className = 'vault-links-panel slide-up';
+  container.style.cssText = 'display: flex; flex-direction: column; gap: 20px;';
+
+  // Session state
+  let currentProfile = (sessionStorage.getItem('current_profile') || 'Architect').trim();
+  let currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+  let isArchitect = currentProfile.toLowerCase() === 'architect' || currentPin === '672167566';
+  let linksList = [];
+  let activeFilter = 'all'; // 'all', 'authorized', 'restricted'
+  let activeCategory = 'ALL';
+  let searchQuery = '';
+
+  const CATEGORIES = ['ALL', 'INFRASTRUCTURE', 'TELEMETRY', 'DATABASE', 'AI_MODELS', 'UTILITIES', 'RESEARCH'];
+
+  container.innerHTML = `
+    <!-- HEADER SUB-BAR -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid rgba(0,184,255,0.2); padding-bottom:14px;">
+      <div>
+        <div class="aim-header-badge" style="font-size:0.75rem; letter-spacing:1px; margin-bottom:4px;">
+          [VAULT_ENCLAVE] // CLASSIFIED_URL_MATRIX
+        </div>
+        <div style="font-family:'Orbitron',sans-serif; color:#00b8ff; font-size:1.2rem; font-weight:bold; letter-spacing:1px;">
+          CLASSIFIED VAULT LINKS
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace; color:var(--blue-dim); font-size:0.78rem; margin-top:2px;">
+          RESTRICTED ENDPOINTS & EXTERNAL REPOSITORIES // PER-PROFILE RBAC ENFORCEMENT
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div style="background:rgba(0,255,157,0.1); border:1px solid #00ff9d; color:#00ff9d; padding:4px 10px; font-family:var(--font-hud); font-size:0.72rem; border-radius:2px; font-weight:bold; display:flex; align-items:center; gap:6px;">
+          <span style="color:#00ff9d; animation:blink 1.5s infinite;">●</span>
+          RBAC: ACTIVE
+        </div>
+
+        <button id="btn-switch-links-auth" class="aim-btn aim-btn-sm" style="padding:4px 10px; font-size:0.72rem; border-color:var(--accent); color:var(--accent);" title="Switch or test different user clearance PINs">
+          🔑 CLEARANCE: ${currentProfile.toUpperCase()}
+        </button>
+      </div>
+    </div>
+
+    <!-- STATS OVERVIEW -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+      <div class="panel" style="padding:12px; background:rgba(8,12,20,0.7); border:1px solid rgba(0,184,255,0.25);">
+        <div style="font-size:0.7rem; color:var(--blue-dim); font-family:var(--font-hud);">CLASSIFIED LINKS</div>
+        <div id="stat-total-links" style="font-size:1.3rem; font-family:'Orbitron',sans-serif; color:#00b8ff; font-weight:bold; margin-top:4px;">--</div>
+      </div>
+      <div class="panel" style="padding:12px; background:rgba(8,12,20,0.7); border:1px solid rgba(0,255,157,0.25);">
+        <div style="font-size:0.7rem; color:#00ff9d; font-family:var(--font-hud);">AUTHORIZED FOR USER</div>
+        <div id="stat-auth-links" style="font-size:1.3rem; font-family:'Orbitron',sans-serif; color:#00ff9d; font-weight:bold; margin-top:4px;">--</div>
+      </div>
+      <div class="panel" style="padding:12px; background:rgba(8,12,20,0.7); border:1px solid rgba(255,0,60,0.25);">
+        <div style="font-size:0.7rem; color:#ff003c; font-family:var(--font-hud);">RESTRICTED / CLOAKED</div>
+        <div id="stat-locked-links" style="font-size:1.3rem; font-family:'Orbitron',sans-serif; color:#ff003c; font-weight:bold; margin-top:4px;">--</div>
+      </div>
+      <div class="panel" style="padding:12px; background:rgba(8,12,20,0.7); border:1px solid rgba(245,158,11,0.25);">
+        <div style="font-size:0.7rem; color:#f59e0b; font-family:var(--font-hud);">DISPATCHED LAUNCHES</div>
+        <div id="stat-clicks-links" style="font-size:1.3rem; font-family:'Orbitron',sans-serif; color:#f59e0b; font-weight:bold; margin-top:4px;">--</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS & FILTER BAR -->
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="aim-btn filter-links-btn active" data-filter="all" style="font-size:0.75rem; padding:6px 12px;">ALL LINKS</button>
+        <button class="aim-btn filter-links-btn" data-filter="authorized" style="font-size:0.75rem; padding:6px 12px; border-color:#00ff9d; color:#00ff9d;">AUTHORIZED</button>
+        <button class="aim-btn filter-links-btn" data-filter="restricted" style="font-size:0.75rem; padding:6px 12px; border-color:#ff003c; color:#ff003c;">RESTRICTED</button>
+      </div>
+
+      <div style="display:flex; gap:8px; flex-grow:1; max-width:550px;">
+        <input type="text" id="links-search-input" class="aim-input" placeholder="Search by title, url, category, description..." style="font-size:0.8rem; height:36px;" />
+        <button id="btn-refresh-links" class="aim-btn" style="white-space:nowrap; padding:0 12px; font-size:0.75rem;" title="Refresh databank">
+          ↻ RE-SYNC
+        </button>
+        ${isArchitect ? `
+          <button id="btn-toggle-add-link" class="aim-btn aim-btn-generate" style="white-space:nowrap; padding:0 14px; font-size:0.75rem;" title="Register new classified URL">
+            + ADD LINK
+          </button>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- CATEGORY PILLS -->
+    <div id="links-cat-pills" style="display:flex; gap:6px; flex-wrap:wrap;">
+      ${CATEGORIES.map(cat => `
+        <button class="aim-btn cat-pill-btn ${cat === 'ALL' ? 'active' : ''}" data-cat="${cat}" style="font-size:0.7rem; padding:3px 10px; border-radius:2px; ${cat === 'ALL' ? 'background:rgba(0,184,255,0.2); border-color:#00b8ff; color:#fff;' : 'background:transparent; border-color:var(--border-dim); color:var(--blue-dim);'}">
+          ${cat}
+        </button>
+      `).join('')}
+    </div>
+
+    <!-- ARCHITECT ADD LINK PANEL (COLLAPSIBLE) -->
+    ${isArchitect ? `
+      <div id="add-link-panel" class="panel aim-section" style="display:none; padding:18px; border:1px solid #00b8ff; background:rgba(8,16,28,0.95);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div style="font-family:'Orbitron',sans-serif; color:#fff; font-size:0.95rem; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+            <span style="color:#00b8ff;">▲</span> CLASSIFY & REGISTER NEW VAULT LINK [ARCHITECT MASTER CLEARANCE]
+          </div>
+          <button id="btn-close-add-link" style="background:none; border:none; color:#888; cursor:pointer; font-size:1.1rem;">✕</button>
+        </div>
+
+        <form id="add-link-form" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+          <div class="aim-field">
+            <label class="aim-label">LINK TITLE</label>
+            <input type="text" id="link-input-title" class="aim-input" placeholder="e.g. Modal Autonomous Orchestrator" required />
+          </div>
+
+          <div class="aim-field">
+            <label class="aim-label">DESTINATION URL</label>
+            <input type="text" id="link-input-url" class="aim-input" placeholder="e.g. https://modal.com/apps/orchestrator" required />
+          </div>
+
+          <div class="aim-field">
+            <label class="aim-label">CATEGORY</label>
+            <select id="link-input-cat" class="aim-input" style="background:#050a12; color:#fff;">
+              <option value="INFRASTRUCTURE">INFRASTRUCTURE</option>
+              <option value="TELEMETRY">TELEMETRY</option>
+              <option value="DATABASE">DATABASE</option>
+              <option value="AI_MODELS">AI_MODELS</option>
+              <option value="UTILITIES">UTILITIES</option>
+              <option value="RESEARCH">RESEARCH</option>
+            </select>
+          </div>
+
+          <div class="aim-field">
+            <label class="aim-label">ACCESS CLEARANCE LEVEL</label>
+            <select id="link-input-access" class="aim-input" style="background:#050a12; color:#fff;">
+              <option value="RESTRICTED">RESTRICTED (Specified Profiles Only)</option>
+              <option value="ROLE_LOCKED">ROLE_LOCKED (Profiles or Assigned Roles)</option>
+              <option value="PUBLIC_CLEARANCE">PUBLIC_CLEARANCE (All Authenticated Profiles)</option>
+            </select>
+          </div>
+
+          <div class="aim-field" style="grid-column:1 / -1;">
+            <label class="aim-label">DESCRIPTION</label>
+            <input type="text" id="link-input-desc" class="aim-input" placeholder="Brief technical summary or purpose of this classified link..." />
+          </div>
+
+          <div class="aim-field" style="grid-column:1 / -1;">
+            <label class="aim-label">ALLOWED OPERATIVES (SELECT PROFILES WITH ACCESS)</label>
+            <div id="link-profiles-cbs" style="display:flex; gap:16px; flex-wrap:wrap; margin-top:6px; background:rgba(0,0,0,0.3); padding:8px 12px; border:1px solid #334155; border-radius:3px;">
+              <label style="color:#00ff9d; font-size:0.75rem; cursor:pointer;"><input type="checkbox" value="Architect" checked disabled /> Architect (Always Authorized)</label>
+              <label style="color:var(--blue-dim); font-size:0.75rem; cursor:pointer;"><input type="checkbox" class="link-perm-cb" value="Fisherman" /> Fisherman</label>
+              <label style="color:var(--blue-dim); font-size:0.75rem; cursor:pointer;"><input type="checkbox" class="link-perm-cb" value="J. P." /> J. P.</label>
+              <label style="color:var(--blue-dim); font-size:0.75rem; cursor:pointer;"><input type="checkbox" class="link-perm-cb" value="john" /> john</label>
+              <label style="color:#f59e0b; font-size:0.75rem; cursor:pointer;"><input type="checkbox" class="link-perm-cb" value="*" /> Public (All Authorized Users)</label>
+            </div>
+          </div>
+
+          <div style="grid-column:1 / -1; display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
+            <button type="submit" id="btn-submit-link" class="aim-btn aim-btn-generate" style="padding:8px 24px;">
+              COMMIT & STORE IN VAULT
+            </button>
+          </div>
+        </form>
+      </div>
+    ` : ''}
+
+    <!-- LINKS CARDS GRID -->
+    <div id="links-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px;">
+      <div style="color:var(--blue-dim); font-family:var(--font-hud); padding:30px; text-align:center; grid-column:1 / -1;">
+        CONNECTING TO VAULT CLASSIFIED DIRECTORY...
+      </div>
+    </div>
+  `;
+
+  // Profile switcher
+  const btnSwitchAuth = container.querySelector('#btn-switch-links-auth');
+  if (btnSwitchAuth) {
+    btnSwitchAuth.onclick = () => {
+      const pinPadEl = buildPinPad({
+        onSuccess: () => {
+          showModal({ title: '', content: '' });
+          currentProfile = (sessionStorage.getItem('current_profile') || 'Guest').trim();
+          currentPin = (sessionStorage.getItem('current_pin') || '').trim();
+          isArchitect = currentProfile.toLowerCase() === 'architect' || currentPin === '672167566';
+          fetchLinks();
+        },
+        title: '// VERIFY_OPERATIVE_CLEARANCE',
+        subtitle: 'ENTER PIN TO VERIFY ACCESS PERMISSIONS',
+        icon: '🔑'
+      });
+      showModal({
+        title: 'SWITCH OPERATIVE CLEARANCE PROFILE',
+        content: pinPadEl
+      });
+    };
+  }
+
+  // Filter buttons
+  const filterBtns = container.querySelectorAll('.filter-links-btn');
+  filterBtns.forEach(btn => {
+    btn.onclick = () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.getAttribute('data-filter');
+      renderLinks();
+    };
+  });
+
+  // Category pills
+  const catPills = container.querySelectorAll('.cat-pill-btn');
+  catPills.forEach(pill => {
+    pill.onclick = () => {
+      catPills.forEach(p => {
+        p.classList.remove('active');
+        p.style.background = 'transparent';
+        p.style.borderColor = 'var(--border-dim)';
+        p.style.color = 'var(--blue-dim)';
+      });
+      pill.classList.add('active');
+      pill.style.background = 'rgba(0,184,255,0.2)';
+      pill.style.borderColor = '#00b8ff';
+      pill.style.color = '#fff';
+      activeCategory = pill.getAttribute('data-cat');
+      renderLinks();
+    };
+  });
+
+  // Search input
+  const searchInput = container.querySelector('#links-search-input');
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      renderLinks();
+    };
+  }
+
+  // Refresh button
+  const btnRefresh = container.querySelector('#btn-refresh-links');
+  if (btnRefresh) {
+    btnRefresh.onclick = () => {
+      playSFX('click');
+      btnRefresh.innerHTML = '↻ SYNCING...';
+      fetchLinks().finally(() => {
+        btnRefresh.innerHTML = '↻ RE-SYNC';
+      });
+    };
+  }
+
+  // Add Link panel toggle
+  const btnToggleAdd = container.querySelector('#btn-toggle-add-link');
+  const addLinkPanel = container.querySelector('#add-link-panel');
+  const btnCloseAdd = container.querySelector('#btn-close-add-link');
+
+  if (btnToggleAdd && addLinkPanel) {
+    btnToggleAdd.onclick = () => {
+      playSFX('click');
+      const isVisible = addLinkPanel.style.display !== 'none';
+      addLinkPanel.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) addLinkPanel.scrollIntoView({ behavior: 'smooth' });
+    };
+  }
+  if (btnCloseAdd && addLinkPanel) {
+    btnCloseAdd.onclick = () => {
+      addLinkPanel.style.display = 'none';
+    };
+  }
+
+  // Add link form submit
+  const addLinkForm = container.querySelector('#add-link-form');
+  if (addLinkForm) {
+    addLinkForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const submitBtn = addLinkForm.querySelector('#btn-submit-link');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'REGISTERING IN VAULT...';
+
+      try {
+        const title = addLinkForm.querySelector('#link-input-title').value.trim();
+        const url = addLinkForm.querySelector('#link-input-url').value.trim();
+        const category = addLinkForm.querySelector('#link-input-cat').value;
+        const accessLevel = addLinkForm.querySelector('#link-input-access').value;
+        const description = addLinkForm.querySelector('#link-input-desc').value.trim();
+
+        const selectedProfiles = ['Architect'];
+        addLinkForm.querySelectorAll('.link-perm-cb:checked').forEach(cb => {
+          selectedProfiles.push(cb.value);
+        });
+
+        const payload = {
+          title,
+          url,
+          category,
+          accessLevel,
+          description,
+          allowedProfiles: selectedProfiles,
+          allowedRoles: ['admin', 'vault']
+        };
+
+        const res = await fetch('/api/vault/links', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-pin': currentPin || '672167566'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to register link');
+
+        showToast(`Vault link '${title}' registered successfully!`, 'success');
+        playSFX('response');
+        addLinkForm.reset();
+        addLinkPanel.style.display = 'none';
+        fetchLinks();
+      } catch (err) {
+        showToast(`Registration error: ${err.message}`, 'error');
+        playSFX('incorrect');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'COMMIT & STORE IN VAULT';
+      }
+    };
+  }
+
+  // Fetch classified links from backend
+  async function fetchLinks() {
+    try {
+      const res = await fetch(`/api/vault/links?profile=${encodeURIComponent(currentProfile)}&pin=${encodeURIComponent(currentPin)}`, {
+        headers: {
+          'x-user-pin': currentPin
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      linksList = data.links || [];
+      if (typeof data.isArchitect === 'boolean') {
+        isArchitect = data.isArchitect;
+      }
+      renderLinks();
+      updateStats();
+    } catch (err) {
+      console.error('[VaultLinks] Fetch error:', err);
+      const grid = container.querySelector('#links-grid');
+      if (grid) {
+        grid.innerHTML = `
+          <div class="panel" style="grid-column:1 / -1; border-color:var(--accent); padding:20px; text-align:center;">
+            <div style="color:var(--accent); font-family:'Orbitron',sans-serif; margin-bottom:8px;">// DATABANK_ERROR</div>
+            <p style="color:#888; font-size:0.85rem; margin:0;">Unable to retrieve classified links: ${err.message}</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  function updateStats() {
+    const totalEl = container.querySelector('#stat-total-links');
+    const authEl = container.querySelector('#stat-auth-links');
+    const lockedEl = container.querySelector('#stat-locked-links');
+    const clicksEl = container.querySelector('#stat-clicks-links');
+
+    const total = linksList.length;
+    const authorized = linksList.filter(l => l.canAccess).length;
+    const locked = total - authorized;
+    const totalClicks = linksList.reduce((sum, l) => sum + (l.clicksCount || 0), 0);
+
+    if (totalEl) totalEl.textContent = total;
+    if (authEl) authEl.textContent = authorized;
+    if (lockedEl) lockedEl.textContent = locked;
+    if (clicksEl) clicksEl.textContent = totalClicks;
+  }
+
+  function renderLinks() {
+    const grid = container.querySelector('#links-grid');
+    if (!grid) return;
+
+    let filtered = linksList;
+
+    if (activeFilter === 'authorized') {
+      filtered = filtered.filter(l => l.canAccess);
+    } else if (activeFilter === 'restricted') {
+      filtered = filtered.filter(l => !l.canAccess);
+    }
+
+    if (activeCategory !== 'ALL') {
+      filtered = filtered.filter(l => (l.category || '').toUpperCase() === activeCategory);
+    }
+
+    if (searchQuery) {
+      filtered = filtered.filter(l =>
+        (l.title && l.title.toLowerCase().includes(searchQuery)) ||
+        (l.url && l.url.toLowerCase().includes(searchQuery)) ||
+        (l.description && l.description.toLowerCase().includes(searchQuery)) ||
+        (l.category && l.category.toLowerCase().includes(searchQuery))
+      );
+    }
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="panel" style="grid-column:1 / -1; padding:30px; text-align:center; color:var(--blue-dim); font-family:var(--font-hud);">
+          NO CLASSIFIED LINKS MATCH CURRENT QUERY OR FILTER CRITERIA.
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = '';
+    filtered.forEach(link => {
+      const card = buildLinkCard(link);
+      grid.appendChild(card);
+    });
+  }
+
+  function getCategoryIcon(cat) {
+    switch ((cat || '').toUpperCase()) {
+      case 'INFRASTRUCTURE': return '🌐';
+      case 'TELEMETRY': return '📡';
+      case 'DATABASE': return '🗄️';
+      case 'AI_MODELS': return '🧠';
+      case 'RESEARCH': return '🔬';
+      default: return '🔗';
+    }
+  }
+
+  function buildLinkCard(link) {
+    const card = createElement('div', { class: 'panel aim-section link-card' });
+    card.style.cssText = `
+      padding: 16px;
+      background: rgba(8, 14, 24, 0.85);
+      border: 1px solid ${link.canAccess ? 'rgba(0, 184, 255, 0.35)' : 'rgba(255, 0, 60, 0.3)'};
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    `;
+
+    const isPublic = (link.allowedProfiles || []).includes('*');
+    const allowedList = (link.allowedProfiles || []).join(', ');
+    const icon = getCategoryIcon(link.category);
+
+    card.innerHTML = `
+      <div>
+        <!-- TOP ROW: ICON, TITLE, BADGES -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:38px; height:38px; border-radius:4px; background:rgba(0,184,255,0.1); border:1px solid #00b8ff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+              ${icon}
+            </div>
+            <div>
+              <h3 style="margin:0; font-family:'Orbitron',sans-serif; font-size:0.95rem; color:#fff; letter-spacing:0.5px;">
+                ${escapeHTML(link.title)}
+              </h3>
+              <div style="font-size:0.68rem; color:#00b8ff; font-family:var(--font-hud); margin-top:2px;">
+                [${escapeHTML((link.category || 'GENERAL').toUpperCase())}]
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:right;">
+            <span style="display:inline-block; font-size:0.68rem; font-family:var(--font-hud); font-weight:bold; padding:2px 6px; border-radius:2px; background:${link.canAccess ? 'rgba(0,255,157,0.15)' : 'rgba(255,0,60,0.15)'}; border:1px solid ${link.canAccess ? '#00ff9d' : '#ff003c'}; color:${link.canAccess ? '#00ff9d' : '#ff003c'};">
+              ${link.canAccess ? '● AUTHORIZED' : '✕ CLASSIFIED'}
+            </span>
+            <div style="font-size:0.65rem; color:#888; font-family:monospace; margin-top:4px;">
+              ${link.accessLevel || 'RESTRICTED'}
+            </div>
+          </div>
+        </div>
+
+        <!-- CLEARANCE BANNER -->
+        <div style="background:rgba(0,0,0,0.4); border-left:3px solid ${link.canAccess ? '#00b8ff' : '#ff003c'}; padding:6px 10px; margin-bottom:12px; font-size:0.72rem; font-family:monospace;">
+          <span style="color:#aaa;">PERMITTED OPERATIVES:</span> 
+          <span style="color:${link.canAccess ? '#00b8ff' : '#ff003c'}; font-weight:bold;">
+            ${isPublic ? 'PUBLIC (ALL ACTIVE OPERATIVES)' : escapeHTML(allowedList)}
+          </span>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <p style="font-size:0.78rem; color:#ccc; line-height:1.4; margin:0 0 12px 0;">
+          ${escapeHTML(link.description || 'No operational description logged.')}
+        </p>
+
+        <!-- DESTINATION URL BOX -->
+        <div style="background:rgba(0,0,0,0.5); border:1px solid #1e293b; padding:8px 10px; border-radius:3px; font-size:0.72rem; font-family:monospace; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <span style="color:${link.canAccess ? '#38bdf8' : '#64748b'}; word-break:break-all; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${escapeHTML(link.url)}
+          </span>
+          ${link.canAccess ? `
+            <button class="btn-copy-link-url" style="background:none; border:none; color:#00b8ff; cursor:pointer; font-size:0.7rem; padding:2px 6px; white-space:nowrap;" title="Copy URL">
+              COPY
+            </button>
+          ` : `
+            <span style="color:#ef4444; font-size:0.65rem; white-space:nowrap;">🔒 CLOAKED</span>
+          `}
+        </div>
+
+        <!-- METRICS ROW -->
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; font-size:0.68rem; font-family:monospace; color:#888;">
+          <div style="background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:2px;">
+            LAUNCHES: <span style="color:#f59e0b;">${link.clicksCount || 0}</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:2px;">
+            SECURITY: <span style="color:${link.canAccess ? '#00ff9d' : '#ff003c'};">${link.canAccess ? 'CLEARED' : 'RESTRICTED'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+        <div style="display:flex; gap:8px;">
+          <button class="aim-btn btn-launch-link" style="flex-grow:1; padding:8px 12px; font-size:0.8rem; font-weight:bold; ${link.canAccess ? 'background:rgba(0,184,255,0.15); border-color:#00b8ff; color:#00b8ff;' : 'opacity:0.4; cursor:not-allowed; border-color:#475569; color:#64748b;'}" ${link.canAccess ? '' : 'disabled'}>
+            ${link.canAccess ? '↗ LAUNCH ENDPOINT' : '🔒 CLEARANCE LOCKED'}
+          </button>
+
+          <button class="aim-btn btn-qr-link" style="padding:8px 10px; font-size:0.75rem; ${link.canAccess ? '' : 'opacity:0.4; cursor:not-allowed;'}" title="Scan Mobile QR Code" ${link.canAccess ? '' : 'disabled'}>
+            📱
+          </button>
+        </div>
+
+        ${isArchitect ? `
+          <div style="display:flex; gap:6px; margin-top:2px;">
+            <button class="aim-btn aim-btn-sm btn-edit-link-perms" style="flex-grow:1; font-size:0.68rem; padding:4px; border-color:#64748b; color:#94a3b8;">
+              ⚙ EDIT PERMISSIONS
+            </button>
+            <button class="aim-btn aim-btn-sm btn-delete-link" style="font-size:0.68rem; padding:4px 8px; border-color:#ef4444; color:#ef4444;" title="Delete Link from Vault">
+              ✕
+            </button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Copy URL handler
+    const btnCopy = card.querySelector('.btn-copy-link-url');
+    if (btnCopy && link.canAccess) {
+      btnCopy.onclick = () => {
+        navigator.clipboard.writeText(link.url);
+        showToast('Destination URL copied to clipboard', 'info');
+        playSFX('click');
+      };
+    }
+
+    // Launch handler
+    const btnLaunch = card.querySelector('.btn-launch-link');
+    if (btnLaunch && link.canAccess) {
+      btnLaunch.onclick = () => {
+        playSFX('click');
+        // Increment clicks in background
+        fetch(`/api/vault/links/${encodeURIComponent(link.id)}/click`, { method: 'POST' }).catch(() => {});
+        link.clicksCount = (link.clicksCount || 0) + 1;
+        updateStats();
+        window.open(link.url, '_blank', 'noopener,noreferrer');
+      };
+    }
+
+    // QR Code modal
+    const btnQr = card.querySelector('.btn-qr-link');
+    if (btnQr && link.canAccess) {
+      btnQr.onclick = () => {
+        playSFX('click');
+        const qrContent = document.createElement('div');
+        qrContent.style.cssText = 'text-align:center; padding:10px;';
+        qrContent.innerHTML = `
+          <div style="background:#fff; padding:16px; display:inline-block; border-radius:6px; margin-bottom:14px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link.url)}" alt="QR Code" style="display:block; width:200px; height:200px;" />
+          </div>
+          <div style="font-family:monospace; font-size:0.75rem; color:#aaa; margin-bottom:12px; word-break:break-all;">
+            DESTINATION URL:<br/>
+            <a href="${link.url}" target="_blank" rel="noopener noreferrer" style="color:#00b8ff;">${escapeHTML(link.url)}</a>
+          </div>
+          <p style="color:#888; font-size:0.75rem; margin:0;">Scan with camera or mobile browser to open endpoint directly.</p>
+        `;
+        showModal({
+          title: `ENDPOINT QR // ${link.title.toUpperCase()}`,
+          content: qrContent
+        });
+      };
+    }
+
+    // Edit permissions modal (Architect only)
+    const btnEditPerms = card.querySelector('.btn-edit-link-perms');
+    if (btnEditPerms && isArchitect) {
+      btnEditPerms.onclick = () => {
+        playSFX('click');
+        const permsForm = document.createElement('form');
+        permsForm.innerHTML = `
+          <div style="font-family:'Share Tech Mono',monospace; font-size:0.85rem;">
+            <p style="color:#aaa; margin-top:0;">Configure access clearance for <strong>${escapeHTML(link.title)}</strong>.</p>
+
+            <div style="background:rgba(0,0,0,0.4); padding:12px; border:1px solid #334155; margin-bottom:14px; border-radius:3px;">
+              <div style="margin-bottom:8px; font-size:0.75rem; color:#00b8ff; font-weight:bold;">ALLOWED PROFILES:</div>
+              <label style="display:block; margin-bottom:6px; color:#00ff9d;"><input type="checkbox" value="Architect" checked disabled /> Architect (Always Allowed)</label>
+              <label style="display:block; margin-bottom:6px; color:var(--blue-dim);"><input type="checkbox" class="edit-link-p-cb" value="Fisherman" ${(link.allowedProfiles || []).includes('Fisherman') ? 'checked' : ''} /> Fisherman</label>
+              <label style="display:block; margin-bottom:6px; color:var(--blue-dim);"><input type="checkbox" class="edit-link-p-cb" value="J. P." ${(link.allowedProfiles || []).includes('J. P.') ? 'checked' : ''} /> J. P.</label>
+              <label style="display:block; margin-bottom:6px; color:var(--blue-dim);"><input type="checkbox" class="edit-link-p-cb" value="john" ${(link.allowedProfiles || []).includes('john') ? 'checked' : ''} /> john</label>
+              <label style="display:block; margin-bottom:6px; color:#f59e0b;"><input type="checkbox" class="edit-link-p-cb" value="*" ${(link.allowedProfiles || []).includes('*') ? 'checked' : ''} /> Public / All Users (*)</label>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <label style="display:block; margin-bottom:4px; font-size:0.75rem; color:#00b8ff; font-weight:bold;">ACCESS LEVEL:</label>
+              <select id="edit-link-access-level" class="aim-input" style="width:100%; background:#050a12; color:#fff;">
+                <option value="RESTRICTED" ${link.accessLevel === 'RESTRICTED' ? 'selected' : ''}>RESTRICTED (Specified Profiles Only)</option>
+                <option value="ROLE_LOCKED" ${link.accessLevel === 'ROLE_LOCKED' ? 'selected' : ''}>ROLE_LOCKED (Profiles or Assigned Roles)</option>
+                <option value="PUBLIC_CLEARANCE" ${link.accessLevel === 'PUBLIC_CLEARANCE' ? 'selected' : ''}>PUBLIC_CLEARANCE (All Users)</option>
+              </select>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+              <button type="submit" class="aim-btn aim-btn-generate" style="padding:6px 18px;">SAVE PERMISSIONS</button>
+            </div>
+          </div>
+        `;
+
+        permsForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const selected = ['Architect'];
+          permsForm.querySelectorAll('.edit-link-p-cb:checked').forEach(cb => selected.push(cb.value));
+          const newAccess = permsForm.querySelector('#edit-link-access-level').value;
+
+          try {
+            const res = await fetch(`/api/vault/links/${encodeURIComponent(link.id)}/permissions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-pin': currentPin || '672167566'
+              },
+              body: JSON.stringify({
+                allowedProfiles: selected,
+                accessLevel: newAccess
+              })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to update');
+
+            showToast('Permissions updated successfully!', 'success');
+            showModal({ title: '', content: '' });
+            fetchLinks();
+          } catch (err) {
+            showToast(`Update error: ${err.message}`, 'error');
+          }
+        };
+
+        showModal({
+          title: `PERMISSIONS // ${link.title.toUpperCase()}`,
+          content: permsForm
+        });
+      };
+    }
+
+    // Delete handler (Architect only)
+    const btnDel = card.querySelector('.btn-delete-link');
+    if (btnDel && isArchitect) {
+      btnDel.onclick = async () => {
+        if (!confirm(`Permanently remove classified link '${link.title}' from Vault?`)) return;
+        playSFX('click');
+        try {
+          const res = await fetch(`/api/vault/links/${encodeURIComponent(link.id)}`, {
+            method: 'DELETE',
+            headers: {
+              'x-user-pin': currentPin || '672167566'
+            }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to delete');
+          showToast(`Link '${link.title}' removed from Vault.`, 'info');
+          fetchLinks();
+        } catch (err) {
+          showToast(`Deletion error: ${err.message}`, 'error');
+        }
+      };
+    }
+
+    return card;
+  }
+
+  // Initial load
+  fetchLinks();
+
+  return container;
+}
+
+
+// ===
 // PROGRAMMATIC VAULT STORAGE API
 // ==========================================
 export async function saveFileToVault(fileObj, customFilename = null, isShared = false) {

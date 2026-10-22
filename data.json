@@ -88,6 +88,38 @@
     {
       "type": "VAULT_LINK_ADDED",
       "user": "Architect",
+      "linkId": "link_1792694360920_eae0w",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1792694360920
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792683124169
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1792683124157
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1792683123599_emisr",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1792683123599
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
       "linkId": "link_1792682944408_9rynj",
       "title": "Autonomous Swarm Node",
       "timestamp": 1792682944408
@@ -203,7 +235,7 @@
         "admin"
       ],
       "accessLevel": "RESTRICTED",
-      "downloadsCount": 46,
+      "downloadsCount": 47,
       "createdAt": 1782687600000,
       "updatedAt": 1782687600000
     },
@@ -231,7 +263,7 @@
         "recon"
       ],
       "accessLevel": "ROLE_LOCKED",
-      "downloadsCount": 21,
+      "downloadsCount": 22,
       "createdAt": 1782687600000,
       "updatedAt": 1782687600000
     },
