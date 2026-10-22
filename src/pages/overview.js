@@ -6,7 +6,6 @@ import { showModal } from '../components/modal.js';
 import { createElement } from '../components/utils.js';
 import { showToast } from '../components/toast.js';
 import { playSFX, initGlobalAudio, toggleAudio, getGlobalAudio } from '../components/audio.js';
-import { getAllGalleryImages } from '../components/vision_db.js';
 
 const bootLines = [
   "INITIALIZING ALPHACORE FRAMEWORK v4.0...",
@@ -397,71 +396,6 @@ export default function Overview() {
       takeMugSip();
     });
   }
-
-  // ─── LIVING DESK PROP 1: POLAROID VISION DB SYNC ────────────────────
-  const polaroidCard = container.querySelector('#prop-polaroid');
-  const polaroidArt = container.querySelector('.polaroid-art');
-  const polaroidPhoto = container.querySelector('.polaroid-photo');
-  const polaroidDesc = polaroidCard?.querySelector('.prop-desc');
-  const polaroidBadge = polaroidCard?.querySelector('.prop-badge');
-
-  getAllGalleryImages()
-    .then(images => {
-      if (images && images.length > 0) {
-        const latest = images[0];
-        if (latest && latest.data && polaroidArt) {
-          polaroidArt.style.backgroundImage = `url("${latest.data}")`;
-          polaroidArt.style.backgroundSize = 'cover';
-          polaroidArt.style.backgroundPosition = 'center';
-          polaroidArt.setAttribute('title', `Latest Generation: "${latest.prompt || 'Synthesized Artwork'}"`);
-
-          if (polaroidDesc && latest.prompt) {
-            const shortPrompt = latest.prompt.length > 60 ? latest.prompt.slice(0, 57) + '...' : latest.prompt;
-            polaroidDesc.innerHTML = `<span style="color:#00f0ff; font-weight:bold;">LATEST DIFFUSION:</span> "${shortPrompt}"`;
-          }
-
-          if (polaroidBadge) {
-            polaroidBadge.textContent = 'LIVE VISION DB';
-            polaroidBadge.style.color = '#10b981';
-            polaroidBadge.style.borderColor = '#10b981';
-          }
-
-          if (polaroidPhoto) {
-            polaroidPhoto.style.cursor = 'zoom-in';
-            polaroidPhoto.title = 'Click to inspect in Vision Archive';
-            polaroidPhoto.addEventListener('click', (e) => {
-              e.stopPropagation();
-              playSFX('modal', 0.6);
-              showModal(
-                '// VISION ARCHIVE: LATEST CAPTURE',
-                `<div style="text-align:center;">
-                  <img src="${latest.data}" alt="Artwork" style="max-width:100%; max-height:60vh; border-radius:6px; border:1px solid rgba(6,182,212,0.4); box-shadow:0 0 25px rgba(0,240,255,0.25);" />
-                  <div style="margin-top:14px; font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:#cbd5e1; text-align:left; background:rgba(0,0,0,0.5); padding:10px 14px; border-radius:4px; border:1px solid rgba(255,255,255,0.1);">
-                    <div style="margin-bottom:4px;"><strong style="color:#00f0ff;">PROMPT:</strong> ${latest.prompt || 'No prompt recorded'}</div>
-                    <div style="margin-bottom:4px;"><strong style="color:#a855f7;">SOURCE:</strong> ${latest.source || 'Diffusion Matrix'}</div>
-                    <div><strong style="color:#64748b;">TIMESTAMP:</strong> ${new Date(latest.timestamp || Date.now()).toLocaleString()}</div>
-                  </div>
-                  <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:14px;">
-                    <a href="#/aimodals?tab=upscaler" class="aim-btn aim-btn-sm" id="modal-handoff-upscale" style="border-color:#38bdf8; color:#38bdf8;">🔍 UPSCALE 4K</a>
-                    <a href="#/aimodals?tab=img2vid" class="aim-btn aim-btn-sm" id="modal-handoff-i2v" style="border-color:#a855f7; color:#a855f7;">🎬 ANIMATE (IMG2VID)</a>
-                    <a href="#/aimodals?tab=omnigen" class="aim-btn aim-btn-sm" id="modal-handoff-omni" style="border-color:#10b981; color:#10b981;">🧬 OMNIGEN REF</a>
-                  </div>
-                </div>`
-              );
-              const upBtn = document.getElementById('modal-handoff-upscale');
-              if (upBtn) upBtn.onclick = () => { window._pending_upscale_image = latest.data; };
-              const i2vBtn = document.getElementById('modal-handoff-i2v');
-              if (i2vBtn) i2vBtn.onclick = () => { window._pending_img2vid_image = latest.data; };
-              const omniBtn = document.getElementById('modal-handoff-omni');
-              if (omniBtn) omniBtn.onclick = () => { window._pending_omnigen_image = latest.data; };
-            });
-          }
-        }
-      }
-    })
-    .catch(err => {
-      console.warn('[Overview] Vision DB gallery fetch skipped:', err);
-    });
 
   // ─── LIVING DESK PROP 5: CYBER-DESK CASSETTE RADIO ──────────────────
   const audioWrap = container.querySelector('.prop-audio-wrap');
