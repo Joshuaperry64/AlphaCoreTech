@@ -50,7 +50,7 @@ def perform_unrestricted_scrape(query: str) -> dict:
 # --- END SCRAPER LOGIC ---
 
 @app.function(image=image)
-@modal.web_endpoint(method="GET")
+@modal.fastapi_endpoint(method="GET")
 def scrape_video(query: str = ""):
     """
     Modal web endpoint for the video scraper.
