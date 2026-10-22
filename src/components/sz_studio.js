@@ -5,7 +5,7 @@
  */
 import { escapeHTML } from './utils.js';
 import { apiUrl } from './api.js';
-import { vetText, vetProfile, gateTags, GateError } from './sz_gate.js';
+
 
 const K_PROFILES = 'sz_profiles_v1';
 const K_PREFS = 'sz_prefs_v1';
@@ -47,7 +47,7 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 
 export function loadProfiles() { return load(K_PROFILES, []); }
 export function saveProfile(p) {
-  vetProfile(p);
+
   const list = loadProfiles();
   const i = list.findIndex(x => x.id === p.id);
   if (i >= 0) list[i] = p; else list.push(p);
