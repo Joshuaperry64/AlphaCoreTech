@@ -290,21 +290,9 @@ class Txt2Img:
                     warmup_ckpt = alt_ckpts[0]
 
             if (ckpt_dir / warmup_ckpt).exists():
-                print(f"🔥 [COLD-START WARMUP] Loading & compiling pipeline for '{warmup_ckpt}' inside @modal.enter()...")
-                self._load_model(warmup_ckpt, compile_unet=True)
-                print("🔥 [COLD-START WARMUP] Running 4-step SDXL-Lightning dummy generation to force PyTorch graph compilation...")
-                with torch.inference_mode():
-                    _ = self.pipe(
-                        prompt="A cinematic cyberpunk portrait, warmup compilation pass",
-                        num_inference_steps=4,
-                        guidance_scale=0.0,
-                        width=1024,
-                        height=1024,
-                    ).images
-                if torch.cuda.is_available():
-                    torch.cuda.synchronize()
-                    torch.cuda.empty_cache()
-                print("✅ [COLD-START WARMUP] AOT torch.compile graph compilation complete! Ready for real-time requests.")
+                print(f"🔥 [COLD-START WARMUP] Loading pipeline for '{warmup_ckpt}' inside @modal.enter()...")
+                self._load_model(warmup_ckpt, compile_unet=False)
+                print("✅ [COLD-START WARMUP] Model weights loaded and ready for real-time requests.")
             else:
                 print(f"⚠️ [COLD-START WARMUP] No checkpoint found in {ckpt_dir}; deferring load to first request.")
         except Exception as warmup_err:
@@ -312,61 +300,48 @@ class Txt2Img:
 
     def _apply_sdxl_optimizations(self, pipe, is_sd15: bool = False, compile_unet: bool = True):
         """
-        Applies the 4-part real-time acceleration stack:
-        1. SDXL-Lightning 4-step LoRA fused into pipeline + trailing EulerDiscreteScheduler
-        2. FreeU V2 structure coherence (s1=0.9, s2=0.2, b1=1.3, b2=1.4)
-        3. DeepCacheSDHelper (cache_interval=2)
-        4. Channels-last memory format on U-Net & VAE + torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
+        Applies SDXL acceleration & quality enhancements:
+        1. FreeU V2 structure coherence (s1=0.9, s2=0.2, b1=1.3, b2=1.4) with float32 FFT safety
+        2. Channels-last memory format on U-Net & VAE
+        3. torch.compile on U-Net (mode='default')
+        Note: SDXL-Lightning 4-step LoRA is NOT fused by default, allowing raw full-step inference.
+        It is loaded dynamically only when lightning/lcm mode is explicitly requested.
         """
-        from diffusers import EulerDiscreteScheduler
-        from DeepCache import DeepCacheSDHelper
-        from huggingface_hub import hf_hub_download
         import torch._dynamo
+        import diffusers.utils.torch_utils as _dtu
 
         # Configure TorchDynamo to cleanly handle dynamic Python hooks (e.g., DeepCache, IP-Adapter, Regional Prompting)
         torch._dynamo.config.suppress_errors = True
         torch._dynamo.config.capture_scalar_outputs = True
 
-        if getattr(self, "deepcache_helper", None) is not None:
-            try:
-                self.deepcache_helper.disable()
-            except Exception:
-                pass
-            self.deepcache_helper = None
+        # Monkey-patch diffusers fourier_filter to ensure float32 FFT calculation, preventing 'Unsupported dtype BFloat16'
+        orig_fourier_filter = getattr(_dtu, "fourier_filter", None)
+        if orig_fourier_filter is not None:
+            def safe_fourier_filter(x_in, threshold, scale):
+                orig_dtype = x_in.dtype
+                x = x_in.to(dtype=torch.float32)
+                B, C, H, W = x.shape
+                x_freq = torch.fft.fftn(x, dim=(-2, -1))
+                x_freq = torch.fft.fftshift(x_freq, dim=(-2, -1))
+                mask = torch.ones((B, C, H, W), device=x.device, dtype=torch.float32)
+                crow, ccol = H // 2, W // 2
+                mask[..., crow - threshold : crow + threshold, ccol - threshold : ccol + threshold] = scale
+                x_freq = x_freq * mask
+                x_freq = torch.fft.ifftshift(x_freq, dim=(-2, -1))
+                x_filtered = torch.fft.ifftn(x_freq, dim=(-2, -1)).real
+                return x_filtered.to(dtype=orig_dtype)
+
+            _dtu.fourier_filter = safe_fourier_filter
 
         if not is_sd15:
-            # 1. SDXL-Lightning 4-Step LoRA + Fusing + Trailing Scheduler
-            try:
-                print(f"⚡ [SDXL-LIGHTNING] Loading & fusing {LIGHTNING_REPO}/{LIGHTNING_CKPT}...")
-                ckpt_path = hf_hub_download(LIGHTNING_REPO, LIGHTNING_CKPT, cache_dir=CACHE_DIR)
-                pipe.load_lora_weights(ckpt_path)
-                pipe.fuse_lora(lora_scale=1.0)
-                pipe.unload_lora_weights()
-                pipe.scheduler = EulerDiscreteScheduler.from_config(
-                    pipe.scheduler.config,
-                    timestep_spacing="trailing",
-                )
-                print("✅ [SDXL-LIGHTNING] 4-Step LoRA fused & EulerDiscreteScheduler(timestep_spacing='trailing') configured.")
-            except Exception as light_err:
-                print(f"⚠️ [SDXL-LIGHTNING] Fuse warning: {light_err}")
-
-            # 2. FreeU V2 Native Structure Coherence
+            # FreeU V2 Native Structure Coherence
             try:
                 pipe.enable_freeu(s1=0.9, s2=0.2, b1=1.3, b2=1.4)
                 print("✅ [FREEU V2] Enabled (s1=0.9, s2=0.2, b1=1.3, b2=1.4).")
             except Exception as freeu_err:
                 print(f"⚠️ [FREEU V2] Warning: {freeu_err}")
 
-        # 3. DeepCache Integration (cache_interval=2) — initialized here and dynamically toggled per step-count in run()
-        try:
-            helper = DeepCacheSDHelper(pipe=pipe)
-            helper.set_params(cache_interval=2, cache_branch_id=0)
-            self.deepcache_helper = helper
-            print("✅ [DEEPCACHE] DeepCacheSDHelper initialized (cache_interval=2).")
-        except Exception as dc_err:
-            print(f"⚠️ [DEEPCACHE] Warning: {dc_err}")
-
-        # 4. AOT Memory Format (channels_last) & U-Net Compilation
+        # Channels-last memory format
         try:
             pipe.unet.to(memory_format=torch.channels_last)
             pipe.vae.to(memory_format=torch.channels_last)
@@ -376,20 +351,15 @@ class Txt2Img:
 
         if compile_unet:
             try:
-                # Patch FreeU Fourier filter helper so TorchDynamo does not bail on complex64 FFT inside UNet forward
-                try:
-                    import diffusers.utils.torch_utils as _dtu
-                    if hasattr(_dtu, "fourier_filter") and hasattr(torch, "compiler") and hasattr(torch.compiler, "disable"):
-                        _dtu.fourier_filter = torch.compiler.disable(_dtu.fourier_filter)
-                except Exception:
-                    pass
+                if hasattr(_dtu, "fourier_filter") and hasattr(torch, "compiler") and hasattr(torch.compiler, "disable"):
+                    _dtu.fourier_filter = torch.compiler.disable(_dtu.fourier_filter)
                 print("⚙️ [AOT COMPILE] Compiling pipe.unet with torch.compile(mode='default')...")
                 pipe.unet = torch.compile(pipe.unet, mode="default")
                 print("✅ [AOT COMPILE] U-Net wrapped for compilation.")
             except Exception as comp_err:
                 print(f"⚠️ [AOT COMPILE] Warning: {comp_err}")
 
-    def _load_model(self, model_filename: str, compile_unet: bool = True):
+    def _load_model(self, model_filename: str, compile_unet: bool = False):
         if not hasattr(self, "pipe"):
             self.pipe = None
         if not hasattr(self, "current_model"):
@@ -655,9 +625,9 @@ class Txt2Img:
         model_name: str = "jugg",
         negative_prompt: str = "low quality, blurry, distorted", 
         batch_size: int = 4, 
-        guidance_scale: str = "0.0", 
-        num_inference_steps: int = 4, 
-        scheduler: str = "Euler", 
+        guidance_scale: str = "7.0", 
+        num_inference_steps: int = 30, 
+        scheduler: str = "Euler a", 
         sampler: str = "",
         amateur: int = 0,
         comic_mode: int = 0,
@@ -665,7 +635,7 @@ class Txt2Img:
         lora: str = "none",
         width: int = 1024,
         height: int = 1024,
-        lcm_mode: int = 1,
+        lcm_mode: int = 0,
         ip_adapter_image_b64: str = "",
         ip_adapter_scale: float = 0.6,
         ip_adapter_mode: str = "standard",
@@ -765,17 +735,20 @@ class Txt2Img:
 
         # Combine sampler and scheduler strings to parse them comprehensively
         chosen_sampler = f"{sampler} {scheduler}".lower()
-        is_lightning_active = bool(not is_sd15 and (int(lcm_mode or 0) == 1 or "lightning" in chosen_sampler or "lcm" in chosen_sampler or chosen_sampler.strip() in ("euler", "default", "")))
+        # Lightning mode is active ONLY if explicitly requested via lcm_mode=1 or explicit lightning/lcm sampler name
+        is_lightning_active = bool(not is_sd15 and (int(lcm_mode or 0) == 1 or "lightning" in chosen_sampler or "lcm" in chosen_sampler))
         is_sd15_lcm_active = bool(is_sd15 and (int(lcm_mode or 0) == 1 or "lcm" in chosen_sampler))
 
         if is_lightning_active:
-            print("⚡ [SDXL-LIGHTNING] Using fused 4-step LoRA + EulerDiscreteScheduler(timestep_spacing='trailing'), steps=4, guidance_scale=0.0...")
+            print("⚡ [SDXL-LIGHTNING] Activating 4-step LoRA adapter + EulerDiscreteScheduler(timestep_spacing='trailing')...")
             run_pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
                 run_pipe.scheduler.config,
                 timestep_spacing="trailing",
             )
-            num_inference_steps = 4
-            g_scale_float = 0.0
+            if not num_inference_steps or num_inference_steps > 8:
+                num_inference_steps = 4
+            if g_scale_float > 2.0:
+                g_scale_float = 0.0
         elif is_sd15_lcm_active:
             print("⚡ [LCM-LoRA SD1.5] Activating LCMScheduler for Real-Time Consistency Inference...")
             run_pipe.scheduler = diffusers.LCMScheduler.from_config(run_pipe.scheduler.config)
@@ -817,17 +790,6 @@ class Txt2Img:
                 timestep_spacing="trailing",
             )
 
-        # Dynamically toggle DeepCache: disable for 4-step SDXL-Lightning (so all 4 steps get 100% full U-Net quality
-        # and avoid Tensor.item() graph breaks), and enable for multi-step runs (> 6 steps).
-        if getattr(self, "deepcache_helper", None) is not None:
-            try:
-                if is_lightning_active or num_inference_steps <= 6:
-                    self.deepcache_helper.disable()
-                else:
-                    self.deepcache_helper.enable()
-            except Exception as dc_toggle_err:
-                print(f"[DEEPCACHE] Toggle note: {dc_toggle_err}")
-
         # Handle Amateur UI toggle
         if amateur == 1:
             if lora and lora.lower() != "none":
@@ -835,9 +797,20 @@ class Txt2Img:
             else:
                 lora = "New_Amateurs_XL"
 
-        # Load LoRAs (note: SDXL-Lightning 4-step LoRA is already permanently fused in _apply_sdxl_optimizations)
+        # Load LoRAs
         loaded_adapters = []
         adapter_weights = []
+
+        if is_lightning_active:
+            try:
+                from huggingface_hub import hf_hub_download
+                light_name = "sdxl_lightning_4step"
+                ckpt_path = hf_hub_download(LIGHTNING_REPO, LIGHTNING_CKPT, cache_dir=CACHE_DIR)
+                run_pipe.load_lora_weights(ckpt_path, adapter_name=light_name)
+                loaded_adapters.append(light_name)
+                adapter_weights.append(1.0)
+            except Exception as light_e:
+                print(f"[SDXL] SDXL-Lightning dynamic LoRA load note: {light_e}")
 
         if is_sd15_lcm_active:
             lcm_repo = "latent-consistency/lcm-lora-sdv1-5"
@@ -1126,14 +1099,14 @@ class Txt2Img:
                 model_name=model_name,
                 negative_prompt=neg_prompt,
                 batch_size=n,
-                guidance_scale=str(body.get("guidance_scale", "0.0")),
-                num_inference_steps=int(body.get("num_inference_steps", 4)),
+                guidance_scale=str(body.get("guidance_scale", "7.0")),
+                num_inference_steps=int(body.get("num_inference_steps", 30)),
                 scheduler=scheduler_val,
                 sampler=sampler_val,
                 amateur=0,
                 seed=-1,
                 lora="none",
-                lcm_mode=int(body.get("lcm_mode", 1)),
+                lcm_mode=int(body.get("lcm_mode", 0)),
             ))
             
             final_msg = msgs[-1]
@@ -1155,9 +1128,9 @@ class Txt2Img:
             Lustify: int = 0,
             AutismPony: int = 0,
             negative_prompt: str = "illustration, 3d, render, anime, cartoon, painting, sketch, bad anatomy, deformed, disfigured, mutated, poorly drawn face, poorly drawn hands, mutated hands, missing limbs, extra limbs, extra fingers, distorted body, bad proportions, fused flesh, asymmetrical, plastic, airbrushed, overly smooth skin, oversaturated, blurry, worst quality, low quality, watermark, text, signature", 
-            guidance_scale: str = "0.0", 
-            num_inference_steps: int = 4, 
-            scheduler: str = "Euler", 
+            guidance_scale: str = "7.0", 
+            num_inference_steps: int = 30, 
+            scheduler: str = "Euler a", 
             sampler: str = "",
             amateur: int = 0,
             comic_mode: int = 0,
@@ -1169,7 +1142,7 @@ class Txt2Img:
             control_image_b64: str = "",
             control_type: str = "none",
             controlnet_conditioning_scale: float = 1.0,
-            lcm_mode: int = 1,
+            lcm_mode: int = 0,
             ip_adapter_image_b64: str = "",
             ip_adapter_scale: float = 0.6,
             ip_adapter_mode: str = "standard",
@@ -1261,9 +1234,9 @@ class Txt2Img:
             lust_val = int(params.get("Lustify", 0) or 0)
             autism_val = int(params.get("AutismPony", 0) or 0)
             neg_val = str(params.get("negative_prompt", default_neg))
-            guidance_val = str(params.get("guidance_scale", "0.0"))
-            steps_val = int(float(params.get("num_inference_steps", 4) or 4))
-            scheduler_val = str(params.get("scheduler", "Euler"))
+            guidance_val = str(params.get("guidance_scale", "7.0"))
+            steps_val = int(float(params.get("num_inference_steps", 30) or 30))
+            scheduler_val = str(params.get("scheduler", "Euler a"))
             sampler_val = str(params.get("sampler", ""))
             amateur_val = int(params.get("amateur", 0) or 0)
             comic_val = int(params.get("comic_mode", 0) or 0)
@@ -1275,7 +1248,7 @@ class Txt2Img:
             ctrl_b64_val = str(params.get("control_image_b64", ""))
             ctrl_type_val = str(params.get("control_type", "none"))
             ctrl_scale_val = float(params.get("controlnet_conditioning_scale", 1.0) or 1.0)
-            lcm_val = int(params.get("lcm_mode", 1) if "lcm_mode" in params else 1)
+            lcm_val = int(params.get("lcm_mode", 0) if "lcm_mode" in params else 0)
             ip_b64_val = str(params.get("ip_adapter_image_b64", ""))
             ip_scale_val = float(params.get("ip_adapter_scale", 0.6) or 0.6)
             ip_mode_val = str(params.get("ip_adapter_mode", "standard"))

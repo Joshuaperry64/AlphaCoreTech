@@ -1249,8 +1249,8 @@ function buildTxt2Img() {
     <div class="aim-row" style="margin-top:4px; margin-bottom:12px; display:flex; justify-content:flex-end; align-items:center; gap:20px; width:100%; flex-wrap:wrap;">
       <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
         <span style="margin-right:8px; font-weight:600; color:#f59e0b;">⚡ SDXL-LIGHTNING (4-STEP REAL-TIME):</span>
-        <div id="t2i-lightning-btn" data-active="true" title="Toggle ByteDance/SDXL-Lightning 4-Step LoRA + FreeU V2 + DeepCache (steps=4, guidance_scale=0)" style="width:36px; height:20px; background:rgba(245, 158, 11, 0.35); border:1px solid #f59e0b; border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
-          <div class="toggle-knob" style="width:14px; height:14px; background:#f59e0b; border-radius:50%; position:absolute; top:2px; left:18px; transition:0.3s;"></div>
+        <div id="t2i-lightning-btn" data-active="false" title="Toggle ByteDance/SDXL-Lightning 4-Step LoRA (steps=4, guidance_scale=0)" style="width:36px; height:20px; background:rgba(0,0,0,0.5); border:1px solid rgba(245, 158, 11, 0.4); border-radius:10px; position:relative; transition:0.3s; cursor:pointer;">
+          <div class="toggle-knob" style="width:14px; height:14px; background:var(--text-muted); border-radius:50%; position:absolute; top:2px; left:2px; transition:0.3s;"></div>
         </div>
       </label>
       <label class="aim-label" style="display:flex; align-items:center; cursor:pointer; margin:0; user-select:none;">
@@ -1290,8 +1290,8 @@ function buildTxt2Img() {
         
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field" style="width: 100%;">
-            <label class="aim-label" for="t2i-cfg">PROMPT ADHERANCE (CFG): <span class="aim-val-display" id="t2i-cfg-val">0.0</span></label>
-            <input class="aim-range" type="range" id="t2i-cfg" min="0" max="20" step="0.5" value="0.0" />
+            <label class="aim-label" for="t2i-cfg">PROMPT ADHERANCE (CFG): <span class="aim-val-display" id="t2i-cfg-val">${parseFloat(settings.guidanceScale || '7.0')}</span></label>
+            <input class="aim-range" type="range" id="t2i-cfg" min="0" max="20" step="0.5" value="${parseFloat(settings.guidanceScale || '7.0')}" />
           </div>
         </div>
 
@@ -1299,8 +1299,8 @@ function buildTxt2Img() {
           <div class="aim-field aim-field-half">
             <label class="aim-label" for="t2i-scheduler">GENERATION ENGINE</label>
             <select class="aim-input" id="t2i-scheduler">
-              <option value="Euler" selected>Euler Trailing (SDXL-Lightning 4-Step)</option>
-              <option value="Euler a">Euler Ancestral (Euler a)</option>
+              <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
+              <option value="Euler">Euler Trailing (SDXL-Lightning 4-Step)</option>
               <option value="DPM++ 2M">DPM++ 2M</option>
               <option value="DPM++ 2M Karras">DPM++ 2M Karras</option>
               <option value="DPM++ SDE Karras">DPM++ SDE Karras</option>
@@ -1506,7 +1506,7 @@ function buildTxt2Img() {
           if (modelStr.includes('cyberrealistic')) cyberFlag = '1';
           if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
           
-          const isLightning = !lightningBtn || lightningBtn.dataset.active === 'true';
+          const isLightning = Boolean(lightningBtn && lightningBtn.dataset.active === 'true');
           const effectiveSteps = isLightning ? 4 : steps;
           const effectiveCfg = isLightning ? 0.0 : cfg;
           const effectiveScheduler = isLightning ? 'Euler' : randomScheduler;
@@ -1692,7 +1692,7 @@ function buildTxt2Img() {
       if (modelStr.includes('cyberrealistic')) { cyberFlag = '1'; }
       if (modelStr.includes('unholy')) { juggFlag = '1'; cyberFlag = '1'; }
 
-      const isLightning = !lightningBtn || lightningBtn.dataset.active === 'true';
+      const isLightning = Boolean(lightningBtn && lightningBtn.dataset.active === 'true');
       const effectiveSteps = isLightning ? 4 : steps;
       const effectiveCfg = isLightning ? 0.0 : cfg;
       const effectiveScheduler = isLightning ? 'Euler' : scheduler;
