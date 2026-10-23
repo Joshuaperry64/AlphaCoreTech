@@ -68,7 +68,7 @@ def _get_secrets():
 sync_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("requests", "tqdm", "fastapi[standard]", "pydantic", "Pillow", "numpy")
-    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio")
+    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio", "app_manager", "webscan")
 )
 
 @app.cls(
@@ -778,8 +778,8 @@ web_app_eco = create_aio_api(is_eco=True)
 # 4. Expose the FastAPI apps to Modal
 router_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "httpx", "stripe")
-    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio", "stripe_transfer")
+    .pip_install("fastapi[standard]", "pydantic", "requests", "Pillow", "numpy", "httpx", "stripe", "beautifulsoup4")
+    .add_local_python_source("shared_app", "music", "web_loader", "voice_cloner", "upscaler", "vid2audio", "app_manager", "webscan", "stripe_transfer")
 )
 
 @app.function(image=router_image, volumes={CACHE_DIR: cache_volume}, scaledown_window=120, secrets=_get_secrets())

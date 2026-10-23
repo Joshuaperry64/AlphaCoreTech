@@ -32,6 +32,7 @@ apps_volume = modal.Volume.from_name(APPS_VOLUME_NAME, create_if_missing=True)
 app_image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("fastapi[standard]", "pydantic", "requests")
+    .add_local_python_source("shared_app")
 )
 
 # --- DEFAULT SEED MANIFEST ---
