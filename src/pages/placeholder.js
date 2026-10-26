@@ -192,33 +192,58 @@ export default function PlaceholderPage() {
     const root = createElement('div', { class: 'sector-zero-root' });
     root.style.cssText = 'padding: 10px 0 30px; animation: fadeIn 1s ease-in-out;';
 
-    const LORA_OPTIONS = `
+    function getSectorZeroLoraOptions() {
+      let base = `
       <option value="none" selected>NONE (RAW MODEL)</option>
+      <optgroup label="Enhancements &amp; Helpers">
+        <option value="epiCRealismHelper.safetensors">EpicRealism Helper</option>
+        <option value="detailifier.safetensors">Detailifier (Ultra-Detail Enhancer)</option>
+        <option value="custom_training.safetensors">Custom Training Weights</option>
+      </optgroup>
       <optgroup label="Taboo Flavors">
         <option value="incest.safetensors">Incest</option>
         <option value="siblings.safetensors">Siblings (Brother/Sister)</option>
         <option value="fatherdaughter.safetensors">Father/Daughter</option>
         <option value="mother_son.safetensors">Mother/Son</option>
       </optgroup>
-      <optgroup label="Age & Body">
+      <optgroup label="Age &amp; Body Aesthetics">
         <option value="younger.safetensors">Younger</option>
         <option value="petite.safetensors">Petite Body</option>
-        <option value="youthful_faceV1.safetensors">Youthful Face</option>
-      </optgroup>
-      <optgroup label="Activities & Scenes">
-        <option value="schoolgirl_uniform.safetensors">Schoolgirl Uniform</option>
-        <option value="cunny.safetensors">Cunny</option>
         <option value="FlatTop.safetensors">Flat Top</option>
+        <option value="youthful_faceV1.safetensors">Youthful Face (V1)</option>
+        <option value="cunny.safetensors">Cunny</option>
+      </optgroup>
+      <optgroup label="Acts &amp; Positions">
         <option value="BJ.safetensors">BJ</option>
         <option value="Cowgirl.safetensors">Cowgirl</option>
         <option value="Missionary.safetensors">Missionary</option>
         <option value="SpyCam.safetensors">SpyCam</option>
         <option value="lezcunbkv2.safetensors">Licking Lesbians</option>
-        <option value="onOff_v326.safetensors">On/Off Clothing</option>
+        <option value="onOff_v326.safetensors">On/Off Clothing (ONOFF)</option>
         <option value="ahxl_v1.safetensors">Ahegao / Expressions (AHXL)</option>
+      </optgroup>
+      <optgroup label="Characters &amp; Outfits">
+        <option value="schoolgirl_uniform.safetensors">Schoolgirl Uniform</option>
         <option value="vanellope-20 (2).safetensors">Vanellope (V20)</option>
       </optgroup>
-    `;
+      `;
+
+      try {
+        const injected = JSON.parse(localStorage.getItem('alphacore_injected_loras') || '[]');
+        if (Array.isArray(injected) && injected.length > 0) {
+          const injectedOpts = injected.map(lora => {
+            const val = lora.file || lora.name || lora.id;
+            const label = lora.name || val;
+            return `<option value="${val}">💉 [INJECTED] ${label.toUpperCase()}</option>`;
+          }).join('\n        ');
+          base += `\n      <optgroup label="💉 Injected LoRAs">\n        ${injectedOpts}\n      </optgroup>`;
+        }
+      } catch (e) {}
+
+      return base;
+    }
+
+    const LORA_OPTIONS = getSectorZeroLoraOptions();
 
     root.innerHTML = `
       <style>
@@ -257,7 +282,28 @@ export default function PlaceholderPage() {
           <div class="panel" style="border-color: rgba(255, 0, 60, 0.5); background: rgba(20, 5, 14, 0.9);">
             <div class="panel-title" style="color: #ff003c;">HYPER-GENERATION ENGINE</div>
             <textarea id="sz-prompt" class="aim-input" rows="4" placeholder="e.g. a shy, petite (younger:1.3) schoolgirl..."></textarea>
-            <select id="sz-model" class="aim-input" style="margin-top:12px;"><option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (Unfiltered)</option><option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option><option value="cyberrealisticPony_v180Coreshift.safetensors">CyberRealistic Pony V18</option><option value="realvisxlV50_v50Bakedvae.safetensors">RealVisXL V5.0</option><option value="fullyREALXL_v30TRINITY.safetensors">Fully Real XL Trinity</option></select>
+            <select id="sz-model" class="aim-input" style="margin-top:12px;">
+              <optgroup label="Unfiltered &amp; NSFW Checkpoints">
+                <option value="lustifyNSFWCheckpoint_zenithV9.safetensors" selected>Lustify Zenith (NSFW / Unfiltered)</option>
+                <option value="unholyDesireMixCrimson_v50.safetensors">Unholy Desire (Crimson)</option>
+                <option value="cyberrealisticPony_v180Coreshift.safetensors">CyberRealistic Pony V18</option>
+                <option value="juicyDreams_v10.safetensors">Juicy Dreams</option>
+                <option value="autismmixSDXL_autismmixPony.safetensors">AutismMix Pony SDXL</option>
+              </optgroup>
+              <optgroup label="Photorealistic &amp; High-Fidelity SDXL">
+                <option value="fullyREALXL_v30TRINITY.safetensors">Fully Real XL Trinity</option>
+                <option value="epicrealismXL_pureFix.safetensors">EpicRealism (Pure Fix)</option>
+                <option value="cyberrealisticXL_desireV30.safetensors">CyberRealistic Desire V30</option>
+                <option value="juggernautXL_ragnarok.safetensors">Juggernaut Ragnarok</option>
+                <option value="0x7RealisticFreedom_omegaSDXL.safetensors">Freedom Omega SDXL</option>
+                <option value="intorealism_sdxlV4.safetensors">IntoRealism V4</option>
+                <option value="realvisxlV50_v50Bakedvae.safetensors">RealVisXL V5.0</option>
+                <option value="dreamshaperXL_alpha2Xl10.safetensors">DreamShaper XL</option>
+              </optgroup>
+              <optgroup label="Stylized &amp; Legacy Checkpoints">
+                <option value="realisticComicBook_v10.safetensors">Realistic Comic Book (SD1.5)</option>
+              </optgroup>
+            </select>
             <select id="sz-lora" class="aim-input" style="margin-top:12px;" multiple size="6">${LORA_OPTIONS}</select>
             <button id="sz-generate-btn" class="aim-btn sz-action-btn">💖 MANIFEST</button>
             <div id="sz-generate-output" style="margin-top: 16px;"></div>

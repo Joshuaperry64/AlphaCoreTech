@@ -35,12 +35,34 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     // Verify newly added checkpoint and LoRAs
     const modelSelect = el.querySelector('#sz-model');
     expect(modelSelect.innerHTML).toContain('fullyREALXL_v30TRINITY.safetensors');
+    expect(modelSelect.innerHTML).toContain('epicrealismXL_pureFix.safetensors');
+    expect(modelSelect.innerHTML).toContain('juggernautXL_ragnarok.safetensors');
+    expect(modelSelect.innerHTML).toContain('cyberrealisticXL_desireV30.safetensors');
+    expect(modelSelect.innerHTML).toContain('juicyDreams_v10.safetensors');
+    expect(modelSelect.innerHTML).toContain('autismmixSDXL_autismmixPony.safetensors');
 
     const loraSelect = el.querySelector('#sz-lora');
     expect(loraSelect.innerHTML).toContain('onOff_v326.safetensors');
     expect(loraSelect.innerHTML).toContain('ahxl_v1.safetensors');
     expect(loraSelect.innerHTML).toContain('youthful_faceV1.safetensors');
     expect(loraSelect.innerHTML).toContain('vanellope-20 (2).safetensors');
+    expect(loraSelect.innerHTML).toContain('detailifier.safetensors');
+    expect(loraSelect.innerHTML).toContain('epiCRealismHelper.safetensors');
+    expect(loraSelect.innerHTML).toContain('custom_training.safetensors');
+  });
+
+  it('dynamically mounts injected custom LoRAs from localStorage into Sector Zero Hyper-Generation', () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
+    localStorage.setItem('alphacore_injected_loras', JSON.stringify([
+      { file: 'cyborg_neon_v2.safetensors', name: 'Cyborg Neon V2' }
+    ]));
+
+    const el = PlaceholderPage();
+    const loraSelect = el.querySelector('#sz-lora');
+    expect(loraSelect.innerHTML).toContain('cyborg_neon_v2.safetensors');
+    expect(loraSelect.innerHTML).toContain('[INJECTED] CYBORG NEON V2');
   });
 
   it('allows switching between Sector ZERO modules and interacting with simulation chamber', () => {

@@ -20,19 +20,44 @@ export const TAG_GROUPS = {
 };
 
 export const CHECKPOINTS = [
-  ['epicrealismXL_pureFix.safetensors', 'epicrealismXL_pureFix'],
-  ['0x7RealisticFreedom_omegaSDXL.safetensors', '0x7RealisticFreedom_omegaSDXL'],
-  ['juggernautXL_ragnarok.safetensors', 'juggernautXL_ragnarok'],
-  ['cyberrealisticXL_desireV30.safetensors', 'cyberrealisticXL_desireV30'],
-  ['unholyDesireMixCrimson_v50.safetensors', 'unholyDesireMixCrimson_v50'],
-  ['lustifyNSFWCheckpoint_zenithV9.safetensors', 'lustifyNSFWCheckpoint_zenithV9'],
-  ['intorealism_sdxlV4.safetensors', 'intorealism_sdxlV4'],
-  ['cyberrealisticPony_v180Coreshift.safetensors', 'cyberrealisticPony_v180Coreshift'],
-  ['realvisxlV50_v50Bakedvae.safetensors', 'realvisxlV50_v50Bakedvae'],
-  ['fullyREALXL_v30TRINITY.safetensors', 'fullyREALXL_v30TRINITY']
+  ['lustifyNSFWCheckpoint_zenithV9.safetensors', 'Lustify Zenith (NSFW / Unfiltered)'],
+  ['unholyDesireMixCrimson_v50.safetensors', 'Unholy Desire Crimson'],
+  ['cyberrealisticPony_v180Coreshift.safetensors', 'CyberRealistic Pony V18'],
+  ['juicyDreams_v10.safetensors', 'Juicy Dreams'],
+  ['autismmixSDXL_autismmixPony.safetensors', 'AutismMix Pony SDXL'],
+  ['fullyREALXL_v30TRINITY.safetensors', 'Fully Real XL Trinity'],
+  ['epicrealismXL_pureFix.safetensors', 'EpicRealism Pure Fix'],
+  ['cyberrealisticXL_desireV30.safetensors', 'CyberRealistic Desire V30'],
+  ['juggernautXL_ragnarok.safetensors', 'Juggernaut Ragnarok'],
+  ['0x7RealisticFreedom_omegaSDXL.safetensors', 'Freedom Omega SDXL'],
+  ['intorealism_sdxlV4.safetensors', 'IntoRealism V4'],
+  ['realvisxlV50_v50Bakedvae.safetensors', 'RealVisXL V5.0'],
+  ['dreamshaperXL_alpha2Xl10.safetensors', 'DreamShaper XL'],
+  ['realisticComicBook_v10.safetensors', 'Realistic Comic Book (SD1.5)']
 ];
 
-const LORAS = ['BJ', 'Cowgirl', 'Missionary', 'lezcunbkv2', 'onOff_v326', 'ahxl_v1', 'vanellope-20 (2)'];
+const LORAS = [
+  'BJ',
+  'Cowgirl',
+  'Missionary',
+  'SpyCam',
+  'lezcunbkv2',
+  'onOff_v326',
+  'ahxl_v1',
+  'cunny',
+  'FlatTop',
+  'younger',
+  'petite',
+  'youthful_faceV1',
+  'schoolgirl_uniform',
+  'vanellope-20 (2)',
+  'incest',
+  'siblings',
+  'fatherdaughter',
+  'mother_son',
+  'detailifier',
+  'epiCRealismHelper'
+];
 
 export const PHASES = [
   { id: 'warmup', label: 'Warm-up', pct: 0.25, intensityScale: 0.4 },
