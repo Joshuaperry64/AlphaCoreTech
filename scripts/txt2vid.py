@@ -32,8 +32,8 @@ image = (
         "huggingface-hub>=0.36.0",
         "torch>=2.5.1",
         "torchvision>=0.20.1",
-        "diffusers",
-        "transformers>=4.48.0",
+        "diffusers==0.31.0",
+        "transformers~=4.44.0",
         "safetensors>=0.4.5",
         "imageio[ffmpeg]",
         "imageio-ffmpeg",
@@ -47,7 +47,7 @@ from shared_app import app
 
 with image.imports():
     import torch
-    from diffusers import AnimateDiffSDXLPipeline, MotionAdapter, DDIMScheduler, EulerDiscreteScheduler
+    from diffusers import AnimateDiffSDXLPipeline, StableDiffusionXLPipeline, MotionAdapter, DDIMScheduler, EulerDiscreteScheduler
     from diffusers.utils import export_to_video
     from PIL import Image
 
@@ -106,18 +106,41 @@ class Txt2Vid:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-        print(f"Loading {model_filename} into AnimateDiff SDXL Pipeline...")
+        print(f"Loading {model_filename} into SDXL base pipeline...")
         model_path = Path(CACHE_DIR) / "checkpoints" / model_filename
         
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at: {model_path}. Did you upload it to /hf-hub-cache/checkpoints?")
 
-        self.pipe = AnimateDiffSDXLPipeline.from_single_file(
-            str(model_path),
-            motion_adapter=self.adapter,
-            torch_dtype=torch.float16,
-            use_safetensors=True,
-        )
+        try:
+            xl_pipe = StableDiffusionXLPipeline.from_single_file(
+                str(model_path),
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+                add_watermarker=False,
+            )
+            print(f"Assembling AnimateDiffSDXLPipeline with MotionAdapter ({MOTION_ADAPTER_ID})...")
+            self.pipe = AnimateDiffSDXLPipeline(
+                vae=xl_pipe.vae,
+                text_encoder=xl_pipe.text_encoder,
+                text_encoder_2=xl_pipe.text_encoder_2,
+                tokenizer=xl_pipe.tokenizer,
+                tokenizer_2=xl_pipe.tokenizer_2,
+                unet=xl_pipe.unet,
+                motion_adapter=self.adapter,
+                scheduler=xl_pipe.scheduler,
+            )
+            del xl_pipe
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"SDXL component load encountered {e}; attempting fallback...")
+            self.pipe = AnimateDiffSDXLPipeline.from_single_file(
+                str(model_path),
+                motion_adapter=self.adapter,
+                torch_dtype=torch.float16,
+                use_safetensors=True,
+            )
         
         # Move entire pipeline directly to GPU in float16 and override upcast_vae so the ENTIRE VAE
         # is upcast to float32 during decoding (preventing Half/Float mismatch between mid_block and up_blocks)
