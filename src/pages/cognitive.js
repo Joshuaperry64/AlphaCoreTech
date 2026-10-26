@@ -258,6 +258,32 @@ export default function CognitiveUplink() {
       return masterApiKey || MASTER_GEMINI_API_KEY;
     }
 
+    function syncUserApiKey(val) {
+      userApiKey = (val || '').trim();
+      if (userApiKey) {
+        localStorage.setItem(userKeyStorageKey, userApiKey);
+        if (isGuest) localStorage.setItem('gemini_api_key_guest', userApiKey);
+      } else {
+        localStorage.removeItem(userKeyStorageKey);
+        if (isGuest) localStorage.removeItem('gemini_api_key_guest');
+      }
+
+      const qInput = container.querySelector('#quick-user-key');
+      const uInput = container.querySelector('#user-api-key');
+      if (qInput && qInput.value !== userApiKey) qInput.value = userApiKey;
+      if (uInput && uInput.value !== userApiKey) uInput.value = userApiKey;
+
+      const hasKey = Boolean(userApiKey);
+      if (keyBanner && hasKey && currentChannel === 'private') {
+        keyBanner.style.display = 'none';
+      }
+      const userKeyStatus = container.querySelector('#user-key-status');
+      if (userKeyStatus) {
+        userKeyStatus.textContent = hasKey ? 'STATUS: Personal Private Uplink API key active & persisted.' : 'STATUS: No personal key set (Required for Private Uplink).';
+        userKeyStatus.style.color = hasKey ? '#00ff8c' : 'var(--blue-dim)';
+      }
+    }
+
     const configContent = container.querySelector('#config-content');
     if (configContent) {
       if (isArchitect) {
@@ -331,12 +357,7 @@ export default function CognitiveUplink() {
             coreBackend = globalSettings.coreBackend;
 
             if (userInput) {
-              userApiKey = userInput.value.trim();
-              if (userApiKey) {
-                localStorage.setItem(userKeyStorageKey, userApiKey);
-              } else {
-                localStorage.removeItem(userKeyStorageKey);
-              }
+              syncUserApiKey(userInput.value);
             }
 
             // Apply persistent backend engine across workspaces
@@ -444,23 +465,13 @@ export default function CognitiveUplink() {
         if (saveUserBtn) {
           saveUserBtn.onclick = () => {
             const userInput = container.querySelector('#user-api-key');
-            userApiKey = userInput ? userInput.value.trim() : '';
-            if (userApiKey) {
-              localStorage.setItem(userKeyStorageKey, userApiKey);
-              const statusEl = container.querySelector('#user-key-status');
-              if (statusEl) {
-                statusEl.textContent = 'Personal API key saved! Applied to your Private Uplink.';
-                statusEl.style.color = '#00ff8c';
-              }
-            } else {
-              localStorage.removeItem(userKeyStorageKey);
-              const statusEl = container.querySelector('#user-key-status');
-              if (statusEl) {
-                statusEl.textContent = 'Cleared custom key. Private Uplink will require a key before transmitting.';
-                statusEl.style.color = 'var(--blue-dim)';
-              }
-            }
+            syncUserApiKey(userInput ? userInput.value : '');
             sfx.play('click');
+            const statusEl = container.querySelector('#user-key-status');
+            if (statusEl) {
+              statusEl.textContent = userApiKey ? 'Personal API key saved & persisted! Applied to your Private Uplink.' : 'Cleared custom key. Private Uplink will require a key before transmitting.';
+              statusEl.style.color = userApiKey ? '#00ff8c' : 'var(--blue-dim)';
+            }
           };
         }
         const clearUserBtn = container.querySelector('#clear-user-key-btn');
@@ -468,14 +479,13 @@ export default function CognitiveUplink() {
           clearUserBtn.onclick = () => {
             const userInput = container.querySelector('#user-api-key');
             if (userInput) userInput.value = '';
-            userApiKey = '';
-            localStorage.removeItem(userKeyStorageKey);
+            syncUserApiKey('');
+            sfx.play('click');
             const statusEl = container.querySelector('#user-key-status');
             if (statusEl) {
               statusEl.textContent = 'Cleared custom key. Private Uplink will require a key before transmitting.';
               statusEl.style.color = 'var(--blue-dim)';
             }
-            sfx.play('click');
           };
         }
       }
@@ -593,17 +603,17 @@ export default function CognitiveUplink() {
         keyBanner.style.display = 'none';
       };
     }
-    if (saveQuickKeyBtn && quickKeyInput) {
+    if (quickKeyInput) {
+      if (userApiKey) quickKeyInput.value = userApiKey;
+      quickKeyInput.addEventListener('input', (e) => syncUserApiKey(e.target.value));
+      quickKeyInput.addEventListener('change', (e) => syncUserApiKey(e.target.value));
+    }
+    if (saveQuickKeyBtn) {
       saveQuickKeyBtn.onclick = () => {
-        const val = quickKeyInput.value.trim();
-        if (val) {
-          userApiKey = val;
-          localStorage.setItem(userKeyStorageKey, val);
-          if (isGuest) localStorage.setItem('gemini_api_key_guest', val);
-          if (keyBanner) keyBanner.style.display = 'none';
-          sfx.play('click');
-          appendMessage('SYSTEM', 'Private Uplink API key registered successfully.', 'system-msg');
-        }
+        const val = quickKeyInput ? quickKeyInput.value : '';
+        syncUserApiKey(val);
+        sfx.play('click');
+        appendMessage('SYSTEM', 'Private Uplink API key saved & persisted to local storage.', 'system-msg');
       };
     }
 
@@ -636,6 +646,15 @@ export default function CognitiveUplink() {
     }
 
     let sseSource = null;
+
+    // Real-time keystroke persistence for config tab inputs
+    setTimeout(() => {
+      const uInput = container.querySelector('#user-api-key');
+      if (uInput) {
+        uInput.addEventListener('input', (e) => syncUserApiKey(e.target.value));
+        uInput.addEventListener('change', (e) => syncUserApiKey(e.target.value));
+      }
+    }, 100);
 
     tabs.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -869,6 +888,115 @@ export default function CognitiveUplink() {
       if (thinkingBubble) {
         thinkingBubble.remove();
         thinkingBubble = null;
+      }
+    }
+
+    let pendingPrompt = null;
+    let promptRetryCount = 0;
+    let responseWatchdogTimer = null;
+    const MAX_PROMPT_RETRIES = 1;
+    const RESPONSE_TIMEOUT_MS = 8500;
+
+    function clearResponseWatchdog() {
+      if (responseWatchdogTimer) {
+        clearTimeout(responseWatchdogTimer);
+        responseWatchdogTimer = null;
+      }
+      pendingPrompt = null;
+      promptRetryCount = 0;
+    }
+
+    function startResponseWatchdog(promptText) {
+      if (responseWatchdogTimer) {
+        clearTimeout(responseWatchdogTimer);
+        responseWatchdogTimer = null;
+      }
+      pendingPrompt = promptText;
+
+      responseWatchdogTimer = setTimeout(async () => {
+        if (!pendingPrompt) return;
+
+        if (promptRetryCount < MAX_PROMPT_RETRIES) {
+          promptRetryCount++;
+          console.warn(`[COGNITIVE] Live API timeout (8.5s). Silently resynchronizing and resubmitting in background (attempt ${promptRetryCount}/${MAX_PROMPT_RETRIES})...`);
+
+          if (thinkingBubble) {
+            const preview = thinkingBubble.querySelector('.thinking-thought-preview');
+            if (preview) {
+              preview.textContent = `> Neural bridge latency detected. Resynchronizing connection & resubmitting prompt silently (${promptRetryCount}/${MAX_PROMPT_RETRIES})...`;
+            }
+          }
+          statusText.textContent = 'RESYNCHRONIZING // RESUBMITTING...';
+
+          try {
+            await connectLiveAPI(true);
+            if (liveSession && typeof liveSession.sendRealtimeInput === 'function') {
+              liveSession.sendRealtimeInput({ text: pendingPrompt });
+              startResponseWatchdog(pendingPrompt);
+              return;
+            }
+          } catch(retryErr) {
+            console.warn('[COGNITIVE] Silent Live API resubmit error:', retryErr);
+          }
+        }
+
+        console.warn('[COGNITIVE] Live API silent resubmit limit reached. Invoking REST fallback generator...');
+        const promptToFallback = pendingPrompt;
+        clearResponseWatchdog();
+        await fallbackRestGeneration(promptToFallback);
+      }, RESPONSE_TIMEOUT_MS);
+    }
+
+    async function fallbackRestGeneration(promptText) {
+      clearResponseWatchdog();
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        removeThinkingIndicator();
+        statusText.textContent = 'SYSTEM READY // STANDBY';
+        statusDot.className = 'chat-status-dot online';
+        appendMessage('SYSTEM', '[BRIDGE TIMEOUT] Model connection timed out. Please try transmitting again.', 'system-msg');
+        return;
+      }
+
+      const isAlpha = currentChannel === 'shared' || (currentChannel === 'private' && useAlphaCorePrivate);
+      const author = isAlpha ? 'ALPHA' : 'GEMINI';
+
+      try {
+        const ai = new GoogleGenAI({ apiKey });
+        let baseInstructions = globalSettings.systemInstruction ? globalSettings.systemInstruction + '\n\n' : '';
+        let instructions = baseInstructions + (isAlpha ? ALPHACORE_SYSTEM_INSTRUCTION : 'You are a helpful assistant.');
+        const currentTime = new Date().toLocaleString();
+        const contextualPrefix = buildContextualPrefix(profile, currentTime);
+
+        createOrGetModelBubble(author);
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: promptText,
+          config: {
+            systemInstruction: contextualPrefix + instructions
+          }
+        });
+
+        const resText = response.text || '';
+        if (resText) {
+          appendToModelBubble(resText);
+          await finalizeModelBubble(author);
+          if (ttsEnabled && typeof window !== 'undefined' && window.speechSynthesis) {
+            try {
+              const utter = new SpeechSynthesisUtterance(resText);
+              window.speechSynthesis.speak(utter);
+            } catch(e){}
+          }
+        }
+        removeThinkingIndicator();
+        statusText.textContent = 'SYSTEM READY // LIVE ACTIVE';
+        statusDot.className = 'chat-status-dot online';
+      } catch(err) {
+        removeThinkingIndicator();
+        statusText.textContent = 'SYSTEM READY // STANDBY';
+        statusDot.className = 'chat-status-dot online';
+        appendMessage('ERROR', 'Fallback generation error: ' + err.message, 'system-msg');
       }
     }
 
@@ -1597,7 +1725,11 @@ export default function CognitiveUplink() {
       return { error: 'Unknown function' };
     }
 
-    async function connectLiveAPI() {
+    async function connectLiveAPI(silent = false) {
+      if (liveSession && typeof liveSession.close === 'function') {
+        try { liveSession.close(); } catch(e){}
+      }
+
       if (coreBackend === 'vllm') {
         initAudio();
         statusDot.classList.replace('online', 'streaming');
@@ -1617,8 +1749,10 @@ export default function CognitiveUplink() {
         disconnectBtn.style.display = 'inline-block';
         const meshModeStatus = container.querySelector('#mesh-mode-status');
         if (meshModeStatus) meshModeStatus.textContent = 'ALPHA AI (vLLM T4) ONLINE';
-        sfx.play('core');
-        appendMessage('SYSTEM', `vLLM Cognitive Core bridge established [${targetUrl}]. Engine: Gemma-12B-it-abliterated. Context optimized.`, 'system-msg');
+        if (!silent) {
+          sfx.play('core');
+          appendMessage('SYSTEM', `vLLM Cognitive Core bridge established [${targetUrl}]. Engine: Gemma-12B-it-abliterated. Context optimized.`, 'system-msg');
+        }
         return;
       }
 
@@ -1668,12 +1802,12 @@ export default function CognitiveUplink() {
 
         const liveCallbacks = {
           onopen: () => {
-            sfx.play('core');
+            if (!silent) sfx.play('core');
             statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // LIVE ACTIVE';
             statusDot.className = 'chat-status-dot online';
             connectBtn.style.display = 'none';
             disconnectBtn.style.display = 'inline-block';
-            appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
+            if (!silent) appendMessage('SYSTEM', isAlpha ? 'AlphaCore neural bridge initialized.' : 'Neural bridge active.', 'system-msg');
           },
           onmessage: async (msg) => {
             const content = msg.serverContent;
@@ -1682,6 +1816,7 @@ export default function CognitiveUplink() {
             const author = isAlpha ? 'ALPHA' : 'GEMINI';
 
             if (content.interrupted) {
+              clearResponseWatchdog();
               interruptAudio();
               removeThinkingIndicator();
               if (currentUserSpeechBubble && currentUserSpeechText.trim()) {
@@ -1714,6 +1849,7 @@ export default function CognitiveUplink() {
             }
 
             if (content.modelTurn && content.modelTurn.parts) {
+              clearResponseWatchdog();
               if (currentUserSpeechBubble && currentUserSpeechText.trim()) {
                 saveMessageToHistory('user', currentUserSpeechText.trim(), profile.toUpperCase());
                 currentUserSpeechBubble = null;
@@ -1751,6 +1887,7 @@ export default function CognitiveUplink() {
             
             // Transcription delivered when responseModalities contains audio
             if (content.outputTranscription && content.outputTranscription.text) {
+              clearResponseWatchdog();
               if (currentUserSpeechBubble && currentUserSpeechText.trim()) {
                 saveMessageToHistory('user', currentUserSpeechText.trim(), profile.toUpperCase());
                 currentUserSpeechBubble = null;
@@ -1764,6 +1901,7 @@ export default function CognitiveUplink() {
             }
             
             if (content.turnComplete) {
+              clearResponseWatchdog();
               removeThinkingIndicator();
               if (currentUserSpeechBubble && currentUserSpeechText.trim()) {
                 saveMessageToHistory('user', currentUserSpeechText.trim(), profile.toUpperCase());
@@ -1828,6 +1966,7 @@ export default function CognitiveUplink() {
     }
     
     function disconnectLiveAPI() {
+      clearResponseWatchdog();
       if (liveSession) {
         if (liveSession.type !== 'vllm' && typeof liveSession.close === 'function') {
           try { liveSession.close(); } catch(e){}
@@ -2230,13 +2369,16 @@ export default function CognitiveUplink() {
           
           if (typeof liveSession.sendRealtimeInput === 'function') {
             liveSession.sendRealtimeInput({ text: payloadText });
+            startResponseWatchdog(payloadText);
           } else if (typeof liveSession.sendClientContent === 'function') {
             liveSession.sendClientContent({
               turns: [{ role: 'user', parts: [{ text: payloadText }] }],
               turnComplete: true
             });
+            startResponseWatchdog(payloadText);
           }
         } catch(e) { 
+          clearResponseWatchdog();
           removeThinkingIndicator();
           liveSession = null;
           connectBtn.style.display = 'inline-block';
@@ -2323,6 +2465,12 @@ export default function CognitiveUplink() {
     updateTitleAndAlpha();
     loadThreads();
     connectSSE();
+
+    container.__cleanup = () => {
+      clearResponseWatchdog();
+      disconnectLiveAPI();
+      try { window.removeEventListener('alphacore_chat_message', onRemoteChatMessage); } catch(e){}
+    };
 
   return container;
 }

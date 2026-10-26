@@ -5,6 +5,7 @@ import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instructio
 const mockSendClientContent = vi.fn();
 const mockSendRealtimeInput = vi.fn();
 const mockClose = vi.fn();
+const mockGenerateContent = vi.fn().mockResolvedValue({ text: 'Fallback response from Alpha.' });
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn().mockImplementation(function() {
@@ -15,6 +16,9 @@ vi.mock('@google/genai', () => ({
           sendRealtimeInput: mockSendRealtimeInput,
           close: mockClose
         })
+      },
+      models: {
+        generateContent: mockGenerateContent
       }
     };
   }),
@@ -27,6 +31,14 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     localStorage.clear();
     document.body.innerHTML = '';
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    document.querySelectorAll('.cognitive-page').forEach(el => {
+      if (typeof el.__cleanup === 'function') el.__cleanup();
+    });
+    document.body.innerHTML = '';
+    vi.clearAllTimers();
   });
 
   it('renders cognitive uplink container and tabs with Global Comm Link as primary default', async () => {
@@ -478,6 +490,31 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     const updatedHistory = localStorage.getItem('alphacore_shared_chat_history');
     expect(updatedHistory).toContain('Matrix status optimal.');
     expect(chatMsgs.innerHTML).toContain('Matrix status optimal.');
+
+    el.remove();
+  });
+
+  it('automatically persists Private Uplink API key to localStorage on keystroke without needing to click save', async () => {
+    sessionStorage.setItem('current_profile', 'DoeBoy');
+    sessionStorage.setItem('current_pin', '0000');
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    // Switch to Private Uplink where quick banner is rendered
+    const privateTab = el.querySelector('[data-target="cog-chat-private"]');
+    privateTab.click();
+
+    const quickInput = el.querySelector('#quick-user-key');
+    expect(quickInput).toBeTruthy();
+
+    // Type into quick input (dispatch input event)
+    quickInput.value = 'AIzaSyKeystrokePersistedKey999';
+    quickInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Verify it persists immediately in localStorage without clicking SAVE
+    expect(localStorage.getItem('gemini_user_api_key_doeboy')).toBe('AIzaSyKeystrokePersistedKey999');
 
     el.remove();
   });
