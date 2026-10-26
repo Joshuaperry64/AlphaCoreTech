@@ -6,16 +6,17 @@ const mockSendClientContent = vi.fn();
 const mockSendRealtimeInput = vi.fn();
 const mockClose = vi.fn();
 const mockGenerateContent = vi.fn().mockResolvedValue({ text: 'Fallback response from Alpha.' });
+const mockConnect = vi.fn().mockImplementation(() => Promise.resolve({
+  sendClientContent: mockSendClientContent,
+  sendRealtimeInput: mockSendRealtimeInput,
+  close: mockClose
+}));
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn().mockImplementation(function() {
     return {
       live: {
-        connect: vi.fn().mockResolvedValue({
-          sendClientContent: mockSendClientContent,
-          sendRealtimeInput: mockSendRealtimeInput,
-          close: mockClose
-        })
+        connect: mockConnect
       },
       models: {
         generateContent: mockGenerateContent
@@ -515,6 +516,108 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
 
     // Verify it persists immediately in localStorage without clicking SAVE
     expect(localStorage.getItem('gemini_user_api_key_doeboy')).toBe('AIzaSyKeystrokePersistedKey999');
+
+    el.remove();
+  });
+  it('seeds concurrent conversation history and modal pipeline directives into Live API connection instructions upon establishing uplink', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    const seeded = [
+      { id: 'h1', author: 'ARCHITECT', text: 'Analyze modal pipeline status.', role: 'user', timestamp: Date.now() - 2000 },
+      { id: 'h2', author: 'ALPHA', text: 'All neural clusters reporting nominal.', role: 'model', timestamp: Date.now() - 1000 }
+    ];
+    localStorage.setItem('alphacore_shared_chat_history', JSON.stringify(seeded));
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const connectBtn = el.querySelector('#connect-live-btn');
+    connectBtn.click();
+    await new Promise(r => setTimeout(r, 60));
+
+    expect(mockConnect).toHaveBeenCalled();
+    const connectCallArgs = mockConnect.mock.calls[0][0];
+    const instructions = connectCallArgs.config.systemInstruction.parts[0].text;
+
+    expect(instructions).toContain('[CONCURRENT CONVERSATION HISTORY - PRIOR TURNS]');
+    expect(instructions).toContain('Analyze modal pipeline status.');
+    expect(instructions).toContain('All neural clusters reporting nominal.');
+    expect(instructions).toContain('[AUTONOMOUS MODAL PIPELINE CAPABILITIES]');
+    expect(instructions).toContain('generate_video_from_image');
+
+    // Check that core tools contain modal functions
+    const tools = connectCallArgs.config.tools[0].functionDeclarations;
+    const toolNames = tools.map(t => t.name);
+    expect(toolNames).toContain('generate_image');
+    expect(toolNames).toContain('edit_image');
+    expect(toolNames).toContain('generate_video');
+    expect(toolNames).toContain('generate_video_from_image');
+    expect(toolNames).toContain('omnigen_multimodal');
+    expect(toolNames).toContain('upscale_image');
+
+    el.remove();
+  });
+
+    it('caps voice reconnect attempts and shuts off microphone without looping indefinitely', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+
+    // Mock navigator.mediaDevices.getUserMedia and AudioContext
+    const mockTrack = { stop: vi.fn() };
+    const mockStream = { getTracks: () => [mockTrack] };
+    navigator.mediaDevices = {
+      getUserMedia: vi.fn().mockResolvedValue(mockStream)
+    };
+    window.AudioContext = vi.fn().mockImplementation(function() {
+      return {
+        createMediaStreamSource: vi.fn().mockReturnValue({ connect: vi.fn() }),
+        createScriptProcessor: vi.fn().mockReturnValue({
+          connect: vi.fn(),
+          disconnect: vi.fn(),
+          onaudioprocess: null
+        }),
+        createGain: vi.fn().mockReturnValue({ gain: { value: 0 }, connect: vi.fn() }),
+        destination: {},
+        close: vi.fn().mockResolvedValue()
+      };
+    });
+
+    let capturedCallbacks = null;
+    mockConnect.mockImplementation(params => {
+      capturedCallbacks = params.callbacks;
+      return Promise.resolve({
+        sendClientContent: mockSendClientContent,
+        sendRealtimeInput: mockSendRealtimeInput,
+        close: mockClose
+      });
+    });
+
+    const el = CognitiveUplink();
+    document.body.appendChild(el);
+    await new Promise(r => setTimeout(r, 60));
+
+    const micBtn = el.querySelector('#chat-mic-btn');
+    expect(micBtn).toBeTruthy();
+    await micBtn.onclick();
+    await new Promise(r => setTimeout(r, 60));
+
+    expect(capturedCallbacks).toBeTruthy();
+    const chatMsgs = el.querySelector('#chat-messages');
+
+    // Simulate first disconnect -> reconnect attempt 1
+    capturedCallbacks.onclose();
+    expect(chatMsgs.textContent).toContain('Reconnecting live link (1/2)...');
+
+    // Simulate second disconnect -> reconnect attempt 2
+    capturedCallbacks.onclose();
+    expect(chatMsgs.textContent).toContain('Reconnecting live link (2/2)...');
+
+    // Simulate third disconnect -> shuts off without looping
+    capturedCallbacks.onclose();
+    expect(chatMsgs.textContent).toContain('Microphone disabled after repeated server disconnects');
+    expect(mockTrack.stop).toHaveBeenCalled();
 
     el.remove();
   });

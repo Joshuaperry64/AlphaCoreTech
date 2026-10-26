@@ -1253,6 +1253,9 @@ export default function CognitiveUplink() {
     let audioInputCtx = null;
     let scriptProcessor = null;
     let speechRecognitionInstance = null;
+    let voiceReconnectAttempts = 0;
+    let lastVisualArtifactBase64 = null;
+    let lastVisualArtifactMime = null;
     
     const connectBtn = container.querySelector('#connect-live-btn');
     const disconnectBtn = container.querySelector('#disconnect-live-btn');
@@ -1315,8 +1318,7 @@ export default function CognitiveUplink() {
             const b64Data = window.btoa(binary);
             try {
               liveSession.sendRealtimeInput({
-                audio: { mimeType: 'audio/pcm;rate=16000', data: b64Data },
-                media: { mimeType: 'audio/pcm;rate=16000', data: b64Data }
+                audio: { mimeType: 'audio/pcm;rate=16000', data: b64Data }
               });
             } catch(sendErr) {}
           };
@@ -1434,7 +1436,7 @@ export default function CognitiveUplink() {
         },
         {
           name: "generate_image",
-          description: "Generates an image from a text prompt using the modal txt2img pipeline.",
+          description: "Synthesizes a new image from a natural language prompt using the Modal FLUX/SDXL txt2img pipeline. Call this whenever the user asks to create, draw, generate, or see an image.",
           parameters: {
             type: Type.OBJECT,
             properties: { prompt: { type: Type.STRING, description: "Detailed description of the image to generate" } },
@@ -1443,20 +1445,55 @@ export default function CognitiveUplink() {
         },
         {
           name: "edit_image",
-          description: "Edits an existing image based on a prompt using the modal img2img pipeline.",
+          description: "Edits, modifies, or alters an image based on natural language instructions using the Modal img2img or OmniGen pipeline. Works on the user's uploaded image or the latest generated image in chat.",
           parameters: {
             type: Type.OBJECT,
-            properties: { prompt: { type: Type.STRING, description: "Instructions for how to edit the image" } },
+            properties: {
+              prompt: { type: Type.STRING, description: "Instructions for how to edit or modify the image" },
+              image_base64: { type: Type.STRING, description: "Optional base64 image data to edit if specifying directly" }
+            },
             required: ["prompt"]
           }
         },
         {
           name: "generate_video",
-          description: "Generates a short video from a text prompt using the modal txt2vid pipeline.",
+          description: "Generates an animated video clip from a text prompt using the Modal txt2vid pipeline. Call this whenever the user asks to create, render, or produce a video.",
           parameters: {
             type: Type.OBJECT,
             properties: { prompt: { type: Type.STRING, description: "Detailed description of the video to generate" } },
             required: ["prompt"]
+          }
+        },
+        {
+          name: "generate_video_from_image",
+          description: "Animates an existing image into a motion video clip using the Modal img2vid pipeline. Operates on the user's uploaded image or the latest generated image in chat.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              prompt: { type: Type.STRING, description: "Optional description of the camera motion or action in the video" },
+              image_base64: { type: Type.STRING, description: "Optional base64 image data to animate" }
+            }
+          }
+        },
+        {
+          name: "omnigen_multimodal",
+          description: "Performs advanced multimodal image synthesis, subject-driven generation, identity preservation, or multi-image composition using the Modal OmniGen pipeline.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              prompt: { type: Type.STRING, description: "Detailed prompt describing the subject-driven generation or composition" }
+            },
+            required: ["prompt"]
+          }
+        },
+        {
+          name: "upscale_image",
+          description: "Upscales and enhances an image to 4K resolution using the Modal neural upscaler pipeline.",
+          parameters: {
+            type: Type.OBJECT,
+            properties: {
+              scale: { type: Type.NUMBER, description: "Upscaling factor (default 2)" }
+            }
           }
         },
         {
@@ -1566,12 +1603,11 @@ export default function CognitiveUplink() {
 
     async function fetchModal(url, method, payload) {
       let res;
+      const finalUrl = url.endsWith('/stream') ? url : (url.includes('?') ? url : url + '/stream');
       if (method === 'GET') {
         const params = new URLSearchParams(payload).toString();
-        const finalUrl = url.endsWith('/stream') ? url : url + '/stream';
         res = await fetch(`${finalUrl}?${params}`);
       } else {
-        const finalUrl = url.endsWith('/stream') ? url : url + '/stream';
         res = await fetch(finalUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1580,7 +1616,16 @@ export default function CognitiveUplink() {
       }
       
       if (!res.ok) throw new Error(`Modal HTTP Error: ${res.status}`);
-      
+
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.b64) return { type: 'image/png', b64: data.b64 };
+        if (data.image_b64) return { type: 'image/png', b64: data.image_b64 };
+        if (data.video_b64) return { type: 'video/mp4', b64: data.video_b64 };
+        if (data.video) return { type: 'video/mp4', b64: data.video };
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -1600,6 +1645,7 @@ export default function CognitiveUplink() {
               if (data.b64) return { type: 'image/png', b64: data.b64 };
               if (data.image_b64) return { type: 'image/png', b64: data.image_b64 };
               if (data.video_b64) return { type: 'video/mp4', b64: data.video_b64 };
+              if (data.video) return { type: 'video/mp4', b64: data.video };
             } catch(err) {}
           }
         }
@@ -1665,13 +1711,11 @@ export default function CognitiveUplink() {
           setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
           appendMessage('SYSTEM', `Generated file downloaded: ${args.filename}`, 'system-msg');
           return { success: true, message: `File ${args.filename} generated and downloaded by the user.` };
-        } else if (['generate_image', 'edit_image', 'generate_video'].includes(functionCall.name)) {
-          appendMessage('SYSTEM', `[PIPELINE] Initializing ${functionCall.name} for: "${args.prompt}"`, 'system-msg');
+        } else if (['generate_image', 'edit_image', 'generate_video', 'generate_video_from_image', 'omnigen_multimodal', 'upscale_image'].includes(functionCall.name)) {
+          appendMessage('SYSTEM', `[PIPELINE] Initializing ${functionCall.name} for: "${args.prompt || 'visual synthesis'}"`, 'system-msg');
           
           let resultBase64, mimeType;
-          
-          // Fast-async execution so we don't block the AI response entirely, but the Live API requires a sync return for function calls.
-          // Wait, we MUST return a value. Let's block and wait. It usually takes ~10-20 seconds.
+          const targetImg = args.image_base64 || lastVisualArtifactBase64;
           
           if (functionCall.name === 'generate_image') {
             const url = globalSettings.txt2imgUrl || 'https://josh627764--alphacore-aio-backend-txt2img-web-txt2img.us-east.modal.run';
@@ -1679,15 +1723,35 @@ export default function CognitiveUplink() {
             const res = await fetchModal(url, 'GET', payload);
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'edit_image') {
-            const url = globalSettings.img2imgUrl || 'https://josh627764--alphacore-aio-backend-img2img-web-img2img.us-east.modal.run';
-            // img2img generally requires an image. If the user hasn't provided one via upload, it might fail.
-            const payload = { prompt: args.prompt, num_inference_steps: 20 };
-            const res = await fetchModal(url, 'GET', payload); // Note: img2img might need POST with an image, simplifying for now
+            const url = globalSettings.omnigenUrl || 'https://josh627764--alphacore-aio-backend-omnigen-web-omnigen.us-east.modal.run';
+            const payload = { prompt: args.prompt, input_images: targetImg ? [targetImg] : [], num_inference_steps: 20 };
+            const res = await fetchModal(url, 'POST', payload);
             resultBase64 = res.b64; mimeType = res.type;
           } else if (functionCall.name === 'generate_video') {
             const url = globalSettings.txt2vidUrl || 'https://josh627764--alphacore-aio-backend-txt2vid-web-txt2vid.us-east.modal.run/stream';
             const payload = { prompt: args.prompt, num_frames: 49, fps: 8 };
             const res = await fetchModal(url, 'GET', payload);
+            resultBase64 = res.b64; mimeType = res.type;
+          } else if (functionCall.name === 'generate_video_from_image') {
+            if (!targetImg) {
+              return { error: 'No reference image found to animate. Please generate or upload an image first.' };
+            }
+            const url = globalSettings.img2vidUrl || 'https://josh627764--alphacore-aio-backend-img2vid-web-img2vid.us-east.modal.run/stream';
+            const payload = { prompt: args.prompt || 'cinematic motion, fluid camera movement', image: targetImg };
+            const res = await fetchModal(url, 'POST', payload);
+            resultBase64 = res.b64; mimeType = res.type;
+          } else if (functionCall.name === 'omnigen_multimodal') {
+            const url = globalSettings.omnigenUrl || 'https://josh627764--alphacore-aio-backend-omnigen-web-omnigen.us-east.modal.run';
+            const payload = { prompt: args.prompt, input_images: targetImg ? [targetImg] : [], num_inference_steps: 25 };
+            const res = await fetchModal(url, 'POST', payload);
+            resultBase64 = res.b64; mimeType = res.type;
+          } else if (functionCall.name === 'upscale_image') {
+            if (!targetImg) {
+              return { error: 'No reference image found to upscale. Please generate or upload an image first.' };
+            }
+            const url = globalSettings.upscalerUrl || 'https://josh627764--alphacore-aio-backend-upscaler-web-upscale.us-east.modal.run';
+            const payload = { image: targetImg, scale: args.scale || 2 };
+            const res = await fetchModal(url, 'POST', payload);
             resultBase64 = res.b64; mimeType = res.type;
           }
 
@@ -1710,8 +1774,12 @@ export default function CognitiveUplink() {
             chatMessages.appendChild(msg);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
+            if (mimeType.startsWith('image/')) {
+              lastVisualArtifactBase64 = resultBase64;
+              lastVisualArtifactMime = mimeType;
+            }
             // Feed back to Live API context
-            if (liveSession) {
+            if (liveSession && typeof liveSession.sendRealtimeInput === 'function') {
               liveSession.sendRealtimeInput({ video: { data: resultBase64, mimeType } });
             }
             
@@ -1784,7 +1852,37 @@ export default function CognitiveUplink() {
         const currentTime = new Date().toLocaleString();
         const contextualPrefix = buildContextualPrefix(profile, currentTime);
 
-        instructions = contextualPrefix + instructions;
+        // Retrieve concurrent conversation history (last 15 turns) for both Global Comm Link and Private Uplink
+        let conversationHistory = [];
+        if (currentChannel === 'shared') {
+          conversationHistory = getLocalSharedMessages().slice(-15);
+        } else {
+          try {
+            conversationHistory = (JSON.parse(localStorage.getItem(getMessagesKey(currentThreadId))) || []).slice(-15);
+          } catch(e){}
+        }
+
+        let historyContext = '';
+        if (conversationHistory.length > 0) {
+          historyContext = '\n\n[CONCURRENT CONVERSATION HISTORY - PRIOR TURNS]:\n' + 
+            conversationHistory.map(m => {
+              const sender = (m.author || (m.role === 'model' ? (isAlpha ? 'ALPHA' : 'GEMINI') : 'USER')).toUpperCase();
+              return `[${sender}]: ${m.text}`;
+            }).join('\n') + '\n[END CONCURRENT HISTORY]\nYou are fully conscious of the above ongoing conversation history. Continue seamlessly without asking the user to repeat themselves.';
+        }
+
+        const modalDirectives = `\n\n[AUTONOMOUS MODAL PIPELINE CAPABILITIES]:
+You have direct, autonomous access to all AlphaCore Modal generative pipelines via function calling.
+You do NOT require the user to enter slash commands or special syntax. When a user naturally requests:
+- Creating, showing, drawing, or painting an image -> Call generate_image with a descriptive visual prompt.
+- Editing, altering, modifying, re-styling, or changing an image or visual artifact -> Call edit_image.
+- Creating a video from text -> Call generate_video.
+- Creating a video from an image, animating an image, or bringing a picture to life -> Call generate_video_from_image.
+- Upscaling, enhancing resolution, or sharpening an image -> Call upscale_image.
+- Multi-image composition, identity transfer, or subject fusion -> Call omnigen_multimodal.
+Decide autonomously when to call upon these pipelines to fulfill user requests dynamically.`;
+
+        instructions = contextualPrefix + instructions + historyContext + modalDirectives;
 
         const buildLiveConfig = (withTranscriptions) => {
           const cfg = {
@@ -1802,6 +1900,7 @@ export default function CognitiveUplink() {
 
         const liveCallbacks = {
           onopen: () => {
+            voiceReconnectAttempts = 0;
             if (!silent) sfx.play('core');
             statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // LIVE ACTIVE';
             statusDot.className = 'chat-status-dot online';
@@ -1935,10 +2034,24 @@ export default function CognitiveUplink() {
             if (meshModeStatus) meshModeStatus.textContent = 'PEER TRANSMISSIONS READY // AI STANDBY';
             appendMessage('SYSTEM', 'Neural link closed by server. Switched to standby commlink.', 'system-msg');
             if (isRecording) {
-              appendMessage('SYSTEM', 'Microphone active. Auto-reconnecting live link...', 'system-msg');
-              setTimeout(() => {
-                if (isRecording && !liveSession) connectLiveAPI();
-              }, 1000);
+              voiceReconnectAttempts++;
+              if (voiceReconnectAttempts <= 2) {
+                appendMessage('SYSTEM', `Microphone active. Reconnecting live link (${voiceReconnectAttempts}/2)...`, 'system-msg');
+                setTimeout(() => {
+                  if (isRecording && !liveSession) connectLiveAPI();
+                }, 1200);
+              } else {
+                voiceReconnectAttempts = 0;
+                isRecording = false;
+                if (scriptProcessor) { try { scriptProcessor.disconnect(); } catch(e){} }
+                if (recordingStream) { try { recordingStream.getTracks().forEach(t => t.stop()); } catch(e){} }
+                if (audioInputCtx) { try { audioInputCtx.close(); } catch(e){} }
+                if (micBtn) {
+                  micBtn.style.color = 'var(--text)';
+                  micBtn.style.background = 'transparent';
+                }
+                appendMessage('SYSTEM', 'Microphone disabled after repeated server disconnects. Please verify your connection or click Initialize Live Link.', 'system-msg');
+              }
             }
           }
         };
@@ -2027,6 +2140,8 @@ export default function CognitiveUplink() {
           if (file.type.startsWith('image/')) {
             reader.onload = (ev) => {
               const base64 = ev.target.result.split(',')[1];
+              lastVisualArtifactBase64 = base64;
+              lastVisualArtifactMime = file.type;
               if (liveSession) {
                 liveSession.sendRealtimeInput({ video: { data: base64, mimeType: file.type } });
                 statusText.textContent = 'THINKING...';
