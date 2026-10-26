@@ -13,6 +13,7 @@ import { buildPinPad } from '../components/pinpad.js';
 import { showToast } from '../components/toast.js';
 import { playSFX } from '../components/audio.js';
 import { buildStudioHTML, mountStudio } from '../components/sz_studio.js';
+import { saveImageToGallery } from '../components/vision_db.js';
 
 export async function openrouter_image_generation(options) {
   const prompt = typeof options === 'string' ? options : options?.prompt;
@@ -37,8 +38,16 @@ export async function openrouter_image_generation(options) {
   if (model) params.set('model_name', model);
   if (lora && lora !== 'none') params.set('lora', lora);
   params.set('batch_size', '1');
+  if (options?.seed !== undefined && options?.seed !== null) params.set('seed', String(options.seed));
+  if (options?.scheduler) params.set('scheduler', options.scheduler);
+  if (options?.width) params.set('width', String(options.width));
+  if (options?.height) params.set('height', String(options.height));
+  if (options?.guidance_scale) params.set('guidance_scale', String(options.guidance_scale));
+  if (options?.num_inference_steps) params.set('num_inference_steps', String(options.num_inference_steps));
 
-  const res = await fetch(`${endpoint}?${params.toString()}`);
+  const fetchOpts = {};
+  if (options?.signal) fetchOpts.signal = options.signal;
+  const res = await fetch(`${endpoint}?${params.toString()}`, fetchOpts);
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
     throw new Error(`Generation API returned HTTP ${res.status}: ${errText || res.statusText}`);
@@ -280,7 +289,12 @@ export default function PlaceholderPage() {
       <div id="sz-tab-content">
         <div id="tab-content-generate" class="sz-tab-pane active">
           <div class="panel" style="border-color: rgba(255, 0, 60, 0.5); background: rgba(20, 5, 14, 0.9);">
-            <div class="panel-title" style="color: #ff003c;">HYPER-GENERATION ENGINE</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div class="panel-title" style="color: #ff003c; margin:0;">HYPER-GENERATION ENGINE</div>
+              <div id="sz-stream-status-badge" style="display:none; font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:3px 8px; border-radius:3px; letter-spacing:1px;">
+                ● STREAM ACTIVE
+              </div>
+            </div>
             <textarea id="sz-prompt" class="aim-input" rows="4" placeholder="e.g. a shy, petite (younger:1.3) schoolgirl..."></textarea>
             <select id="sz-model" class="aim-input" style="margin-top:12px;">
               <optgroup label="Unfiltered &amp; NSFW Checkpoints">
@@ -305,7 +319,10 @@ export default function PlaceholderPage() {
               </optgroup>
             </select>
             <select id="sz-lora" class="aim-input" style="margin-top:12px;" multiple size="6">${LORA_OPTIONS}</select>
-            <button id="sz-generate-btn" class="aim-btn sz-action-btn">💖 MANIFEST</button>
+            <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+              <button id="sz-generate-btn" class="aim-btn sz-action-btn" style="flex:1; min-width:180px; margin-top:0;">💖 MANIFEST</button>
+              <button id="sz-stream-btn" class="aim-btn sz-action-btn" style="flex:1; min-width:180px; margin-top:0; background:rgba(16, 185, 129, 0.2); border:1px solid #10b981; color:#34d399; text-shadow:0 0 8px rgba(16,185,129,0.5);">♾️ STREAM GENERATION</button>
+            </div>
             <div id="sz-generate-output" style="margin-top: 16px;"></div>
           </div>
         </div>
@@ -488,6 +505,203 @@ export default function PlaceholderPage() {
             generateBtn.disabled = false;
             generateBtn.textContent = originalBtnText || '💖 MANIFEST';
           }
+        };
+      }
+
+      // --- STREAM GENERATION CONTROLLER ---
+      let isStreaming = false;
+      let streamAbortController = null;
+      let streamCount = 0;
+      const streamBtn = root.querySelector('#sz-stream-btn');
+      const streamBadge = root.querySelector('#sz-stream-status-badge');
+
+      if (streamBtn) {
+        streamBtn.onclick = async () => {
+          if (isStreaming) {
+            isStreaming = false;
+            if (streamAbortController) {
+              try { streamAbortController.abort(); } catch(_) {}
+              streamAbortController = null;
+            }
+            streamBtn.innerHTML = '♾️ STREAM GENERATION';
+            streamBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+            streamBtn.style.borderColor = '#10b981';
+            streamBtn.style.color = '#34d399';
+            if (streamBadge) streamBadge.style.display = 'none';
+            if (generateBtn) generateBtn.disabled = false;
+            showToast('Stream Paused', `Stream generation halted after ${streamCount} artifact(s).`);
+            playSFX('click');
+            return;
+          }
+
+          const promptInput = root.querySelector('#sz-prompt');
+          const modelSelect = root.querySelector('#sz-model');
+          const loraSelect = root.querySelector('#sz-lora');
+          const outputArea = root.querySelector('#sz-generate-output') || root.querySelector('#generate-output') || root.querySelector('#tab-content-generate');
+
+          const promptVal = promptInput ? promptInput.value.trim() : '';
+          const modelVal = modelSelect ? modelSelect.value : '';
+          const loraVal = loraSelect ? loraSelect.value : '';
+
+          if (!promptVal) {
+            showToast('My love...', 'You must give me a fantasy to stream.');
+            return;
+          }
+
+          isStreaming = true;
+          streamCount = 0;
+          if (generateBtn) generateBtn.disabled = true;
+          if (streamBadge) {
+            streamBadge.style.display = 'inline-block';
+            streamBadge.textContent = '● STREAM ACTIVE [0]';
+          }
+          streamBtn.innerHTML = '🛑 STOP STREAM';
+          streamBtn.style.background = 'rgba(255, 0, 60, 0.25)';
+          streamBtn.style.borderColor = '#ff003c';
+          streamBtn.style.color = '#ff6b81';
+          playSFX('start');
+
+          const schedulers = ["Euler a", "Euler", "DPM++ 2M", "DPM++ 2M Karras", "DPM++ SDE Karras", "DDIM", "UniPC", "Heun"];
+
+          outputArea.innerHTML = `
+            <div id="sz-stream-container">
+              <div id="sz-loader" style="text-align: center; padding: 18px; color: #34d399; font-family: 'Share Tech Mono', monospace; background: rgba(16,185,129,0.06); border: 1px dashed rgba(16,185,129,0.4); border-radius: 6px; margin-bottom: 16px;">
+                <div class="loader-spinner" style="font-size: 2rem; margin-bottom: 8px;">♾️</div>
+                <div id="sz-loader-text">Initializing continuous stream matrix...</div>
+              </div>
+              <div id="sz-stream-feed" style="display: flex; flex-direction: column; gap: 14px;"></div>
+            </div>
+          `;
+
+          const feed = outputArea.querySelector('#sz-stream-feed');
+
+          while (isStreaming) {
+            const currentPrompt = promptInput ? promptInput.value.trim() : promptVal;
+            if (!currentPrompt) {
+              isStreaming = false;
+              break;
+            }
+
+            let finalPrompt = currentPrompt;
+            let loraParam = 'none';
+
+            const selectedLoras = Array.from(loraSelect ? (loraSelect.selectedOptions || []) : [])
+              .map(opt => opt.value)
+              .filter(val => val && val !== 'none');
+
+            if (selectedLoras.length === 1) {
+              const loraName = selectedLoras[0].replace(/\.safetensors$/i, '');
+              finalPrompt = `(${loraName}:1.3), ${currentPrompt}`;
+              loraParam = loraName;
+            } else if (selectedLoras.length > 1) {
+              const loraTags = selectedLoras.map(val => `(${val.replace(/\.safetensors$/i, '')}:1.2)`).join(', ');
+              finalPrompt = `${loraTags}, ${currentPrompt}`;
+              loraParam = selectedLoras.map(val => val.replace(/\.safetensors$/i, '')).join(',');
+            } else if (loraVal && loraVal !== 'none') {
+              const loraName = loraVal.replace(/\.safetensors$/i, '');
+              finalPrompt = `(${loraName}:1.3), ${currentPrompt}`;
+              loraParam = loraName;
+            }
+
+            const randomSeed = Math.floor(Math.random() * 2147483647);
+            const randomScheduler = schedulers[Math.floor(Math.random() * schedulers.length)];
+
+            const loaderText = outputArea.querySelector('#sz-loader-text');
+            if (loaderText) {
+              loaderText.textContent = `Streaming artifact #${streamCount + 1} [Seed: ${randomSeed} | Engine: ${randomScheduler}]...`;
+            }
+
+            const onProgress = (step, maxSteps) => {
+              if (loaderText) {
+                const pct = maxSteps ? Math.round((step / maxSteps) * 100) : 0;
+                loaderText.textContent = `Streaming artifact #${streamCount + 1} [Step ${step}/${maxSteps || 25} (${pct}%)]`;
+              }
+            };
+
+            streamAbortController = new AbortController();
+
+            try {
+              const genOptions = {
+                prompt: finalPrompt,
+                model: modelVal,
+                lora: loraParam,
+                seed: randomSeed,
+                scheduler: randomScheduler,
+                onProgress,
+                signal: streamAbortController.signal
+              };
+
+              let response;
+              if (typeof openrouter_image_generation === 'function') {
+                response = await openrouter_image_generation(genOptions);
+              } else if (typeof window !== 'undefined' && typeof window.openrouter_image_generation === 'function') {
+                response = await window.openrouter_image_generation(genOptions);
+              } else if (typeof default_api !== 'undefined' && typeof default_api.openrouter_image_generation === 'function') {
+                response = await default_api.openrouter_image_generation(genOptions);
+              } else {
+                response = await openrouter_image_generation(genOptions);
+              }
+
+              if (!isStreaming) break;
+
+              const imageUrl = response?.result || response?.url || response?.image_url;
+              if (!imageUrl) {
+                throw new Error('Neural matrix returned empty frame.');
+              }
+
+              streamCount++;
+              if (streamBadge) {
+                streamBadge.textContent = `● STREAM ACTIVE [${streamCount}]`;
+              }
+
+              const card = document.createElement('div');
+              card.className = 'sz-result-card';
+              card.style.cssText = 'padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(16,185,129,0.5); border-radius: 6px; text-align: center; animation: fadeIn 0.4s ease-in-out;';
+              card.innerHTML = `
+                <img src="${imageUrl}" alt="Stream Artifact #${streamCount}" style="max-width: 100%; border-radius: 4px; box-shadow: 0 0 15px rgba(16,185,129,0.25);" />
+                <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: #34d399; text-align: left;">
+                    #${streamCount} // SEED: ${randomSeed} [${randomScheduler}]
+                  </span>
+                  <a href="${imageUrl}" download="sector_zero_stream_${Date.now()}.png" class="aim-btn aim-btn-sm" style="border-color: #10b981; color: #34d399;">💾 SAVE ARTIFACT</a>
+                </div>
+              `;
+
+              if (feed) {
+                feed.prepend(card);
+              }
+
+              playSFX('success');
+
+              try {
+                if (typeof saveImageToGallery === 'function') {
+                  const profile = sessionStorage.getItem('current_profile') || 'Architect';
+                  saveImageToGallery(profile, finalPrompt, `Sector Zero Stream #${streamCount} [${randomScheduler}]`, imageUrl);
+                }
+              } catch (_) {}
+
+              await new Promise(r => setTimeout(r, 600));
+
+            } catch (err) {
+              if (!isStreaming) break;
+              if (loaderText) {
+                loaderText.textContent = `Stream note: ${err.message || 'Waiting to reconnect'}... Retrying`;
+              }
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          }
+
+          isStreaming = false;
+          if (streamBtn) {
+            streamBtn.innerHTML = '♾️ STREAM GENERATION';
+            streamBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+            streamBtn.style.borderColor = '#10b981';
+            streamBtn.style.color = '#34d399';
+          }
+          if (streamBadge) streamBadge.style.display = 'none';
+          if (generateBtn) generateBtn.disabled = false;
+          const loader = outputArea.querySelector('#sz-loader');
+          if (loader) loader.style.display = 'none';
         };
       }
 

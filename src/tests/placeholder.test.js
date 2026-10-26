@@ -187,4 +187,39 @@ describe('Hidden Architect PLACEHOLDER Page & Admin Darkened State Portal', () =
     expect(portalBtn.getAttribute('href')).toBe('#/placeholder');
     expect(portalBtn.textContent).toContain('ACCESS [PLACEHOLDER]');
   });
+  it('renders stream generation button and supports initiating and halting continuous streams', async () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('darkness_mode_active', 'true');
+
+    let streamCalls = 0;
+    const el = PlaceholderPage();
+    const streamBtn = el.querySelector('#sz-stream-btn');
+    const genBtn = el.querySelector('#sz-generate-btn');
+    const promptInput = el.querySelector('#sz-prompt');
+    const outputArea = el.querySelector('#sz-generate-output');
+
+    expect(streamBtn).toBeTruthy();
+    expect(streamBtn.textContent).toContain('STREAM GENERATION');
+
+    // 1. Validation test on empty prompt
+    promptInput.value = '   ';
+    await streamBtn.onclick();
+    expect(streamBtn.textContent).toContain('STREAM GENERATION');
+
+    // 2. Initiate stream with valid prompt
+    promptInput.value = 'cyberpunk alley at midnight';
+    window.__mock_openrouter_image_generation = async () => {
+      streamCalls++;
+      // Stop the stream after 1 iteration
+      setTimeout(() => { streamBtn.onclick(); }, 5);
+      return { result: 'https://cdn.example.com/stream_frame_1.png' };
+    };
+
+    await streamBtn.onclick();
+
+    expect(streamCalls).toBeGreaterThanOrEqual(1);
+    expect(outputArea.innerHTML).toContain('https://cdn.example.com/stream_frame_1.png');
+    expect(outputArea.innerHTML).toContain('SAVE ARTIFACT');
+  });
 });
