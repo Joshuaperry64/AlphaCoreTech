@@ -2,14 +2,18 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import CognitiveUplink, { resolveProfileDossier, buildContextualPrefix, sanitizeArchitectOutput } from '../pages/cognitive.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
 
+const mockSendClientContent = vi.fn();
+const mockSendRealtimeInput = vi.fn();
+const mockClose = vi.fn();
+
 vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn().mockImplementation(function() {
     return {
       live: {
         connect: vi.fn().mockResolvedValue({
-          sendClientContent: vi.fn(),
-          sendRealtimeInput: vi.fn(),
-          close: vi.fn()
+          sendClientContent: mockSendClientContent,
+          sendRealtimeInput: mockSendRealtimeInput,
+          close: mockClose
         })
       }
     };
@@ -134,6 +138,10 @@ describe('Cognitive Core & Global Comm Link API Key Routing', () => {
     const thinking = chatMessages.querySelector('.thinking-bubble');
     expect(thinking).toBeTruthy();
     expect(thinking.textContent).toContain('PROCESSING & LISTENING');
+
+    // Verify sendRealtimeInput is called with text payload and sendClientContent is NOT called
+    expect(mockSendRealtimeInput).toHaveBeenCalledWith(expect.objectContaining({ text: 'Status report on neural grid.' }));
+    expect(mockSendClientContent).not.toHaveBeenCalled();
 
     el.remove();
   });

@@ -1186,7 +1186,10 @@ export default function CognitiveUplink() {
             for (let i = 0; i < buffer.byteLength; i++) binary += String.fromCharCode(buffer[i]);
             const b64Data = window.btoa(binary);
             try {
-              liveSession.sendRealtimeInput({ media: { mimeType: 'audio/pcm;rate=16000', data: b64Data } });
+              liveSession.sendRealtimeInput({
+                audio: { mimeType: 'audio/pcm;rate=16000', data: b64Data },
+                media: { mimeType: 'audio/pcm;rate=16000', data: b64Data }
+              });
             } catch(sendErr) {}
           };
           
@@ -1767,9 +1770,12 @@ export default function CognitiveUplink() {
                 currentUserSpeechBubble = null;
                 currentUserSpeechText = "";
               }
+              if (!currentModelText && (!activeAudioSources || activeAudioSources.length === 0)) {
+                appendMessage('SYSTEM', '[NEURAL BRIDGE] Model turn concluded. Ready for transmission.', 'system-msg');
+              }
               finalizeModelBubble(author); 
               if (activeAudioSources.length === 0) {
-                statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY'; 
+                statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // LIVE ACTIVE'; 
                 statusDot.className = 'chat-status-dot online';
               }
             }
@@ -1777,7 +1783,8 @@ export default function CognitiveUplink() {
           onerror: (err) => {
             removeThinkingIndicator();
             statusText.textContent = 'SYSTEM READY // STANDBY';
-            appendMessage('ERROR', 'Live API Error: ' + err.message, 'system-msg');
+            statusDot.className = 'chat-status-dot online';
+            appendMessage('ERROR', 'Live API Error: ' + (err?.message || 'WebSocket transmission failure'), 'system-msg');
           },
           onclose: () => {
             removeThinkingIndicator();
@@ -1788,8 +1795,9 @@ export default function CognitiveUplink() {
             liveSession = null;
             const meshModeStatus = container.querySelector('#mesh-mode-status');
             if (meshModeStatus) meshModeStatus.textContent = 'PEER TRANSMISSIONS READY // AI STANDBY';
+            appendMessage('SYSTEM', 'Neural link closed by server. Switched to standby commlink.', 'system-msg');
             if (isRecording) {
-              appendMessage('SYSTEM', 'Neural link closed by server. Auto-reconnecting...', 'system-msg');
+              appendMessage('SYSTEM', 'Microphone active. Auto-reconnecting live link...', 'system-msg');
               setTimeout(() => {
                 if (isRecording && !liveSession) connectLiveAPI();
               }, 1000);
@@ -1893,10 +1901,14 @@ export default function CognitiveUplink() {
             reader.onload = (ev) => {
               const textContent = ev.target.result;
               if (liveSession) {
-                liveSession.sendClientContent({
-                  turns: [{ role: 'user', parts: [{ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` }] }],
-                  turnComplete: true
-                });
+                if (typeof liveSession.sendRealtimeInput === 'function') {
+                  liveSession.sendRealtimeInput({ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` });
+                } else if (typeof liveSession.sendClientContent === 'function') {
+                  liveSession.sendClientContent({
+                    turns: [{ role: 'user', parts: [{ text: `[FILE ATTACHED: ${file.name}]\n\n${textContent}` }] }],
+                    turnComplete: true
+                  });
+                }
                 appendMessage('SYSTEM', `File ${file.name} injected into data stream.`, 'system-msg');
               }
             };
@@ -2216,19 +2228,22 @@ export default function CognitiveUplink() {
           statusText.textContent = 'PROCESSING PROMPT...'; 
           statusDot.className = 'chat-status-dot streaming'; 
           
-          if (typeof liveSession.sendClientContent === 'function') {
+          if (typeof liveSession.sendRealtimeInput === 'function') {
+            liveSession.sendRealtimeInput({ text: payloadText });
+          } else if (typeof liveSession.sendClientContent === 'function') {
             liveSession.sendClientContent({
               turns: [{ role: 'user', parts: [{ text: payloadText }] }],
               turnComplete: true
             });
-          } else {
-            liveSession.sendRealtimeInput({ text: payloadText });
           }
         } catch(e) { 
           removeThinkingIndicator();
-          statusText.textContent = isRecording ? 'MIC ACTIVE // LISTENING TO VOICE...' : 'SYSTEM READY // STANDBY';
+          liveSession = null;
+          connectBtn.style.display = 'inline-block';
+          disconnectBtn.style.display = 'none';
+          statusText.textContent = 'SYSTEM READY // STANDBY';
           statusDot.className = 'chat-status-dot online';
-          appendMessage('ERROR', 'Send failed: ' + e.message, 'system-msg'); 
+          appendMessage('ERROR', 'Transmission failed: ' + e.message + '. Link severed.', 'system-msg'); 
         }
       }
     };
