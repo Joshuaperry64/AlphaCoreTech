@@ -1,7 +1,7 @@
 import { createElement } from '../components/utils.js';
 import { playSFX } from '../components/audio.js';
 import { ALPHACORE_SYSTEM_INSTRUCTION } from '../components/alphacore_instruction.js';
-import { pushToServer } from '../components/db_sync.js';
+import { pushToServer, broadcastChatMessage } from '../components/db_sync.js';
 import { GoogleGenAI, Type } from '@google/genai';
 import { apiUrl } from '../components/api.js';
 import { saveFileToVault } from './vault.js';
@@ -960,8 +960,7 @@ export default function CognitiveUplink() {
       const effectiveAuthor = author || profile.toUpperCase();
 
       if (currentChannel === 'shared') {
-        // 1. Dual-Tier Permanent Local Persistence (LocalStorage & IndexedDB)
-        await persistSharedMessage({
+        const msgPayload = {
           id: msgId,
           role: role || 'user',
           author: effectiveAuthor,
@@ -969,7 +968,13 @@ export default function CognitiveUplink() {
           timestamp: Date.now(),
           created_at: new Date().toISOString(),
           channel: 'shared'
-        });
+        };
+
+        // 1. Instant Realtime WebSocket Broadcast to all active sessions & peers
+        broadcastChatMessage(msgPayload);
+
+        // 2. Dual-Tier Permanent Local Persistence (LocalStorage & IndexedDB)
+        await persistSharedMessage(msgPayload);
 
         // 2. Primary Remote: Direct Cloud Substrate Sync via Supabase
         if (supabase && typeof supabase.from === 'function') {

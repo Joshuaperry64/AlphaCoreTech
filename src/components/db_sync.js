@@ -128,6 +128,7 @@ export function pushToServer(endpoint, data, authPinOverride = null) {
  * Initialize Realtime Subscriptions for multi-device live sync.
  */
 export function initRealtimeSync() {
+  if (typeof process !== 'undefined' && process.env && process.env.VITEST) return;
   if (!supabase || typeof supabase.channel !== 'function' || realtimeChannel) return;
 
   try {
@@ -147,8 +148,36 @@ export function initRealtimeSync() {
           window.dispatchEvent(new CustomEvent('alphacore_chat_message', { detail: payload.new }));
         }
       })
+      .on('broadcast', { event: 'chat_message' }, (payload) => {
+        if (payload && payload.payload) {
+          window.dispatchEvent(new CustomEvent('alphacore_chat_message', { detail: payload.payload }));
+        }
+      })
       .subscribe();
   } catch (err) {
     console.warn('[REALTIME_SYNC] Channel initialization note:', err.message || err);
   }
 }
+
+/**
+ * Broadcast a real-time message across all active cross-device sessions via Supabase WebSockets.
+ */
+export function broadcastChatMessage(msg) {
+  if (typeof process !== 'undefined' && process.env && process.env.VITEST) return;
+  if (!supabase || typeof supabase.channel !== 'function') return;
+  if (!realtimeChannel) {
+    initRealtimeSync();
+  }
+  if (realtimeChannel) {
+    try {
+      realtimeChannel.send({
+        type: 'broadcast',
+        event: 'chat_message',
+        payload: msg
+      }).catch(err => console.warn('[BROADCAST_CHAT] Send error:', err));
+    } catch (e) {
+      console.warn('[BROADCAST_CHAT] Send note:', e);
+    }
+  }
+}
+
