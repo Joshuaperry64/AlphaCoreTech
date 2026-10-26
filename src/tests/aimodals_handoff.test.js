@@ -96,4 +96,43 @@ describe('AI Modals Synthesis Chain Cross-Modal Handoff', () => {
     expect(i2iCheckpointSelect).toBeTruthy();
     expect(i2iCheckpointSelect.innerHTML).toContain('fullyREALXL_v30TRINITY');
   });
+  it('locks generation engine to Euler trailing when 4-step lightning toggle is active and restores on toggle off', () => {
+    sessionStorage.setItem('current_profile', 'Architect');
+    sessionStorage.setItem('current_pin', '672167566');
+    sessionStorage.setItem('aimodals_authenticated', '1');
+    sessionStorage.setItem('aim_disclaimer_accepted', '1');
+
+    const page = AIModalsPage();
+    document.body.appendChild(page);
+
+    const schedulerSelect = page.querySelector('#t2i-scheduler');
+    const lightningBtn = page.querySelector('#t2i-lightning-btn');
+    const lockBadge = page.querySelector('#t2i-scheduler-lock');
+
+    expect(schedulerSelect).toBeTruthy();
+    expect(lightningBtn).toBeTruthy();
+
+    // 1. Initial state: DPM++ 2M Karras, unlocked
+    schedulerSelect.value = 'DPM++ 2M Karras';
+    expect(schedulerSelect.disabled).toBe(false);
+    expect(lockBadge.style.display).toBe('none');
+
+    // 2. Click 4-step lightning toggle -> ON
+    lightningBtn.parentElement.click();
+
+    expect(lightningBtn.dataset.active).toBe('true');
+    expect(schedulerSelect.value).toBe('Euler');
+    expect(schedulerSelect.disabled).toBe(true);
+    expect(lockBadge.style.display).toBe('inline');
+
+    // 3. Click 4-step lightning toggle -> OFF
+    lightningBtn.parentElement.click();
+
+    expect(lightningBtn.dataset.active).toBe('false');
+    expect(schedulerSelect.disabled).toBe(false);
+    expect(schedulerSelect.value).toBe('DPM++ 2M Karras');
+    expect(lockBadge.style.display).toBe('none');
+
+    page.remove();
+  });
 });

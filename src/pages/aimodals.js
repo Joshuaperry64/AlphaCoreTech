@@ -1297,7 +1297,7 @@ function buildTxt2Img() {
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="t2i-scheduler">GENERATION ENGINE</label>
+            <label class="aim-label" for="t2i-scheduler">GENERATION ENGINE <span id="t2i-scheduler-lock" style="color:#f59e0b; display:none; margin-left:6px; font-size:0.75rem; letter-spacing:0.5px;">[LOCKED: EULER TRAILING]</span></label>
             <select class="aim-input" id="t2i-scheduler">
               <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
               <option value="Euler">Euler Trailing (SDXL-Lightning 4-Step)</option>
@@ -1412,6 +1412,9 @@ function buildTxt2Img() {
   }
 
   const lightningBtn = wrap.querySelector('#t2i-lightning-btn');
+  const schedulerSelect = wrap.querySelector('#t2i-scheduler');
+  const schedulerLockBadge = wrap.querySelector('#t2i-scheduler-lock');
+
   if (lightningBtn) {
     lightningBtn.parentElement.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1427,9 +1430,31 @@ function buildTxt2Img() {
       }
       if (newState) {
         if (cfgInput) { cfgInput.value = '0.0'; if (cfgVal) cfgVal.textContent = '0'; }
-        setStatus(wrap, '#t2i-status', '⚡ SDXL-LIGHTNING ENGAGED: 4-Step Fused LoRA, Trailing Scheduler, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
+        if (schedulerSelect) {
+          if (!schedulerSelect.dataset.prevScheduler) {
+            schedulerSelect.dataset.prevScheduler = schedulerSelect.value;
+          }
+          schedulerSelect.value = 'Euler';
+          schedulerSelect.disabled = true;
+          schedulerSelect.style.borderColor = '#f59e0b';
+          schedulerSelect.style.color = '#f59e0b';
+          schedulerSelect.title = 'Locked to Euler Trailing for 4-Step Lightning';
+        }
+        if (schedulerLockBadge) schedulerLockBadge.style.display = 'inline';
+        setStatus(wrap, '#t2i-status', '⚡ SDXL-LIGHTNING ENGAGED: 4-Step Fused LoRA, Locked to Euler Trailing, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
       } else {
         if (cfgInput) { cfgInput.value = settings.guidanceScale || '7.0'; if (cfgVal) cfgVal.textContent = parseFloat(cfgInput.value); }
+        if (schedulerSelect) {
+          schedulerSelect.disabled = false;
+          schedulerSelect.style.borderColor = '';
+          schedulerSelect.style.color = '';
+          schedulerSelect.title = '';
+          if (schedulerSelect.dataset.prevScheduler) {
+            schedulerSelect.value = schedulerSelect.dataset.prevScheduler;
+            delete schedulerSelect.dataset.prevScheduler;
+          }
+        }
+        if (schedulerLockBadge) schedulerLockBadge.style.display = 'none';
         setStatus(wrap, '#t2i-status', 'SDXL-LIGHTNING DISENGAGED: Standard multi-step CFG mode active.', 'info');
       }
     });
@@ -2154,7 +2179,7 @@ function buildImg2Img() {
 
         <div class="aim-row" style="margin-top:12px;">
           <div class="aim-field aim-field-half">
-            <label class="aim-label" for="i2i-scheduler">GENERATION ENGINE</label>
+            <label class="aim-label" for="i2i-scheduler">GENERATION ENGINE <span id="i2i-scheduler-lock" style="color:#f59e0b; display:none; margin-left:6px; font-size:0.75rem; letter-spacing:0.5px;">[LOCKED: EULER TRAILING]</span></label>
             <select class="aim-input" id="i2i-scheduler">
               <option value="Euler a" selected>Euler Ancestral (Euler a)</option>
               <option value="Euler">Euler</option>
@@ -2747,6 +2772,9 @@ function buildImg2Img() {
   bindDropzone(fileInput2, dropzone2, dzInner2, preview2);
 
   const i2iLightningBtn = wrap.querySelector('#i2i-lightning-btn');
+  const i2iSched = wrap.querySelector('#i2i-scheduler');
+  const i2iSchedLockBadge = wrap.querySelector('#i2i-scheduler-lock');
+
   if (i2iLightningBtn) {
     i2iLightningBtn.parentElement.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2761,9 +2789,31 @@ function buildImg2Img() {
         knob.style.background = newState ? '#f59e0b' : 'var(--text-muted)';
       }
       if (newState) {
-        setStatus(wrap, '#i2i-status', '⚡ SDXL-LIGHTNING (4-STEP) ENGAGED: Trailing Euler, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
+        if (i2iSched) {
+          if (!i2iSched.dataset.prevScheduler) {
+            i2iSched.dataset.prevScheduler = i2iSched.value;
+          }
+          i2iSched.value = 'Euler';
+          i2iSched.disabled = true;
+          i2iSched.style.borderColor = '#f59e0b';
+          i2iSched.style.color = '#f59e0b';
+          i2iSched.title = 'Locked to Euler Trailing for 4-Step Lightning';
+        }
+        if (i2iSchedLockBadge) i2iSchedLockBadge.style.display = 'inline';
+        setStatus(wrap, '#i2i-status', '⚡ SDXL-LIGHTNING (4-STEP) ENGAGED: Locked to Euler Trailing, CFG=0.0, FreeU V2 & DeepCache.', 'ok');
       } else {
-        setStatus(wrap, '#i2i-status', 'SDXL-LIGHTNING DISENGAGED.', 'info');
+        if (i2iSched) {
+          i2iSched.disabled = false;
+          i2iSched.style.borderColor = '';
+          i2iSched.style.color = '';
+          i2iSched.title = '';
+          if (i2iSched.dataset.prevScheduler) {
+            i2iSched.value = i2iSched.dataset.prevScheduler;
+            delete i2iSched.dataset.prevScheduler;
+          }
+        }
+        if (i2iSchedLockBadge) i2iSchedLockBadge.style.display = 'none';
+        setStatus(wrap, '#i2i-status', 'SDXL-LIGHTNING DISENGAGED: Standard multi-step mode active.', 'info');
       }
     });
   }
