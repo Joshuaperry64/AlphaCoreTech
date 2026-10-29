@@ -87,64 +87,108 @@ export function createModuleSelector({ onSelectModule }) {
         </button>
       </div>
 
-      <!-- MODULE 2: NEURAL OVERDRIVE (FUTURE) -->
-      <div class="panel" style="background:rgba(6,8,14,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; opacity:0.75;">
+      <!-- MODULE 2: NEURAL OVERDRIVE (ACTIVE) -->
+      <div class="panel" style="background:linear-gradient(180deg, rgba(20,10,32,0.95) 0%, rgba(8,4,16,0.95) 100%); border:1.5px solid #a855f7; border-radius:4px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; position:relative; box-shadow:0 0 20px rgba(168,85,247,0.15);">
+        <div style="position:absolute; top:14px; right:14px; background:rgba(168,85,247,0.15); border:1px solid #a855f7; color:#a855f7; font-size:0.7rem; font-family:'Share Tech Mono',monospace; padding:3px 8px; border-radius:2px; font-weight:bold;">
+          ● CO-OP PROTOCOL
+        </div>
+
         <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:2.8rem;">🧠</div>
-            <span style="background:rgba(168,85,247,0.15); border:1px solid #a855f7; color:#a855f7; font-size:0.7rem; font-family:'Share Tech Mono',monospace; padding:3px 8px; border-radius:2px;">
-              STAGING
-            </span>
-          </div>
-          <h2 style="font-family:'Orbitron',sans-serif; font-size:1.2rem; color:#fff; letter-spacing:1px; margin-bottom:6px;">
+          <div style="font-size:2.8rem; margin-bottom:12px;">🧠</div>
+          <h2 style="font-family:'Orbitron',sans-serif; font-size:1.3rem; color:#fff; letter-spacing:1px; margin-bottom:6px;">
             NEURAL OVERDRIVE
           </h2>
-          <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#888; margin-bottom:14px; letter-spacing:1px;">
-            // COMPETITIVE FIREWALL DECRYPTION (2-4 PLAYERS)
+          <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#a855f7; margin-bottom:14px; letter-spacing:1px;">
+            // 2-PLAYER DISTRIBUTED CO-OP // FIREWALL PENETRATION & PAYLOAD
           </div>
-          <p style="font-size:0.85rem; color:#888; line-height:1.6; margin-bottom:16px;">
-            High-speed adversarial penetration testing. Race against rival operators to infiltrate neural security nodes, inject malware payloads, and seize sub-matrix control.
+
+          <p style="font-size:0.85rem; color:#ccc; line-height:1.6; margin-bottom:16px;">
+            High-speed cyberpunk firewall infiltration. Designed for 2 operators with equal, complementary controls: <strong>Operator 1: Infiltrator & Cipher Specialist</strong> (ports & cryptographic session keys) and <strong>Operator 2: Tactical Defense & Payload</strong> (buffer overflow injection & Counter-ICE trace scrub).
           </p>
+
+          <div style="background:rgba(0,0,0,0.5); padding:10px 14px; border-radius:4px; border:1px solid rgba(255,255,255,0.06); margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px;">
+              <span style="color:#888;">OPERATORS:</span>
+              <span style="color:#a855f7; font-weight:bold;">2 LIVE PLAYERS (50/50 SPLIT)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px;">
+              <span style="color:#888;">THREAT VECTOR:</span>
+              <span style="color:#ef4444; font-weight:bold;">SENTINEL ICE TRACE</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+              <span style="color:#888;">TARGET:</span>
+              <span style="color:#00ff66;">QUANTUM SUBNET ROOT</span>
+            </div>
+          </div>
         </div>
-        <button disabled class="aim-btn aim-btn-sm" style="width:100%; height:44px; background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.1); color:#666; cursor:not-allowed;">
-          🔒 CLASSIFIED // IN STAGING
+
+        <button id="btn-launch-neural" class="aim-btn" style="width:100%; height:48px; background:rgba(168,85,247,0.2); border-color:#a855f7; color:#fff; font-family:'Orbitron',sans-serif; font-size:0.95rem; font-weight:bold; letter-spacing:1px; cursor:pointer;">
+          ⚡ LAUNCH NEURAL OVERDRIVE
         </button>
       </div>
 
-      <!-- MODULE 3: VOID RUNNER (FUTURE) -->
-      <div class="panel" style="background:rgba(6,8,14,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; opacity:0.75;">
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="font-size:2.8rem;">⚡</div>
-            <span style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#f59e0b; font-size:0.7rem; font-family:'Share Tech Mono',monospace; padding:3px 8px; border-radius:2px;">
-              IN DEV
-            </span>
-          </div>
-          <h2 style="font-family:'Orbitron',sans-serif; font-size:1.2rem; color:#fff; letter-spacing:1px; margin-bottom:6px;">
-            VOID RUNNER
-          </h2>
-          <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#888; margin-bottom:14px; letter-spacing:1px;">
-            // SUB-NEURAL SECTOR RECON (1-2 PLAYERS)
-          </div>
-          <p style="font-size:0.85rem; color:#888; line-height:1.6; margin-bottom:16px;">
-            Tactical co-op grid traversal through corrupted memory sectors. Collect encryption artifacts while evading automated hunter-killer watchdog subroutines.
-          </p>
+      <!-- MODULE 3: ASTRO-LINK OBSERVATORY (ACTIVE) -->
+      <div class="panel" style="background:linear-gradient(180deg, rgba(6,16,36,0.95) 0%, rgba(2,6,16,0.95) 100%); border:1.5px solid #00ff66; border-radius:4px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; position:relative; box-shadow:0 0 20px rgba(0,255,100,0.15);">
+        <div style="position:absolute; top:14px; right:14px; background:rgba(0,255,100,0.15); border:1px solid #00ff66; color:#00ff66; font-size:0.7rem; font-family:'Share Tech Mono',monospace; padding:3px 8px; border-radius:2px; font-weight:bold;">
+          ● 2-PLAYER HARDWARE CO-OP
         </div>
-        <button disabled class="aim-btn aim-btn-sm" style="width:100%; height:44px; background:rgba(255,255,255,0.03); border-color:rgba(255,255,255,0.1); color:#666; cursor:not-allowed;">
-          🔒 LOCKED // IN DEVELOPMENT
+
+        <div>
+          <div style="font-size:2.8rem; margin-bottom:12px;">🔭</div>
+          <h2 style="font-family:'Orbitron',sans-serif; font-size:1.3rem; color:#fff; letter-spacing:1px; margin-bottom:6px;">
+            ASTRO-LINK OBSERVATORY
+          </h2>
+          <div style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#00ff66; margin-bottom:14px; letter-spacing:1px;">
+            // 2-PLAYER MEADE DS TELESCOPE MISSION CONTROL
+          </div>
+
+          <p style="font-size:0.85rem; color:#ccc; line-height:1.6; margin-bottom:16px;">
+            Cooperate across 2 distinct stations: <strong>Operator 1: Mount Helmsman</strong> (Autostar Handbox, 2D Polar Sky Dome Radar, WebSerial 9600 8N1 link) and <strong>Operator 2: Optical Sensor Engineer</strong> (ASCOM electronic focuser, Lucky imaging stacker, reticle ping, and AI capture).
+          </p>
+
+          <div style="background:rgba(0,0,0,0.5); padding:10px 14px; border-radius:4px; border:1px solid rgba(255,255,255,0.06); margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px;">
+              <span style="color:#888;">OPERATORS:</span>
+              <span style="color:#00ff66; font-weight:bold;">2 PLAYERS / SOLO OVERRIDE</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px;">
+              <span style="color:#888;">HARDWARE LINK:</span>
+              <span style="color:#06b6d4;">WebSerial LX200 9600 baud</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+              <span style="color:#888;">TELESCOPE:</span>
+              <span style="color:#fff;">MEADE DS / AUTOSTAR #494/#497</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-launch-astrolink" class="aim-btn" style="width:100%; height:48px; background:rgba(0,255,100,0.2); border-color:#00ff66; color:#fff; font-family:'Orbitron',sans-serif; font-size:0.95rem; font-weight:bold; letter-spacing:1px; cursor:pointer;">
+          🔭 LAUNCH OBSERVATORY
         </button>
       </div>
 
     </div>
   `;
 
-  const launch = () => {
+  const launchLab = () => {
     playClick();
     onSelectModule('LABORATORY');
   };
 
-  container.querySelector('#btn-launch-laboratory')?.addEventListener('click', launch);
-  container.querySelector('#btn-quick-launch-lab')?.addEventListener('click', launch);
+  const launchNeural = () => {
+    playClick();
+    onSelectModule('NEURAL_OVERDRIVE');
+  };
+
+  const launchAstro = () => {
+    playClick();
+    onSelectModule('ASTRO_LINK');
+  };
+
+  container.querySelector('#btn-launch-laboratory')?.addEventListener('click', launchLab);
+  container.querySelector('#btn-quick-launch-lab')?.addEventListener('click', launchLab);
+  container.querySelector('#btn-launch-neural')?.addEventListener('click', launchNeural);
+  container.querySelector('#btn-launch-astrolink')?.addEventListener('click', launchAstro);
 
   return container;
 }

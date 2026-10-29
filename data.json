@@ -86,6 +86,81 @@
   ],
   "logs": [
     {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793183340777
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793183340765
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1793183338752_hi8ko",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1793183338752
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793182912178
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793182912171
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1793182910012_12qob",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1793182910012
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Architect",
+      "appId": "alphacore-hud-mobile",
+      "appName": "AlphaCore HUD Mobile",
+      "filename": "AlphaCore_HUD_v4.7.2.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793181902074
+    },
+    {
+      "type": "APK_DOWNLOAD",
+      "user": "Fisherman",
+      "appId": "alpha-sentinel-recon",
+      "appName": "Alpha Sentinel Recon",
+      "filename": "Alpha_Sentinel_v2.1.0.apk",
+      "profileLock": "josh627764",
+      "timestamp": 1793181902062
+    },
+    {
+      "type": "VAULT_LINK_ADDED",
+      "user": "Architect",
+      "linkId": "link_1793181900417_o6p6f",
+      "title": "Autonomous Swarm Node",
+      "timestamp": 1793181900417
+    },
+    {
       "type": "VAULT_LINK_ADDED",
       "user": "Architect",
       "linkId": "link_1792694360920_eae0w",
@@ -235,7 +310,7 @@
         "admin"
       ],
       "accessLevel": "RESTRICTED",
-      "downloadsCount": 47,
+      "downloadsCount": 50,
       "createdAt": 1782687600000,
       "updatedAt": 1782687600000
     },
@@ -263,7 +338,7 @@
         "recon"
       ],
       "accessLevel": "ROLE_LOCKED",
-      "downloadsCount": 22,
+      "downloadsCount": 25,
       "createdAt": 1782687600000,
       "updatedAt": 1782687600000
     },

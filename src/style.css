@@ -5280,3 +5280,34 @@ body.synthwave-overdrive :focus-visible {
   }
 }
 
+/* =============================================================
+   MEADE TELESCOPE OBSERVATORY & RED NIGHT-VISION HUD
+   ============================================================= */
+.telescope-observatory-view.night-vision-mode {
+  filter: sepia(1) saturate(6) hue-rotate(-50deg);
+  background-color: #050002 !important;
+}
+
+.telescope-observatory-view.night-vision-mode .panel {
+  background: rgba(22, 2, 4, 0.95) !important;
+  border-color: rgba(255, 0, 60, 0.45) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.15) !important;
+}
+
+.telescope-observatory-view.night-vision-mode .aim-btn {
+  border-color: #ff003c !important;
+  color: #ff3366 !important;
+}
+
+.telescope-observatory-view.night-vision-mode .aim-btn.active {
+  background: rgba(255, 0, 60, 0.3) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 900px) {
+  .observatory-mission-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+

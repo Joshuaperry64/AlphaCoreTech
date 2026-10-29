@@ -40,6 +40,7 @@ import CyberDirectorPage from './pages/director.js';
 import NotarizationPage from './pages/notarization.js';
 import PlaceholderPage from './pages/placeholder.js';
 import AppManagerPage from './pages/appmanager.js';
+import TelescopePage from './pages/telescope.js';
 
 
 const routes = {
@@ -47,6 +48,8 @@ const routes = {
   '/overview': Overview,
   '/thelab': TheLabPage,
   '/lab': TheLabPage,
+  '/telescope': TelescopePage,
+  '/observatory': TelescopePage,
   '/transfer': TransferPage,
   '/laundry': TransferPage,
   '/lore': Lore,
